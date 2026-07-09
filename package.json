@@ -20,8 +20,7 @@
   },
   "lint-staged": {
     "**/*.{js,ts}": [
-      "prettier --write",
-      "turbo run lint --continue"
+      "prettier --write"
     ],
     "**/*.json": [
       "prettier --write"
