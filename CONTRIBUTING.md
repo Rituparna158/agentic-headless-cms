@@ -1,6 +1,6 @@
 # How to Contribute
 
-We are thrilled that you are interested in contributing to Markdown Reader\! Your contributions are invaluable in making this project better for everyone. This guide will walk you through the entire process, from setting up your environment to submitting a high-quality pull request.
+We are thrilled that you are interested in contributing to Agentic Headless CMS\! Your contributions are invaluable in making this project better for everyone. This guide will walk you through the entire process, from setting up your environment to submitting a high-quality pull request.
 
 ## Table of Contents
 
@@ -37,7 +37,7 @@ We are committed to fostering a welcoming and inclusive community. Before contri
 
 First, get the project running on your local machine.
 
-- **Fork the repository:** Click the "Fork" button at the top-right of the [Markdown Reader repository](https://github.com/mindfire-test/agentic-headless-cms).
+- **Fork the repository:** Click the "Fork" button at the top-right of the [Agentic Headless CMS repository](https://github.com/mindfire-test/agentic-headless-cms).
 - **Clone your forked repository:**
   ```bash
   git clone https://github.com/mindfire-test/agentic-headless-cms
