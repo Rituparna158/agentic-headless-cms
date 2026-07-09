@@ -8,9 +8,10 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 
 - **apps/frontend**: The frontend dashboard built with Next.js, Tailwind CSS, and shadcn/ui.
 - **apps/backend**: The core backend API built with NestJS.
-- **packages/db**: Database schemas, ORM logic (Drizzle), and migrations.
-- **packages/ui**: Shared React components.
-- **packages/types**: Shared TypeScript types and Zod validation schemas.
+- **packages/shared-db**: Database schemas, ORM logic (Drizzle), and migrations.
+- **packages/shared-types**: Shared TypeScript types and Zod validation schemas.
+- **packages/eslint-config**: Shared ESLint configuration.
+- **packages/typescript-config**: Shared TypeScript configuration.
 
 ## Quick Start
 
@@ -22,3 +23,12 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
    ```bash
    pnpm dev
    ```
+
+## Common Commands
+
+```bash
+pnpm lint          # Lint all apps and packages
+pnpm check-types   # Type-check all apps and packages
+pnpm format        # Format the codebase with Prettier
+pnpm build         # Build all apps and packages
+```
