@@ -5,12 +5,11 @@ node_modules
 .pnp
 .pnp.js
 
-# Local env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Local env files — catch every variant (.env, .env.local, .env.production,
+# .env.production.local, etc.) at any depth, but always allow the checked-in
+# example files back in.
+.env*
+!.env.example
 
 # Testing
 coverage
@@ -26,6 +25,7 @@ coverage
 out/
 build
 dist
+*.tsbuildinfo
 
 
 # Debug

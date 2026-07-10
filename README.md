@@ -7,7 +7,7 @@ Welcome to the **Agentic Headless CMS**! This project is a modular, API-first co
 This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 
 - **apps/frontend**: The frontend dashboard built with Next.js, Tailwind CSS, and shadcn/ui.
-- **apps/backend**: The core backend API built with NestJS.
+- **apps/backend**: The core backend API built with Express.
 - **packages/shared-db**: Database schemas, ORM logic (Drizzle), and migrations.
 - **packages/shared-types**: Shared TypeScript types and Zod validation schemas.
 - **packages/eslint-config**: Shared ESLint configuration.
