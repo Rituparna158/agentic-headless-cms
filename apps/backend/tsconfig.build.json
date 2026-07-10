@@ -1,4 +1,16 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "compilerOptions": {
+    "rootDir": "./src",
+    // Incremental caching is a dev-loop speed optimization (see
+    // tsconfig.json, used for check-types/editor tooling) — it has no
+    // place in a production build, where a stale or corrupted
+    // .tsbuildinfo (e.g. left over from a branch switch) can make tsc
+    // silently skip recompiling files it thinks are unchanged, producing
+    // an incomplete dist/ with no error and exit code 0. A build step
+    // must be deterministic even if it's slower.
+    "incremental": false
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "test", "**/*.test.ts"]
 }
