@@ -1,0 +1,22 @@
+'use client';
+
+import { useState, type ReactNode } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { getQueryClient } from '@/lib/query-client';
+
+export function QueryProvider({ children }: { children: ReactNode }) {
+  // useState (not useMemo) guarantees the client is only created once per
+  // component instance, even under React Strict Mode's double-invoke —
+  // useMemo isn't guaranteed to skip re-running for a given render.
+  const [queryClient] = useState(getQueryClient);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      {process.env.NODE_ENV === 'development' ? (
+        <ReactQueryDevtools initialIsOpen={false} />
+      ) : null}
+    </QueryClientProvider>
+  );
+}
