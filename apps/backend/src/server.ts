@@ -1,14 +1,12 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './common/logger.js';
-import { closeDatabaseClient, getDatabaseClient } from './database/index.js';
+import { getDatabaseAdapter } from './config/database.js';
 
 const app = createApp();
 
-// Instantiate the client at boot (not connect — see database/index.ts's
-// getDatabaseClient() for why) so a config-time error, like a malformed
-// DATABASE_URL, surfaces immediately instead of on the first request.
-getDatabaseClient();
+// Instantiate the adapter at start so a config-time error surfaces immediately
+getDatabaseAdapter();
 
 const server = app.listen(env.PORT, () => {
   logger.info(`Server listening on port ${env.PORT} (${env.NODE_ENV})`);
@@ -34,7 +32,8 @@ function shutdown(signal: string): void {
       );
     }
 
-    closeDatabaseClient()
+    getDatabaseAdapter()
+      .close()
       .then(() => {
         logger.info('Shutdown complete.');
         process.exit(closeServerError ? 1 : 0);

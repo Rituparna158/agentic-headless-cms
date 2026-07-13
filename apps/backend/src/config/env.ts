@@ -5,6 +5,7 @@ const envSchema = z.object({
     .enum(['development', 'test', 'production'])
     .default('development'),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
+  DB_CLIENT: z.enum(['postgres', 'mysql', 'sqlite']).default('postgres'),
 
   // Full URL parsing here, not just a prefix check — @repo/shared-db's own
   // createDatabaseClient() validates this the same way, but catching a
