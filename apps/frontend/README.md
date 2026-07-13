@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/create-next-app).
+# Frontend — Agentic Headless CMS Admin UI
 
-## Getting Started
+Next.js (App Router) admin dashboard. Tailwind CSS v4 + shadcn/ui, Zustand for auth state, TanStack
+Query for server-state fetching/caching, React Hook Form + Zod for forms.
 
-First, run the development server:
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env   # then adjust NEXT_PUBLIC_API_URL if the backend isn't on localhost:3000
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Commands
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev            # dev server on http://localhost:3001
+pnpm build           # production build
+pnpm start           # run the production build
+pnpm lint            # eslint
+pnpm check-types     # next typegen && tsc --noEmit
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load Inter, a custom Google Font.
+Runs on port **3001**, not Next's default 3000 — `apps/backend` already uses 3000, so this was moved
+to avoid a collision when running both apps at once.
 
-## Learn More
+## Structure
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  layout.tsx              root layout — QueryProvider, global styles
+  (auth)/login/            login screen (no public register — admin users are invited, see Settings > Users)
+  (dashboard)/             dashboard shell (sidebar + topbar) and its pages
+components/
+  ui/                       shadcn/ui primitives
+  layout/                   sidebar, topbar, nav config
+  auth/                     login form
+  providers/                TanStack Query provider
+lib/
+  api-client.ts             fetch wrapper (credentials: 'include' for the backend's session cookie)
+  api/                       per-resource API calls
+  query-client.ts           TanStack Query client factory
+stores/
+  auth-store.ts             Zustand auth/session state
+```
