@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['test/**/*.test.ts'],
+    include: ['tests/**/*.test.ts'],
     globals: false,
     // env.ts validates and fails fast on import — tests that only exercise
     // routes not touching the database (e.g. /health/live) still import the

@@ -10,14 +10,7 @@ import {
 } from '../errors/http-error.js';
 import { logger } from '../logger.js';
 
-interface ErrorResponseBody {
-  error: {
-    message: string;
-    requestId: string;
-    details?: unknown;
-    stack?: string;
-  };
-}
+import type { ErrorResponseBody } from '../../types/error-handler.types.js';
 
 /**
  * `req.id` is typed as pino-http's `ReqId` (`string | number | object`) —

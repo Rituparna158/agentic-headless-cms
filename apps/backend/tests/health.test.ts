@@ -1,7 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { closeDatabaseClient } from '../src/database/index.js';
 
 interface ReadinessBody {
   status: 'ok' | 'error';
@@ -12,12 +11,14 @@ interface ErrorBody {
   error: { message: string; requestId: string };
 }
 
+import { getDatabaseAdapter } from '../src/config/database.js';
+
 // GET /health/ready lazily creates the database client/pool on first call.
 // Close it once the suite finishes rather than leaving it for process exit
 // — harmless today since DATABASE_URL points nowhere reachable, but this
 // will matter once tests run against a real ephemeral database in CI.
 afterAll(async () => {
-  await closeDatabaseClient();
+  await getDatabaseAdapter().close();
 });
 
 describe('GET /health/live', () => {
