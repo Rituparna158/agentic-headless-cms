@@ -1,18 +1,10 @@
-import { getDatabaseClient } from '../../database/index.js';
+import { getDatabaseAdapter } from '../../config/database.js';
+import type {
+  DependencyStatus,
+  ReadinessResult,
+} from '../../types/health.types.js';
 
-export interface DependencyStatus {
-  status: 'up' | 'down';
-  message?: string;
-}
-
-export interface ReadinessResult {
-  healthy: boolean;
-  dependencies: {
-    database: DependencyStatus;
-  };
-}
-
-/** Kubernetes readiness probe target — can this instance actually serve traffic right now? */
+//Kubernetes readiness check
 export async function checkReadiness(): Promise<ReadinessResult> {
   const database = await checkDatabase();
 
@@ -24,7 +16,7 @@ export async function checkReadiness(): Promise<ReadinessResult> {
 
 async function checkDatabase(): Promise<DependencyStatus> {
   try {
-    await getDatabaseClient().healthCheck(2_000);
+    await getDatabaseAdapter().healthCheck(2_000);
     return { status: 'up' };
   } catch (error) {
     return {
