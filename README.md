@@ -19,10 +19,24 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
    ```bash
    pnpm install
    ```
-2. Start the development server:
+2. Start every app's development server (frontend + backend, via Turborepo):
    ```bash
    pnpm dev
    ```
+
+## Running the Frontend Only
+
+1. Copy the example environment file and adjust it if needed:
+   ```bash
+   cp apps/frontend/.env.example apps/frontend/.env
+   ```
+2. Start just the frontend dev server:
+   ```bash
+   pnpm --filter frontend dev
+   ```
+3. Open [http://localhost:3001](http://localhost:3001).
+
+The frontend runs on port **3001**, not 3000 — `apps/backend` already uses 3000, so the frontend was moved to avoid a port collision when running both at once.
 
 ## Common Commands
 
