@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authRouter } from '../modules/auth/auth.router.js';
+import { schemaRouter } from '../modules/schemas/schema.router.js';
 
 /**
  * Versioned API router — feature modules (content, schema, media, auth,
@@ -10,3 +11,4 @@ import { authRouter } from '../modules/auth/auth.router.js';
 export const apiRouter = Router();
 
 apiRouter.use('/auth', authRouter);
+apiRouter.use('/schemas', schemaRouter);

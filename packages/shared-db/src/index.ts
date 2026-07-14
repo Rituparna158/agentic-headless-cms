@@ -6,3 +6,4 @@ export * from './errors.js';
 export * from './transaction.js';
 export * from './migrate.js';
 export * from './repositories/content-entry.repository.js';
+export * from './repositories/schema.repository.js';

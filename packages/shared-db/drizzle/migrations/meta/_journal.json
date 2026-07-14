@@ -15,6 +15,13 @@
       "when": 1783663624013,
       "tag": "0001_updated_at_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784029976716,
+      "tag": "0002_worthless_talkback",
+      "breakpoints": true
     }
   ]
 }
