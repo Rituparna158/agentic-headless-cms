@@ -33,7 +33,7 @@ async function seedAdmin() {
       .limit(1);
 
     if (existingRole.length > 0) {
-      roleId = existingRole[0].id;
+      roleId = existingRole[0]!.id;
       logger.info({ roleId }, 'Admin role already exists.');
     } else {
       const newRole = await db
@@ -44,7 +44,7 @@ async function seedAdmin() {
         })
         .returning({ id: roles.id });
 
-      roleId = newRole[0].id;
+      roleId = newRole[0]!.id;
       logger.info({ roleId }, 'Created new Admin role.');
 
       // Add wildcard permission for the admin role
@@ -65,7 +65,7 @@ async function seedAdmin() {
       .limit(1);
 
     if (existingUser.length > 0) {
-      userId = existingUser[0].id;
+      userId = existingUser[0]!.id;
       logger.info({ userId }, 'Admin user already exists. Checking roles...');
     } else {
       const passwordHash = await bcrypt.hash(adminPassword, 10);
@@ -80,7 +80,7 @@ async function seedAdmin() {
         })
         .returning({ id: users.id });
 
-      userId = newUser[0].id;
+      userId = newUser[0]!.id;
       logger.info(
         { userId, email: adminEmail, password: adminPassword },
         'Created new Admin user. PLEASE CHANGE PASSWORD AFTER LOGIN.',
