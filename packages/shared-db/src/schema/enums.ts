@@ -30,6 +30,7 @@ export const approvalStatusEnum = pgEnum('approval_status', [
   'rejected',
 ]);
 export const permissionActionEnum = pgEnum('permission_action', [
+  '*',
   'read',
   'create',
   'update',

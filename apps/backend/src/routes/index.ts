@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authRouter } from '../modules/auth/auth.router.js';
 
 /**
  * Versioned API router — feature modules (content, schema, media, auth,
@@ -7,3 +8,5 @@ import { Router } from 'express';
  * monitoring tooling expect unversioned `/health/*` paths.
  */
 export const apiRouter = Router();
+
+apiRouter.use('/auth', authRouter);

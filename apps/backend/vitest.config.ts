@@ -12,6 +12,7 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test',
       DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
+      JWT_SECRET: 'super_secret_jwt_key_that_is_at_least_32_chars_long',
     },
   },
 });
