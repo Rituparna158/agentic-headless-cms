@@ -1,0 +1,6 @@
+apiVersion: v2
+name: agentic-cms
+description: Agentic Headless CMS — backend (Express) and frontend (Next.js)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

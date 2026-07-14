@@ -1,0 +1,71 @@
+# Default values for agentic-cms.
+# Postgres/Redis are intentionally not part of this chart — they're assumed
+# to be externally managed (managed DB service, existing cluster instance,
+# etc.); this chart only wires the connection details in.
+
+backend:
+  replicaCount: 1
+  image:
+    repository: agentic-cms-backend
+    tag: ""  # defaults to .Chart.AppVersion
+    pullPolicy: IfNotPresent
+  service:
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    NODE_ENV: production
+    PORT: "3000"
+    DB_CLIENT: postgres
+    DATABASE_POOL_MAX: "10"
+    DATABASE_SSL: "false"
+    CORS_ORIGIN: "*"
+    LOG_LEVEL: info
+  # DATABASE_URL is deliberately not under `env` above — it's sensitive and
+  # belongs in a Secret, not a ConfigMap. Leave `value` empty and set
+  # `existingSecret`/`existingSecretKey` to reference a Secret you manage
+  # yourself (created outside this chart), or set `value` for local/dev use.
+  databaseUrl:
+    value: ""
+    existingSecret: ""
+    existingSecretKey: "DATABASE_URL"
+  livenessProbe:
+    path: /health/live
+  readinessProbe:
+    path: /health/ready
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: agentic-cms-frontend
+    tag: ""  # defaults to .Chart.AppVersion
+    pullPolicy: IfNotPresent
+  service:
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    NODE_ENV: production
+  livenessProbe:
+    path: /login
+  readinessProbe:
+    path: /login
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  host: ""
+  tls:
+    enabled: false
+    secretName: ""
