@@ -51,9 +51,11 @@ describe('Auth Module', () => {
       };
 
       vi.mocked(authRepository.getUserByEmail).mockResolvedValue(
-        mockUser as any,
+        mockUser as unknown as Awaited<
+          ReturnType<typeof authRepository.getUserByEmail>
+        >,
       );
-      vi.mocked(bcrypt.compare).mockResolvedValue(true as any);
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
       vi.mocked(authRepository.getUserRoles).mockResolvedValue(['admin']);
 
       const res = await request(app).post('/api/v1/auth/login').send({

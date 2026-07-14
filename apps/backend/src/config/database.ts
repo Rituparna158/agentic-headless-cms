@@ -1,10 +1,10 @@
-import { PostgresAdapter, DatabasePort } from '@repo/shared-db';
+import { PostgresAdapter, DatabasePort, Database } from '@repo/shared-db';
 import { env } from './env.js';
 import { logger } from '../common/logger.js';
 
-let adapterInstance: DatabasePort | null = null;
+let adapterInstance: DatabasePort<Database> | null = null;
 
-export function getDatabaseAdapter(): DatabasePort {
+export function getDatabaseAdapter(): DatabasePort<Database> {
   if (adapterInstance) {
     return adapterInstance;
   }

@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PostgresAdapter } from '../../src/adapters/postgres.adapter.js';
-import {
-  ConnectionError,
-  InvalidDatabaseConfigError,
-} from '../../src/errors.js';
-import { Pool } from 'pg';
+import { InvalidDatabaseConfigError } from '../../src/errors.js';
 
 const mPool = vi.hoisted(() => ({
   connect: vi.fn(),
@@ -62,7 +58,7 @@ describe('PostgresAdapter', () => {
 
     // Simulate error event on pool
     const errorCallback = mPool.on.mock.calls.find(
-      (call: any[]) => call[0] === 'error',
+      (call: unknown[]) => call[0] === 'error',
     )[1];
 
     expect(errorCallback).toBeDefined();

@@ -15,13 +15,15 @@ export const requirePermission = (action: string, schemaId?: string) => {
       const permissions = await authService.getUserPermissions(req.user.id);
 
       // Check if any of the user's permissions grant access to the action
-      const hasPermission = permissions.some((p: any) => {
-        const actionMatches = p.action === action || p.action === '*';
-        const schemaMatches =
-          !schemaId || p.schemaId === null || p.schemaId === schemaId;
-        const effectAllows = p.effect === 'allow';
-        return actionMatches && schemaMatches && effectAllows;
-      });
+      const hasPermission = permissions.some(
+        (p: { action: string; schemaId: string | null; effect: string }) => {
+          const actionMatches = p.action === action || p.action === '*';
+          const schemaMatches =
+            !schemaId || p.schemaId === null || p.schemaId === schemaId;
+          const effectAllows = p.effect === 'allow';
+          return actionMatches && schemaMatches && effectAllows;
+        },
+      );
 
       if (!hasPermission) {
         res

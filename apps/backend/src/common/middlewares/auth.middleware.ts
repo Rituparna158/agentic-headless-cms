@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { env } from '../../config/env.js';
 import type { AuthenticatedUser } from '@repo/shared-types';
+import { env } from '../../config/env.js';
 import { ERROR_MESSAGES, HTTP_STATUS, AUTH_COOKIES } from '@repo/shared-types';
 
 export const authenticateToken = (
@@ -9,7 +9,9 @@ export const authenticateToken = (
   res: Response,
   next: NextFunction,
 ) => {
-  const token = req.cookies?.[AUTH_COOKIES.NAME];
+  const token = (req.cookies as Record<string, string> | undefined)?.[
+    AUTH_COOKIES.NAME
+  ];
 
   if (!token) {
     res
@@ -22,7 +24,7 @@ export const authenticateToken = (
     const decoded = jwt.verify(token, env.JWT_SECRET) as AuthenticatedUser;
     req.user = decoded;
     next();
-  } catch (err) {
+  } catch {
     res
       .status(HTTP_STATUS.UNAUTHORIZED)
       .json({ error: ERROR_MESSAGES.AUTH.INVALID_TOKEN });
