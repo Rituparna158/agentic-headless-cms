@@ -9,7 +9,14 @@ export const ERROR_MESSAGES = {
   RBAC: {
     FORBIDDEN: 'Forbidden: Insufficient permissions',
   },
+  CONTENT: {
+    ENTRY_NOT_FOUND: 'Entry not found',
+    INVALID_VERSION_NO: 'Invalid versionNo',
+    FAILED_TO_CREATE_ENTRY: 'Failed to create entry',
+  },
 } as const;
+
+export const DEFAULT_LOCALE = 'en';
 
 export const HTTP_STATUS = {
   OK: 200,

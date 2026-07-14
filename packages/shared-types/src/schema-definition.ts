@@ -43,6 +43,11 @@ export const schemaFieldSchema = z.object({
 });
 
 export type SchemaFieldInput = z.infer<typeof schemaFieldSchema>;
+export type SchemaField = z.infer<typeof schemaFieldSchema>;
+
+export interface SchemaDefinition {
+  fields: SchemaField[];
+}
 
 export const schemaTypeValues = [
   'collection',
