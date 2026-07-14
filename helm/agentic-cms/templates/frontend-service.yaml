@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "agentic-cms.componentName" (dict "context" . "component" "frontend") }}
+  labels:
+    {{- include "agentic-cms.labels" . | nindent 4 }}
+    {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "frontend") | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.frontend.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "frontend") | nindent 4 }}
