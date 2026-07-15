@@ -34,7 +34,7 @@ describe('RBAC Middleware', () => {
 
   it('should return 401 if user is not authenticated', async () => {
     mockReq.user = undefined;
-    const middleware = requirePermission('content:read');
+    const middleware = requirePermission('read');
     await middleware(
       mockReq as Request,
       mockRes as Response,
@@ -51,7 +51,7 @@ describe('RBAC Middleware', () => {
   it('should call next() if user has the exact permission', async () => {
     vi.mocked(authService.getUserPermissions).mockResolvedValue([
       {
-        action: 'content:read',
+        action: 'read',
         effect: 'allow',
         schemaId: null,
         fields: null,
@@ -59,7 +59,7 @@ describe('RBAC Middleware', () => {
       },
     ]);
 
-    const middleware = requirePermission('content:read');
+    const middleware = requirePermission('read');
     await middleware(
       mockReq as Request,
       mockRes as Response,
@@ -81,7 +81,7 @@ describe('RBAC Middleware', () => {
       },
     ]);
 
-    const middleware = requirePermission('content:write');
+    const middleware = requirePermission('update');
     await middleware(
       mockReq as Request,
       mockRes as Response,
@@ -94,7 +94,7 @@ describe('RBAC Middleware', () => {
   it('should return 403 if user lacks permission', async () => {
     vi.mocked(authService.getUserPermissions).mockResolvedValue([
       {
-        action: 'content:read',
+        action: 'read',
         effect: 'allow',
         schemaId: null,
         fields: null,
@@ -102,7 +102,7 @@ describe('RBAC Middleware', () => {
       },
     ]);
 
-    const middleware = requirePermission('content:write');
+    const middleware = requirePermission('update');
     await middleware(
       mockReq as Request,
       mockRes as Response,

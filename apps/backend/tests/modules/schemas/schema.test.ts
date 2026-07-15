@@ -19,6 +19,7 @@ vi.mock('@repo/shared-db', async (importOriginal) => {
     createSchema: vi.fn(),
     listSchemas: vi.fn(),
     updateSchema: vi.fn(),
+    getSchemaById: vi.fn(),
   };
 });
 
@@ -237,6 +238,19 @@ describe('Schemas Module', () => {
           condition: null,
         },
       ]);
+      const beforeState = {
+        id: 'schema-1',
+        name: 'Article',
+        slug: 'article',
+        type: 'collection',
+        definition: { fields: validFields },
+        status: 'draft',
+        version: 1,
+      };
+
+      const { getSchemaById } = await import('@repo/shared-db');
+      vi.mocked(getSchemaById).mockResolvedValue(beforeState as never);
+
       const updated = {
         id: 'schema-1',
         name: 'Updated Article',
