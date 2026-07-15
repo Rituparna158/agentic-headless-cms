@@ -16,6 +16,10 @@ export class SchemaService {
     return this.repository.list();
   }
 
+  async getById(id: string) {
+    return this.repository.getById(id);
+  }
+
   async update(id: string, input: UpdateSchemaInput, actorUserId: string) {
     return this.repository.update(id, { ...input, actorUserId });
   }

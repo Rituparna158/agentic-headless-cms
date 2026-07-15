@@ -1,46 +1,19 @@
-import { randomUUID } from 'node:crypto';
-import path from 'node:path';
 import { ERROR_MESSAGES } from '@repo/shared-types';
 import { getStorageAdapter } from '../../config/storage.js';
 import { NotFoundError } from '../../common/errors/http-error.js';
-import {
-  MediaRepository,
-  type MediaAssetRecord,
-  type ListMediaOptions,
-} from './media.repository.js';
+import { MediaRepository, type MediaAssetRecord } from './media.repository.js';
+import type {
+  UploadMediaInput,
+  ServedFile,
+  ListMediaOptions,
+} from '../../types/media.types.js';
 import {
   readImageDimensions,
   resizeImage,
   type ResizeOptions,
 } from './image-processing.js';
 
-export interface UploadMediaInput {
-  buffer: Buffer;
-  originalFilename: string;
-  mimeType: string;
-  altText?: string;
-  folderId?: string;
-  actorUserId: string;
-}
-
-export interface ServedFile {
-  buffer: Buffer;
-  mimeType: string;
-  filename: string;
-}
-
-function buildStorageKey(originalFilename: string): string {
-  const ext = path.extname(originalFilename);
-  return `${randomUUID()}${ext}`;
-}
-
-function extractStorageKey(asset: MediaAssetRecord): string {
-  const metadata = asset.metadata as { storageKey?: string } | null;
-  if (!metadata?.storageKey) {
-    throw new NotFoundError(ERROR_MESSAGES.MEDIA.ASSET_NOT_FOUND);
-  }
-  return metadata.storageKey;
-}
+import { buildStorageKey, extractStorageKey } from '../../utils/media.util.js';
 
 export class MediaService {
   private repository = new MediaRepository();
