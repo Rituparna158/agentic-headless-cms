@@ -2,7 +2,7 @@ import { SQL, and, asc, desc, or, sql } from 'drizzle-orm';
 import type { SchemaField } from '@repo/shared-types';
 import { contentEntries, entryLocalizations } from '@repo/shared-db';
 import { BadRequestError } from '../../../common/errors/http-error.js';
-import type { ContentQueryOptions } from '../../../types/content.types.js';
+import { ContentQueryOptions } from '../../../types/content.types.js';
 
 const FILTER_OPERATORS = [
   '$eq',

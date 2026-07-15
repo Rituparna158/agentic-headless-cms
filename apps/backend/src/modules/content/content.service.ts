@@ -1,6 +1,6 @@
 import { ContentRepository } from './content.repository.js';
 import { DEFAULT_LOCALE } from '@repo/shared-types';
-import type { ContentQueryOptions } from './query/content-query.util.js';
+import { ContentQueryOptions } from '../../types/content.types.js';
 
 export class ContentService {
   private repository: ContentRepository;

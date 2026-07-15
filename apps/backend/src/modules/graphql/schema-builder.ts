@@ -7,7 +7,8 @@ import { parseContentQuery } from '../content/query/content-query.util.js';
 import { fieldTypeSpec } from './type-mapper.js';
 import { toCamelCase, toPascalCase, toPluralCamelCase } from './naming.js';
 import { jsonScalarConfig } from './json-scalar.js';
-import { assertPermission, type GraphQLContext } from './graphql.context.js';
+import { GraphQLContext } from '../../types/graphql.types.js';
+import { assertPermission } from './graphql.context.js';
 
 const contentService = new ContentService();
 
