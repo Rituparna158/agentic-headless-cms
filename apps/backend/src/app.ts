@@ -11,6 +11,7 @@ import { requestIdMiddleware } from './common/middlewares/request-id.middleware.
 import { logger } from './common/logger.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { apiRouter } from './routes/index.js';
+import { graphqlRouter } from './modules/graphql/graphql.router.js';
 
 /**
  * Pure app assembly — no `listen()` here. Kept separate from server.ts so
@@ -61,6 +62,7 @@ export function createApp(): Express {
 
   app.use('/health', healthRouter);
   app.use('/api/v1', apiRouter);
+  app.use('/graphql', graphqlRouter);
 
   app.use(notFoundMiddleware);
   app.use(errorHandlerMiddleware);
