@@ -10,7 +10,7 @@ import {
 } from '@repo/shared-db';
 import { RecordNotFoundError } from '@repo/shared-db';
 import { DEFAULT_LOCALE } from '@repo/shared-types';
-import type { ContentQueryOptions } from './query/content-query.util.js';
+import { ContentQueryOptions } from '../../types/content.types.js';
 
 export class ContentRepository {
   private get db() {

@@ -27,6 +27,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "drizzle-orm": "^0.36.4",
+    "eventemitter2": "^6.4.9",
     "express": "^5.2.1",
     "graphql": "^16.14.2",
     "graphql-compose": "^9.1.0",

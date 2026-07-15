@@ -2,6 +2,7 @@ import { SQL, and, asc, desc, or, sql } from 'drizzle-orm';
 import type { SchemaField } from '@repo/shared-types';
 import { contentEntries, entryLocalizations } from '@repo/shared-db';
 import { BadRequestError } from '../../../common/errors/http-error.js';
+import { ContentQueryOptions } from '../../../types/content.types.js';
 
 const FILTER_OPERATORS = [
   '$eq',
@@ -24,15 +25,6 @@ const TEXT_DATA_TYPES = new Set(['text', 'richtext']);
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
-
-export interface ContentQueryOptions {
-  where: SQL | undefined;
-  orderBy: SQL[];
-  limit: number;
-  offset: number;
-  page: number;
-  pageSize: number;
-}
 
 /** Sortable columns that live on `content_entries` directly, not in JSONB `data`. */
 const SORTABLE_BASE_COLUMNS = {

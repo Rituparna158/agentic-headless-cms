@@ -3,25 +3,17 @@ import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/shared-types';
 import { BadRequestError } from '../../common/errors/http-error.js';
 import { MediaService } from './media.service.js';
 import { parseResizeQuery } from './image-processing.js';
-
+import { eventBus } from '../../common/events/event-bus.js';
+import { parsePositiveIntParam } from '../../utils/pagination.util.js';
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+} from '../../constants/media.constants.js';
+import {
+  EVENT_NAMES,
+  AUDIT_ACTIONS,
+} from '../../constants/events.constants.js';
 const mediaService = new MediaService();
-
-const DEFAULT_PAGE_SIZE = 25;
-const MAX_PAGE_SIZE = 100;
-
-function parsePositiveIntParam(
-  value: unknown,
-  fallback: number,
-  name: string,
-): number {
-  if (value === undefined) return fallback;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    throw new BadRequestError(`'${name}' must be a positive integer.`);
-  }
-  return parsed;
-}
-
 export const uploadMedia = async (
   req: Request,
   res: Response,
@@ -44,6 +36,14 @@ export const uploadMedia = async (
       altText,
       folderId,
       actorUserId: req.user!.id,
+    });
+
+    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+      action: AUDIT_ACTIONS.CREATE,
+      resourceType: 'media',
+      resourceId: asset.id,
+      actorUserId: req.user!.id,
+      afterState: asset,
     });
 
     res.status(HTTP_STATUS.CREATED).json({ data: asset });
@@ -124,7 +124,18 @@ export const deleteMedia = async (
   next: NextFunction,
 ) => {
   try {
+    const asset = await mediaService.getById(req.params.id as string);
+
     await mediaService.delete(req.params.id as string);
+
+    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+      action: AUDIT_ACTIONS.DELETE,
+      resourceType: 'media',
+      resourceId: req.params.id as string,
+      actorUserId: req.user?.id,
+      beforeState: asset,
+    });
+
     res.status(HTTP_STATUS.NO_CONTENT).send();
   } catch (error) {
     next(error);

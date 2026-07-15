@@ -1,14 +1,11 @@
-import { ERROR_MESSAGES, type AuthenticatedUser } from '@repo/shared-types';
+import { ERROR_MESSAGES } from '@repo/shared-types';
 import { authService } from '../auth/auth.service.js';
-import { hasPermission } from '../../common/middlewares/rbac.middleware.js';
+import { hasPermission } from '../../utils/rbac.util.js';
 import {
   ForbiddenError,
   UnauthorizedError,
 } from '../../common/errors/http-error.js';
-
-export interface GraphQLContext {
-  user?: AuthenticatedUser;
-}
+import { GraphQLContext } from '../../types/graphql.types.js';
 
 /**
  * Resolver-side equivalent of the REST layer's requirePermission

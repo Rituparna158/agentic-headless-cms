@@ -6,7 +6,7 @@ import { getDatabaseAdapter } from '../../config/database.js';
 import { authenticateToken } from '../../common/middlewares/auth.middleware.js';
 import { buildGraphQLSchema } from './schema-builder.js';
 import { formatGraphQLError } from './format-error.js';
-import type { GraphQLContext } from './graphql.context.js';
+import { GraphQLContext } from '../../types/graphql.types.js';
 
 export const graphqlRouter = Router();
 

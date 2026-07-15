@@ -1,6 +1,7 @@
 import {
   createSchema as createSchemaRecord,
   listSchemas as listSchemaRecords,
+  getSchemaById,
   updateSchema as updateSchemaRecord,
   type Database,
 } from '@repo/shared-db';
@@ -27,6 +28,11 @@ export class SchemaRepository {
   async list() {
     const db = this.getDb();
     return listSchemaRecords(db);
+  }
+
+  async getById(id: string) {
+    const db = this.getDb();
+    return getSchemaById(db, id);
   }
 
   async update(id: string, input: UpdateSchemaInput & { actorUserId: string }) {

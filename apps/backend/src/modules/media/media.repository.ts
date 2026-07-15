@@ -1,28 +1,10 @@
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { mediaAssets, RecordNotFoundError } from '@repo/shared-db';
 import { getDatabaseAdapter } from '../../config/database.js';
-
-export interface CreateMediaAssetInput {
-  filename: string;
-  mimeType: string;
-  sizeBytes: number;
-  width?: number | null;
-  height?: number | null;
-  url: string;
-  altText?: string | null;
-  metadata?: Record<string, unknown> | null;
-  storageProvider: string;
-  folderId?: string | null;
-  actorType: 'user' | 'agent' | 'system';
-  uploadedByUserId?: string | null;
-  uploadedByAgentId?: string | null;
-}
-
-export interface ListMediaOptions {
-  page: number;
-  pageSize: number;
-  folderId?: string;
-}
+import type {
+  CreateMediaAssetInput,
+  ListMediaOptions,
+} from '../../types/media.types.js';
 
 export type MediaAssetRecord = typeof mediaAssets.$inferSelect;
 
