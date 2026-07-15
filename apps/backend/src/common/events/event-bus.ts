@@ -16,6 +16,8 @@ const { EventEmitter2 } =
   require('eventemitter2') as typeof import('eventemitter2');
 
 import type { AppEvents } from '../../types/events.types.js';
+import EventEmitter2Package from 'eventemitter2';
+const { EventEmitter2 } = EventEmitter2Package;
 
 class TypedEventEmitter extends EventEmitter2 {
   public emit<K extends keyof AppEvents>(
