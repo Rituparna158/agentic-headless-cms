@@ -14,6 +14,12 @@ export const ERROR_MESSAGES = {
     INVALID_VERSION_NO: 'Invalid versionNo',
     FAILED_TO_CREATE_ENTRY: 'Failed to create entry',
   },
+  MEDIA: {
+    ASSET_NOT_FOUND: 'Media asset not found',
+    NO_FILE_UPLOADED:
+      'No file was uploaded. Attach one under the "file" field.',
+    INVALID_RESIZE_PARAMS: 'Invalid resize query params',
+  },
 } as const;
 
 export const DEFAULT_LOCALE = 'en';

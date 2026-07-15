@@ -62,7 +62,16 @@ export class LocalAdapter implements StoragePort {
     this.dirEnsured = true;
   }
 
-  async write(key: string, buffer: Buffer): Promise<StorageWriteResult> {
+  // contentType is unused here — local storage doesn't need it for the
+  // filesystem write; the serving route (media.controller.ts) sets
+  // Content-Type from the DB row's mimeType, not from disk. Kept as a
+  // parameter to satisfy StoragePort's shared signature with S3Adapter,
+  // which does need it for the PutObject call.
+  async write(
+    key: string,
+    buffer: Buffer,
+    _contentType: string,
+  ): Promise<StorageWriteResult> {
     await this.ensureDir();
     const filePath = resolveSafePath(this.uploadDir, key);
 
