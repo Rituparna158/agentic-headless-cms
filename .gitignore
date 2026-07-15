@@ -27,6 +27,9 @@ build
 dist
 *.tsbuildinfo
 
+# Local media storage (STORAGE_ADAPTER=local) — uploaded files, never source
+apps/backend/uploads/
+
 
 # Debug
 npm-debug.log*

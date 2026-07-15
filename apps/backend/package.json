@@ -19,6 +19,7 @@
   "dependencies": {
     "@apollo/server": "^5.5.1",
     "@as-integrations/express5": "^1.1.2",
+    "@aws-sdk/client-s3": "^3.1087.0",
     "@repo/shared-db": "workspace:*",
     "@repo/shared-types": "workspace:^",
     "bcrypt": "^6.0.0",
@@ -31,9 +32,12 @@
     "graphql-compose": "^9.1.0",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "pluralize": "^8.0.0",
+    "sharp": "^0.35.3",
+    "uuid": "^14.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -45,6 +49,7 @@
     "@types/express": "^5.0.6",
     "@types/express-serve-static-core": "^5.1.2",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.2.0",
     "@types/node": "^24.0.0",
     "@types/pluralize": "^0.0.33",
     "@types/supertest": "^7.2.0",

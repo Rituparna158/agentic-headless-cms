@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const envSchema = z.object({
+const baseEnvSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
@@ -41,6 +41,50 @@ const envSchema = z.object({
     .string()
     .min(32, 'JWT_SECRET must be at least 32 characters long'),
   JWT_EXPIRES_IN: z.string().default('1d'),
+
+  STORAGE_ADAPTER: z.enum(['local', 's3']).default('local'),
+  STORAGE_LOCAL_UPLOAD_DIR: z.string().default('./uploads'),
+  // Route prefix media.router.ts serves local files from — see media.router.ts's GET /file/:key.
+  STORAGE_LOCAL_BASE_URL: z.string().default('/media/file'),
+  STORAGE_S3_BUCKET: z.string().optional(),
+  STORAGE_S3_REGION: z.string().optional(),
+  STORAGE_S3_ACCESS_KEY_ID: z.string().optional(),
+  STORAGE_S3_SECRET_ACCESS_KEY: z.string().optional(),
+  // For S3-compatible providers (MinIO, R2, localstack) — omit for real AWS S3.
+  STORAGE_S3_ENDPOINT: z.string().optional(),
+  STORAGE_S3_FORCE_PATH_STYLE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
+  STORAGE_S3_PUBLIC_URL_BASE: z.string().optional(),
+
+  MAX_UPLOAD_SIZE_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(10 * 1024 * 1024),
+});
+
+// STORAGE_S3_BUCKET/REGION are only required when STORAGE_ADAPTER is
+// actually 's3' — z.object() alone can't express "required if this other
+// field equals X", hence the separate superRefine pass below.
+const envSchema = baseEnvSchema.superRefine((data, ctx) => {
+  if (data.STORAGE_ADAPTER === 's3') {
+    if (!data.STORAGE_S3_BUCKET) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['STORAGE_S3_BUCKET'],
+        message: 'STORAGE_S3_BUCKET is required when STORAGE_ADAPTER=s3',
+      });
+    }
+    if (!data.STORAGE_S3_REGION) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['STORAGE_S3_REGION'],
+        message: 'STORAGE_S3_REGION is required when STORAGE_ADAPTER=s3',
+      });
+    }
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

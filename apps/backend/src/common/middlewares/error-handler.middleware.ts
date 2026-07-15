@@ -1,8 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
+import { MulterError } from 'multer';
 import { DatabaseError } from '@repo/shared-db';
 import { env } from '../../config/env.js';
 import { mapDatabaseErrorToHttpError } from '../errors/database-error-mapper.js';
+import { mapStorageErrorToHttpError } from '../errors/storage-error-mapper.js';
+import { StorageError } from '../../storage/errors.js';
 import {
   BadRequestError,
   HttpError,
@@ -32,8 +35,16 @@ function stringifyRequestId(id: unknown): string {
 function toHttpError(error: unknown): HttpError {
   if (error instanceof HttpError) return error;
   if (error instanceof DatabaseError) return mapDatabaseErrorToHttpError(error);
+  if (error instanceof StorageError) return mapStorageErrorToHttpError(error);
   if (error instanceof ZodError)
     return new BadRequestError('Invalid request.', error.flatten());
+  // Multer reports its own failures (file too large, unexpected field,
+  // etc.) as a MulterError, not a generic Error — without this, an
+  // oversized upload would surface as a 500 instead of a 400.
+  if (error instanceof MulterError)
+    return new BadRequestError(`Upload failed: ${error.message}`, {
+      code: error.code,
+    });
   return new InternalServerError(
     error instanceof Error ? error.message : 'An unexpected error occurred.',
   );
