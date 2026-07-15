@@ -1,5 +1,6 @@
 import { ContentRepository } from './content.repository.js';
 import { DEFAULT_LOCALE } from '@repo/shared-types';
+import type { ContentQueryOptions } from './query/content-query.util.js';
 
 export class ContentService {
   private repository: ContentRepository;
@@ -8,12 +9,28 @@ export class ContentService {
     this.repository = new ContentRepository();
   }
 
-  async listEntries(schemaId: string, locale: string = DEFAULT_LOCALE) {
-    return this.repository.listEntries(schemaId, locale);
+  async listEntries(
+    schemaId: string,
+    locale: string = DEFAULT_LOCALE,
+    query?: ContentQueryOptions,
+  ) {
+    return this.repository.listEntries(schemaId, locale, query);
   }
 
-  async getEntryById(entryId: string, locale: string = DEFAULT_LOCALE) {
-    return this.repository.getEntryById(entryId, locale);
+  async countEntries(
+    schemaId: string,
+    locale: string = DEFAULT_LOCALE,
+    query?: ContentQueryOptions,
+  ) {
+    return this.repository.countEntries(schemaId, locale, query?.where);
+  }
+
+  async getEntryById(
+    entryId: string,
+    locale: string = DEFAULT_LOCALE,
+    schemaId?: string,
+  ) {
+    return this.repository.getEntryById(entryId, locale, schemaId);
   }
 
   async createDraft(

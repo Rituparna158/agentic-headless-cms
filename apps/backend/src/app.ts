@@ -28,6 +28,12 @@ export function createApp(): Express {
   // Adjust if the real deployment topology adds more hops (e.g. a CDN in
   // front of the ingress).
   app.set('trust proxy', 1);
+  // Express 5 defaults to the 'simple' query parser (Node's `querystring`),
+  // which doesn't support bracket-nested keys. The content API's filter
+  // syntax (`?filters[title][$eq]=Hello`) needs 'extended' (the `qs`
+  // library) to parse into a nested req.query object instead of a flat
+  // `{ "filters[title][$eq]": "Hello" }`.
+  app.set('query parser', 'extended');
 
   app.use(requestIdMiddleware);
   app.use(
