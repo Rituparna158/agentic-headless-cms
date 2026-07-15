@@ -37,6 +37,7 @@ vi.mock('../../../src/modules/content/content.repository.js', () => {
           },
         }),
         listEntries: vi.fn().mockResolvedValue([]),
+        countEntries: vi.fn().mockResolvedValue(0),
         getEntryById: vi.fn().mockResolvedValue({
           id: 'entry-1',
           status: 'draft',

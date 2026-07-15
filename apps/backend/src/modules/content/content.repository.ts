@@ -1,4 +1,4 @@
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, sql, type SQL } from 'drizzle-orm';
 import { getDatabaseAdapter } from '../../config/database.js';
 import {
   schemas,
@@ -10,6 +10,7 @@ import {
 } from '@repo/shared-db';
 import { RecordNotFoundError } from '@repo/shared-db';
 import { DEFAULT_LOCALE } from '@repo/shared-types';
+import type { ContentQueryOptions } from './query/content-query.util.js';
 
 export class ContentRepository {
   private get db() {
@@ -26,8 +27,18 @@ export class ContentRepository {
     return schema || null;
   }
 
-  async listEntries(schemaId: string, locale: string = DEFAULT_LOCALE) {
-    return this.db
+  async listEntries(
+    schemaId: string,
+    locale: string = DEFAULT_LOCALE,
+    query?: ContentQueryOptions,
+  ) {
+    const baseWhere = and(
+      eq(contentEntries.schemaId, schemaId),
+      isNull(contentEntries.deletedAt),
+    );
+    const where = query?.where ? and(baseWhere, query.where) : baseWhere;
+
+    const rows = this.db
       .select({
         id: contentEntries.id,
         status: entryLocalizations.status,
@@ -44,15 +55,61 @@ export class ContentRepository {
           eq(entryLocalizations.locale, locale),
         ),
       )
-      .where(
-        and(
-          eq(contentEntries.schemaId, schemaId),
-          isNull(contentEntries.deletedAt),
-        ),
-      );
+      .where(where);
+
+    if (query) {
+      return rows
+        .orderBy(...query.orderBy)
+        .limit(query.limit)
+        .offset(query.offset);
+    }
+
+    return rows;
   }
 
-  async getEntryById(entryId: string, locale: string = DEFAULT_LOCALE) {
+  /** Total matching row count for `listEntries` — used to compute pagination meta without over-fetching. */
+  async countEntries(
+    schemaId: string,
+    locale: string = DEFAULT_LOCALE,
+    filterWhere?: SQL,
+  ) {
+    const baseWhere = and(
+      eq(contentEntries.schemaId, schemaId),
+      isNull(contentEntries.deletedAt),
+    );
+    const where = filterWhere ? and(baseWhere, filterWhere) : baseWhere;
+
+    const [result] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(contentEntries)
+      .innerJoin(
+        entryLocalizations,
+        and(
+          eq(contentEntries.id, entryLocalizations.entryId),
+          eq(entryLocalizations.locale, locale),
+        ),
+      )
+      .where(where);
+
+    return result?.count ?? 0;
+  }
+
+  async getEntryById(
+    entryId: string,
+    locale: string = DEFAULT_LOCALE,
+    schemaId?: string,
+  ) {
+    const conditions = [
+      eq(contentEntries.id, entryId),
+      isNull(contentEntries.deletedAt),
+    ];
+    // When called from a :schemaSlug-scoped route, also require the entry to
+    // actually belong to that schema — otherwise GET /:schemaSlug/:entryId
+    // would happily return an entry from a completely different schema.
+    if (schemaId) {
+      conditions.push(eq(contentEntries.schemaId, schemaId));
+    }
+
     const [entry] = await this.db
       .select({
         id: contentEntries.id,
@@ -69,9 +126,7 @@ export class ContentRepository {
           eq(entryLocalizations.locale, locale),
         ),
       )
-      .where(
-        and(eq(contentEntries.id, entryId), isNull(contentEntries.deletedAt)),
-      )
+      .where(and(...conditions))
       .limit(1);
 
     return entry || null;

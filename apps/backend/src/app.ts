@@ -11,6 +11,7 @@ import { requestIdMiddleware } from './common/middlewares/request-id.middleware.
 import { logger } from './common/logger.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { apiRouter } from './routes/index.js';
+import { graphqlRouter } from './modules/graphql/graphql.router.js';
 
 /**
  * Pure app assembly — no `listen()` here. Kept separate from server.ts so
@@ -28,6 +29,12 @@ export function createApp(): Express {
   // Adjust if the real deployment topology adds more hops (e.g. a CDN in
   // front of the ingress).
   app.set('trust proxy', 1);
+  // Express 5 defaults to the 'simple' query parser (Node's `querystring`),
+  // which doesn't support bracket-nested keys. The content API's filter
+  // syntax (`?filters[title][$eq]=Hello`) needs 'extended' (the `qs`
+  // library) to parse into a nested req.query object instead of a flat
+  // `{ "filters[title][$eq]": "Hello" }`.
+  app.set('query parser', 'extended');
 
   app.use(requestIdMiddleware);
   app.use(
@@ -55,6 +62,7 @@ export function createApp(): Express {
 
   app.use('/health', healthRouter);
   app.use('/api/v1', apiRouter);
+  app.use('/graphql', graphqlRouter);
 
   app.use(notFoundMiddleware);
   app.use(errorHandlerMiddleware);
