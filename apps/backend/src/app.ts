@@ -12,6 +12,7 @@ import { logger } from './common/logger.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { apiRouter } from './routes/index.js';
 import { graphqlRouter } from './modules/graphql/graphql.router.js';
+import { setupAuditListener } from './modules/audit/audit.listener.js';
 
 /**
  * Pure app assembly — no `listen()` here. Kept separate from server.ts so
@@ -19,6 +20,8 @@ import { graphqlRouter } from './modules/graphql/graphql.router.js';
  * binding a real port or touching process lifecycle.
  */
 export function createApp(): Express {
+  setupAuditListener();
+
   const app = express();
 
   app.disable('x-powered-by');

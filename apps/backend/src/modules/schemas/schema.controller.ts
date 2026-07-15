@@ -2,6 +2,11 @@ import type { Request, Response, NextFunction } from 'express';
 import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/shared-types';
 import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/shared-types';
 import { schemaService } from './schema.service.js';
+import { eventBus } from '../../common/events/event-bus.js';
+import {
+  EVENT_NAMES,
+  AUDIT_ACTIONS,
+} from '../../constants/events.constants.js';
 
 export const createSchema = async (
   req: Request,
@@ -19,6 +24,15 @@ export const createSchema = async (
     // middleware ahead of this handler.
     const input = req.body as CreateSchemaInput;
     const schema = await schemaService.create(input, req.user.id);
+
+    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+      action: AUDIT_ACTIONS.CREATE,
+      resourceType: 'schema',
+      resourceId: schema.id,
+      actorUserId: req.user.id,
+      afterState: schema,
+    });
+
     res.status(HTTP_STATUS.CREATED).json(schema);
   } catch (error) {
     next(error);
@@ -50,12 +64,22 @@ export const updateSchema = async (
         .json({ error: ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED });
       return;
     }
+
+    const id = req.params.id as string;
+    const beforeState = await schemaService.getById(id);
+
     const input = req.body as UpdateSchemaInput;
-    const schema = await schemaService.update(
-      req.params.id as string,
-      input,
-      req.user.id,
-    );
+    const schema = await schemaService.update(id, input, req.user.id);
+
+    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+      action: AUDIT_ACTIONS.SCHEMA_CHANGE,
+      resourceType: 'schema',
+      resourceId: schema.id,
+      actorUserId: req.user.id,
+      beforeState: beforeState,
+      afterState: schema,
+    });
+
     res.json(schema);
   } catch (error) {
     next(error);

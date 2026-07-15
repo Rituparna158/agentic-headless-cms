@@ -1,11 +1,12 @@
 import { eventBus } from '../../common/events/event-bus.js';
+import { EVENT_NAMES } from '../../constants/events.constants.js';
 import { AuditRepository } from './audit.repository.js';
 import { logger } from '../../common/logger.js';
 
 export function setupAuditListener() {
   const repository = new AuditRepository();
 
-  eventBus.on('audit.log', (payload) => {
+  eventBus.on(EVENT_NAMES.AUDIT_LOG, (payload) => {
     void (async () => {
       try {
         await repository.create({
