@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { DynamicField } from './dynamic-field';
+import { VersionHistoryDrawer } from './version-history-drawer';
 
 export interface ContentEntryFormProps {
   schema: SchemaRecord;
@@ -58,6 +59,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
 
   const definition = schema.definition;
   // Rebuilt only when the schema itself changes, not on every render — the
@@ -153,6 +155,25 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
             </CardContent>
           </Card>
 
+          {entry ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Versions</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-2 text-sm">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full justify-between"
+                  onClick={() => setIsVersionHistoryOpen(true)}
+                >
+                  View history
+                  <span aria-hidden="true">&rarr;</span>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
+
           {submitError ? (
             <p role="alert" className="text-destructive text-sm">
               {submitError}
@@ -194,6 +215,16 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           </div>
         </div>
       </form>
+
+      {entry ? (
+        <VersionHistoryDrawer
+          schemaSlug={schema.slug}
+          entryId={entry.id}
+          currentEntry={entry}
+          open={isVersionHistoryOpen}
+          onOpenChange={setIsVersionHistoryOpen}
+        />
+      ) : null}
     </Form>
   );
 }
