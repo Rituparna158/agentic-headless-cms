@@ -9,6 +9,20 @@ export interface ContentEntryRecord {
   updatedAt?: string;
 }
 
+export interface ContentVersionRecord {
+  id: string;
+  entryId: string;
+  locale: string;
+  versionNo: number;
+  status: 'draft' | 'published';
+  data: Record<string, unknown>;
+  actorType: 'user' | 'agent' | 'system';
+  createdByUserId?: string | null;
+  createdByAgentId?: string | null;
+  comment?: string | null;
+  createdAt: string;
+}
+
 export interface PaginationMeta {
   page: number;
   pageSize: number;
@@ -148,4 +162,28 @@ export function deleteContentEntry(
   return apiFetch<void>(`/api/v1/content/${schemaSlug}/${entryId}`, {
     method: 'DELETE',
   });
+}
+
+export async function revertContentEntry(
+  schemaSlug: string,
+  entryId: string,
+  versionNo: number,
+): Promise<ContentEntryRecord> {
+  const { data: raw } = await apiFetch<{
+    data: Parameters<typeof normalizeMutationResponse>[0];
+  }>(`/api/v1/content/${schemaSlug}/${entryId}/revert`, {
+    method: 'POST',
+    body: JSON.stringify({ versionNo }),
+  });
+  return normalizeMutationResponse(raw);
+}
+
+export async function listContentVersions(
+  schemaSlug: string,
+  entryId: string,
+): Promise<ContentVersionRecord[]> {
+  const { data } = await apiFetch<{ data: ContentVersionRecord[] }>(
+    `/api/v1/content/${schemaSlug}/${entryId}/versions`,
+  );
+  return data;
 }
