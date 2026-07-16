@@ -51,7 +51,17 @@ export function createApp(): Express {
       },
     }),
   );
-  app.use(helmet());
+  app.use(
+    helmet({
+      // The default 'same-origin' CORP blocks the frontend (a different
+      // origin in every real deployment — separate host/port, and a CDN in
+      // front per FR-MD-2) from loading <img src> thumbnails off media
+      // asset URLs at all. CORS above already scopes cross-origin access to
+      // env.CORS_ORIGIN, so relaxing CORP to match doesn't open this up
+      // beyond what's already allowed for fetch/XHR.
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(
     cors({
       origin: env.CORS_ORIGIN,
