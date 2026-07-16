@@ -5,55 +5,23 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { compileZodSchema, type SchemaDefinition } from '@repo/shared-types';
+import { compileZodSchema } from '@repo/shared-types';
 
 import {
   createContentEntry,
   deleteContentEntry,
   publishContentEntry,
   updateContentEntry,
-  type ContentEntryRecord,
 } from '@/lib/api/content';
 import { ApiError } from '@/lib/api-client';
-import type { SchemaRecord } from '@/lib/api/schemas';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { DynamicField } from './dynamic-field';
 import { VersionHistoryDrawer } from './version-history-drawer';
+import type { ContentEntryFormProps } from '@/types/components';
 
-export interface ContentEntryFormProps {
-  schema: SchemaRecord;
-  /** Omit when creating a new entry. */
-  entry?: ContentEntryRecord;
-}
-
-function buildDefaultValues(
-  definition: SchemaDefinition,
-  existingData?: Record<string, unknown>,
-): Record<string, unknown> {
-  const defaults: Record<string, unknown> = {};
-
-  for (const field of definition.fields) {
-    const existing = existingData?.[field.apiId];
-    if (existing !== undefined) {
-      defaults[field.apiId] = existing;
-    } else if (field.isRepeatable) {
-      defaults[field.apiId] = [];
-    } else if (field.dataType === 'boolean') {
-      defaults[field.apiId] = false;
-    } else if (field.dataType === 'number') {
-      // '' is not a valid empty value for z.number().optional() — it must
-      // be undefined, not a string, or an untouched optional number field
-      // fails validation before the user has typed anything.
-      defaults[field.apiId] = undefined;
-    } else {
-      defaults[field.apiId] = '';
-    }
-  }
-
-  return defaults;
-}
+import { buildDefaultValues } from '@/utils/form';
 
 export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const router = useRouter();

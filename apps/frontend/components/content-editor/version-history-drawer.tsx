@@ -11,19 +11,9 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import {
-  listContentVersions,
-  revertContentEntry,
-  type ContentEntryRecord,
-} from '@/lib/api/content';
-
-export interface VersionHistoryDrawerProps {
-  schemaSlug: string;
-  entryId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentEntry: ContentEntryRecord;
-}
+import { listContentVersions, revertContentEntry } from '@/lib/api/content';
+import { formatFieldValue } from '@/utils/lexical';
+import type { VersionHistoryDrawerProps } from '@/types/components';
 
 export function VersionHistoryDrawer({
   schemaSlug,
@@ -138,10 +128,8 @@ export function VersionHistoryDrawer({
 
           <div className="space-y-4">
             {Object.keys(currentEntry.data).map((key) => {
-              const currentVal =
-                JSON.stringify(currentEntry.data[key], null, 2) || '';
-              const oldVal =
-                JSON.stringify(selectedVersion?.data[key], null, 2) || '';
+              const currentVal = formatFieldValue(currentEntry.data[key]);
+              const oldVal = formatFieldValue(selectedVersion?.data?.[key]);
 
               if (currentVal === oldVal) return null;
 
@@ -156,10 +144,8 @@ export function VersionHistoryDrawer({
             })}
 
             {Object.keys(currentEntry.data).every((key) => {
-              const currentVal =
-                JSON.stringify(currentEntry.data[key], null, 2) || '';
-              const oldVal =
-                JSON.stringify(selectedVersion?.data[key], null, 2) || '';
+              const currentVal = formatFieldValue(currentEntry.data[key]);
+              const oldVal = formatFieldValue(selectedVersion?.data?.[key]);
               return currentVal === oldVal;
             }) && (
               <p className="text-sm text-muted-foreground italic">
