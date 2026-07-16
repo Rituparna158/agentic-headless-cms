@@ -1,20 +1,3 @@
-import { createRequire } from 'node:module';
-
-// eventemitter2's runtime is CJS-only (`module.exports = EventEmitter`,
-// with `EventEmitter2` attached as a static property on the constructor
-// for backwards compat) while its .d.ts declares ESM-style named + default
-// exports — a real mismatch between the published types and the actual
-// module shape. `import { EventEmitter2 } from 'eventemitter2'` type-checks
-// (trusting the .d.ts) and even passes under Vitest (esbuild's lenient CJS
-// interop), but resolves to `undefined` under Node's actual ESM loader
-// (`tsx watch` / `node --env-file`), since the static property assignment
-// isn't statically analyzable by cjs-module-lexer. `createRequire` forces
-// real CJS resolution, which does see the property, sidestepping the
-// ESM/CJS ambiguity entirely.
-const require = createRequire(import.meta.url);
-const { EventEmitter2 } =
-  require('eventemitter2') as typeof import('eventemitter2');
-
 import type { AppEvents } from '../../types/events.types.js';
 import EventEmitter2Package from 'eventemitter2';
 const { EventEmitter2 } = EventEmitter2Package;
