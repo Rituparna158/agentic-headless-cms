@@ -145,6 +145,7 @@ function registerSchemaTypes(
       args: {
         filters: 'JSON',
         sort: 'String',
+        search: 'String',
         page: 'Int',
         pageSize: 'Int',
         locale: 'String',
@@ -154,6 +155,7 @@ function registerSchemaTypes(
         args: {
           filters?: unknown;
           sort?: string;
+          search?: string;
           page?: number;
           pageSize?: number;
           locale?: string;
@@ -165,6 +167,7 @@ function registerSchemaTypes(
           {
             filters: args.filters,
             sort: args.sort,
+            search: args.search,
             page: args.page?.toString(),
             pageSize: args.pageSize?.toString(),
           },
