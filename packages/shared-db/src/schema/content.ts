@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -9,7 +10,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   actorTypeEnum,
   relationKindEnum,
@@ -173,6 +174,10 @@ export const entryLocalizations = pgTable(
     entryLocaleUnique: unique('entry_localizations_entry_locale_unique').on(
       table.entryId,
       table.locale,
+    ),
+    searchIndex: index('entry_localizations_search_idx').using(
+      'gin',
+      sql`jsonb_to_tsvector('english', ${table.data}, '["string"]')`,
     ),
   }),
 );

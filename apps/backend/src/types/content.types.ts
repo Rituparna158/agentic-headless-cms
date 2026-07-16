@@ -5,6 +5,7 @@ export interface ContentQueryOptions {
   orderBy: SQL[];
   limit: number;
   offset: number;
+  search?: string;
   page: number;
   pageSize: number;
 }

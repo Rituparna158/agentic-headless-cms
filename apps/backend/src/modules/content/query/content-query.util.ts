@@ -166,8 +166,21 @@ function parseFilters(
  * on the cast JSONB expression (so numeric/date fields sort correctly, not
  * lexicographically).
  */
-function parseSort(sortParam: unknown, fields: SchemaField[]): SQL[] {
-  if (!sortParam) return [];
+function parseSort(
+  sortParam: unknown,
+  fields: SchemaField[],
+  search?: string,
+): SQL[] {
+  if (!sortParam) {
+    if (search) {
+      return [
+        desc(
+          sql`ts_rank(jsonb_to_tsvector('english', ${entryLocalizations.data}, '["string"]'), plainto_tsquery('english', ${search}))`,
+        ),
+      ];
+    }
+    return [];
+  }
 
   let raw: string;
   if (Array.isArray(sortParam)) {
@@ -233,9 +246,16 @@ export function parseContentQuery(
   query: Record<string, unknown>,
   fields: SchemaField[],
 ): ContentQueryOptions {
-  const where = parseFilters(query.filters, fields);
-  const orderBy = parseSort(query.sort, fields);
+  const search = typeof query.search === 'string' ? query.search : undefined;
+
+  let where = parseFilters(query.filters, fields);
+  if (search) {
+    const searchSql = sql`jsonb_to_tsvector('english', ${entryLocalizations.data}, '["string"]') @@ plainto_tsquery('english', ${search})`;
+    where = where ? and(where, searchSql) : searchSql;
+  }
+
+  const orderBy = parseSort(query.sort, fields, search);
   const { page, pageSize, limit, offset } = parsePagination(query);
 
-  return { where, orderBy, limit, offset, page, pageSize };
+  return { where, orderBy, limit, offset, search, page, pageSize };
 }
