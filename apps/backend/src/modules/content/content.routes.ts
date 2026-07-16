@@ -25,6 +25,12 @@ contentRoutes.get(
   contentController.getEntry,
 );
 
+contentRoutes.get(
+  '/:schemaSlug/:entryId/versions',
+  requirePermission('read'),
+  contentController.listVersions,
+);
+
 contentRoutes.post(
   '/:schemaSlug',
   requirePermission('create'),

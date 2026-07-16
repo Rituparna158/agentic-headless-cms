@@ -68,6 +68,10 @@ export class ContentService {
     return this.repository.revertEntry(entryId, versionNo, userId, locale);
   }
 
+  async listEntryVersions(entryId: string, locale: string = DEFAULT_LOCALE) {
+    return this.repository.listEntryVersions(entryId, locale);
+  }
+
   async deleteEntry(entryId: string) {
     return this.repository.deleteEntry(entryId);
   }

@@ -77,6 +77,27 @@ export const getEntry = async (
   }
 };
 
+export const listVersions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { entryId } = req.params;
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+
+    const versions = await contentService.listEntryVersions(
+      entryId as string,
+      locale,
+    );
+
+    res.status(HTTP_STATUS.OK).json({ data: versions });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createDraft = async (
   req: Request,
   res: Response,

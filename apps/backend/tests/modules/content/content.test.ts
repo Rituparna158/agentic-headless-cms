@@ -82,6 +82,26 @@ vi.mock('../../../src/modules/content/content.repository.js', () => {
             author: 'Tester',
           },
         }),
+        listEntryVersions: vi.fn().mockResolvedValue([
+          {
+            id: 'version-1',
+            versionNo: 1,
+            data: {
+              title: 'Test Post',
+              body: 'This is a test post body',
+              author: 'Tester',
+            },
+          },
+          {
+            id: 'version-2',
+            versionNo: 2,
+            data: {
+              title: 'Updated Post',
+              body: 'This is an updated body',
+              author: 'Tester',
+            },
+          },
+        ]),
         deleteEntry: vi.fn().mockResolvedValue({ id: 'entry-1' }),
       };
     }),
@@ -191,6 +211,18 @@ describe('Content API', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('draft');
     expect(res.body.data.data.title).toBe('Test Post'); // Version 1 had "Test Post"
+  });
+
+  it('should list the entry versions', async () => {
+    const res = await request(app)
+      .get(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/versions`)
+      .set('Cookie', [`token=${adminToken}`]);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(2);
+    expect(res.body.data[0].versionNo).toBe(1);
+    expect(res.body.data[1].versionNo).toBe(2);
   });
 
   it('should delete the entry', async () => {
