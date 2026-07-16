@@ -16,6 +16,24 @@ export function compileZodSchema(
       fieldSchema = applyValidations(fieldSchema, field);
     }
 
+    // `isRequired` only controls whether the field is wrapped in
+    // `.optional()` below — for strings that isn't enough, since an empty
+    // string is still a valid, present value as far as Zod is concerned. A
+    // "required" text/richtext field with no explicit min-length validation
+    // would otherwise silently accept ''. Only apply when the field didn't
+    // already specify its own min (respect an explicit, possibly larger,
+    // minimum instead of overriding it).
+    if (
+      field.isRequired &&
+      (field.dataType === 'text' || field.dataType === 'richtext') &&
+      (field.validation as { min?: number } | null)?.min === undefined
+    ) {
+      fieldSchema = (fieldSchema as z.ZodString).min(
+        1,
+        `${field.displayName} is required`,
+      );
+    }
+
     // Handle repeatability (arrays)
     if (field.isRepeatable) {
       fieldSchema = z.array(fieldSchema);
@@ -42,12 +60,34 @@ function getBaseType(field: SchemaField): z.ZodTypeAny {
     case 'boolean':
       return z.boolean();
     case 'date':
+    case 'datetime':
       return z.string().datetime(); // ISO-8601 strings
     case 'media':
     case 'relation':
       return z.string().uuid();
+    case 'email':
+      return z.string().email();
+    case 'url':
+      return z.string().url();
+    case 'enum': {
+      // `config.options` is the schema builder's convention for an enum
+      // field's allowed values — see field-settings-panel.tsx (issue #20).
+      // No options configured means the field can't validate anything
+      // meaningful yet; fall back to a plain string rather than silently
+      // accepting arbitrary values via z.any().
+      const options = (field.config as { options?: unknown } | null)?.options;
+      return Array.isArray(options) &&
+        options.every((o) => typeof o === 'string') &&
+        options.length > 0
+        ? z.enum(options as [string, ...string[]])
+        : z.string();
+    }
+    case 'json':
+      // Deliberately permissive — json fields are meant to hold arbitrary
+      // JSON-compatible structures, unlike the other cases above where
+      // falling through to z.any() was an unintentional validation gap.
+      return z.any();
     default:
-      // Fallback for unknown types
       return z.any();
   }
 }
