@@ -90,7 +90,7 @@ describe('MediaGrid', () => {
     expect(screen.getByAltText('hero.jpg')).toBeInTheDocument();
   });
 
-  it('deletes an asset when its delete button is clicked', async () => {
+  it('asks for confirmation before deleting, and does not delete if cancelled', async () => {
     mockList.mockResolvedValue({
       data: [
         {
@@ -119,6 +119,48 @@ describe('MediaGrid', () => {
     );
 
     await user.click(screen.getByRole('button', { name: /delete hero\.jpg/i }));
+
+    // Clicking the row's delete button only opens the confirmation dialog —
+    // it must not delete anything until the user confirms.
+    expect(await screen.findByText('Delete this file?')).toBeInTheDocument();
+    expect(mockDelete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+
+  it('deletes an asset once the user confirms in the dialog', async () => {
+    mockList.mockResolvedValue({
+      data: [
+        {
+          id: 'asset-1',
+          filename: 'hero.jpg',
+          mimeType: 'image/jpeg',
+          sizeBytes: 1024,
+          width: 100,
+          height: 100,
+          url: '/media/file/hero.jpg',
+          altText: null,
+          folderId: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      meta: { pagination: { page: 1, pageSize: 24, total: 1, pageCount: 1 } },
+    });
+    mockDelete.mockResolvedValue(undefined);
+
+    const user = userEvent.setup();
+    renderGrid();
+
+    await waitFor(() =>
+      expect(screen.getByText('hero.jpg')).toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole('button', { name: /delete hero\.jpg/i }));
+    await screen.findByText('Delete this file?');
+
+    await user.click(screen.getByRole('button', { name: /^delete$/i }));
 
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith('asset-1');

@@ -18,6 +18,7 @@ import {
 } from '@/lib/api/media';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 
 const PAGE_SIZE = 24;
 
@@ -44,6 +45,7 @@ function AssetThumbnail({ asset }: { asset: MediaAsset }) {
 export function MediaGrid() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pendingDelete, setPendingDelete] = useState<MediaAsset | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['media', page],
@@ -53,7 +55,10 @@ export function MediaGrid() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteMedia(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['media'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media'] });
+      setPendingDelete(null);
+    },
   });
 
   if (isLoading) {
@@ -95,7 +100,7 @@ export function MediaGrid() {
                 className="absolute top-1 right-1 size-7"
                 aria-label={`Delete ${asset.filename}`}
                 disabled={deleteMutation.isPending}
-                onClick={() => deleteMutation.mutate(asset.id)}
+                onClick={() => setPendingDelete(asset)}
               >
                 <Trash2 className="size-3.5" />
               </Button>
@@ -133,6 +138,24 @@ export function MediaGrid() {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+        title="Delete this file?"
+        description={
+          pendingDelete
+            ? `"${pendingDelete.filename}" will be permanently deleted. This can't be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
+        }}
+      />
     </div>
   );
 }
