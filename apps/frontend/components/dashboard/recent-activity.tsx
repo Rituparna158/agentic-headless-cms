@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useDashboardOverview } from '@/lib/hooks/use-dashboard-overview';
 import { formatRelativeTime } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 export function RecentActivity() {
   const { data, isLoading, isError } = useDashboardOverview();
@@ -11,11 +11,15 @@ export function RecentActivity() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        {/* A real heading, not shadcn's CardTitle (a <div>) — see the same
+            note in stats-cards.tsx. */}
+        <h2 className="leading-none font-semibold">Recent Activity</h2>
       </CardHeader>
-      <CardContent>
+      <CardContent aria-live="polite">
         {isLoading ? (
-          <p className="text-muted-foreground text-sm">Loading…</p>
+          <p role="status" className="text-muted-foreground text-sm">
+            Loading…
+          </p>
         ) : isError ? (
           <p role="alert" className="text-destructive text-sm">
             Failed to load recent activity.
@@ -31,7 +35,7 @@ export function RecentActivity() {
               >
                 <Link
                   href={`/content/${item.schemaSlug}/${item.entryId}`}
-                  className="truncate hover:underline"
+                  className="focus-visible:ring-ring/50 rounded-xs truncate outline-none hover:underline focus-visible:ring-[3px]"
                 >
                   <span className="text-muted-foreground">
                     {item.schemaName}:

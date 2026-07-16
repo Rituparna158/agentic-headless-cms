@@ -1,7 +1,7 @@
 'use client';
 
 import { useDashboardOverview } from '@/lib/hooks/use-dashboard-overview';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 export function StatsCards() {
   const { data, isLoading, isError } = useDashboardOverview();
@@ -21,17 +21,26 @@ export function StatsCards() {
       {stats.map((stat) => (
         <Card key={stat.label}>
           <CardHeader>
-            <CardTitle className="text-muted-foreground text-sm font-medium">
+            {/* A real heading, not shadcn's CardTitle (a <div>) — screen
+                reader users commonly navigate by heading, and a <div> is
+                invisible to that. */}
+            <h2 className="text-muted-foreground text-sm leading-none font-medium">
               {stat.label}
-            </CardTitle>
+            </h2>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">
+          <CardContent className="text-2xl font-semibold" aria-live="polite">
             {isError ? (
-              <span className="text-destructive text-sm font-normal">
+              <span
+                role="alert"
+                className="text-destructive text-sm font-normal"
+              >
                 Error
               </span>
             ) : isLoading ? (
-              <span className="text-muted-foreground text-sm font-normal">
+              <span
+                role="status"
+                className="text-muted-foreground text-sm font-normal"
+              >
                 Loading…
               </span>
             ) : (
