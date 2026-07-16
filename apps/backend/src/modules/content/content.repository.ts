@@ -1,4 +1,4 @@
-import { eq, and, isNull, sql, type SQL } from 'drizzle-orm';
+import { eq, and, isNull, sql, desc, type SQL } from 'drizzle-orm';
 import { getDatabaseAdapter } from '../../config/database.js';
 import {
   schemas,
@@ -248,6 +248,19 @@ export class ContentRepository {
     });
 
     return versionResult.localization;
+  }
+
+  async listEntryVersions(entryId: string, locale: string = DEFAULT_LOCALE) {
+    return this.db
+      .select()
+      .from(contentVersions)
+      .where(
+        and(
+          eq(contentVersions.entryId, entryId),
+          eq(contentVersions.locale, locale),
+        ),
+      )
+      .orderBy(desc(contentVersions.versionNo));
   }
 
   async deleteEntry(entryId: string) {

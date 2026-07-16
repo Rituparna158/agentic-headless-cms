@@ -5,59 +5,29 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { compileZodSchema, type SchemaDefinition } from '@repo/shared-types';
+import { compileZodSchema } from '@repo/shared-types';
 
 import {
   createContentEntry,
   deleteContentEntry,
   publishContentEntry,
   updateContentEntry,
-  type ContentEntryRecord,
 } from '@/lib/api/content';
 import { ApiError } from '@/lib/api-client';
-import type { SchemaRecord } from '@/lib/api/schemas';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { DynamicField } from './dynamic-field';
+import { VersionHistoryDrawer } from './version-history-drawer';
+import type { ContentEntryFormProps } from '@/types/components';
 
-export interface ContentEntryFormProps {
-  schema: SchemaRecord;
-  /** Omit when creating a new entry. */
-  entry?: ContentEntryRecord;
-}
-
-function buildDefaultValues(
-  definition: SchemaDefinition,
-  existingData?: Record<string, unknown>,
-): Record<string, unknown> {
-  const defaults: Record<string, unknown> = {};
-
-  for (const field of definition.fields) {
-    const existing = existingData?.[field.apiId];
-    if (existing !== undefined) {
-      defaults[field.apiId] = existing;
-    } else if (field.isRepeatable) {
-      defaults[field.apiId] = [];
-    } else if (field.dataType === 'boolean') {
-      defaults[field.apiId] = false;
-    } else if (field.dataType === 'number') {
-      // '' is not a valid empty value for z.number().optional() — it must
-      // be undefined, not a string, or an untouched optional number field
-      // fails validation before the user has typed anything.
-      defaults[field.apiId] = undefined;
-    } else {
-      defaults[field.apiId] = '';
-    }
-  }
-
-  return defaults;
-}
+import { buildDefaultValues } from '@/utils/form';
 
 export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
 
   const definition = schema.definition;
   // Rebuilt only when the schema itself changes, not on every render — the
@@ -153,6 +123,25 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
             </CardContent>
           </Card>
 
+          {entry ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Versions</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-2 text-sm">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full justify-between"
+                  onClick={() => setIsVersionHistoryOpen(true)}
+                >
+                  View history
+                  <span aria-hidden="true">&rarr;</span>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
+
           {submitError ? (
             <p role="alert" className="text-destructive text-sm">
               {submitError}
@@ -194,6 +183,16 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           </div>
         </div>
       </form>
+
+      {entry ? (
+        <VersionHistoryDrawer
+          schemaSlug={schema.slug}
+          entryId={entry.id}
+          currentEntry={entry}
+          open={isVersionHistoryOpen}
+          onOpenChange={setIsVersionHistoryOpen}
+        />
+      ) : null}
     </Form>
   );
 }
