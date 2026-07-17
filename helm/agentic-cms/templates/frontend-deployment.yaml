@@ -6,7 +6,9 @@ metadata:
     {{- include "agentic-cms.labels" . | nindent 4 }}
     {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "frontend") | nindent 4 }}
 spec:
+  {{- if not .Values.frontend.autoscaling.enabled }}
   replicas: {{ .Values.frontend.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "frontend") | nindent 6 }}
