@@ -26,18 +26,44 @@ backend:
     DATABASE_SSL: "false"
     CORS_ORIGIN: "*"
     LOG_LEVEL: info
-  # DATABASE_URL is deliberately not under `env` above — it's sensitive and
-  # belongs in a Secret, not a ConfigMap. Leave `value` empty and set
-  # `existingSecret`/`existingSecretKey` to reference a Secret you manage
-  # yourself (created outside this chart), or set `value` for local/dev use.
-  databaseUrl:
-    value: ""
-    existingSecret: ""
-    existingSecretKey: "DATABASE_URL"
+    JWT_EXPIRES_IN: 1d
+  # Sensitive values — deliberately not under `env` above, which becomes a
+  # plaintext ConfigMap. Each key here becomes an env var sourced from a
+  # Secret instead. Leave `value` empty and set `existingSecret`/
+  # `existingSecretKey` to reference a Secret you manage yourself (created
+  # outside this chart, e.g. via External Secrets Operator or sealed-secrets)
+  # — the recommended path for anything beyond local/dev use — or set
+  # `value` directly for local/dev. JWT_SECRET and DATABASE_URL are both
+  # required by the backend (see apps/backend/src/config/env.ts) — the chart
+  # will deploy a broken pod without them. REDIS_URL is technically optional
+  # there (it has a same-namespace-only default), but that default is never
+  # correct outside of a docker-compose/local setup.
+  secrets:
+    JWT_SECRET:
+      value: ""
+      existingSecret: ""
+      existingSecretKey: "JWT_SECRET"
+    DATABASE_URL:
+      value: ""
+      existingSecret: ""
+      existingSecretKey: "DATABASE_URL"
+    REDIS_URL:
+      value: ""
+      existingSecret: ""
+      existingSecretKey: "REDIS_URL"
   livenessProbe:
     path: /health/live
   readinessProbe:
     path: /health/ready
+  # When enabled, replicaCount above is only the initial value — the HPA
+  # takes over scaling .spec.replicas from there, and the Deployment template
+  # omits `replicas` entirely so `helm upgrade` doesn't fight the HPA back
+  # down to replicaCount on every release.
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
 
 frontend:
   replicaCount: 1
@@ -60,6 +86,11 @@ frontend:
     path: /login
   readinessProbe:
     path: /login
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
 
 ingress:
   enabled: true

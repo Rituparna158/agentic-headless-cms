@@ -6,7 +6,9 @@ metadata:
     {{- include "agentic-cms.labels" . | nindent 4 }}
     {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "backend") | nindent 4 }}
 spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
   replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "backend") | nindent 6 }}
@@ -26,16 +28,18 @@ spec:
             - configMapRef:
                 name: {{ include "agentic-cms.componentName" (dict "context" . "component" "backend") }}
           env:
-            - name: DATABASE_URL
+            {{- range $key, $cfg := .Values.backend.secrets }}
+            - name: {{ $key }}
               valueFrom:
                 secretKeyRef:
-                  {{- if .Values.backend.databaseUrl.existingSecret }}
-                  name: {{ .Values.backend.databaseUrl.existingSecret }}
-                  key: {{ .Values.backend.databaseUrl.existingSecretKey }}
+                  {{- if $cfg.existingSecret }}
+                  name: {{ $cfg.existingSecret }}
+                  key: {{ $cfg.existingSecretKey | default $key }}
                   {{- else }}
-                  name: {{ include "agentic-cms.componentName" (dict "context" . "component" "backend") }}
-                  key: DATABASE_URL
+                  name: {{ include "agentic-cms.componentName" (dict "context" $ "component" "backend") }}
+                  key: {{ $key }}
                   {{- end }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: {{ .Values.backend.livenessProbe.path }}
