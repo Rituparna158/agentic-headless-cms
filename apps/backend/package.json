@@ -20,6 +20,8 @@
     "@apollo/server": "^5.5.1",
     "@as-integrations/express5": "^1.1.2",
     "@aws-sdk/client-s3": "^3.1087.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.78.0",
+    "@opentelemetry/sdk-node": "^0.220.0",
     "@repo/shared-db": "workspace:*",
     "@repo/shared-types": "workspace:^",
     "bcrypt": "^6.0.0",
@@ -40,6 +42,7 @@
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "pluralize": "^8.0.0",
+    "prom-client": "^15.1.3",
     "sharp": "^0.35.3",
     "uuid": "^14.0.1",
     "zod": "^4.4.3"
