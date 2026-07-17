@@ -1,7 +1,18 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["NODE_ENV", "PORT"],
+  "globalEnv": [
+    "NODE_ENV",
+    "PORT",
+    "APP_URL",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_USER",
+    "SMTP_PASS",
+    "EMAIL_FROM",
+    "SEED_ADMIN_EMAIL",
+    "SEED_ADMIN_PASSWORD"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
