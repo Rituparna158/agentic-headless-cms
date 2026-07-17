@@ -54,6 +54,15 @@ vi.mock('../../../src/config/storage.js', () => ({
   }),
 }));
 
+// uploadMedia emits MEDIA_UPLOADED, which the real setupMediaQueueListener()
+// (registered by createApp()) reacts to by calling getQueue(...).add() —
+// without this mock that would open a real Redis connection during a route
+// test that has nothing to do with queues.
+const { mockQueueAdd } = vi.hoisted(() => ({ mockQueueAdd: vi.fn() }));
+vi.mock('../../../src/queues/queue.factory.js', () => ({
+  getQueue: vi.fn().mockReturnValue({ add: mockQueueAdd }),
+}));
+
 function makeToken(): string {
   return jwt.sign(
     {
@@ -110,6 +119,21 @@ describe('Media API', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.data.id).toBe('asset-1');
+    });
+
+    it('enqueues a thumbnail-generation job for the uploaded asset', async () => {
+      await request(app)
+        .post('/api/v1/media')
+        .set('Cookie', [`token=${token}`])
+        .attach('file', Buffer.from('fake-png-bytes'), 'photo.png');
+
+      await vi.waitFor(() => {
+        expect(mockQueueAdd).toHaveBeenCalledWith('generate-thumbnail', {
+          assetId: 'asset-1',
+          storageKey: 'abc-photo.png',
+          mimeType: 'image/png',
+        });
+      });
     });
 
     it('returns 403 when the user lacks the create permission', async () => {

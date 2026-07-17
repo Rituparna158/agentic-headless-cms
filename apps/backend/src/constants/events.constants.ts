@@ -1,5 +1,6 @@
 export const EVENT_NAMES = {
   AUDIT_LOG: 'audit.log',
+  MEDIA_UPLOADED: 'media.uploaded',
 } as const;
 
 export const AUDIT_ACTIONS = {

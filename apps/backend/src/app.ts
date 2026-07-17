@@ -13,6 +13,7 @@ import { healthRouter } from './modules/health/health.routes.js';
 import { apiRouter } from './routes/index.js';
 import { graphqlRouter } from './modules/graphql/graphql.router.js';
 import { setupAuditListener } from './modules/audit/audit.listener.js';
+import { setupMediaQueueListener } from './queues/media-queue.listener.js';
 
 /**
  * Pure app assembly — no `listen()` here. Kept separate from server.ts so
@@ -21,6 +22,11 @@ import { setupAuditListener } from './modules/audit/audit.listener.js';
  */
 export function createApp(): Express {
   setupAuditListener();
+  // Registers the event *listener* only (cheap — no connection opened).
+  // The actual Worker that consumes the queue is started separately in
+  // server.ts, not here, so importing createApp() in tests (supertest)
+  // never opens a real Redis connection just to exercise HTTP routes.
+  setupMediaQueueListener();
 
   const app = express();
 

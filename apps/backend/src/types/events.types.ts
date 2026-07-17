@@ -13,6 +13,13 @@ export interface AuditEventPayload {
   context?: Record<string, unknown> | null;
 }
 
+export interface MediaUploadedEventPayload {
+  assetId: string;
+  storageKey: string;
+  mimeType: string;
+}
+
 export interface AppEvents {
   [EVENT_NAMES.AUDIT_LOG]: (payload: AuditEventPayload) => void;
+  [EVENT_NAMES.MEDIA_UPLOADED]: (payload: MediaUploadedEventPayload) => void;
 }

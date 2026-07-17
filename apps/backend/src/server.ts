@@ -2,11 +2,18 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './common/logger.js';
 import { getDatabaseAdapter } from './config/database.js';
+import { closeRedisConnection } from './config/redis.js';
+import { closeAllQueues } from './queues/queue.factory.js';
+import { setupMediaWorker } from './queues/media.worker.js';
 
 const app = createApp();
 
 // Instantiate the adapter at start so a config-time error surfaces immediately
 getDatabaseAdapter();
+
+// Workers actually open a Redis connection and start polling — started here
+// (not in createApp()) so importing the app in tests never does either.
+setupMediaWorker();
 
 const server = app.listen(env.PORT, () => {
   logger.info(`Server listening on port ${env.PORT} (${env.NODE_ENV})`);
@@ -32,8 +39,19 @@ function shutdown(signal: string): void {
       );
     }
 
-    getDatabaseAdapter()
-      .close()
+    // Queues/workers before Redis itself — closeAllQueues() waits for
+    // in-flight jobs to finish and needs a live connection to do so.
+    // Best-effort: a failure here shouldn't block the DB pool from also
+    // closing, so it's caught and logged rather than propagated.
+    closeAllQueues()
+      .then(() => closeRedisConnection())
+      .catch((closeQueueError: unknown) => {
+        logger.error(
+          { err: closeQueueError },
+          'Error while closing queues/workers/Redis connection',
+        );
+      })
+      .then(() => getDatabaseAdapter().close())
       .then(() => {
         logger.info('Shutdown complete.');
         process.exit(closeServerError ? 1 : 0);
