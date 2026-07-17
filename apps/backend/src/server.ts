@@ -1,3 +1,5 @@
+import './instrumentation.js';
+import { sdk } from './instrumentation.js';
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './common/logger.js';
@@ -52,6 +54,7 @@ function shutdown(signal: string): void {
         );
       })
       .then(() => getDatabaseAdapter().close())
+      .then(() => sdk.shutdown())
       .then(() => {
         logger.info('Shutdown complete.');
         process.exit(closeServerError ? 1 : 0);
