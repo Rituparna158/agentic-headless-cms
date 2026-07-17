@@ -2,8 +2,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RolesTab } from '@/components/roles-access/roles-tab';
 import { UsersTab } from '@/components/roles-access/users-tab';
 import { TokensTab } from '@/components/roles-access/tokens-tab';
+import { useAuthStore } from '@/stores/auth-store';
 
 export default function RolesAccessPage() {
+  const user = useAuthStore((state) => state.user);
+  const isAdmin =
+    user?.roles.some((role) => role.toLowerCase() === 'admin') || false;
+
   return (
     <div className="space-y-6">
       <div>
@@ -13,21 +18,28 @@ export default function RolesAccessPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="roles" className="space-y-4">
+      <Tabs defaultValue={isAdmin ? 'roles' : 'users'} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="roles">Roles</TabsTrigger>
+          {isAdmin && <TabsTrigger value="roles">Roles</TabsTrigger>}
           <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="tokens">API Tokens</TabsTrigger>
+          {isAdmin && <TabsTrigger value="tokens">API Tokens</TabsTrigger>}
         </TabsList>
-        <TabsContent value="roles" className="space-y-4 h-[calc(100vh-14rem)]">
-          <RolesTab />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent
+            value="roles"
+            className="space-y-4 h-[calc(100vh-14rem)]"
+          >
+            <RolesTab />
+          </TabsContent>
+        )}
         <TabsContent value="users" className="space-y-4">
-          <UsersTab />
+          <UsersTab isAdmin={isAdmin} />
         </TabsContent>
-        <TabsContent value="tokens" className="space-y-4">
-          <TokensTab />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="tokens" className="space-y-4">
+            <TokensTab />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

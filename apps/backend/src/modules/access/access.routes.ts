@@ -11,21 +11,27 @@ import {
   revokeToken,
   inviteUser,
 } from './access.controller.js';
-import { authenticateToken } from '../../common/middlewares/auth.middleware.js';
+import {
+  authenticateToken,
+  requireAdmin,
+} from '../../common/middlewares/auth.middleware.js';
 
 export const accessRouter = Router();
 
 accessRouter.use(authenticateToken);
 
-accessRouter.get('/roles', listRoles);
-accessRouter.post('/roles', createRole);
-accessRouter.get('/roles/:id', getRole);
-accessRouter.put('/roles/:id', updateRole);
-accessRouter.delete('/roles/:id', deleteRole);
+// Roles (Admin only)
+accessRouter.get('/roles', requireAdmin, listRoles);
+accessRouter.post('/roles', requireAdmin, createRole);
+accessRouter.get('/roles/:id', requireAdmin, getRole);
+accessRouter.put('/roles/:id', requireAdmin, updateRole);
+accessRouter.delete('/roles/:id', requireAdmin, deleteRole);
 
-accessRouter.get('/users', listUsers);
-accessRouter.post('/users/invite', inviteUser);
+// Users
+accessRouter.get('/users', listUsers); // Open to all authenticated users
+accessRouter.post('/users/invite', requireAdmin, inviteUser); // Admin only
 
-accessRouter.get('/tokens', listTokens);
-accessRouter.post('/tokens', createToken);
-accessRouter.delete('/tokens/:id', revokeToken);
+// Tokens (Admin only)
+accessRouter.get('/tokens', requireAdmin, listTokens);
+accessRouter.post('/tokens', requireAdmin, createToken);
+accessRouter.delete('/tokens/:id', requireAdmin, revokeToken);
