@@ -30,3 +30,30 @@ export const authenticateToken = (
       .json({ error: ERROR_MESSAGES.AUTH.INVALID_TOKEN });
   }
 };
+
+export const requireAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user) {
+    res
+      .status(HTTP_STATUS.UNAUTHORIZED)
+      .json({ error: ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED });
+    return;
+  }
+
+  // Check if the user has the 'admin' role
+  const isAdmin = req.user.roles?.some(
+    (role) => role.toLowerCase() === 'admin',
+  );
+
+  if (!isAdmin) {
+    res
+      .status(HTTP_STATUS.FORBIDDEN)
+      .json({ error: ERROR_MESSAGES.RBAC.FORBIDDEN });
+    return;
+  }
+
+  next();
+};

@@ -13,6 +13,29 @@ export class AuthRepository {
     return result[0] || null;
   }
 
+  async getUserByInviteTokenHash(hash: string) {
+    const db = getDatabaseAdapter().getDb();
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.inviteTokenHash, hash))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async activateUser(userId: string, passwordHash: string) {
+    const db = getDatabaseAdapter().getDb();
+    await db
+      .update(users)
+      .set({
+        passwordHash,
+        status: 'active',
+        inviteTokenHash: null,
+        inviteExpiresAt: null,
+      })
+      .where(eq(users.id, userId));
+  }
+
   async getUserRoles(userId: string) {
     const db = getDatabaseAdapter().getDb();
     const rows = await db

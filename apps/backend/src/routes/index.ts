@@ -3,6 +3,7 @@ import { authRouter } from '../modules/auth/auth.router.js';
 import { schemaRouter } from '../modules/schemas/schema.router.js';
 import { contentRoutes } from '../modules/content/content.routes.js';
 import { mediaRoutes } from '../modules/media/media.routes.js';
+import { accessRouter } from '../modules/access/access.routes.js';
 
 /**
  * Versioned API router — feature modules (content, schema, media, auth,
@@ -16,3 +17,4 @@ apiRouter.use('/auth', authRouter);
 apiRouter.use('/schemas', schemaRouter);
 apiRouter.use('/content', contentRoutes);
 apiRouter.use('/media', mediaRoutes);
+apiRouter.use('/access', accessRouter);
