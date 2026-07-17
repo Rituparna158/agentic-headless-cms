@@ -63,6 +63,29 @@ const baseEnvSchema = z.object({
     .int()
     .positive()
     .default(10 * 1024 * 1024),
+
+  // Full URL parsing, same rationale as DATABASE_URL above — BullMQ/ioredis
+  // would otherwise surface a malformed value as a confusing connection
+  // error at first queue use rather than at startup.
+  REDIS_URL: z
+    .string()
+    .min(1, 'REDIS_URL is required')
+    .refine(
+      (value) => {
+        try {
+          return ['redis:', 'rediss:'].includes(new URL(value).protocol);
+        } catch {
+          return false;
+        }
+      },
+      {
+        message:
+          'REDIS_URL must be a valid redis:// or rediss:// connection string',
+      },
+    )
+    .default('redis://localhost:6379'),
+  QUEUE_JOB_ATTEMPTS: z.coerce.number().int().positive().default(3),
+  QUEUE_JOB_BACKOFF_DELAY_MS: z.coerce.number().int().positive().default(5000),
 });
 
 // STORAGE_S3_BUCKET/REGION are only required when STORAGE_ADAPTER is
