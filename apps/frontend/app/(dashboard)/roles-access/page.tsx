@@ -1,3 +1,5 @@
+'use client';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RolesTab } from '@/components/roles-access/roles-tab';
 import { UsersTab } from '@/components/roles-access/users-tab';
