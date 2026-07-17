@@ -34,6 +34,8 @@ export const users = pgTable('users', {
   mfaEnabled: boolean('mfa_enabled').notNull().default(false),
   mfaSecret: text('mfa_secret'),
   status: userStatusEnum('status').notNull().default('invited'),
+  inviteTokenHash: varchar('invite_token_hash', { length: 255 }),
+  inviteExpiresAt: timestamp('invite_expires_at', { withTimezone: true }),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
