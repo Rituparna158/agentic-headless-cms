@@ -3,6 +3,15 @@ import { env } from '../config/env.js';
 
 export const logger = pino({
   level: env.LOG_LEVEL,
+  redact: [
+    'req.headers.authorization',
+    'req.headers.cookie',
+    'body.password',
+    'body.token',
+    'body.newPassword',
+    'body.apiKey',
+    'body.secretKey',
+  ],
   // Human-readable output locally; structured JSON (the default) in
   // production/CI so logs are machine-parseable (NFR-O-1).
   transport:
