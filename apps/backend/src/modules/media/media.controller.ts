@@ -5,6 +5,7 @@ import { MediaService } from './media.service.js';
 import { parseResizeQuery } from './image-processing.js';
 import { eventBus } from '../../common/events/event-bus.js';
 import { parsePositiveIntParam } from '../../utils/pagination.util.js';
+import { extractStorageKey } from '../../utils/media.util.js';
 import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
@@ -44,6 +45,14 @@ export const uploadMedia = async (
       resourceId: asset.id,
       actorUserId: req.user!.id,
       afterState: asset,
+    });
+
+    // Thumbnail generation happens off-thread, in a queue worker (see
+    // queues/media.worker.ts) — the upload response doesn't wait on it.
+    eventBus.emit(EVENT_NAMES.MEDIA_UPLOADED, {
+      assetId: asset.id,
+      storageKey: extractStorageKey(asset),
+      mimeType: asset.mimeType,
     });
 
     res.status(HTTP_STATUS.CREATED).json({ data: asset });
