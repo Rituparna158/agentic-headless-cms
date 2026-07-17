@@ -14,3 +14,7 @@ export interface VersionHistoryDrawerProps {
   onOpenChange: (open: boolean) => void;
   currentEntry: ContentEntryRecord;
 }
+
+export interface UsersTabProps {
+  isAdmin?: boolean;
+}

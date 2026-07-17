@@ -9,6 +9,15 @@ export const ERROR_MESSAGES = {
   RBAC: {
     FORBIDDEN: 'Forbidden: Insufficient permissions',
   },
+  ACCESS: {
+    USER_ALREADY_EXISTS: 'User already exists',
+    EMAIL_AND_ROLE_REQUIRED: 'Email and roleId are required',
+    FAILED_TO_INVITE_USER: 'Failed to invite user',
+    TOKEN_AND_PASSWORD_REQUIRED: 'Token and newPassword are required',
+    PASSWORD_TOO_SHORT: 'Password must be at least 8 characters long',
+    INVITE_NOT_FOUND: 'Invalid or expired invitation token',
+    ROLE_NOT_FOUND: 'Role not found',
+  },
   CONTENT: {
     ENTRY_NOT_FOUND: 'Entry not found',
     INVALID_VERSION_NO: 'Invalid versionNo',
@@ -40,4 +49,12 @@ export const HTTP_STATUS = {
 export const AUTH_COOKIES = {
   NAME: 'token',
   MAX_AGE_MS: 24 * 60 * 60 * 1000, // 1 day
+} as const;
+
+export const EMAIL_TEMPLATES = {
+  INVITE: {
+    SUBJECT: 'You have been invited to Agentic CMS',
+    HTML: `<p>Hello {{firstName}},</p><p>You have been invited to join Agentic CMS. Please click the link below to set your password and activate your account:</p><p><a href="{{inviteUrl}}">{{inviteUrl}}</a></p><p>This link will expire in 48 hours.</p>`,
+    TEXT: `Hello {{firstName}},\n\nYou have been invited to join Agentic CMS. Please click the link below to set your password and activate your account:\n\n{{inviteUrl}}\n\nThis link will expire in 48 hours.`,
+  },
 } as const;
