@@ -82,13 +82,11 @@ vi.mock('../../../src/modules/content/content.repository.js', () => {
           publishedData: null,
         }),
         createEntry: vi.fn().mockResolvedValue({
-          entryId: 'entry-1',
-          localization: {
-            entryId: 'entry-1',
-            status: 'draft',
-            data: { title: 'Post 1', views: 10 },
-            publishedData: null,
-          },
+          id: 'entry-1',
+          schemaId: 'schema-1',
+          status: 'draft',
+          data: { title: 'Post 1', views: 10 },
+          publishedData: null,
         }),
       };
     }),

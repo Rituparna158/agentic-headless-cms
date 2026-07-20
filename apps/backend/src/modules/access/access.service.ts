@@ -13,6 +13,10 @@ import {
   UpdateRoleInput,
 } from '../../types/access.types.js';
 import { AccessRepository } from './access.repository.js';
+import {
+  BadRequestError,
+  InternalServerError,
+} from '../../common/errors/http-error.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,7 +64,7 @@ export class AccessService {
     // 1. Check if user already exists
     const existingUser = await this.repository.getUserByEmail(email);
     if (existingUser) {
-      throw new Error(ERROR_MESSAGES.ACCESS.USER_ALREADY_EXISTS);
+      throw new BadRequestError(ERROR_MESSAGES.ACCESS.USER_ALREADY_EXISTS);
     }
 
     // 2. Generate secure token
@@ -85,7 +89,9 @@ export class AccessService {
     });
 
     if (!user) {
-      throw new Error(ERROR_MESSAGES.ACCESS.FAILED_TO_INVITE_USER);
+      throw new InternalServerError(
+        ERROR_MESSAGES.ACCESS.FAILED_TO_INVITE_USER,
+      );
     }
 
     // 5. Assign role

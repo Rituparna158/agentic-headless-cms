@@ -38,7 +38,7 @@ describe('Auth Module', () => {
       });
 
       expect(res.status).toBe(401);
-      expect(res.body.error).toBe('Invalid email or password');
+      expect(res.body.error.message).toBe('Invalid email or password');
     });
 
     it('should return 200 and a cookie for valid login', async () => {
