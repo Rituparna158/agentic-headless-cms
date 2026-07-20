@@ -1,11 +1,12 @@
 import { Router } from 'express';
+
+import { authenticateToken } from '../../common/middlewares/auth.middleware.js';
 import {
+  acceptInvite,
+  getCurrentUser,
   login,
   logout,
-  getCurrentUser,
-  acceptInvite,
 } from './auth.controller.js';
-import { authenticateToken } from '../../common/middlewares/auth.middleware.js';
 
 export const authRouter = Router();
 

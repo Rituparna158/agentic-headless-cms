@@ -42,6 +42,13 @@ const baseEnvSchema = z.object({
     .min(32, 'JWT_SECRET must be at least 32 characters long'),
   JWT_EXPIRES_IN: z.string().default('1d'),
 
+  APP_URL: z.string().default('http://localhost:3001'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().default('"Agentic CMS" <noreply@agentic-cms.com>'),
+
   STORAGE_ADAPTER: z.enum(['local', 's3']).default('local'),
   STORAGE_LOCAL_UPLOAD_DIR: z.string().default('./uploads'),
   // Route prefix media.router.ts serves local files from — see media.router.ts's GET /file/:key.
