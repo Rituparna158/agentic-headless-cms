@@ -1,15 +1,18 @@
-import { AccessRepository } from './access.repository.js';
 import crypto from 'node:crypto';
-import nodemailer from 'nodemailer';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { EMAIL_TEMPLATES, ERROR_MESSAGES } from '@repo/shared-types';
+import nodemailer from 'nodemailer';
+
+import { env } from '../../config/env.js';
 import {
   CreateRoleInput,
-  UpdateRoleInput,
   CreateTokenInput,
+  UpdateRoleInput,
 } from '../../types/access.types.js';
-import { ERROR_MESSAGES, EMAIL_TEMPLATES } from '@repo/shared-types';
+import { AccessRepository } from './access.repository.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,17 +94,17 @@ export class AccessService {
     }
 
     // 6. Generate invite URL
-    const appUrl = process.env.APP_URL || 'http://localhost:3001';
+    const appUrl = env.APP_URL;
     const inviteUrl = `${appUrl}/accept-invite?token=${rawToken}`;
 
     // 7. Send Email
-    if (process.env.SMTP_HOST) {
+    if (env.SMTP_HOST) {
       const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        host: env.SMTP_HOST,
+        port: env.SMTP_PORT,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
+          user: env.SMTP_USER,
+          pass: env.SMTP_PASS,
         },
       });
 
@@ -140,8 +143,7 @@ export class AccessService {
         .replace(/\{\{inviteUrl\}\}/g, inviteUrl);
 
       await transporter.sendMail({
-        from:
-          process.env.EMAIL_FROM || '"Agentic CMS" <noreply@agentic-cms.com>',
+        from: env.EMAIL_FROM,
         to: email,
         subject: EMAIL_TEMPLATES.INVITE.SUBJECT,
         text: textContent,

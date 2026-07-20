@@ -1,5 +1,6 @@
-import { Router } from 'express';
 import { createSchemaSchema, updateSchemaSchema } from '@repo/shared-types';
+import { Router } from 'express';
+
 import { authenticateToken } from '../../common/middlewares/auth.middleware.js';
 import { requirePermission } from '../../common/middlewares/rbac.middleware.js';
 import { validateBody } from '../../common/middlewares/validate-body.middleware.js';

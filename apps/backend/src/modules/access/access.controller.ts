@@ -1,7 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import { AccessService } from './access.service.js';
+import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/shared-types';
+import { NextFunction, Request, Response } from 'express';
+
+import { env } from '../../config/env.js';
 import { PermissionData } from '../../types/access.types.js';
-import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/shared-types';
+import { AccessService } from './access.service.js';
 
 const accessService = new AccessService();
 
@@ -139,7 +141,7 @@ export const inviteUser = async (
         status: user.status,
       },
       // In development, return the inviteUrl testing
-      inviteUrl: process.env.NODE_ENV !== 'production' ? inviteUrl : undefined,
+      inviteUrl: env.NODE_ENV !== 'production' ? inviteUrl : undefined,
     });
   } catch (error: unknown) {
     if (

@@ -1,8 +1,10 @@
-import type { Request, Response, NextFunction } from 'express';
 import { loginSchema } from '@repo/shared-types';
-import { authService } from './auth.service.js';
+import { AUTH_COOKIES, ERROR_MESSAGES, HTTP_STATUS } from '@repo/shared-types';
+import type { NextFunction, Request, Response } from 'express';
+
 import { UnauthorizedError } from '../../common/errors/http-error.js';
-import { ERROR_MESSAGES, HTTP_STATUS, AUTH_COOKIES } from '@repo/shared-types';
+import { env } from '../../config/env.js';
+import { authService } from './auth.service.js';
 
 export const login = async (
   req: Request,
@@ -15,7 +17,7 @@ export const login = async (
 
     res.cookie(AUTH_COOKIES.NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
@@ -33,7 +35,7 @@ export const login = async (
 export const logout = (req: Request, res: Response) => {
   res.clearCookie(AUTH_COOKIES.NAME, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: env.NODE_ENV === 'production',
     sameSite: 'strict',
   });
   res.status(HTTP_STATUS.NO_CONTENT).send();

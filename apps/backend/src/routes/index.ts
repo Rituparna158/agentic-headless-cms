@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { authRouter } from '../modules/auth/auth.router.js';
-import { schemaRouter } from '../modules/schemas/schema.router.js';
+
+import { accessRouter } from '../modules/access/access.routes.js';
+import { authRouter } from '../modules/auth/auth.routes.js';
 import { contentRoutes } from '../modules/content/content.routes.js';
 import { mediaRoutes } from '../modules/media/media.routes.js';
 import { accessRouter } from '../modules/access/access.routes.js';
 import { webhooksRouter } from '../modules/webhooks/webhooks.routes.js';
 import { localesRouter } from '../modules/locales/locales.routes.js';
+import { schemaRouter } from '../modules/schemas/schema.routes.js';
 
 /**
  * Versioned API router — feature modules (content, schema, media, auth,
