@@ -223,6 +223,19 @@ export const agentOperationsRelations = relations(
   }),
 );
 
+// Managed list of enabled content locales — distinct from the free-text
+// `locale` column on content_entries/content_versions, which just tags a
+// row's language; this table is what the Settings UI lets admins edit.
+export const locales = pgTable('locales', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: varchar('code', { length: 20 }).notNull().unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  isDefault: boolean('is_default').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const webhooksRelations = relations(webhooks, ({ many }) => ({
   deliveries: many(webhookDeliveries),
 }));

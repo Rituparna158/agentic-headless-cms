@@ -4,6 +4,8 @@ import { schemaRouter } from '../modules/schemas/schema.router.js';
 import { contentRoutes } from '../modules/content/content.routes.js';
 import { mediaRoutes } from '../modules/media/media.routes.js';
 import { accessRouter } from '../modules/access/access.routes.js';
+import { webhooksRouter } from '../modules/webhooks/webhooks.routes.js';
+import { localesRouter } from '../modules/locales/locales.routes.js';
 
 /**
  * Versioned API router — feature modules (content, schema, media, auth,
@@ -18,3 +20,5 @@ apiRouter.use('/schemas', schemaRouter);
 apiRouter.use('/content', contentRoutes);
 apiRouter.use('/media', mediaRoutes);
 apiRouter.use('/access', accessRouter);
+apiRouter.use('/webhooks', webhooksRouter);
+apiRouter.use('/locales', localesRouter);

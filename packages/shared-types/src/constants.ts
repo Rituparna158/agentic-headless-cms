@@ -29,6 +29,15 @@ export const ERROR_MESSAGES = {
       'No file was uploaded. Attach one under the "file" field.',
     INVALID_RESIZE_PARAMS: 'Invalid resize query params',
   },
+  WEBHOOKS: {
+    NOT_FOUND: 'Webhook not found',
+    NAME_URL_EVENTS_REQUIRED: 'name, url and events are required',
+  },
+  LOCALES: {
+    NOT_FOUND: 'Locale not found',
+    CODE_NAME_REQUIRED: 'code and name are required',
+    CODE_ALREADY_EXISTS: 'A locale with this code already exists',
+  },
 } as const;
 
 export const DEFAULT_LOCALE = 'en';
