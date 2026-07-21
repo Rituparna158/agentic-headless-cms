@@ -1,15 +1,5 @@
 import { apiFetch } from '@/lib/api-client';
-
-export interface WebhookRecord {
-  id: string;
-  name: string;
-  url: string;
-  events: string[];
-  isActive: boolean;
-  secretKey: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { WebhookRecord } from '@repo/shared-types';
 
 export function listWebhooks(): Promise<WebhookRecord[]> {
   return apiFetch<WebhookRecord[]>('/api/v1/webhooks');

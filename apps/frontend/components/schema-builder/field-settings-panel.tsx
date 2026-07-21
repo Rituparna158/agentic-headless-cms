@@ -22,8 +22,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import type { SchemaBuilderFieldValues } from './schema-builder-form';
-import type { FieldSettingsPanelProps } from '@/types/component.types';
+import type {
+  FieldSettingsPanelProps,
+  SchemaBuilderFieldValues,
+} from '@/types/component.types';
 
 // Validation rules matching backend's compileZodSchema:
 // min/max apply to text/richtext/number. regex applies only to text/richtext.

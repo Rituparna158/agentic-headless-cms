@@ -8,8 +8,10 @@ import { useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import type { SchemaBuilderFieldValues } from './schema-builder-form';
-import type { FieldListItemProps } from '@/types/component.types';
+import type {
+  FieldListItemProps,
+  SchemaBuilderFieldValues,
+} from '@/types/component.types';
 
 /**
  * Compact single-line summary row for the field list (wireframe S-07) —

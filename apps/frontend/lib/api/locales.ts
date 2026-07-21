@@ -1,12 +1,5 @@
 import { apiFetch } from '@/lib/api-client';
-
-export interface LocaleRecord {
-  id: string;
-  code: string;
-  name: string;
-  isDefault: boolean;
-  createdAt: string;
-}
+import { LocaleRecord } from '@repo/shared-types';
 
 export function listLocales(): Promise<LocaleRecord[]> {
   return apiFetch<LocaleRecord[]>('/api/v1/locales');

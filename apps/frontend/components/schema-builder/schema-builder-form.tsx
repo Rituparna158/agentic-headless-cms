@@ -23,7 +23,6 @@ import { PlusIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import type { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,13 +44,9 @@ import {
 } from '@/components/ui/select';
 import { createSchema } from '@/lib/api/schemas';
 import { ApiError } from '@/lib/api-client';
+import type { SchemaBuilderFieldValues } from '@/types/component.types';
 import { FieldListItem } from './field-list-item';
 import { FieldSettingsPanel } from './field-settings-panel';
-
-// createSchemaSchema has default values that differ from its input type.
-// We use z.input to extract the form's input-shaped values for React Hook Form,
-// while handleSubmit will receive the resolver's output with defaults resolved.
-export type SchemaBuilderFieldValues = z.input<typeof createSchemaSchema>;
 
 function emptyField() {
   return {

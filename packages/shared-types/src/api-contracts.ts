@@ -131,3 +131,22 @@ export interface SchemaRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface WebhookRecord {
+  id: string;
+  name: string;
+  url: string;
+  events: string[];
+  isActive: boolean;
+  secretKey: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LocaleRecord {
+  id: string;
+  code: string;
+  name: string;
+  isDefault: boolean;
+  createdAt: string;
+}
