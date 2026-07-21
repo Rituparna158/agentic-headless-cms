@@ -1,20 +1,21 @@
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
 import { pinoHttp } from 'pino-http';
-import { env } from './config/env.js';
+
+import { logger } from './common/logger.js';
 import { errorHandlerMiddleware } from './common/middlewares/error-handler.middleware.js';
 import { notFoundMiddleware } from './common/middlewares/not-found.middleware.js';
 import { requestIdMiddleware } from './common/middlewares/request-id.middleware.js';
-import { logger } from './common/logger.js';
+import { env } from './config/env.js';
+import { setupAuditListener } from './modules/audit/audit.listener.js';
+import { graphqlRouter } from './modules/graphql/graphql.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { metricsRouter } from './modules/observability/metrics.routes.js';
-import { apiRouter } from './routes/index.js';
-import { graphqlRouter } from './modules/graphql/graphql.router.js';
-import { setupAuditListener } from './modules/audit/audit.listener.js';
 import { setupMediaQueueListener } from './queues/media-queue.listener.js';
+import { apiRouter } from './routes/index.js';
 
 /**
  * Pure app assembly — no `listen()` here. Kept separate from server.ts so

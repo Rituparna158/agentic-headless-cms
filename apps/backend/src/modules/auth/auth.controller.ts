@@ -1,8 +1,13 @@
-import type { Request, Response, NextFunction } from 'express';
 import { loginSchema } from '@repo/shared-types';
+import { AUTH_COOKIES, ERROR_MESSAGES, HTTP_STATUS } from '@repo/shared-types';
+import type { NextFunction, Request, Response } from 'express';
+
+import {
+  UnauthorizedError,
+  BadRequestError,
+} from '../../common/errors/http-error.js';
+import { env } from '../../config/env.js';
 import { authService } from './auth.service.js';
-import { UnauthorizedError } from '../../common/errors/http-error.js';
-import { ERROR_MESSAGES, HTTP_STATUS, AUTH_COOKIES } from '@repo/shared-types';
 
 export const login = async (
   req: Request,
@@ -15,17 +20,13 @@ export const login = async (
 
     res.cookie(AUTH_COOKIES.NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
 
     res.json(user);
   } catch (error) {
-    if (error instanceof UnauthorizedError) {
-      res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: error.message });
-      return;
-    }
     next(error);
   }
 };
@@ -33,7 +34,7 @@ export const login = async (
 export const logout = (req: Request, res: Response) => {
   res.clearCookie(AUTH_COOKIES.NAME, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: env.NODE_ENV === 'production',
     sameSite: 'strict',
   });
   res.status(HTTP_STATUS.NO_CONTENT).send();
@@ -41,10 +42,7 @@ export const logout = (req: Request, res: Response) => {
 
 export const getCurrentUser = (req: Request, res: Response) => {
   if (!req.user) {
-    res
-      .status(HTTP_STATUS.UNAUTHORIZED)
-      .json({ error: ERROR_MESSAGES.AUTH.UNAUTHORIZED });
-    return;
+    throw new UnauthorizedError(ERROR_MESSAGES.AUTH.UNAUTHORIZED);
   }
   res.json(req.user);
 };
@@ -61,15 +59,13 @@ export const acceptInvite = async (
     };
     const { token, newPassword } = body;
     if (!token || !newPassword) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: ERROR_MESSAGES.ACCESS.TOKEN_AND_PASSWORD_REQUIRED });
+      throw new BadRequestError(
+        ERROR_MESSAGES.ACCESS.TOKEN_AND_PASSWORD_REQUIRED,
+      );
     }
 
     if (newPassword.length < 8) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: ERROR_MESSAGES.ACCESS.PASSWORD_TOO_SHORT });
+      throw new BadRequestError(ERROR_MESSAGES.ACCESS.PASSWORD_TOO_SHORT);
     }
 
     await authService.acceptInvite(token, newPassword);
@@ -81,9 +77,7 @@ export const acceptInvite = async (
         error.message.includes('Invalid') ||
         error.message.includes('Expired')
       ) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json({ error: error.message });
+        return next(new BadRequestError(error.message));
       }
     }
     next(error);

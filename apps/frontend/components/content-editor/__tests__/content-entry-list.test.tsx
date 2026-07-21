@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { SchemaDefinition } from '@repo/shared-types';
+import type { SchemaRecord } from '@repo/shared-types';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { SchemaDefinition } from '@repo/shared-types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { ContentEntryList } from '../content-entry-list';
-import type { SchemaRecord } from '@/lib/api/schemas';
 
 const { mockList, mockDelete } = vi.hoisted(() => ({
   mockList: vi.fn(),

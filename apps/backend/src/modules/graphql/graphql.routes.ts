@@ -1,12 +1,13 @@
-import { Router } from 'express';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { listSchemas } from '@repo/shared-db';
-import { getDatabaseAdapter } from '../../config/database.js';
+import { Router } from 'express';
+
 import { authenticateToken } from '../../common/middlewares/auth.middleware.js';
-import { buildGraphQLSchema } from './schema-builder.js';
-import { formatGraphQLError } from './format-error.js';
+import { getDatabaseAdapter } from '../../config/database.js';
 import { GraphQLContext } from '../../types/graphql.types.js';
+import { formatGraphQLError } from './format-error.js';
+import { buildGraphQLSchema } from './schema-builder.js';
 
 export const graphqlRouter = Router();
 

@@ -1,7 +1,13 @@
-import { Request, Response, NextFunction } from 'express';
-import { AccessService } from './access.service.js';
+import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/shared-types';
+import { NextFunction, Request, Response } from 'express';
+
+import { env } from '../../config/env.js';
 import { PermissionData } from '../../types/access.types.js';
-import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/shared-types';
+import {
+  NotFoundError,
+  BadRequestError,
+} from '../../common/errors/http-error.js';
+import { AccessService } from './access.service.js';
 
 const accessService = new AccessService();
 
@@ -26,10 +32,7 @@ export const getRole = async (
   try {
     const role = await accessService.getRole(req.params.id as string);
     if (!role) {
-      res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json({ error: ERROR_MESSAGES.ACCESS.ROLE_NOT_FOUND });
-      return;
+      throw new NotFoundError(ERROR_MESSAGES.ACCESS.ROLE_NOT_FOUND);
     }
     res.json(role);
   } catch (error) {
@@ -118,10 +121,7 @@ export const inviteUser = async (
     const { email, firstName, lastName, roleId } = body;
 
     if (!email || !roleId) {
-      res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: ERROR_MESSAGES.ACCESS.EMAIL_AND_ROLE_REQUIRED });
-      return;
+      throw new BadRequestError(ERROR_MESSAGES.ACCESS.EMAIL_AND_ROLE_REQUIRED);
     }
 
     const { inviteUrl, user } = await accessService.inviteUser(
@@ -139,18 +139,9 @@ export const inviteUser = async (
         status: user.status,
       },
       // In development, return the inviteUrl testing
-      inviteUrl: process.env.NODE_ENV !== 'production' ? inviteUrl : undefined,
+      inviteUrl: env.NODE_ENV !== 'production' ? inviteUrl : undefined,
     });
   } catch (error: unknown) {
-    if (
-      error instanceof Error &&
-      error.message === ERROR_MESSAGES.ACCESS.USER_ALREADY_EXISTS
-    ) {
-      res
-        .status(HTTP_STATUS.CONFLICT)
-        .json({ error: ERROR_MESSAGES.ACCESS.USER_ALREADY_EXISTS });
-      return;
-    }
     next(error);
   }
 };

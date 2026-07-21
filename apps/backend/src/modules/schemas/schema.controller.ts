@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/shared-types';
 import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/shared-types';
+import { UnauthorizedError } from '../../common/errors/http-error.js';
 import { schemaService } from './schema.service.js';
 import { eventBus } from '../../common/events/event-bus.js';
 import {
@@ -15,10 +16,7 @@ export const createSchema = async (
 ) => {
   try {
     if (!req.user) {
-      res
-        .status(HTTP_STATUS.UNAUTHORIZED)
-        .json({ error: ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED });
-      return;
+      throw new UnauthorizedError(ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
     // Already validated/defaulted by the validateBody(createSchemaSchema)
     // middleware ahead of this handler.
@@ -59,10 +57,7 @@ export const updateSchema = async (
 ) => {
   try {
     if (!req.user) {
-      res
-        .status(HTTP_STATUS.UNAUTHORIZED)
-        .json({ error: ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED });
-      return;
+      throw new UnauthorizedError(ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
     const id = req.params.id as string;

@@ -119,7 +119,7 @@ export const createDraft = async (
     eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
       action: AUDIT_ACTIONS.CREATE,
       resourceType: 'content',
-      resourceId: entry.entryId,
+      resourceId: entry.id,
       actorUserId: userId,
       afterState: entry,
     });
@@ -156,7 +156,7 @@ export const updateDraft = async (
     eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
       action: AUDIT_ACTIONS.UPDATE,
       resourceType: 'content',
-      resourceId: entry.entryId,
+      resourceId: entry.id,
       actorUserId: userId,
       beforeState: beforeState,
       afterState: entry,
@@ -193,7 +193,7 @@ export const publishEntry = async (
     eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
       action: AUDIT_ACTIONS.PUBLISH,
       resourceType: 'content',
-      resourceId: entry.entryId,
+      resourceId: entry.id,
       actorUserId: userId,
       beforeState: beforeState,
       afterState: entry,
@@ -239,7 +239,7 @@ export const revertEntry = async (
     eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
       action: AUDIT_ACTIONS.ROLLBACK,
       resourceType: 'content',
-      resourceId: entry.entryId,
+      resourceId: entry.id,
       actorUserId: userId,
       beforeState: beforeState,
       afterState: entry,

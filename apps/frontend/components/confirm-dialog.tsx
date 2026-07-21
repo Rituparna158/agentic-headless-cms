@@ -11,17 +11,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-export interface ConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  /** Styles the confirm action red — use for destructive actions like delete. */
-  destructive?: boolean;
-  onConfirm: () => void;
-}
+import type { ConfirmDialogProps } from '@/types/component.types';
 
 /**
  * Generic yes/no confirmation modal — not tied to any one action. Callers

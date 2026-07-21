@@ -22,13 +22,7 @@ interface EntryPayload {
 }
 
 /**
- * `createDraft`/`updateDraft`/`publishEntry`/`revertEntry` all bottom out
- * in `createEntryVersion`, which returns the full `entry_localizations` row
- * (its own `id`, plus `entryId`) rather than the shape `listEntries`/
- * `getEntryById` return (entry `id` at the top level). Normalizing here
- * once means every mutation resolver returns the same shape the generated
- * GraphQL type expects, matching what the REST layer's `data` object means
- * by `id` (the content entry's id, not the localization row's).
+ * Normalizes backend entry responses for the GraphQL schema.
  */
 function toEntryPayload(raw: {
   entryId?: string;
@@ -208,11 +202,7 @@ function registerSchemaTypes(
           context.user!.id,
           args.locale,
         );
-        // result.localization already carries its own `entryId` column
-        // (equal to result.entryId) — toEntryPayload prefers `entryId` over
-        // `id` when normalizing, so passing the localization row directly
-        // is sufficient without re-specifying entryId.
-        return toEntryPayload(result.localization);
+        return toEntryPayload(result);
       },
     },
     [`update${typeName}`]: {

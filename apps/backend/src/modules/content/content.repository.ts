@@ -11,6 +11,7 @@ import {
 import { RecordNotFoundError } from '@repo/shared-db';
 import { DEFAULT_LOCALE } from '@repo/shared-types';
 import { ContentQueryOptions } from '../../types/content.types.js';
+import { InternalServerError } from '../../common/errors/http-error.js';
 
 export class ContentRepository {
   private get db() {
@@ -150,7 +151,7 @@ export class ContentRepository {
         .returning();
 
       if (!newEntry) {
-        throw new Error('Failed to create entry');
+        throw new InternalServerError('Failed to create entry');
       }
 
       // 2. Create the first version (draft)
@@ -165,8 +166,11 @@ export class ContentRepository {
       });
 
       return {
-        entryId: newEntry.id,
-        localization: versionResult.localization,
+        id: newEntry.id,
+        schemaId: newEntry.schemaId,
+        status: versionResult.localization.status,
+        data: versionResult.localization.data,
+        publishedData: versionResult.localization.publishedData,
       };
     });
   }
@@ -177,7 +181,7 @@ export class ContentRepository {
     userId: string,
     locale: string = DEFAULT_LOCALE,
   ) {
-    const versionResult = await createEntryVersion(this.db, {
+    await createEntryVersion(this.db, {
       entryId,
       locale,
       data,
@@ -187,7 +191,10 @@ export class ContentRepository {
       comment: 'Updated draft',
     });
 
-    return versionResult.localization;
+    const updatedEntry = await this.getEntryById(entryId, locale);
+    if (!updatedEntry)
+      throw new InternalServerError('Failed to fetch updated entry');
+    return updatedEntry;
   }
 
   async publishEntry(
@@ -200,7 +207,7 @@ export class ContentRepository {
       throw new RecordNotFoundError('Entry not found');
     }
 
-    const versionResult = await createEntryVersion(this.db, {
+    await createEntryVersion(this.db, {
       entryId,
       locale,
       data: entry.data,
@@ -210,7 +217,10 @@ export class ContentRepository {
       comment: 'Published entry',
     });
 
-    return versionResult.localization;
+    const publishedEntry = await this.getEntryById(entryId, locale);
+    if (!publishedEntry)
+      throw new InternalServerError('Failed to fetch published entry');
+    return publishedEntry;
   }
 
   async revertEntry(
@@ -236,8 +246,7 @@ export class ContentRepository {
       throw new RecordNotFoundError(`Version ${versionNo} not found`);
     }
 
-    // 2. Create new draft from historical data
-    const versionResult = await createEntryVersion(this.db, {
+    await createEntryVersion(this.db, {
       entryId,
       locale,
       data: historical.data,
@@ -247,7 +256,10 @@ export class ContentRepository {
       comment: `Reverted to version ${versionNo}`,
     });
 
-    return versionResult.localization;
+    const revertedEntry = await this.getEntryById(entryId, locale);
+    if (!revertedEntry)
+      throw new InternalServerError('Failed to fetch reverted entry');
+    return revertedEntry;
   }
 
   async listEntryVersions(entryId: string, locale: string = DEFAULT_LOCALE) {
