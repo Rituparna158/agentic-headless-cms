@@ -1,28 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { PlusIcon } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  type CreateSchemaInput,
   createSchemaSchema,
   schemaTypeValues,
-  type CreateSchemaInput,
 } from '@repo/shared-types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PlusIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -48,15 +48,9 @@ import { ApiError } from '@/lib/api-client';
 import { FieldListItem } from './field-list-item';
 import { FieldSettingsPanel } from './field-settings-panel';
 
-// createSchemaSchema's nested field entries have `.default()` on several
-// booleans (isRequired, isUnique, ...), so Zod's *input* type (what the
-// form actually manipulates — those fields optional) differs from its
-// *output* type (CreateSchemaInput, defaults resolved). useForm's third
-// generic tells RHF "the form holds input-shaped values, but handleSubmit's
-// callback receives the resolver's output" — same fix as login-form.tsx's
-// rememberMe, just via RHF's explicit transform generic instead of dropping
-// .default() from the schema (can't do that here without weakening the
-// backend's own validation, since this schema is shared).
+// createSchemaSchema has default values that differ from its input type.
+// We use z.input to extract the form's input-shaped values for React Hook Form,
+// while handleSubmit will receive the resolver's output with defaults resolved.
 export type SchemaBuilderFieldValues = z.input<typeof createSchemaSchema>;
 
 function emptyField() {
@@ -76,9 +70,7 @@ export function SchemaBuilderForm() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  // Master-detail layout (wireframe S-07): the field list on the left
-  // selects which field's full config shows in the settings panel on the
-  // right, rather than every field's config being expanded inline at once.
+  // Controls which field's config is expanded in the settings panel.
   const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
 
   const form = useForm<SchemaBuilderFieldValues, unknown, CreateSchemaInput>({
@@ -92,9 +84,7 @@ export function SchemaBuilderForm() {
   });
 
   const fieldArray = useFieldArray({ control: form.control, name: 'fields' });
-  // useFieldArray's own `field.id` is stable across reorders, which is
-  // exactly what dnd-kit's SortableContext needs as a drag identity — no
-  // separate id-tracking state required.
+  // useFieldArray's `field.id` serves as a stable drag identity for dnd-kit.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
@@ -107,6 +97,9 @@ export function SchemaBuilderForm() {
     },
   });
 
+  /**
+   * Reorders fields after a drag-and-drop action completes.
+   */
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -123,11 +116,17 @@ export function SchemaBuilderForm() {
     if (selectedIndex === oldIndex) setSelectedIndex(newIndex);
   }
 
+  /**
+   * Appends a new empty field to the end of the schema.
+   */
   function handleAddField() {
     fieldArray.append(emptyField(), { shouldFocus: false });
     setSelectedIndex(fieldArray.fields.length);
   }
 
+  /**
+   * Removes a field at the given index and updates the selected field index.
+   */
   function handleRemoveField(index: number) {
     fieldArray.remove(index);
     setSelectedIndex((current) => {
@@ -140,13 +139,13 @@ export function SchemaBuilderForm() {
     });
   }
 
+  /**
+   * Submits the schema form, normalizing field sort orders before API creation.
+   */
   async function onSubmit(values: CreateSchemaInput) {
     setSubmitError(null);
     try {
-      // sortOrder mirrors the field list's current visual order — the
-      // backend stores it verbatim rather than re-deriving it, so it has to
-      // be kept in sync with every drag-reorder, not just set once at
-      // field-creation time.
+      // sortOrder must be synced with the field list's current visual order.
       const payload: CreateSchemaInput = {
         ...values,
         fields: values.fields.map((field, index) => ({

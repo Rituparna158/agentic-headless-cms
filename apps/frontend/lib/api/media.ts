@@ -2,37 +2,11 @@ import { ApiError, apiFetch } from '@/lib/api-client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-export interface MediaAsset {
-  id: string;
-  filename: string;
-  mimeType: string;
-  sizeBytes: number;
-  width: number | null;
-  height: number | null;
-  url: string;
-  altText: string | null;
-  folderId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PaginationMeta {
-  page: number;
-  pageSize: number;
-  total: number;
-  pageCount: number;
-}
-
-export interface ListMediaOptions {
-  page?: number;
-  pageSize?: number;
-  folderId?: string;
-}
-
-export interface ListMediaResult {
-  data: MediaAsset[];
-  meta: { pagination: PaginationMeta };
-}
+import type {
+  ListMediaOptions,
+  ListMediaResult,
+  MediaAsset,
+} from '@repo/shared-types';
 
 /** The asset `url` the backend returns (e.g. "/media/file/<key>") is relative to the API host, not the frontend's. */
 export function mediaFileUrl(asset: MediaAsset): string {
