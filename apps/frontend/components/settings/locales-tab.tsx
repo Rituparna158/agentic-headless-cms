@@ -2,12 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  listLocales,
-  createLocale,
-  deleteLocale,
-  LocaleRecord,
-} from '@/lib/api/locales';
+import { listLocales, createLocale, deleteLocale } from '@/lib/api/locales';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
+import { LocaleRecord } from '@repo/shared-types';
 
 export function LocalesTab() {
   const queryClient = useQueryClient();
