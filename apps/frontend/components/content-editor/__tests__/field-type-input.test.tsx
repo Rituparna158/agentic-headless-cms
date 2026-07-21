@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import type { SchemaField } from '@repo/shared-types';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { SchemaField } from '@repo/shared-types';
+import { describe, expect, it, vi } from 'vitest';
+
 import { FieldTypeInput } from '../field-type-input';
 
 function makeField(overrides: Partial<SchemaField>): SchemaField {

@@ -1,23 +1,19 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  listTokens,
-  createToken,
-  listRoles,
-  revokeToken,
-} from '@/lib/api/access';
+
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -26,7 +22,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Trash2, Copy, Check } from 'lucide-react';
+import {
+  createToken,
+  listRoles,
+  listTokens,
+  revokeToken,
+} from '@/lib/api/access';
 
 export function TokensTab() {
   const queryClient = useQueryClient();

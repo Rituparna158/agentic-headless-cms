@@ -1,8 +1,7 @@
 'use client';
 
-import { useFieldArray, useFormContext, type Control } from 'react-hook-form';
 import { PlusIcon, Trash2 } from 'lucide-react';
-import type { SchemaField } from '@repo/shared-types';
+import { type Control, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,12 +11,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import type { DynamicFieldProps } from '@/types/component.types';
 import { FieldTypeInput } from './field-type-input';
-
-export interface DynamicFieldProps {
-  field: SchemaField;
-  control: Control<Record<string, unknown>>;
-}
 
 /** Renders one schema field: a single control, or (isRepeatable) an add/remove-able list of them. */
 export function DynamicField({ field, control }: DynamicFieldProps) {
@@ -51,12 +46,8 @@ export function DynamicField({ field, control }: DynamicFieldProps) {
 
 function RepeatableDynamicField({ field, control }: DynamicFieldProps) {
   const { getFieldState } = useFormContext();
-  // useFieldArray can't statically infer an ArrayPath from a fully generic
-  // Record<string, unknown> — there's no static schema to check "is this
-  // key actually an array" against, since the field set is only known at
-  // runtime (fetched from the backend). The cast just widens the type RHF
-  // checks against; field.isRepeatable is what guarantees this path is
-  // actually an array at runtime.
+  // The generic Record<string, unknown> prevents useFieldArray from inferring ArrayPath.
+  // We cast to Record<string, unknown[]> to bypass this; field.isRepeatable guarantees it at runtime.
   const arrayControl = control as unknown as Control<Record<string, unknown[]>>;
   const fieldArray = useFieldArray({
     control: arrayControl,

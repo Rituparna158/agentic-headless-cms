@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { SchemaDefinition } from '@repo/shared-types';
+import type { ContentEntryRecord, SchemaRecord } from '@repo/shared-types';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { SchemaDefinition } from '@repo/shared-types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { ContentEntryForm } from '../content-entry-form';
-import type { SchemaRecord } from '@/lib/api/schemas';
-import type { ContentEntryRecord } from '@/lib/api/content';
 
 const {
   mockPush,

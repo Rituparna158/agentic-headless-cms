@@ -1,41 +1,19 @@
 'use client';
 
-import type * as React from 'react';
-import { FORMAT_TEXT_COMMAND, type EditorState } from 'lexical';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { type EditorState, FORMAT_TEXT_COMMAND } from 'lexical';
 import { Bold, Italic, Underline } from 'lucide-react';
+import type * as React from 'react';
+import type { LexicalRichTextFieldProps } from '@/types/component.types';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-export interface LexicalRichTextFieldProps {
-  /**
-   * Serialized Lexical editor state (JSON string), or empty for a blank
-   * editor — read only once, at mount, to seed `initialConfig.editorState`.
-   * This is deliberately *not* a fully controlled value: re-parsing and
-   * replacing the editor's state on every `value` change (e.g. reactively
-   * syncing it back in an effect) fights Lexical's own reconciler, since
-   * `onChange` below already updates `value` on every keystroke — the two
-   * together create a feedback loop that visibly duplicates/corrupts text
-   * as you type. Switching to a different entry happens through Next.js
-   * navigation (a different route param unmounts and remounts this whole
-   * form), which already re-seeds a fresh editor with the new initial
-   * value, so no imperative re-sync is needed.
-   */
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  id?: string;
-  'aria-describedby'?: React.AriaAttributes['aria-describedby'];
-  'aria-invalid'?: React.AriaAttributes['aria-invalid'];
-}
 
 function Toolbar({ disabled }: { disabled?: boolean }) {
   const [editor] = useLexicalComposerContext();

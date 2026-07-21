@@ -1,17 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import type { SchemaDefinition } from '@repo/shared-types';
 import {
   keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import type { SchemaDefinition } from '@repo/shared-types';
+import Link from 'next/link';
+import { useState } from 'react';
 
-import { deleteContentEntry, listContentEntries } from '@/lib/api/content';
-import type { SchemaRecord } from '@/lib/api/schemas';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,12 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { deleteContentEntry, listContentEntries } from '@/lib/api/content';
+import type { ContentEntryListProps } from '@/types/component.types';
 
 const PAGE_SIZE = 25;
-
-export interface ContentEntryListProps {
-  schema: SchemaRecord;
-}
 
 /** The first text/richtext field is used as the entry's display title in the list — schemas have no dedicated "title field" concept, so this is the closest reasonable stand-in. */
 function pickTitleField(definition: SchemaDefinition) {

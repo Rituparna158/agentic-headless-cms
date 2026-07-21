@@ -1,19 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
 import { listContentVersions, revertContentEntry } from '@/lib/api/content';
+import type { VersionHistoryDrawerProps } from '@/types/component.types';
 import { formatFieldValue } from '@/utils/lexical';
-import type { VersionHistoryDrawerProps } from '@/types/components';
 
 export function VersionHistoryDrawer({
   schemaSlug,

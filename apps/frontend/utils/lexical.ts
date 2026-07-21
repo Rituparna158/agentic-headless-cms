@@ -1,4 +1,4 @@
-import type { LexicalNode } from '@/types/lexical';
+import type { LexicalNode } from '@/types/util.types';
 
 export function extractLexicalText(
   node: LexicalNode | null | undefined,
