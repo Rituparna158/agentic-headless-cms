@@ -1,46 +1,6 @@
+import type { RoleRecord, TokenRecord, UserRecord } from '@repo/shared-types';
+
 import { apiFetch } from '@/lib/api-client';
-
-export interface RoleRecord {
-  id: string;
-  name: string;
-  description?: string | null;
-  isSystem: boolean;
-  createdAt: string;
-  updatedAt: string;
-  permissions: PermissionRecord[];
-}
-
-export interface PermissionRecord {
-  id: string;
-  roleId: string;
-  schemaId: string | null;
-  action: 'read' | 'create' | 'update' | 'delete' | 'publish' | '*';
-  effect: 'allow' | 'deny';
-  fields: string[] | null;
-  condition: Record<string, unknown> | null;
-  createdAt: string;
-}
-
-export interface UserRecord {
-  id: string;
-  email: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  status: string;
-  createdAt: string;
-}
-
-export interface TokenRecord {
-  id: string;
-  name: string;
-  type: string;
-  scopes: string[];
-  roleId?: string;
-  expiresAt?: string | null;
-  revokedAt?: string | null;
-  createdAt: string;
-  rawToken?: string; // only present on creation
-}
 
 export function listRoles(): Promise<RoleRecord[]> {
   return apiFetch<RoleRecord[]>('/api/v1/access/roles');

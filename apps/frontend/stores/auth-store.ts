@@ -1,21 +1,11 @@
 import { create } from 'zustand';
-import type { AuthenticatedUser, LoginInput } from '@repo/shared-types';
-import { ApiError } from '@/lib/api-client';
 import {
   getCurrentUser,
   login as loginRequest,
   logout as logoutRequest,
 } from '@/lib/api/auth';
-
-interface AuthState {
-  user: AuthenticatedUser | null;
-  status: 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
-  error: string | null;
-  login: (input: LoginInput) => Promise<void>;
-  logout: () => Promise<void>;
-  /** Checks for an existing session (via the HttpOnly cookie) on app load — the frontend has no other way to know if one exists. */
-  hydrate: () => Promise<void>;
-}
+import { AuthState } from '@/types/store.types';
+import { ApiError } from '@/lib/api-client';
 
 /**
  * No persist middleware here deliberately: the session itself lives in an

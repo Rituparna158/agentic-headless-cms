@@ -1,24 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { listContentEntries } from '@/lib/api/content';
 import { listSchemas } from '@/lib/api/schemas';
-import { listContentEntries, type ContentEntryRecord } from '@/lib/api/content';
+import { RecentActivityItem, DashboardOverview } from '@/types/hook.types';
 
 const ENTRIES_PER_SCHEMA = 100; // the backend's MAX_PAGE_SIZE (content-query.util.ts)
-
-export interface RecentActivityItem {
-  entryId: string;
-  title: string;
-  schemaName: string;
-  schemaSlug: string;
-  status: ContentEntryRecord['status'];
-  updatedAt: string;
-}
-
-export interface DashboardOverview {
-  totalEntries: number;
-  publishedEntries: number;
-  draftEntries: number;
-  recentActivity: RecentActivityItem[];
-}
 
 /**
  * There's no cross-schema "all content" or stats/analytics endpoint (content

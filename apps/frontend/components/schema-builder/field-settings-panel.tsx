@@ -1,9 +1,10 @@
 'use client';
 
-import { useWatch, type Control } from 'react-hook-form';
 import { schemaFieldDataTypes } from '@repo/shared-types';
+import { useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   FormControl,
@@ -20,29 +21,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { SchemaBuilderFieldValues } from './schema-builder-form';
 
-// Matches the backend's compileZodSchema (packages/shared-types/src/
-// content-validation.ts): min/max apply to text/richtext/number, regex
-// applies only to text/richtext.
+import type { SchemaBuilderFieldValues } from './schema-builder-form';
+import type { FieldSettingsPanelProps } from '@/types/component.types';
+
+// Validation rules matching backend's compileZodSchema:
+// min/max apply to text/richtext/number. regex applies only to text/richtext.
 const LENGTH_VALIDATED_TYPES = new Set(['text', 'richtext', 'number']);
 const REGEX_VALIDATED_TYPES = new Set(['text', 'richtext']);
-
-export interface FieldSettingsPanelProps {
-  index: number | null;
-  control: Control<SchemaBuilderFieldValues>;
-  onRemove: (index: number) => void;
-}
 
 export function FieldSettingsPanel({
   index,
   control,
   onRemove,
-}: FieldSettingsPanelProps) {
-  // useWatch must be called unconditionally (rules of hooks) even though
-  // its value is only meaningful once `index !== null` — watching index 0
-  // as a harmless fallback keeps the hook call stable across renders.
+}: FieldSettingsPanelProps<SchemaBuilderFieldValues>) {
+  // useWatch is called unconditionally with a fallback index of 0 to comply with hooks rules.
   const dataType = useWatch({ control, name: `fields.${index ?? 0}.dataType` });
 
   if (index === null) {
