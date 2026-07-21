@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
+import type { MediaAsset } from '@repo/shared-types';
 import {
   keepPreviousData,
   useMutation,
@@ -9,16 +8,13 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { FileIcon, Trash2 } from 'lucide-react';
+import Image from 'next/image';
+import { useState } from 'react';
 
-import {
-  deleteMedia,
-  listMedia,
-  mediaFileUrl,
-  type MediaAsset,
-} from '@/lib/api/media';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ConfirmDialog } from '@/components/confirm-dialog';
+import { deleteMedia, listMedia, mediaFileUrl } from '@/lib/api/media';
 
 const PAGE_SIZE = 24;
 

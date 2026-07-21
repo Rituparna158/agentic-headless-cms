@@ -1,16 +1,9 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listUsers, inviteUser, listRoles } from '@/lib/api/access';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -28,8 +21,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UsersTabProps } from '@/types/components';
-import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { inviteUser, listRoles, listUsers } from '@/lib/api/access';
+import { UsersTabProps } from '@/types/component.types';
 
 export function UsersTab({ isAdmin = false }: UsersTabProps) {
   const queryClient = useQueryClient();

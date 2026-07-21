@@ -1,10 +1,8 @@
 'use client';
 
 import type * as React from 'react';
-import type { SchemaField } from '@repo/shared-types';
+import type { FieldTypeInputProps } from '@/types/component.types';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -12,31 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+
 import { LexicalRichTextField } from './lexical-rich-text-field';
 
-export interface FieldTypeInputProps {
-  field: SchemaField;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  disabled?: boolean;
-  id?: string;
-  'aria-describedby'?: React.AriaAttributes['aria-describedby'];
-  'aria-invalid'?: React.AriaAttributes['aria-invalid'];
-}
-
 /**
- * Renders the single control appropriate for one field's dataType — no
- * knowledge of react-hook-form here, just a plain controlled input, so it
- * can be reused identically for both a scalar field and each item of a
- * repeatable field's array (see dynamic-field.tsx).
+ * Renders a specific input control based on the field's dataType.
  *
- * This is rendered as the sole child of shadcn's `FormControl`, which is a
- * Radix `Slot` — it merges `id`/`aria-describedby`/`aria-invalid` onto
- * whatever single element it wraps, for label association and error
- * announcement. Since a plain function component doesn't automatically
- * forward props like that to its own internal elements, `...rest` is
- * threaded through explicitly onto the actual focusable control in every
- * branch below.
+ * Note: This component is agnostic to react-hook-form. It acts as a standard controlled input.
+ * It is wrapped by `FormControl` which automatically handles accessibility attributes
+ * (like aria-invalid) by forwarding props via `...rest`.
  */
 export function FieldTypeInput({
   field,

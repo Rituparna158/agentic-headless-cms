@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { DynamicField } from './dynamic-field';
 import { VersionHistoryDrawer } from './version-history-drawer';
-import type { ContentEntryFormProps } from '@/types/components';
+import type { ContentEntryFormProps } from '@/types/component.types';
 
 import { buildDefaultValues } from '@/utils/form';
 
