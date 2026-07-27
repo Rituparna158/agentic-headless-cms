@@ -13,6 +13,12 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 - **packages/eslint-config**: Shared ESLint configuration.
 - **packages/typescript-config**: Shared TypeScript configuration.
 
+## Prerequisites
+
+- **Node.js** >= 20.9.0
+- **pnpm** (see `packageManager` in `package.json`)
+- **Redis** >= 5.0.0 — required by `apps/backend`'s job queue (BullMQ), which relies on Redis Streams. Older versions (e.g. the deprecated Windows Redis port) will fail to boot the backend. The bundled `docker-compose.yml` provisions a compatible version (`redis:7-alpine`); if you run Redis yourself, make sure it meets this minimum.
+
 ## Quick Start
 
 1. Install dependencies:

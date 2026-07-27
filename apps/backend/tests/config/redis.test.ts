@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { mockRedisInstance, RedisMock } = vi.hoisted(() => {
-  const mockRedisInstance = { quit: vi.fn().mockResolvedValue('OK') };
+  const mockRedisInstance = {
+    quit: vi.fn().mockResolvedValue('OK'),
+    info: vi.fn().mockResolvedValue('redis_version:7.2.4\r\n'),
+  };
   return {
     mockRedisInstance,
     // A real `function`, not an arrow — `new Redis(...)` in redis.ts calls
@@ -57,5 +60,46 @@ describe('config/redis', () => {
 
     await expect(closeRedisConnection()).resolves.toBeUndefined();
     expect(mockRedisInstance.quit).not.toHaveBeenCalled();
+  });
+
+  describe('assertMinimumRedisVersion', () => {
+    it('resolves when the server reports a version >= 5.0.0', async () => {
+      const { assertMinimumRedisVersion } =
+        await import('../../src/config/redis.js');
+      mockRedisInstance.info.mockResolvedValueOnce('redis_version:7.2.4\r\n');
+
+      await expect(assertMinimumRedisVersion()).resolves.toBeUndefined();
+    });
+
+    it('resolves when the server reports exactly the minimum version', async () => {
+      const { assertMinimumRedisVersion } =
+        await import('../../src/config/redis.js');
+      mockRedisInstance.info.mockResolvedValueOnce('redis_version:5.0.0\r\n');
+
+      await expect(assertMinimumRedisVersion()).resolves.toBeUndefined();
+    });
+
+    it('rejects with UnsupportedRedisVersionError when the server is too old', async () => {
+      const { assertMinimumRedisVersion, UnsupportedRedisVersionError } =
+        await import('../../src/config/redis.js');
+      mockRedisInstance.info.mockResolvedValue('redis_version:3.0.504\r\n');
+
+      await expect(assertMinimumRedisVersion()).rejects.toBeInstanceOf(
+        UnsupportedRedisVersionError,
+      );
+      await expect(assertMinimumRedisVersion()).rejects.toThrow(
+        /Redis version 3\.0\.504 is not supported.*>= 5\.0\.0/,
+      );
+    });
+
+    it('rejects when the redis_version cannot be parsed from INFO output', async () => {
+      const { assertMinimumRedisVersion } =
+        await import('../../src/config/redis.js');
+      mockRedisInstance.info.mockResolvedValueOnce('some_other_field:1\r\n');
+
+      await expect(assertMinimumRedisVersion()).rejects.toThrow(
+        /Unable to determine Redis server version/,
+      );
+    });
   });
 });
