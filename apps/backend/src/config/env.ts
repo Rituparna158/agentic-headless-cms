@@ -51,8 +51,8 @@ const baseEnvSchema = z.object({
 
   STORAGE_ADAPTER: z.enum(['local', 's3']).default('local'),
   STORAGE_LOCAL_UPLOAD_DIR: z.string().default('./uploads'),
-  // Route prefix media.router.ts serves local files from — see media.router.ts's GET /file/:key.
-  STORAGE_LOCAL_BASE_URL: z.string().default('/media/file'),
+  // Route path media.routes.ts's GET /file/:key
+  STORAGE_LOCAL_BASE_URL: z.string().default('/api/v1/media/file'),
   STORAGE_S3_BUCKET: z.string().optional(),
   STORAGE_S3_REGION: z.string().optional(),
   STORAGE_S3_ACCESS_KEY_ID: z.string().optional(),
