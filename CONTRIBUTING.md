@@ -37,6 +37,7 @@ We are committed to fostering a welcoming and inclusive community. Before contri
 
 First, get the project running on your local machine.
 
+- **Check prerequisites:** Node.js >= 20.9.0, pnpm, and **Redis >= 5.0.0** (required by the backend's BullMQ job queue — older versions lack the Redis Streams support BullMQ depends on, and will crash the backend on startup). Use the `redis` service in the root `docker-compose.yml` (`redis:7-alpine`) if you don't already have a compatible local instance — on Windows, Docker Desktop, WSL2, or Memurai are the recommended ways to run a modern Redis.
 - **Fork the repository:** Click the "Fork" button at the top-right of the [Agentic Headless CMS repository](https://github.com/mindfire-test/agentic-headless-cms).
 - **Clone your forked repository:**
   ```bash

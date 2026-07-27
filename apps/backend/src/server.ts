@@ -4,7 +4,10 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './common/logger.js';
 import { getDatabaseAdapter } from './config/database.js';
-import { closeRedisConnection } from './config/redis.js';
+import {
+  assertMinimumRedisVersion,
+  closeRedisConnection,
+} from './config/redis.js';
 import { closeAllQueues } from './queues/queue.factory.js';
 import { setupMediaWorker } from './queues/media.worker.js';
 
@@ -12,6 +15,14 @@ const app = createApp();
 
 // Instantiate the adapter at start so a config-time error surfaces immediately
 getDatabaseAdapter();
+
+// Check before any queue/worker opens a connection so an unsupported Redis
+try {
+  await assertMinimumRedisVersion();
+} catch (error) {
+  logger.fatal({ err: error }, 'Redis pre-flight check failed - exiting.');
+  process.exit(1);
+}
 
 // Workers actually open a Redis connection and start polling — started here
 // (not in createApp()) so importing the app in tests never does either.
