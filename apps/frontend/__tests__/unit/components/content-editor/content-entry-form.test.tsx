@@ -5,7 +5,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ContentEntryForm } from '../content-entry-form';
+import { ContentEntryForm } from '@/components/content-editor/content-entry-form';
 
 const {
   mockPush,

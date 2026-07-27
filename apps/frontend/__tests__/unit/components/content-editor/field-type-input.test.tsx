@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { FieldTypeInput } from '../field-type-input';
+import { FieldTypeInput } from '@/components/content-editor/field-type-input';
 
 function makeField(overrides: Partial<SchemaField>): SchemaField {
   return {

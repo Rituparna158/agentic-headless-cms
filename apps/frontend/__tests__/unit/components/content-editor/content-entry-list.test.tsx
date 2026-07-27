@@ -5,7 +5,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ContentEntryList } from '../content-entry-list';
+import { ContentEntryList } from '@/components/content-editor/content-entry-list';
 
 const { mockList, mockDelete } = vi.hoisted(() => ({
   mockList: vi.fn(),

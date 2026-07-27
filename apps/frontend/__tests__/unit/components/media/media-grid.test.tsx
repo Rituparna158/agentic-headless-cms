@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MediaGrid } from '../media-grid';
+import { MediaGrid } from '@/components/media/media-grid';
 
 const { mockList, mockDelete } = vi.hoisted(() => ({
   mockList: vi.fn(),

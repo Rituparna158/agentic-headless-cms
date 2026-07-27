@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MediaUploadDropzone } from '../media-upload-dropzone';
+import { MediaUploadDropzone } from '@/components/media/media-upload-dropzone';
 
 const { mockUpload } = vi.hoisted(() => ({
   mockUpload: vi.fn(),

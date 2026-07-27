@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SchemaBuilderForm } from '../schema-builder-form';
+import { SchemaBuilderForm } from '@/components/schema-builder/schema-builder-form';
 
 const { mockPush, mockCreateSchema } = vi.hoisted(() => ({
   mockPush: vi.fn(),

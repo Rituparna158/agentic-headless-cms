@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { QuickActions } from '../quick-actions';
+import { QuickActions } from '@/components/dashboard/quick-actions';
 
 describe('QuickActions', () => {
   it('routes each action to its correct creation screen', () => {
