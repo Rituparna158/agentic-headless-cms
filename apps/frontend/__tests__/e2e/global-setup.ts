@@ -12,4 +12,8 @@ export default function globalSetup() {
     cwd: repoRoot,
     stdio: 'inherit',
   });
+  execSync('pnpm --filter backend seed:e2e-expired-invite', {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
 }
