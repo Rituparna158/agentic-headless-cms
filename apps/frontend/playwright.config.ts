@@ -39,14 +39,14 @@ export default defineConfig({
       url: BACKEND_HEALTH_URL,
       reuseExistingServer: !process.env.CI,
       cwd: monorepoRoot,
-      timeout: 60_000,
+      timeout: 120_000,
     },
     {
       command: 'pnpm --filter frontend dev',
       url: FRONTEND_URL,
       reuseExistingServer: !process.env.CI,
       cwd: monorepoRoot,
-      timeout: 60_000,
+      timeout: 120_000,
     },
   ],
 });
