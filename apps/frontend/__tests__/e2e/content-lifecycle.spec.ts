@@ -1,7 +1,6 @@
 import crypto from 'node:crypto';
 import { test, expect } from '@playwright/test';
-
-const BACKEND_URL = 'http://localhost:3000';
+import { BACKEND_URL } from './constants';
 
 async function createTitleOnlySchema(
   request: import('@playwright/test').APIRequestContext,

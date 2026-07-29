@@ -4,7 +4,8 @@
  * issue — the frontend never touches the token itself, only the browser's
  * cookie jar does, which is the point of HttpOnly.
  */
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export class ApiError extends Error {
   constructor(

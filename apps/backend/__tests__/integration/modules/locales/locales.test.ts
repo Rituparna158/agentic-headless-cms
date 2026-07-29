@@ -4,6 +4,7 @@ import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
 import { env } from '../../../../src/config/env.js';
 import { ERROR_MESSAGES } from '@repo/shared-types';
+import { LocalesService } from '../../../../src/modules/locales/locales.service.js';
 
 vi.mock('../../../../src/modules/locales/locales.service.js', () => {
   const LocalesService = vi.fn();
@@ -29,6 +30,10 @@ describe('Locales Module', () => {
     { id: 'user-1', email: 'admin@example.com', roles: ['admin'] },
     env.JWT_SECRET,
   );
+  const nonAdminToken = jwt.sign(
+    { id: 'user-2', email: 'editor@example.com', roles: ['editor'] },
+    env.JWT_SECRET,
+  );
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,6 +43,13 @@ describe('Locales Module', () => {
     it('should require authentication', async () => {
       const res = await request(app).get('/api/v1/locales');
       expect(res.status).toBe(401);
+    });
+
+    it('should reject non-admin users', async () => {
+      const res = await request(app)
+        .get('/api/v1/locales')
+        .set('Cookie', [`token=${nonAdminToken}`]);
+      expect(res.status).toBe(403);
     });
 
     it('should return the locales list', async () => {
@@ -67,9 +79,38 @@ describe('Locales Module', () => {
       expect(res.status).toBe(201);
       expect(res.body.code).toBe('fr-FR');
     });
+
+    it('should return 409 when the code already exists', async () => {
+      vi.mocked(LocalesService.prototype.create).mockRejectedValueOnce(
+        new Error(ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS),
+      );
+
+      const res = await request(app)
+        .post('/api/v1/locales')
+        .set('Cookie', [`token=${adminToken}`])
+        .send({ code: 'en', name: 'English (again)' });
+
+      expect(res.status).toBe(409);
+      expect(res.body.error).toBe(ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS);
+    });
+
+    it('should reject non-admin users', async () => {
+      const res = await request(app)
+        .post('/api/v1/locales')
+        .set('Cookie', [`token=${nonAdminToken}`])
+        .send({ code: 'fr-FR', name: 'French' });
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('DELETE /api/v1/locales/:id', () => {
+    it('should reject non-admin users', async () => {
+      const res = await request(app)
+        .delete('/api/v1/locales/l1')
+        .set('Cookie', [`token=${nonAdminToken}`]);
+      expect(res.status).toBe(403);
+    });
+
     it('should delete a locale', async () => {
       const res = await request(app)
         .delete('/api/v1/locales/l1')

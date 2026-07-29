@@ -1,7 +1,6 @@
 import crypto from 'node:crypto';
 import { test, expect } from '@playwright/test';
-
-const BACKEND_URL = 'http://localhost:3000';
+import { BACKEND_URL } from './constants';
 
 test('version history lists prior versions and can restore one', async ({
   page,

@@ -11,99 +11,47 @@ vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   },
 }));
 
+const testSchema = {
+  id: 'schema-1',
+  slug: 'blog-post',
+  definition: {
+    fields: [
+      {
+        apiId: 'title',
+        dataType: 'text',
+        isRequired: true,
+      },
+      {
+        apiId: 'body',
+        dataType: 'richtext',
+      },
+      {
+        apiId: 'author',
+        dataType: 'text',
+      },
+    ],
+  },
+};
+
+const { repoMocks } = vi.hoisted(() => ({
+  repoMocks: {
+    getSchemaBySlug: vi.fn(),
+    listEntries: vi.fn(),
+    countEntries: vi.fn(),
+    getEntryById: vi.fn(),
+    createEntry: vi.fn(),
+    updateEntryDraft: vi.fn(),
+    publishEntry: vi.fn(),
+    revertEntry: vi.fn(),
+    listEntryVersions: vi.fn(),
+    deleteEntry: vi.fn(),
+  },
+}));
+
 vi.mock('../../../../src/modules/content/content.repository.js', () => {
   return {
     ContentRepository: vi.fn().mockImplementation(function () {
-      return {
-        getSchemaBySlug: vi.fn().mockResolvedValue({
-          id: 'schema-1',
-          slug: 'blog-post',
-          definition: {
-            fields: [
-              {
-                apiId: 'title',
-                dataType: 'text',
-                isRequired: true,
-              },
-              {
-                apiId: 'body',
-                dataType: 'richtext',
-              },
-              {
-                apiId: 'author',
-                dataType: 'text',
-              },
-            ],
-          },
-        }),
-        listEntries: vi.fn().mockResolvedValue([]),
-        countEntries: vi.fn().mockResolvedValue(0),
-        getEntryById: vi.fn().mockResolvedValue({
-          id: 'entry-1',
-          status: 'draft',
-          data: {
-            title: 'Test Post',
-            body: 'This is a test post body',
-            author: 'Tester',
-          },
-        }),
-        createEntry: vi.fn().mockResolvedValue({
-          entryId: 'entry-1',
-          localization: {
-            status: 'draft',
-            data: {
-              title: 'Test Post',
-              body: 'This is a test post body',
-              author: 'Tester',
-            },
-          },
-        }),
-        updateEntryDraft: vi.fn().mockResolvedValue({
-          status: 'draft',
-          data: {
-            title: 'Updated Post',
-            body: 'This is an updated body',
-            author: 'Tester',
-          },
-        }),
-        publishEntry: vi.fn().mockResolvedValue({
-          status: 'published',
-          publishedData: {
-            title: 'Updated Post',
-            body: 'This is an updated body',
-            author: 'Tester',
-          },
-        }),
-        revertEntry: vi.fn().mockResolvedValue({
-          status: 'draft',
-          data: {
-            title: 'Test Post',
-            body: 'This is a test post body',
-            author: 'Tester',
-          },
-        }),
-        listEntryVersions: vi.fn().mockResolvedValue([
-          {
-            id: 'version-1',
-            versionNo: 1,
-            data: {
-              title: 'Test Post',
-              body: 'This is a test post body',
-              author: 'Tester',
-            },
-          },
-          {
-            id: 'version-2',
-            versionNo: 2,
-            data: {
-              title: 'Updated Post',
-              body: 'This is an updated body',
-              author: 'Tester',
-            },
-          },
-        ]),
-        deleteEntry: vi.fn().mockResolvedValue({ id: 'entry-1' }),
-      };
+      return repoMocks;
     }),
   };
 });
@@ -138,6 +86,75 @@ describe('Content API', () => {
         condition: null,
       },
     ]);
+
+    repoMocks.getSchemaBySlug.mockResolvedValue(testSchema);
+    repoMocks.listEntries.mockResolvedValue([]);
+    repoMocks.countEntries.mockResolvedValue(0);
+    repoMocks.getEntryById.mockResolvedValue({
+      id: 'entry-1',
+      status: 'draft',
+      data: {
+        title: 'Test Post',
+        body: 'This is a test post body',
+        author: 'Tester',
+      },
+    });
+    repoMocks.createEntry.mockResolvedValue({
+      entryId: 'entry-1',
+      localization: {
+        status: 'draft',
+        data: {
+          title: 'Test Post',
+          body: 'This is a test post body',
+          author: 'Tester',
+        },
+      },
+    });
+    repoMocks.updateEntryDraft.mockResolvedValue({
+      status: 'draft',
+      data: {
+        title: 'Updated Post',
+        body: 'This is an updated body',
+        author: 'Tester',
+      },
+    });
+    repoMocks.publishEntry.mockResolvedValue({
+      status: 'published',
+      publishedData: {
+        title: 'Updated Post',
+        body: 'This is an updated body',
+        author: 'Tester',
+      },
+    });
+    repoMocks.revertEntry.mockResolvedValue({
+      status: 'draft',
+      data: {
+        title: 'Test Post',
+        body: 'This is a test post body',
+        author: 'Tester',
+      },
+    });
+    repoMocks.listEntryVersions.mockResolvedValue([
+      {
+        id: 'version-1',
+        versionNo: 1,
+        data: {
+          title: 'Test Post',
+          body: 'This is a test post body',
+          author: 'Tester',
+        },
+      },
+      {
+        id: 'version-2',
+        versionNo: 2,
+        data: {
+          title: 'Updated Post',
+          body: 'This is an updated body',
+          author: 'Tester',
+        },
+      },
+    ]);
+    repoMocks.deleteEntry.mockResolvedValue({ id: 'entry-1' });
   });
 
   it('should list content entries (empty)', async () => {
@@ -231,5 +248,109 @@ describe('Content API', () => {
       .set('Cookie', [`token=${adminToken}`]);
 
     expect(res.status).toBe(204);
+  });
+
+  describe('negative paths', () => {
+    it('returns 401 with no auth token', async () => {
+      const res = await request(app).get(`/api/v1/content/${testSchemaSlug}`);
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 for an unknown schema slug', async () => {
+      repoMocks.getSchemaBySlug.mockResolvedValueOnce(null);
+
+      const res = await request(app)
+        .get('/api/v1/content/does-not-exist')
+        .set('Cookie', [`token=${adminToken}`]);
+
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 403 when the user lacks the read permission', async () => {
+      vi.mocked(authService.getUserPermissions).mockResolvedValue([
+        {
+          action: 'create',
+          effect: 'allow',
+          schemaId: null,
+          fields: null,
+          condition: null,
+        },
+      ]);
+
+      const res = await request(app)
+        .get(`/api/v1/content/${testSchemaSlug}`)
+        .set('Cookie', [`token=${adminToken}`]);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 403 when the user lacks the create permission', async () => {
+      vi.mocked(authService.getUserPermissions).mockResolvedValue([
+        {
+          action: 'read',
+          effect: 'allow',
+          schemaId: null,
+          fields: null,
+          condition: null,
+        },
+      ]);
+
+      const res = await request(app)
+        .post(`/api/v1/content/${testSchemaSlug}`)
+        .set('Cookie', [`token=${adminToken}`])
+        .send({ title: 'Test Post', body: 'x', author: 'Tester' });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 400 when a required field is missing from the payload', async () => {
+      const res = await request(app)
+        .post(`/api/v1/content/${testSchemaSlug}`)
+        .set('Cookie', [`token=${adminToken}`])
+        .send({ body: 'Missing the required title field', author: 'Tester' });
+
+      expect(res.status).toBe(400);
+      expect(repoMocks.createEntry).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 when getting a nonexistent entry', async () => {
+      repoMocks.getEntryById.mockResolvedValueOnce(null);
+
+      const res = await request(app)
+        .get(`/api/v1/content/${testSchemaSlug}/does-not-exist`)
+        .set('Cookie', [`token=${adminToken}`]);
+
+      expect(res.status).toBe(404);
+      expect(res.body.error.message).toBe('Entry not found');
+    });
+
+    it('returns 400 for an invalid versionNo on revert', async () => {
+      const res = await request(app)
+        .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/revert`)
+        .set('Cookie', [`token=${adminToken}`])
+        .send({ versionNo: 'not-a-number' });
+
+      expect(res.status).toBe(400);
+      expect(repoMocks.revertEntry).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when the user lacks the delete permission', async () => {
+      vi.mocked(authService.getUserPermissions).mockResolvedValue([
+        {
+          action: 'read',
+          effect: 'allow',
+          schemaId: null,
+          fields: null,
+          condition: null,
+        },
+      ]);
+
+      const res = await request(app)
+        .delete(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
+        .set('Cookie', [`token=${adminToken}`]);
+
+      expect(res.status).toBe(403);
+      expect(repoMocks.deleteEntry).not.toHaveBeenCalled();
+    });
   });
 });

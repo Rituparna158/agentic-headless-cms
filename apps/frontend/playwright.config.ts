@@ -1,7 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
-
-const FRONTEND_URL = 'http://localhost:3001';
-const BACKEND_HEALTH_URL = 'http://localhost:3000/health/live';
+import {
+  BACKEND_HEALTH_URL,
+  E2E_DATABASE_URL,
+  FRONTEND_URL,
+} from './__tests__/e2e/constants';
 
 const monorepoRoot = '../..';
 
@@ -40,6 +42,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       cwd: monorepoRoot,
       timeout: 120_000,
+      env: { DATABASE_URL: E2E_DATABASE_URL },
     },
     {
       command: 'pnpm --filter frontend dev',

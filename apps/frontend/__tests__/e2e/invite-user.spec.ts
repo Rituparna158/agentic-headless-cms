@@ -35,7 +35,13 @@ test('admin can invite a user, and the invited user can accept and log in', asyn
   const token = new URL(inviteUrl!).searchParams.get('token');
   expect(token).toBeTruthy();
 
-  const inviteeContext = await browser.newContext();
+  /* browser.newContext() inherits the project's default storageState (the
+   admin's cookie) unless explicitly overridden - without this, proxy.ts's
+   "already-authenticated visitors get redirected off /accept-invite" rule
+   fires here too, since this context wouldn't actually be a fresh visitor.*/
+  const inviteeContext = await browser.newContext({
+    storageState: { cookies: [], origins: [] },
+  });
   const inviteePage = await inviteeContext.newPage();
 
   await inviteePage.goto(`/accept-invite?token=${token}`);
