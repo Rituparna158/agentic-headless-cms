@@ -110,8 +110,8 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm --filter frontend exec playwright install --with-deps chromium
 
-      - name: Build shared-db
-        run: pnpm --filter @repo/shared-db run build
+      - name: Build shared packages
+        run: pnpm --filter @repo/shared-types --filter @repo/shared-db run build
 
       - name: Create backend .env placeholder
         run: touch apps/backend/.env
