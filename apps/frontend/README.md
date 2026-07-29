@@ -3,6 +3,11 @@
 Next.js (App Router) admin dashboard. Tailwind CSS v4 + shadcn/ui, Zustand for auth state, TanStack
 Query for server-state fetching/caching, React Hook Form + Zod for forms.
 
+> First time setting up the whole project? Follow the root
+> [README.md](../../README.md#getting-started-first-time-setup) — it covers
+> Docker, env files, migrations, and seeding for the full stack. This file
+> only covers frontend-specific details.
+
 ## Setup
 
 ```bash
@@ -13,15 +18,16 @@ pnpm install
 ## Commands
 
 ```bash
-pnpm dev            # dev server on http://localhost:3001
+pnpm dev             # dev server on http://localhost:3001 (backend already uses 3000)
 pnpm build           # production build
 pnpm start           # run the production build
 pnpm lint            # eslint
 pnpm check-types     # next typegen && tsc --noEmit
+pnpm test            # vitest run (unit tests)
+pnpm test:watch      # vitest watch mode
+pnpm test:e2e        # playwright (see docs/testing.md for the test-database setup)
+pnpm test:e2e:ui     # playwright, interactive UI mode
 ```
-
-Runs on port **3001**, not Next's default 3000 — `apps/backend` already uses 3000, so this was moved
-to avoid a collision when running both apps at once.
 
 ## Structure
 

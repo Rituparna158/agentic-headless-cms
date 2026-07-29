@@ -14,7 +14,8 @@
     "check-types": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:admin": "tsx --env-file=.env src/scripts/seed-admin.ts"
+    "seed:admin": "tsx --env-file=.env src/scripts/seed-admin.ts",
+    "seed:e2e-expired-invite": "tsx --env-file=.env src/scripts/seed-e2e-expired-invite.ts"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",

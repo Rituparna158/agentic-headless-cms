@@ -89,4 +89,17 @@ describe('FieldTypeInput', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
+
+  it('renders the Lexical rich text editor for dataType "richtext"', () => {
+    const onChange = vi.fn();
+    render(
+      <FieldTypeInput
+        field={makeField({ dataType: 'richtext', displayName: 'Body' })}
+        value=""
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByText('Body')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+  });
 });

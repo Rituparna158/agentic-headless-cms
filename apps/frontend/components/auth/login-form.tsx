@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { API_BASE_URL } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 
 export function LoginForm() {
@@ -50,7 +51,7 @@ export function LoginForm() {
     // FR-AC-4 scopes SSO separately from #12's JWT-only auth) is planned
     // to add: GET /api/v1/auth/sso, which redirects to the configured
     // identity provider.
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000'}/api/v1/auth/sso`;
+    window.location.href = `${API_BASE_URL}/api/v1/auth/sso`;
   }
 
   return (

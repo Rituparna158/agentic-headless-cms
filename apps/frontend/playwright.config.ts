@@ -1,7 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
-
-const FRONTEND_URL = 'http://localhost:3001';
-const BACKEND_HEALTH_URL = 'http://localhost:3000/health/live';
+import {
+  BACKEND_HEALTH_URL,
+  E2E_DATABASE_URL,
+  FRONTEND_URL,
+} from './__tests__/e2e/constants';
 
 const monorepoRoot = '../..';
 
@@ -10,7 +12,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 2,
+  timeout: 45_000,
+  expect: { timeout: 10_000 },
   reporter: [['list'], ['html', { open: 'never' }]],
   globalSetup: './__tests__/e2e/global-setup.ts',
   use: {
@@ -37,14 +41,15 @@ export default defineConfig({
       url: BACKEND_HEALTH_URL,
       reuseExistingServer: !process.env.CI,
       cwd: monorepoRoot,
-      timeout: 60_000,
+      timeout: 120_000,
+      env: { DATABASE_URL: E2E_DATABASE_URL },
     },
     {
       command: 'pnpm --filter frontend dev',
       url: FRONTEND_URL,
       reuseExistingServer: !process.env.CI,
       cwd: monorepoRoot,
-      timeout: 60_000,
+      timeout: 120_000,
     },
   ],
 });

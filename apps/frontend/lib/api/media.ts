@@ -1,6 +1,4 @@
-import { ApiError, apiFetch } from '@/lib/api-client';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+import { API_BASE_URL, ApiError, apiFetch } from '@/lib/api-client';
 
 import type {
   ListMediaOptions,
