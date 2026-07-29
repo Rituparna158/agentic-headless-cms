@@ -3,6 +3,11 @@
 Express + TypeScript API for the Agentic Headless CMS. Uses `@repo/shared-db` (Drizzle ORM) for
 all database access.
 
+> First time setting up the whole project? Follow the root
+> [README.md](../../README.md#getting-started-first-time-setup) — it covers
+> Docker, env files, migrations, and seeding for the full stack. This file
+> only covers backend-specific details.
+
 ## Structure
 
 ```
@@ -27,20 +32,38 @@ test/                        # vitest + supertest
 ## Setup
 
 ```bash
-cp .env.example .env   # then fill in DATABASE_URL, etc.
+cp .env.example .env   # defaults match docker-compose.yml; adjust if needed
 pnpm install
 ```
+
+## Environment variables
+
+See `.env.example` for the full list with inline comments. Ones you're most likely to
+change:
+
+- `DATABASE_URL` / `REDIS_URL` — only if you're not using the bundled `docker-compose.yml`.
+- `JWT_SECRET` — the `.env.example` value is a local-dev placeholder only; use a real
+  generated secret anywhere this isn't a throwaway environment.
+- `CORS_ORIGIN` — restrict this beyond `*` outside of local development.
+- `STORAGE_ADAPTER` — `local` (default, writes to `STORAGE_LOCAL_UPLOAD_DIR`) or `s3`
+  (fill in the `STORAGE_S3_*` variables).
+- `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` — required for real invitation emails to send;
+  left blank, the backend logs emails instead of sending them.
+- `E2E_DATABASE_URL` — only used by the frontend's Playwright suite; see
+  [docs/testing.md](../../docs/testing.md). You don't need to set this yourself.
 
 ## Commands
 
 ```bash
-pnpm dev            # watch mode (tsx)
-pnpm build           # compile to dist/
-pnpm start           # run the compiled build
-pnpm lint            # eslint
-pnpm check-types     # tsc --noEmit
-pnpm test            # vitest run
-pnpm test:watch      # vitest watch mode
+pnpm dev                        # watch mode (tsx)
+pnpm build                      # compile to dist/
+pnpm start                      # run the compiled build
+pnpm lint                       # eslint
+pnpm check-types                # tsc --noEmit
+pnpm test                       # vitest run
+pnpm test:watch                 # vitest watch mode
+pnpm seed:admin                 # create/update the initial superadmin user
+pnpm seed:e2e-expired-invite    # E2E-only fixture, see docs/testing.md
 ```
 
 ## Health checks
