@@ -100,15 +100,15 @@ describe('Content API', () => {
       },
     });
     repoMocks.createEntry.mockResolvedValue({
-      entryId: 'entry-1',
-      localization: {
-        status: 'draft',
-        data: {
-          title: 'Test Post',
-          body: 'This is a test post body',
-          author: 'Tester',
-        },
+      id: 'entry-1',
+      schemaId: testSchema.id,
+      status: 'draft',
+      data: {
+        title: 'Test Post',
+        body: 'This is a test post body',
+        author: 'Tester',
       },
+      publishedData: null,
     });
     repoMocks.updateEntryDraft.mockResolvedValue({
       status: 'draft',
@@ -136,20 +136,20 @@ describe('Content API', () => {
     });
     repoMocks.listEntryVersions.mockResolvedValue([
       {
-        id: 'version-1',
-        versionNo: 1,
-        data: {
-          title: 'Test Post',
-          body: 'This is a test post body',
-          author: 'Tester',
-        },
-      },
-      {
         id: 'version-2',
         versionNo: 2,
         data: {
           title: 'Updated Post',
           body: 'This is an updated body',
+          author: 'Tester',
+        },
+      },
+      {
+        id: 'version-1',
+        versionNo: 1,
+        data: {
+          title: 'Test Post',
+          body: 'This is a test post body',
           author: 'Tester',
         },
       },
@@ -179,8 +179,8 @@ describe('Content API', () => {
       .send(payload);
 
     expect(res.status).toBe(201);
-    expect(res.body.data.localization.status).toBe('draft');
-    expect(res.body.data.localization.data.title).toBe(payload.title);
+    expect(res.body.data.status).toBe('draft');
+    expect(res.body.data.data.title).toBe(payload.title);
   });
 
   it('should get the created entry', async () => {
@@ -238,8 +238,8 @@ describe('Content API', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.data.length).toBe(2);
-    expect(res.body.data[0].versionNo).toBe(1);
-    expect(res.body.data[1].versionNo).toBe(2);
+    expect(res.body.data[0].versionNo).toBe(2);
+    expect(res.body.data[1].versionNo).toBe(1);
   });
 
   it('should delete the entry', async () => {

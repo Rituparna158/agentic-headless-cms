@@ -52,6 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await getCurrentUser();
       set({ user, status: 'authenticated', error: null });
     } catch {
+      await logoutRequest().catch(() => {});
       set({ user: null, status: 'unauthenticated', error: null });
     }
   },
