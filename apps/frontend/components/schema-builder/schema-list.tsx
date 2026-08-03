@@ -1,7 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import { PencilIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Table,
@@ -53,9 +56,7 @@ export function SchemaList() {
             <TableHead>Kind</TableHead>
             <TableHead>Fields</TableHead>
             <TableHead>Localized</TableHead>
-            <TableHead className="w-10">
-              <span className="sr-only">Actions</span>
-            </TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -78,8 +79,18 @@ export function SchemaList() {
                 <TableCell className="text-muted-foreground">
                   {isLocalized ? 'Yes' : 'No'}
                 </TableCell>
-                <TableCell>
-                  <SchemaRowActions schema={schema} />
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button variant="ghost" size="icon" asChild>
+                      <Link
+                        href={`/content-types/${schema.slug}/edit`}
+                        title="Edit content type"
+                      >
+                        <PencilIcon className="size-4" />
+                      </Link>
+                    </Button>
+                    <SchemaRowActions schema={schema} />
+                  </div>
                 </TableCell>
               </TableRow>
             );
