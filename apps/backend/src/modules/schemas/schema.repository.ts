@@ -3,6 +3,7 @@ import {
   listSchemas as listSchemaRecords,
   getSchemaById,
   updateSchema as updateSchemaRecord,
+  deleteSchema as deleteSchemaRecord,
   type Database,
 } from '@repo/shared-db';
 import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/shared-types';
@@ -44,5 +45,10 @@ export class SchemaRepository {
       actorType: 'user',
       createdByUserId: input.actorUserId,
     });
+  }
+
+  async delete(id: string, force: boolean = false) {
+    const db = this.getDb();
+    return deleteSchemaRecord(db, id, force);
   }
 }

@@ -8,6 +8,7 @@ import {
   createSchema,
   listSchemas,
   updateSchema,
+  deleteSchema,
 } from './schema.controller.js';
 
 export const schemaRouter = Router();
@@ -31,4 +32,10 @@ schemaRouter.put(
   requirePermission('update'),
   validateBody(updateSchemaSchema),
   updateSchema,
+);
+schemaRouter.delete(
+  '/:id',
+  authenticateToken,
+  requirePermission('delete'),
+  deleteSchema,
 );

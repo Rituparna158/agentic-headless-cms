@@ -80,3 +80,34 @@ export const updateSchema = async (
     next(error);
   }
 };
+
+export const deleteSchema = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user) {
+      throw new UnauthorizedError(ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
+    }
+
+    const id = req.params.id as string;
+    const force = req.query.force === 'true';
+
+    const beforeState = await schemaService.getById(id);
+    await schemaService.delete(id, force);
+
+    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+      action: AUDIT_ACTIONS.SCHEMA_CHANGE,
+      resourceType: 'schema',
+      resourceId: id,
+      actorUserId: req.user.id,
+      beforeState: beforeState,
+      afterState: null,
+    });
+
+    res.status(HTTP_STATUS.NO_CONTENT).send();
+  } catch (error) {
+    next(error);
+  }
+};
