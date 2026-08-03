@@ -84,4 +84,14 @@ describe('SchemaList', () => {
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('Yes')).toBeInTheDocument();
   });
+
+  it('links each row to its edit page', async () => {
+    mockListSchemas.mockResolvedValue([schema]);
+    renderList();
+
+    const editLink = await screen.findByRole('link', {
+      name: /edit content type/i,
+    });
+    expect(editLink).toHaveAttribute('href', '/content-types/blog-post/edit');
+  });
 });
