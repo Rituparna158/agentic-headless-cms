@@ -17,6 +17,7 @@ import {
   type CreateSchemaInput,
   createSchemaSchema,
   schemaTypeValues,
+  type SchemaRecord,
 } from '@repo/shared-types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from 'lucide-react';
@@ -42,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { createSchema } from '@/lib/api/schemas';
+import { createSchema, updateSchema } from '@/lib/api/schemas';
 import { ApiError } from '@/lib/api-client';
 import type { SchemaBuilderFieldValues } from '@/types/component.types';
 import { FieldListItem } from './field-list-item';
@@ -61,7 +62,13 @@ function emptyField() {
   };
 }
 
-export function SchemaBuilderForm() {
+export interface SchemaBuilderFormProps {
+  /** Present when editing an existing content type; omit when creating one. */
+  schema?: SchemaRecord;
+}
+
+export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
+  const isEditing = !!schema;
   const router = useRouter();
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -70,12 +77,19 @@ export function SchemaBuilderForm() {
 
   const form = useForm<SchemaBuilderFieldValues, unknown, CreateSchemaInput>({
     resolver: zodResolver(createSchemaSchema),
-    defaultValues: {
-      name: '',
-      slug: '',
-      type: 'collection',
-      fields: [emptyField()],
-    },
+    defaultValues: schema
+      ? {
+          name: schema.name,
+          slug: schema.slug,
+          type: schema.type,
+          fields: schema.definition.fields,
+        }
+      : {
+          name: '',
+          slug: '',
+          type: 'collection',
+          fields: [emptyField()],
+        },
   });
 
   const fieldArray = useFieldArray({ control: form.control, name: 'fields' });
@@ -85,10 +99,18 @@ export function SchemaBuilderForm() {
   );
 
   const mutation = useMutation({
-    mutationFn: createSchema,
-    onSuccess: (created) => {
+    mutationFn: (input: CreateSchemaInput) =>
+      isEditing
+        ? updateSchema(schema.id, {
+            name: input.name,
+            fields: input.fields,
+          })
+        : createSchema(input),
+    onSuccess: (saved) => {
       void queryClient.invalidateQueries({ queryKey: ['schemas'] });
-      router.push(`/content-types?created=${created.slug}`);
+      router.push(
+        `/content-types?${isEditing ? 'updated' : 'created'}=${saved.slug}`,
+      );
     },
   });
 
@@ -153,7 +175,7 @@ export function SchemaBuilderForm() {
       setSubmitError(
         error instanceof ApiError
           ? error.message
-          : 'Failed to create schema. Please try again.',
+          : `Failed to ${isEditing ? 'update' : 'create'} schema. Please try again.`,
       );
     }
   }
@@ -238,7 +260,11 @@ export function SchemaBuilderForm() {
                     <FormItem>
                       <FormLabel>Slug</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. blog-post" {...field} />
+                        <Input
+                          placeholder="e.g. blog-post"
+                          disabled={isEditing}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -254,6 +280,7 @@ export function SchemaBuilderForm() {
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
+                        disabled={isEditing}
                       >
                         <FormControl>
                           <SelectTrigger className="w-full">
@@ -291,7 +318,13 @@ export function SchemaBuilderForm() {
 
         <div className="flex justify-end">
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Creating…' : 'Create schema'}
+            {form.formState.isSubmitting
+              ? isEditing
+                ? 'Saving…'
+                : 'Creating…'
+              : isEditing
+                ? 'Save changes'
+                : 'Create schema'}
           </Button>
         </div>
       </form>
