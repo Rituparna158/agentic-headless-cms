@@ -1,3 +1,4 @@
+import type { SchemaRecord } from '@repo/shared-types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -5,9 +6,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SchemaBuilderForm } from '@/components/schema-builder/schema-builder-form';
 
-const { mockPush, mockCreateSchema } = vi.hoisted(() => ({
+const { mockPush, mockCreateSchema, mockUpdateSchema } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockCreateSchema: vi.fn(),
+  mockUpdateSchema: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -16,15 +18,16 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/api/schemas', () => ({
   createSchema: mockCreateSchema,
+  updateSchema: mockUpdateSchema,
 }));
 
-function renderForm() {
+function renderForm(schema?: SchemaRecord) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <SchemaBuilderForm />
+      <SchemaBuilderForm schema={schema} />
     </QueryClientProvider>,
   );
 }
@@ -153,5 +156,75 @@ describe('SchemaBuilderForm', () => {
       expect(screen.getByText(/failed to create schema/i)).toBeInTheDocument();
     });
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  describe('editing an existing schema', () => {
+    const existingSchema: SchemaRecord = {
+      id: 'schema-1',
+      name: 'Blog Post',
+      slug: 'blog-post',
+      type: 'collection',
+      status: 'published',
+      version: 2,
+      definition: {
+        fields: [
+          {
+            apiId: 'title',
+            displayName: 'Title',
+            dataType: 'text',
+            isRequired: true,
+            isUnique: false,
+            isLocalized: false,
+            isRepeatable: false,
+            sortOrder: 0,
+          },
+        ],
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    it('pre-fills the form and disables slug/kind', () => {
+      renderForm(existingSchema);
+
+      expect(screen.getByLabelText('Name')).toHaveValue('Blog Post');
+      expect(screen.getByLabelText('Slug')).toHaveValue('blog-post');
+      expect(screen.getByLabelText('Slug')).toBeDisabled();
+      expect(screen.getByRole('combobox', { name: /kind/i })).toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: /save changes/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('calls updateSchema (not createSchema) with only name and fields on submit', async () => {
+      mockUpdateSchema.mockResolvedValue({ ...existingSchema, name: 'Post' });
+
+      const user = userEvent.setup();
+      renderForm(existingSchema);
+
+      await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+      await waitFor(() => {
+        expect(mockUpdateSchema).toHaveBeenCalledTimes(1);
+      });
+      expect(mockCreateSchema).not.toHaveBeenCalled();
+
+      const [id, payload] = mockUpdateSchema.mock.calls[0]!;
+      expect(id).toBe('schema-1');
+      expect(payload.name).toBe('Blog Post');
+      expect(payload.fields).toHaveLength(1);
+      expect(payload.fields[0]).toMatchObject({
+        apiId: 'title',
+        displayName: 'Title',
+        dataType: 'text',
+        sortOrder: 0,
+      });
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith(
+          '/content-types?updated=blog-post',
+        );
+      });
+    });
   });
 });
