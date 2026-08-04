@@ -37,6 +37,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const form = useForm<Record<string, unknown>>({
     resolver: zodResolver(zodSchema),
     defaultValues: buildDefaultValues(definition, entry?.data),
+    values: buildDefaultValues(definition, entry?.data),
   });
 
   function invalidateList() {

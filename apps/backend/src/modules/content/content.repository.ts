@@ -12,6 +12,7 @@ import { RecordNotFoundError } from '@repo/shared-db';
 import { DEFAULT_LOCALE } from '@repo/shared-types';
 import { ContentQueryOptions } from '../../types/content.types.js';
 import { InternalServerError } from '../../common/errors/http-error.js';
+import { isDeepStrictEqual } from 'node:util';
 
 export class ContentRepository {
   private get db() {
@@ -181,6 +182,11 @@ export class ContentRepository {
     userId: string,
     locale: string = DEFAULT_LOCALE,
   ) {
+    const currentEntry = await this.getEntryById(entryId, locale);
+    if (currentEntry && isDeepStrictEqual(currentEntry.data, data)) {
+      return currentEntry;
+    }
+
     await createEntryVersion(this.db, {
       entryId,
       locale,
