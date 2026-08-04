@@ -49,8 +49,14 @@ export function VersionHistoryDrawer({
     },
   });
 
-  const selectedVersion =
-    versions?.find((v) => v.id === selectedVersionId) || versions?.[0];
+  const foundIndex = versions?.findIndex((v) => v.id === selectedVersionId);
+  const selectedVersionIndex =
+    foundIndex !== undefined && foundIndex !== -1 ? foundIndex : 0;
+  const selectedVersion = versions?.[selectedVersionIndex] || versions?.[0];
+  const previousVersion =
+    versions && selectedVersionIndex + 1 < versions.length
+      ? versions[selectedVersionIndex + 1]
+      : null;
 
   const renderDiff = (oldText: string, newText: string) => {
     const changes = diffWordsWithSpace(oldText, newText);
@@ -123,13 +129,15 @@ export function VersionHistoryDrawer({
         </div>
         <div className="w-2/3 overflow-y-auto p-4 flex flex-col gap-4">
           <h3 className="font-semibold text-sm">
-            Diff: v{selectedVersion?.versionNo} &rarr; Current
+            Diff:{' '}
+            {previousVersion ? `v${previousVersion.versionNo}` : 'Initial'}{' '}
+            &rarr; v{selectedVersion?.versionNo}
           </h3>
 
           <div className="space-y-4">
             {Object.keys(currentEntry.data).map((key) => {
-              const currentVal = formatFieldValue(currentEntry.data[key]);
-              const oldVal = formatFieldValue(selectedVersion?.data?.[key]);
+              const currentVal = formatFieldValue(selectedVersion?.data?.[key]);
+              const oldVal = formatFieldValue(previousVersion?.data?.[key]);
 
               if (currentVal === oldVal) return null;
 
@@ -144,12 +152,12 @@ export function VersionHistoryDrawer({
             })}
 
             {Object.keys(currentEntry.data).every((key) => {
-              const currentVal = formatFieldValue(currentEntry.data[key]);
-              const oldVal = formatFieldValue(selectedVersion?.data?.[key]);
+              const currentVal = formatFieldValue(selectedVersion?.data?.[key]);
+              const oldVal = formatFieldValue(previousVersion?.data?.[key]);
               return currentVal === oldVal;
             }) && (
               <p className="text-sm text-muted-foreground italic">
-                No changes between these versions.
+                No changes in this version.
               </p>
             )}
           </div>
