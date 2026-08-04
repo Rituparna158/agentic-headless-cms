@@ -49,8 +49,9 @@ export function VersionHistoryDrawer({
     },
   });
 
+  const foundIndex = versions?.findIndex((v) => v.id === selectedVersionId);
   const selectedVersionIndex =
-    versions?.findIndex((v) => v.id === selectedVersionId) ?? 0;
+    foundIndex !== undefined && foundIndex !== -1 ? foundIndex : 0;
   const selectedVersion = versions?.[selectedVersionIndex] || versions?.[0];
   const previousVersion =
     versions && selectedVersionIndex + 1 < versions.length

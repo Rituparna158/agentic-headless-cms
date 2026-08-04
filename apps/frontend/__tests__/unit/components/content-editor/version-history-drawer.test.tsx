@@ -87,7 +87,7 @@ describe('VersionHistoryDrawer', () => {
     expect(await screen.findByText('v1')).toBeInTheDocument();
     expect(screen.getByText('v2')).toBeInTheDocument();
     expect(
-      screen.getByText((_, node) => node?.textContent === 'Diff: v1 → Current'),
+      screen.getByText((_, node) => node?.textContent === 'Diff: v2 → v1'),
     ).toBeInTheDocument();
   });
 
