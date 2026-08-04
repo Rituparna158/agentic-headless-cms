@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { SchemaRowActions } from './schema-row-actions';
 
 export function SchemaList() {
   const { data, isLoading, isError } = useQuery({
@@ -52,6 +53,9 @@ export function SchemaList() {
             <TableHead>Kind</TableHead>
             <TableHead>Fields</TableHead>
             <TableHead>Localized</TableHead>
+            <TableHead className="w-10">
+              <span className="sr-only">Actions</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -73,6 +77,9 @@ export function SchemaList() {
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {isLocalized ? 'Yes' : 'No'}
+                </TableCell>
+                <TableCell>
+                  <SchemaRowActions schema={schema} />
                 </TableCell>
               </TableRow>
             );

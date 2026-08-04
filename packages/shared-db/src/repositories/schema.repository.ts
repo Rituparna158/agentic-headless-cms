@@ -1,7 +1,12 @@
 import { eq } from 'drizzle-orm';
 import type { Database } from '../client.js';
 import { RecordNotFoundError } from '../errors.js';
-import { fields, schemas, schemaVersions } from '../schema/index.js';
+import {
+  fields,
+  schemas,
+  schemaVersions,
+  contentEntries,
+} from '../schema/index.js';
 import type { actorTypeEnum, schemaTypeEnum } from '../schema/enums.js';
 import { withTransaction } from '../transaction.js';
 
@@ -189,5 +194,26 @@ export async function updateSchema(
     });
 
     return updated;
+  });
+}
+
+export async function deleteSchema(
+  db: Database,
+  id: string,
+  force: boolean = false,
+): Promise<void> {
+  return withTransaction(db, async (tx) => {
+    if (force) {
+      await tx.delete(contentEntries).where(eq(contentEntries.schemaId, id));
+    }
+
+    const [deleted] = await tx
+      .delete(schemas)
+      .where(eq(schemas.id, id))
+      .returning({ id: schemas.id });
+
+    if (!deleted) {
+      throw new RecordNotFoundError(`Schema ${id} does not exist.`);
+    }
   });
 }

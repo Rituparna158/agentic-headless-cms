@@ -23,6 +23,10 @@ export class SchemaService {
   async update(id: string, input: UpdateSchemaInput, actorUserId: string) {
     return this.repository.update(id, { ...input, actorUserId });
   }
+
+  async delete(id: string, force: boolean = false) {
+    return this.repository.delete(id, force);
+  }
 }
 
 export const schemaService = new SchemaService();

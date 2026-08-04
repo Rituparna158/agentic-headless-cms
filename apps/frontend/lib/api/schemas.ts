@@ -25,3 +25,15 @@ export function updateSchema(
     body: JSON.stringify(input),
   });
 }
+
+export function deleteSchema(
+  id: string,
+  force: boolean = false,
+): Promise<void> {
+  const url = force
+    ? `/api/v1/schemas/${id}?force=true`
+    : `/api/v1/schemas/${id}`;
+  return apiFetch<void>(url, {
+    method: 'DELETE',
+  });
+}
