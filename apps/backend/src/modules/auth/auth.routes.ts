@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { authenticateToken } from '../../common/middlewares/auth.middleware.js';
+import { authenticateToken } from '@repo/middlewares';
 import {
   acceptInvite,
   getCurrentUser,
