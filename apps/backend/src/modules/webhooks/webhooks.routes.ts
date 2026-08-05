@@ -4,10 +4,7 @@ import {
   createWebhook,
   deleteWebhook,
 } from './webhooks.controller.js';
-import {
-  authenticateToken,
-  requireAdmin,
-} from '../../common/middlewares/auth.middleware.js';
+import { authenticateToken, requireAdmin } from '@repo/middlewares';
 
 export const webhooksRouter = Router();
 

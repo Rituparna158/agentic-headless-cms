@@ -1,58 +1,62 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, RequestHandler } from 'express';
 import { WebhooksService } from './webhooks.service.js';
-import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/shared-types';
+import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/constants';
+import { asyncHandler, BadRequestError, ApiResponse } from '@repo/utils';
+import { logger } from '@repo/logger';
 
 const webhooksService = new WebhooksService();
 
-export const listWebhooks = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const listWebhooks: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('WebhooksController: listWebhooks start');
     const webhooks = await webhooksService.list();
-    res.json(webhooks);
-  } catch (error) {
-    next(error);
-  }
-};
+    logger.debug(
+      { count: webhooks.length },
+      'WebhooksController: listWebhooks success',
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, webhooks, 'Webhooks listed successfully'));
+  },
+);
 
-export const createWebhook = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const createWebhook: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
     const body = req.body as {
       name: string;
       url: string;
       events: string[];
       isActive?: boolean;
     };
+    logger.info(
+      { name: body.name, url: body.url },
+      'WebhooksController: createWebhook start',
+    );
 
     if (!body.name || !body.url || !body.events?.length) {
-      res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: ERROR_MESSAGES.WEBHOOKS.NAME_URL_EVENTS_REQUIRED });
-      return;
+      logger.warn('WebhooksController: createWebhook missing required fields');
+      throw new BadRequestError(
+        ERROR_MESSAGES.WEBHOOKS.NAME_URL_EVENTS_REQUIRED,
+      );
     }
 
     const webhook = await webhooksService.create(body);
-    res.status(HTTP_STATUS.CREATED).json(webhook);
-  } catch (error) {
-    next(error);
-  }
-};
+    logger.debug(
+      { id: webhook!.id },
+      'WebhooksController: createWebhook success',
+    );
+    res
+      .status(HTTP_STATUS.CREATED)
+      .json(new ApiResponse(201, webhook, 'Webhook created successfully'));
+  },
+);
 
-export const deleteWebhook = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    await webhooksService.delete(req.params.id as string);
+export const deleteWebhook: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'WebhooksController: deleteWebhook start');
+    await webhooksService.delete(id as string);
+    logger.debug({ id }, 'WebhooksController: deleteWebhook success');
     res.status(HTTP_STATUS.NO_CONTENT).send();
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
