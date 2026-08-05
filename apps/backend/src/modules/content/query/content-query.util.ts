@@ -1,8 +1,8 @@
 import { SQL, and, asc, desc, or, sql } from 'drizzle-orm';
-import type { SchemaField } from '@repo/shared-types';
+import type { SchemaField } from '@repo/types';
 import { contentEntries, entryLocalizations } from '@repo/shared-db';
-import { BadRequestError } from '../../../common/errors/http-error.js';
-import { ContentQueryOptions } from '../../../types/content.types.js';
+import { BadRequestError } from '@repo/utils';
+import { ContentQueryOptions } from '@repo/types';
 
 const FILTER_OPERATORS = [
   '$eq',
@@ -16,17 +16,15 @@ const FILTER_OPERATORS = [
 ] as const;
 type FilterOperator = (typeof FILTER_OPERATORS)[number];
 
-// Comparison operators only make sense against types with a real ordering —
-// applying $lt/$gt to, say, a UUID relation field would silently do a
-// lexicographic string compare, which looks plausible but is meaningless.
+// Orderable data types
 const ORDERABLE_DATA_TYPES = new Set(['number', 'date', 'datetime']);
-// $contains is a substring match — only sensible against free text.
+// Text data types
 const TEXT_DATA_TYPES = new Set(['text', 'richtext']);
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
 
-/** Sortable columns that live on `content_entries` directly, not in JSONB `data`. */
+/** Base columns */
 const SORTABLE_BASE_COLUMNS = {
   createdAt: contentEntries.createdAt,
   updatedAt: contentEntries.updatedAt,
@@ -40,12 +38,7 @@ function findField(fields: SchemaField[], apiId: string): SchemaField {
   return field;
 }
 
-/**
- * Builds the SQL expression that reads a JSONB field out of
- * entry_localizations.data, cast to the type appropriate for comparison.
- * `->>'key'` always yields text; casting is what lets `$gt`/`$lt` compare
- * numbers and dates numerically/chronologically instead of lexicographically.
- */
+/** Build JSONB field expression */
 function jsonFieldExpr(field: SchemaField): SQL {
   const raw = sql`(${entryLocalizations.data} ->> ${field.apiId})`;
   switch (field.dataType) {
@@ -116,12 +109,7 @@ function buildComparison(
   }
 }
 
-/**
- * `req.query.filters` (with the 'extended' query parser) is a nested object
- * like `{ title: { $eq: 'Hello' }, views: { $gte: '10' } }`. Values arrive
- * as strings regardless of the field's real type — casting happens in SQL
- * (see jsonFieldExpr), not here.
- */
+/** Parse filters */
 function parseFilters(
   filters: unknown,
   fields: SchemaField[],
@@ -159,13 +147,7 @@ function parseFilters(
   return clauses.length > 0 ? and(...clauses) : undefined;
 }
 
-/**
- * `?sort=title:asc,createdAt:desc` — comma-separated `field:direction` pairs.
- * Direction defaults to `asc` when omitted. `createdAt`/`updatedAt` sort on
- * the real column; anything else is assumed to be a schema field and sorts
- * on the cast JSONB expression (so numeric/date fields sort correctly, not
- * lexicographically).
- */
+/** Parse sort options */
 function parseSort(
   sortParam: unknown,
   fields: SchemaField[],
