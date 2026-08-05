@@ -1,4 +1,5 @@
-import type { AuthenticatedUser, LoginInput } from '@repo/shared-types';
+import type { AuthenticatedUser, LoginInput } from '@repo/types';
+import { API_PATHS } from '@/lib/constants/api-paths';
 import { apiFetch } from '@/lib/api-client';
 
 /**
@@ -10,7 +11,7 @@ import { apiFetch } from '@/lib/api-client';
  * further changes are needed here once the backend route exists.
  */
 export function login(input: LoginInput): Promise<AuthenticatedUser> {
-  return apiFetch<AuthenticatedUser>('/api/v1/auth/login', {
+  return apiFetch<AuthenticatedUser>(API_PATHS.AUTH.LOGIN, {
     method: 'POST',
     body: JSON.stringify(input),
   });
@@ -18,7 +19,7 @@ export function login(input: LoginInput): Promise<AuthenticatedUser> {
 
 /** Calls the route issue #12 is planned to add: POST /api/v1/auth/logout. */
 export function logout(): Promise<void> {
-  return apiFetch<void>('/api/v1/auth/logout', { method: 'POST' });
+  return apiFetch<void>(API_PATHS.AUTH.LOGOUT, { method: 'POST' });
 }
 
 /**
@@ -29,5 +30,5 @@ export function logout(): Promise<void> {
  * already exists.
  */
 export function getCurrentUser(): Promise<AuthenticatedUser> {
-  return apiFetch<AuthenticatedUser>('/api/v1/auth/me');
+  return apiFetch<AuthenticatedUser>(API_PATHS.AUTH.ME);
 }

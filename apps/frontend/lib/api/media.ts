@@ -1,10 +1,11 @@
 import { API_BASE_URL, ApiError, apiFetch } from '@/lib/api-client';
+import { API_PATHS } from '@/lib/constants/api-paths';
 
 import type {
   ListMediaOptions,
   ListMediaResult,
   MediaAsset,
-} from '@repo/shared-types';
+} from '@repo/types';
 
 /** The asset `url` the backend returns (e.g. "/media/file/<key>") is relative to the API host, not the frontend's. */
 export function mediaFileUrl(asset: MediaAsset): string {
@@ -23,11 +24,11 @@ export function listMedia(
   options: ListMediaOptions = {},
 ): Promise<ListMediaResult> {
   const qs = buildQueryString(options);
-  return apiFetch<ListMediaResult>(`/api/v1/media${qs ? `?${qs}` : ''}`);
+  return apiFetch<ListMediaResult>(API_PATHS.MEDIA.BASE(qs));
 }
 
 export function deleteMedia(id: string): Promise<void> {
-  return apiFetch<void>(`/api/v1/media/${id}`, { method: 'DELETE' });
+  return apiFetch<void>(API_PATHS.MEDIA.BY_ID(id), { method: 'DELETE' });
 }
 
 /**
@@ -47,7 +48,7 @@ export async function uploadMedia(
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/v1/media`, {
+    response = await fetch(`${API_BASE_URL}${API_PATHS.MEDIA.BASE()}`, {
       method: 'POST',
       credentials: 'include',
       body: formData,

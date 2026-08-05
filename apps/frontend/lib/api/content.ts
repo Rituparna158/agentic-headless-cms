@@ -3,7 +3,8 @@ import type {
   ContentVersionRecord,
   ListContentEntriesOptions,
   ListContentEntriesResult,
-} from '@repo/shared-types';
+} from '@repo/types';
+import { API_PATHS } from '@/lib/constants/api-paths';
 
 import { apiFetch } from '@/lib/api-client';
 
@@ -29,90 +30,81 @@ export function listContentEntries(
 ): Promise<ListContentEntriesResult> {
   const qs = buildQueryString(options);
   return apiFetch<ListContentEntriesResult>(
-    `/api/v1/content/${schemaSlug}${qs ? `?${qs}` : ''}`,
+    API_PATHS.CONTENT.BASE(schemaSlug, qs),
   );
 }
 
-export async function getContentEntry(
+export function getContentEntry(
   schemaSlug: string,
   entryId: string,
 ): Promise<ContentEntryRecord> {
-  const { data } = await apiFetch<{ data: ContentEntryRecord }>(
-    `/api/v1/content/${schemaSlug}/${entryId}`,
+  return apiFetch<ContentEntryRecord>(
+    API_PATHS.CONTENT.BY_ID(schemaSlug, entryId),
   );
-  return data;
 }
 
-export async function createContentEntry(
+export function createContentEntry(
   schemaSlug: string,
   data: Record<string, unknown>,
 ): Promise<ContentEntryRecord> {
-  const response = await apiFetch<{ data: ContentEntryRecord }>(
-    `/api/v1/content/${schemaSlug}`,
-    {
-      method: 'POST',
-      body: JSON.stringify(data),
-    },
-  );
-  return response.data;
+  return apiFetch<ContentEntryRecord>(API_PATHS.CONTENT.BASE(schemaSlug), {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
-export async function updateContentEntry(
+export function updateContentEntry(
   schemaSlug: string,
   entryId: string,
   data: Record<string, unknown>,
 ): Promise<ContentEntryRecord> {
-  const response = await apiFetch<{ data: ContentEntryRecord }>(
-    `/api/v1/content/${schemaSlug}/${entryId}`,
+  return apiFetch<ContentEntryRecord>(
+    API_PATHS.CONTENT.BY_ID(schemaSlug, entryId),
     {
       method: 'PUT',
       body: JSON.stringify(data),
     },
   );
-  return response.data;
 }
 
-export async function publishContentEntry(
+export function publishContentEntry(
   schemaSlug: string,
   entryId: string,
 ): Promise<ContentEntryRecord> {
-  const response = await apiFetch<{ data: ContentEntryRecord }>(
-    `/api/v1/content/${schemaSlug}/${entryId}/publish`,
+  return apiFetch<ContentEntryRecord>(
+    API_PATHS.CONTENT.PUBLISH(schemaSlug, entryId),
     { method: 'POST' },
   );
-  return response.data;
 }
 
 export function deleteContentEntry(
   schemaSlug: string,
   entryId: string,
 ): Promise<void> {
-  return apiFetch<void>(`/api/v1/content/${schemaSlug}/${entryId}`, {
+  return apiFetch<void>(API_PATHS.CONTENT.BY_ID(schemaSlug, entryId), {
     method: 'DELETE',
   });
 }
 
-export async function revertContentEntry(
+export function revertContentEntry(
   schemaSlug: string,
   entryId: string,
   versionNo: number,
 ): Promise<ContentEntryRecord> {
-  const response = await apiFetch<{ data: ContentEntryRecord }>(
-    `/api/v1/content/${schemaSlug}/${entryId}/revert`,
+  return apiFetch<ContentEntryRecord>(
+    API_PATHS.CONTENT.REVERT(schemaSlug, entryId),
     {
       method: 'POST',
       body: JSON.stringify({ versionNo }),
     },
   );
-  return response.data;
 }
 
-export async function listContentVersions(
+export function listContentVersions(
   schemaSlug: string,
   entryId: string,
 ): Promise<ContentVersionRecord[]> {
-  const { data } = await apiFetch<{ data: ContentVersionRecord[] }>(
-    `/api/v1/content/${schemaSlug}/${entryId}/versions`,
+  return apiFetch<ContentVersionRecord[]>(
+    API_PATHS.CONTENT.VERSIONS(schemaSlug, entryId),
   );
-  return data;
 }

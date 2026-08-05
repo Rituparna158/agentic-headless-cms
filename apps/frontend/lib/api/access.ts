@@ -1,13 +1,14 @@
-import type { RoleRecord, TokenRecord, UserRecord } from '@repo/shared-types';
+import type { RoleRecord, TokenRecord, UserRecord } from '@repo/types';
+import { API_PATHS } from '@/lib/constants/api-paths';
 
 import { apiFetch } from '@/lib/api-client';
 
 export function listRoles(): Promise<RoleRecord[]> {
-  return apiFetch<RoleRecord[]>('/api/v1/access/roles');
+  return apiFetch<RoleRecord[]>(API_PATHS.ACCESS.ROLES);
 }
 
 export function createRole(data: Partial<RoleRecord>): Promise<RoleRecord> {
-  return apiFetch<RoleRecord>('/api/v1/access/roles', {
+  return apiFetch<RoleRecord>(API_PATHS.ACCESS.ROLES, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -17,18 +18,18 @@ export function updateRole(
   id: string,
   data: Partial<RoleRecord>,
 ): Promise<RoleRecord> {
-  return apiFetch<RoleRecord>(`/api/v1/access/roles/${id}`, {
+  return apiFetch<RoleRecord>(API_PATHS.ACCESS.ROLE(id), {
     method: 'PUT',
     body: JSON.stringify(data),
   });
 }
 
 export function deleteRole(id: string): Promise<void> {
-  return apiFetch<void>(`/api/v1/access/roles/${id}`, { method: 'DELETE' });
+  return apiFetch<void>(API_PATHS.ACCESS.ROLE(id), { method: 'DELETE' });
 }
 
 export function listUsers(): Promise<UserRecord[]> {
-  return apiFetch<UserRecord[]>('/api/v1/access/users');
+  return apiFetch<UserRecord[]>(API_PATHS.ACCESS.USERS);
 }
 
 export function inviteUser(data: {
@@ -37,23 +38,23 @@ export function inviteUser(data: {
   lastName?: string;
   roleId?: string;
 }): Promise<{ message: string; user: UserRecord; inviteUrl?: string }> {
-  return apiFetch('/api/v1/access/users/invite', {
+  return apiFetch(API_PATHS.ACCESS.INVITE, {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
 export function listTokens(): Promise<TokenRecord[]> {
-  return apiFetch<TokenRecord[]>('/api/v1/access/tokens');
+  return apiFetch<TokenRecord[]>(API_PATHS.ACCESS.TOKENS);
 }
 
 export function createToken(data: Partial<TokenRecord>): Promise<TokenRecord> {
-  return apiFetch<TokenRecord>('/api/v1/access/tokens', {
+  return apiFetch<TokenRecord>(API_PATHS.ACCESS.TOKENS, {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
 export function revokeToken(id: string): Promise<void> {
-  return apiFetch<void>(`/api/v1/access/tokens/${id}`, { method: 'DELETE' });
+  return apiFetch<void>(API_PATHS.ACCESS.TOKEN(id), { method: 'DELETE' });
 }
