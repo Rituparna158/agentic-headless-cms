@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import Image from 'next/image';
 import type { MediaPickerFieldProps } from '@/types/component.types';
 import type { MediaAsset } from '@repo/types';
 import { MediaLibrary } from './media-library';
@@ -65,11 +66,13 @@ export function MediaPickerField({
             )}
           >
             {/* Thumbnail */}
-            <div className="size-16 shrink-0 overflow-hidden rounded-md bg-muted">
-              <img
+            <div className="size-16 shrink-0 relative overflow-hidden rounded-md bg-muted">
+              <Image
+                unoptimized
+                fill
                 src={mediaFileUrl(selected)}
                 alt={selected.altText ?? selected.filename}
-                className="size-full object-cover"
+                className="object-cover"
               />
             </div>
 

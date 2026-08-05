@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRightIcon } from 'lucide-react';
+import Image from 'next/image';
 import { getMediaAsset, mediaFileUrl } from '@/lib/api/media';
 
 /**
@@ -35,7 +36,10 @@ export function MediaVersionDiff({
     <div className="flex flex-col items-center gap-1">
       <span className="text-muted-foreground text-xs font-medium">{label}</span>
       {asset?.data ? (
-        <img
+        <Image
+          unoptimized
+          width={96}
+          height={96}
           src={mediaFileUrl(asset.data)}
           alt={asset.data.filename}
           className="border rounded-md object-cover size-24"

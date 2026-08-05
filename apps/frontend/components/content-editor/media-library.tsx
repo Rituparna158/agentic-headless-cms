@@ -8,6 +8,8 @@ import { listMedia, mediaFileUrl } from '@/lib/api/media';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import type { MediaAsset } from '@repo/types';
+import Image from 'next/image';
+
 import type { MediaLibraryProps } from '@/types/component.types';
 
 export function MediaLibrary({ selectedId, onSelect }: MediaLibraryProps) {
@@ -79,10 +81,12 @@ export function MediaLibrary({ selectedId, onSelect }: MediaLibraryProps) {
               >
                 {/* Thumbnail */}
                 <div className="relative aspect-square w-full overflow-hidden bg-muted">
-                  <img
+                  <Image
+                    unoptimized
+                    fill
                     src={mediaFileUrl(asset)}
                     alt={asset.altText ?? asset.filename}
-                    className="size-full object-cover transition-transform group-hover:scale-105"
+                    className="object-cover transition-transform group-hover:scale-105"
                   />
 
                   {/* Selected overlay */}

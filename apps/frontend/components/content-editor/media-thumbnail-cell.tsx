@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import { getMediaAsset, mediaFileUrl } from '@/lib/api/media';
 
 export function MediaThumbnailCell({
@@ -23,7 +24,10 @@ export function MediaThumbnailCell({
   }
 
   return (
-    <img
+    <Image
+      unoptimized
+      width={40}
+      height={40}
       src={mediaFileUrl(data.data)}
       alt={alt}
       className="size-10 rounded object-cover"
