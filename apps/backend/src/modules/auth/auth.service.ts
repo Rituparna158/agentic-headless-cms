@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
@@ -59,7 +58,7 @@ export class AuthService {
         actorUserId: user.id,
         actorAgentId: undefined,
         beforeState: null,
-        afterState: { email: user.email } as any,
+        afterState: { email: user.email },
         context,
       });
 
@@ -133,8 +132,8 @@ export class AuthService {
         resourceId: user.id,
         actorUserId: user.id,
         actorAgentId: undefined,
-        beforeState: { status: 'invited' } as any,
-        afterState: { status: 'active' } as any,
+        beforeState: { status: 'invited' },
+        afterState: { status: 'active' },
         context,
       });
     } catch (error) {

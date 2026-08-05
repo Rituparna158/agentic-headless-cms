@@ -32,7 +32,7 @@ export const login: RequestHandler = asyncHandler(
 );
 
 export const logout: RequestHandler = asyncHandler(
-  async (req: Request, res: Response) => {
+  (req: Request, res: Response) => {
     logger.info('AuthController: logout start');
     res.clearCookie(AUTH_COOKIES.NAME, {
       httpOnly: true,
@@ -45,7 +45,7 @@ export const logout: RequestHandler = asyncHandler(
 );
 
 export const getCurrentUser: RequestHandler = asyncHandler(
-  async (req: Request, res: Response) => {
+  (req: Request, res: Response) => {
     logger.info('AuthController: getCurrentUser start');
     if (!req.user) {
       logger.warn('AuthController: getCurrentUser user not authenticated');
