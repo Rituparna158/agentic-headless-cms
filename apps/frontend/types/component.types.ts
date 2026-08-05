@@ -1,11 +1,11 @@
 import type * as React from 'react';
 import type { Control, FieldValues } from 'react-hook-form';
+import type { createSchemaSchema } from '@repo/validation';
 import type {
-  createSchemaSchema,
   ContentEntryRecord,
   SchemaField,
   SchemaRecord,
-} from '@repo/shared-types';
+} from '@repo/types';
 import type { z } from 'zod';
 
 export type SchemaBuilderFieldValues = z.input<typeof createSchemaSchema>;

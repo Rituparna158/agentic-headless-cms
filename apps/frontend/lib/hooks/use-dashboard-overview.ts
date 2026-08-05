@@ -24,11 +24,12 @@ export function useDashboardOverview() {
     queryKey: ['schemas'],
     queryFn: listSchemas,
   });
-  const schemas = schemasQuery.data ?? [];
+  const schemas = schemasQuery.isSuccess ? schemasQuery.data : [];
+  console.log('raw schemas data:', schemasQuery.data);
 
   const entriesQuery = useQuery({
     queryKey: ['dashboard-overview', schemas.map((s) => s.slug)],
-    enabled: schemasQuery.isSuccess,
+    enabled: schemasQuery.isSuccess && schemas.length > 0,
     queryFn: async () => {
       const perSchema = await Promise.all(
         schemas.map((schema) =>

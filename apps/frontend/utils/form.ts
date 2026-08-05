@@ -1,4 +1,4 @@
-import type { SchemaDefinition } from '@repo/shared-types';
+import type { SchemaDefinition } from '@repo/types';
 
 export function buildDefaultValues(
   definition: SchemaDefinition,
