@@ -8,12 +8,7 @@ import { webhooksRouter } from '../modules/webhooks/webhooks.routes.js';
 import { localesRouter } from '../modules/locales/locales.routes.js';
 import { schemaRouter } from '../modules/schemas/schema.routes.js';
 
-/**
- * Versioned API router — feature modules (content, schema, media, auth,
- * etc.) mount their routers here as they're built. Health checks are
- * intentionally not under this prefix: Kubernetes probes and most
- * monitoring tooling expect unversioned `/health/*` paths.
- */
+// Versioned API router
 export const apiRouter = Router();
 
 apiRouter.use('/auth', authRouter);
