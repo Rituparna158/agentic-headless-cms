@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ERROR_MESSAGES } from '@repo/constants';
 import { getStorageAdapter } from '@repo/config';
 import { NotFoundError, ApiError } from '@repo/utils';
@@ -67,7 +66,7 @@ export class MediaService {
         actorUserId: actorUserId || input.actorUserId,
         actorAgentId,
         beforeState: null,
-        afterState: asset as any,
+        afterState: asset,
         context,
       });
 
@@ -164,7 +163,7 @@ export class MediaService {
         resourceId: id,
         actorUserId,
         actorAgentId,
-        beforeState: asset as any,
+        beforeState: asset,
         afterState: null,
         context,
       });

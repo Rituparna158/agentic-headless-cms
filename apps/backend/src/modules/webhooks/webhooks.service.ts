@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import crypto from 'node:crypto';
 import { WebhooksRepository } from '@repo/repository';
 import { CreateWebhookInput } from '@repo/types';
@@ -55,7 +54,7 @@ export class WebhooksService {
           name: result!.name,
           url: result!.url,
           events: result!.events,
-        } as any,
+        },
         context,
       });
 
@@ -84,7 +83,7 @@ export class WebhooksService {
         resourceId: id,
         actorUserId,
         actorAgentId,
-        beforeState: beforeState as any,
+        beforeState: beforeState,
         afterState: null,
         context,
       });

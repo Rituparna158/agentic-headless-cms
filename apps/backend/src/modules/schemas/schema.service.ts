@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/types';
 import { SchemaRepository } from '@repo/repository';
 import { logger } from '@repo/logger';
@@ -39,7 +38,7 @@ export class SchemaService {
         actorUserId: ctxUserId || actorUserId,
         actorAgentId,
         beforeState: null,
-        afterState: result as any,
+        afterState: result,
         context,
       });
 
@@ -98,8 +97,8 @@ export class SchemaService {
         resourceId: id,
         actorUserId: ctxUserId || actorUserId,
         actorAgentId,
-        beforeState: beforeState as any,
-        afterState: result as any,
+        beforeState: beforeState,
+        afterState: result,
         context,
       });
 
@@ -131,7 +130,7 @@ export class SchemaService {
         resourceId: id,
         actorUserId,
         actorAgentId,
-        beforeState: beforeState as any,
+        beforeState: beforeState,
         afterState: null,
         context,
       });
