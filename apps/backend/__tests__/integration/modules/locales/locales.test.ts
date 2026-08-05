@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
-import { env } from '../../../../src/config/env.js';
-import { ERROR_MESSAGES } from '@repo/shared-types';
+import { env } from '@repo/config';
+import { ERROR_MESSAGES } from '@repo/constants';
 import { LocalesService } from '../../../../src/modules/locales/locales.service.js';
 
 vi.mock('../../../../src/modules/locales/locales.service.js', () => {
@@ -57,7 +57,7 @@ describe('Locales Module', () => {
         .get('/api/v1/locales')
         .set('Cookie', [`token=${adminToken}`]);
       expect(res.status).toBe(200);
-      expect(res.body[0].code).toBe('en');
+      expect(res.body.data[0].code).toBe('en');
     });
   });
 
@@ -68,7 +68,9 @@ describe('Locales Module', () => {
         .set('Cookie', [`token=${adminToken}`])
         .send({ code: 'fr-FR' });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe(ERROR_MESSAGES.LOCALES.CODE_NAME_REQUIRED);
+      expect(res.body.error.message).toBe(
+        ERROR_MESSAGES.LOCALES.CODE_NAME_REQUIRED,
+      );
     });
 
     it('should create a locale', async () => {
@@ -77,7 +79,7 @@ describe('Locales Module', () => {
         .set('Cookie', [`token=${adminToken}`])
         .send({ code: 'fr-FR', name: 'French' });
       expect(res.status).toBe(201);
-      expect(res.body.code).toBe('fr-FR');
+      expect(res.body.data.code).toBe('fr-FR');
     });
 
     it('should return 409 when the code already exists', async () => {
@@ -91,7 +93,9 @@ describe('Locales Module', () => {
         .send({ code: 'en', name: 'English (again)' });
 
       expect(res.status).toBe(409);
-      expect(res.body.error).toBe(ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS);
+      expect(res.body.error.message).toBe(
+        ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS,
+      );
     });
 
     it('should reject non-admin users', async () => {

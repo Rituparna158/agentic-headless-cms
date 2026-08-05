@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseContentQuery } from '../../../../src/modules/content/query/content-query.util.js';
-import type { SchemaField } from '@repo/shared-types';
+import type { SchemaField } from '@repo/types';
 
 const fields: SchemaField[] = [
   {

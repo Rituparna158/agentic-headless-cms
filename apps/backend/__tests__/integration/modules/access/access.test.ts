@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
-import { env } from '../../../../src/config/env.js';
+import { env } from '@repo/config';
 
 vi.mock('../../../../src/modules/access/access.service.js', () => {
   const AccessService = vi.fn();
@@ -73,8 +73,8 @@ describe('Access Module', () => {
         .get('/api/v1/access/roles')
         .set('Cookie', [`token=${validToken}`]);
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].name).toBe('Admin');
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].name).toBe('Admin');
     });
   });
 
@@ -93,7 +93,7 @@ describe('Access Module', () => {
         .set('Cookie', [`token=${validToken}`])
         .send({ name: 'Editor', permissions: [] });
       expect(res.status).toBe(201);
-      expect(res.body.name).toBe('Editor');
+      expect(res.body.data.name).toBe('Editor');
     });
   });
 
@@ -121,8 +121,8 @@ describe('Access Module', () => {
         .send({ email: 'invitee@example.com', roleId: 'role-1' });
 
       expect(res.status).toBe(201);
-      expect(res.body.inviteUrl).toContain('token=abc123');
-      expect(res.body.user.email).toBe('invitee@example.com');
+      expect(res.body.data.inviteUrl).toContain('token=abc123');
+      expect(res.body.data.user.email).toBe('invitee@example.com');
     });
   });
 
@@ -142,8 +142,8 @@ describe('Access Module', () => {
         .send({ name: 'My Token' });
 
       expect(res.status).toBe(201);
-      expect(res.body.name).toBe('New Token');
-      expect(res.body.rawToken).toBe('abc');
+      expect(res.body.data.name).toBe('New Token');
+      expect(res.body.data.rawToken).toBe('abc');
     });
   });
 
@@ -160,7 +160,7 @@ describe('Access Module', () => {
         .delete('/api/v1/access/tokens/t1')
         .set('Cookie', [`token=${validToken}`]);
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
+      expect(res.body.data.success).toBe(true);
     });
   });
 });

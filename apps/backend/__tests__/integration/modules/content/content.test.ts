@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
-import { env } from '../../../../src/config/env.js';
+import { env } from '@repo/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
 
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
@@ -48,11 +50,18 @@ const { repoMocks } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../../../src/modules/content/content.repository.js', () => {
+vi.mock('@repo/repository', () => {
   return {
     ContentRepository: vi.fn().mockImplementation(function () {
       return repoMocks;
     }),
+    MediaRepository: vi.fn().mockImplementation(class {}),
+    SchemaRepository: vi.fn().mockImplementation(class {}),
+    AuditRepository: vi.fn().mockImplementation(class {}),
+    AccessRepository: vi.fn().mockImplementation(class {}),
+    LocalesRepository: vi.fn().mockImplementation(class {}),
+    WebhooksRepository: vi.fn().mockImplementation(class {}),
+    authRepository: {},
   };
 });
 
@@ -163,7 +172,7 @@ describe('Content API', () => {
       .set('Cookie', [`token=${adminToken}`]);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(Array.isArray(res.body.data.data)).toBe(true);
   });
 
   it('should create a new content draft', async () => {
