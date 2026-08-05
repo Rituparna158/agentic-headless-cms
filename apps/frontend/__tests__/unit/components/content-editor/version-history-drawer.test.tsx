@@ -1,7 +1,4 @@
-import type {
-  ContentEntryRecord,
-  ContentVersionRecord,
-} from '@repo/shared-types';
+import type { ContentEntryRecord, ContentVersionRecord } from '@repo/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

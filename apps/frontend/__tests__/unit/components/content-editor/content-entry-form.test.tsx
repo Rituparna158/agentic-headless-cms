@@ -1,5 +1,5 @@
-import type { SchemaDefinition } from '@repo/shared-types';
-import type { ContentEntryRecord, SchemaRecord } from '@repo/shared-types';
+import type { SchemaDefinition } from '@repo/types';
+import type { ContentEntryRecord, SchemaRecord } from '@repo/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

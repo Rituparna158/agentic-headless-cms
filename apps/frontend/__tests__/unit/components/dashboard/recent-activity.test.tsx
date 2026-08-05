@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { SchemaDefinition } from '@repo/shared-types';
+import type { SchemaDefinition } from '@repo/types';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 
 const { mockListSchemas, mockListContentEntries } = vi.hoisted(() => ({
