@@ -9,7 +9,9 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 - **apps/frontend**: The frontend dashboard built with Next.js, Tailwind CSS, and shadcn/ui.
 - **apps/backend**: The core backend API built with Express.
 - **packages/shared-db**: Database schemas, ORM logic (Drizzle), and migrations.
-- **packages/shared-types**: Shared TypeScript types and Zod validation schemas.
+- **packages/types**: Shared compile-time TypeScript interfaces and definitions.
+- **packages/validation**: Zod validation schemas and dynamic compilers.
+- **packages/constants**: Shared runtime constants (error messages, HTTP status codes, cookies, email templates).
 - **packages/eslint-config**: Shared ESLint configuration.
 - **packages/typescript-config**: Shared TypeScript configuration.
 

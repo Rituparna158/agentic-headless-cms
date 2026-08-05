@@ -1,5 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
+  "concurrency": "20",
   "ui": "tui",
   "globalEnv": [
     "NODE_ENV",
@@ -15,7 +16,9 @@
     "SEED_ADMIN_PASSWORD",
     "E2E_FRONTEND_URL",
     "E2E_BACKEND_URL",
-    "E2E_DATABASE_URL"
+    "E2E_DATABASE_URL",
+    "API_INTERNAL_URL",
+    "NEXT_PUBLIC_API_URL"
   ],
   "tasks": {
     "build": {
