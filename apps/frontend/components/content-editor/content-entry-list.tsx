@@ -1,6 +1,6 @@
 'use client';
 
-import type { SchemaDefinition } from '@repo/shared-types';
+import type { SchemaDefinition } from '@repo/types';
 import {
   keepPreviousData,
   useMutation,

@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { deleteSchema } from '@/lib/api/schemas';
-import type { SchemaRecord } from '@repo/shared-types';
+import type { SchemaRecord } from '@repo/types';
 
 export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
   const queryClient = useQueryClient();

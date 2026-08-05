@@ -13,12 +13,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  type CreateSchemaInput,
-  createSchemaSchema,
-  schemaTypeValues,
-  type SchemaRecord,
-} from '@repo/shared-types';
+import { createSchemaSchema, schemaTypeValues } from '@repo/validation';
+import { type CreateSchemaInput, type SchemaRecord } from '@repo/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';

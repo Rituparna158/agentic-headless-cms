@@ -1,6 +1,6 @@
 'use client';
 
-import type { MediaAsset } from '@repo/shared-types';
+import type { MediaAsset } from '@repo/types';
 import {
   keepPreviousData,
   useMutation,
