@@ -1,15 +1,8 @@
 import type { GraphQLFormattedError } from 'graphql';
 import { unwrapResolverError } from '@apollo/server/errors';
-import { HttpError } from '../../common/errors/http-error.js';
+import { HttpError } from '@repo/utils';
 
-/**
- * Apollo's default error formatting reports every resolver-thrown error as
- * `extensions.code: "INTERNAL_SERVER_ERROR"` — a client can't distinguish
- * "you're not allowed to do this" from "the server crashed" without this.
- * Resolvers throw the same HttpError subclasses the REST layer's error
- * handler understands (see graphql.context.ts's assertPermission), so this
- * maps them to conventional GraphQL error codes instead.
- */
+// Format GraphQL error codes
 export function formatGraphQLError(
   formattedError: GraphQLFormattedError,
   error: unknown,

@@ -1,20 +1,10 @@
-import { ERROR_MESSAGES } from '@repo/shared-types';
+import { ERROR_MESSAGES } from '@repo/constants';
 import { authService } from '../auth/auth.service.js';
-import { hasPermission } from '../../utils/rbac.util.js';
-import {
-  ForbiddenError,
-  UnauthorizedError,
-} from '../../common/errors/http-error.js';
+import { hasPermission } from '@repo/middlewares';
+import { ForbiddenError, UnauthorizedError } from '@repo/utils';
 import { GraphQLContext } from '../../types/graphql.types.js';
 
-/**
- * Resolver-side equivalent of the REST layer's requirePermission
- * middleware — GraphQL has one HTTP endpoint for many operations, so RBAC
- * can't be applied at the route level and has to be checked inside each
- * resolver instead. Throws HttpError subclasses; Apollo reports them via
- * the response's `errors[]` with their message, same as the REST error
- * handler would for the equivalent operation.
- */
+/** Check GraphQL permissions */
 export async function assertPermission(
   context: GraphQLContext,
   action: string,

@@ -4,17 +4,10 @@ import {
   GraphQLID,
   GraphQLString,
 } from 'graphql';
-import type { SchemaField } from '@repo/shared-types';
+import type { SchemaField } from '@repo/types';
 import { jsonScalarConfig } from './json-scalar.js';
 
-/**
- * Maps a schema field's dataType to the GraphQL type used both for the
- * generated content type's fields and (via isRequired/isRepeatable) its
- * nullability/list wrapping. Dates are represented as ISO-8601 strings
- * rather than a custom Date scalar — the REST API already returns them the
- * same way, so this keeps the two delivery surfaces consistent without
- * introducing a scalar with its own parsing edge cases.
- */
+// Map schema field to GraphQL type
 function baseTypeName(field: SchemaField): string {
   switch (field.dataType) {
     case 'number':
@@ -38,7 +31,7 @@ function baseTypeName(field: SchemaField): string {
   }
 }
 
-/** graphql-compose accepts type specs as strings like 'String!' / '[String]'. */
+// Format field type spec
 export function fieldTypeSpec(field: SchemaField): string {
   const base = baseTypeName(field);
   const withList = field.isRepeatable ? `[${base}]` : base;

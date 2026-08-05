@@ -1,6 +1,6 @@
 import pluralize from 'pluralize';
 
-/** 'blog-post' -> 'BlogPost' — GraphQL type names can't contain hyphens. */
+// Format as PascalCase
 export function toPascalCase(slug: string): string {
   return slug
     .split(/[-_]/)
@@ -9,13 +9,13 @@ export function toPascalCase(slug: string): string {
     .join('');
 }
 
-/** 'blog-post' -> 'blogPost' — single-entry query/mutation field name. */
+// Format as camelCase
 export function toCamelCase(slug: string): string {
   const pascal = toPascalCase(slug);
   return pascal[0]!.toLowerCase() + pascal.slice(1);
 }
 
-/** 'blog-post' -> 'blogPosts', 'category' -> 'categories' — list query field name. */
+// Format as plural camelCase
 export function toPluralCamelCase(slug: string): string {
   return pluralize(toCamelCase(slug));
 }
