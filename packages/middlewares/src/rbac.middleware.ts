@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
-import { hasPermission } from './rbac.util.js';
+import { hasPermission, Permission } from './rbac.util.js';
 
 function errorJson(res: Response, status: number, message: string) {
   const req = res.req as unknown as Request;
@@ -9,7 +9,7 @@ function errorJson(res: Response, status: number, message: string) {
 }
 
 export const requirePermission =
-  (getUserPermissions: (userId: string) => Promise<unknown[]>) =>
+  (getUserPermissions: (userId: string) => Promise<Permission[]>) =>
   (action: string, schemaId?: string) => {
     return async (req: Request, res: Response, next: NextFunction) => {
       if (!req.user) {
