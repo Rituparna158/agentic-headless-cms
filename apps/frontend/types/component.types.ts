@@ -5,6 +5,7 @@ import type {
   ContentEntryRecord,
   SchemaField,
   SchemaRecord,
+   MediaAsset
 } from '@repo/types';
 import type { z } from 'zod';
 
@@ -22,6 +23,7 @@ export interface VersionHistoryDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentEntry: ContentEntryRecord;
+  schema?: SchemaRecord;
 }
 
 export interface UsersTabProps {
@@ -58,6 +60,15 @@ export interface LexicalRichTextFieldProps {
   'aria-invalid'?: React.AriaAttributes['aria-invalid'];
 }
 
+export interface MediaPickerFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  id?: string;
+  'aria-describedby'?: React.AriaAttributes['aria-describedby'];
+  'aria-invalid'?: React.AriaAttributes['aria-invalid'];
+}
+
 export interface ContentEntryListProps {
   schema: SchemaRecord;
 }
@@ -87,4 +98,9 @@ export interface ConfirmDialogProps {
   /** Styles the confirm action red — use for destructive actions like delete. */
   destructive?: boolean;
   onConfirm: () => void;
+}
+
+export interface MediaLibraryProps {
+  selectedId: string;
+  onSelect: (asset: MediaAsset) => void;
 }

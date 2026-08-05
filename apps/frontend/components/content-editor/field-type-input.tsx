@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
 import { LexicalRichTextField } from './lexical-rich-text-field';
+import { MediaPickerField } from './media-picker-field';
 
 /**
  * Renders a specific input control based on the field's dataType.
@@ -119,10 +120,17 @@ export function FieldTypeInput({
       );
 
     case 'media':
+      return (
+        <MediaPickerField
+          value={typeof value === 'string' ? value : ''}
+          onChange={onChange}
+          disabled={disabled}
+          {...rest}
+        />
+      );
+
     case 'relation':
-      // No media picker / relation search UI exists yet (out of scope for
-      // this issue) — the backend only validates these as a UUID string, so
-      // a plain text input is the honest minimum viable control.
+      // No relation picker UI yet - plain UUID input until a relation picker is built.
       return (
         <Input
           placeholder="UUID"

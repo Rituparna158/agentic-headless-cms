@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
 import { useState } from 'react';
@@ -14,6 +15,7 @@ import {
 import { listContentVersions, revertContentEntry } from '@/lib/api/content';
 import type { VersionHistoryDrawerProps } from '@/types/component.types';
 import { formatFieldValue } from '@/utils/lexical';
+import { MediaVersionDiff } from './media-version-diff';
 
 export function VersionHistoryDrawer({
   schemaSlug,
@@ -21,6 +23,7 @@ export function VersionHistoryDrawer({
   open,
   onOpenChange,
   currentEntry,
+  schema,
 }: VersionHistoryDrawerProps) {
   const queryClient = useQueryClient();
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
@@ -57,6 +60,12 @@ export function VersionHistoryDrawer({
     versions && selectedVersionIndex + 1 < versions.length
       ? versions[selectedVersionIndex + 1]
       : null;
+
+  const fieldMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    schema?.definition.fields.forEach((f) => map.set(f.apiId, f.dataType));
+    return map;
+  }, [schema]);
 
   const renderDiff = (oldText: string, newText: string) => {
     const changes = diffWordsWithSpace(oldText, newText);
@@ -136,6 +145,7 @@ export function VersionHistoryDrawer({
 
           <div className="space-y-4">
             {Object.keys(currentEntry.data).map((key) => {
+              const isMedia = fieldMap.get(key) === 'media';
               const currentVal = formatFieldValue(selectedVersion?.data?.[key]);
               const oldVal = formatFieldValue(previousVersion?.data?.[key]);
 
@@ -146,7 +156,11 @@ export function VersionHistoryDrawer({
                   <h4 className="text-xs font-semibold uppercase text-muted-foreground">
                     {key}
                   </h4>
-                  {renderDiff(oldVal, currentVal)}
+                  {isMedia ? (
+                    <MediaVersionDiff oldId={oldVal} newId={currentVal} />
+                  ) : (
+                    renderDiff(oldVal, currentVal)
+                  )}
                 </div>
               );
             })}
