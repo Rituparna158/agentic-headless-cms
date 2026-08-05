@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import * as mediaController from './media.controller.js';
 import { upload } from './upload.middleware.js';
-import { authenticateToken } from '../../common/middlewares/auth.middleware.js';
-import { requirePermission } from '../../common/middlewares/rbac.middleware.js';
+import { authenticateToken } from '@repo/middlewares';
+import { requirePermission } from '../auth/rbac.middleware.js';
 
 export const mediaRoutes = Router();
 
@@ -17,9 +17,7 @@ mediaRoutes.post(
 
 mediaRoutes.get('/', requirePermission('read'), mediaController.listMedia);
 
-// Two path segments (/file/:key) vs one (/:id) below — no routing overlap,
-// but declared first anyway to keep the more specific route visually ahead
-// of the generic one.
+// Specific routes before generic
 mediaRoutes.get(
   '/file/:key',
   requirePermission('read'),

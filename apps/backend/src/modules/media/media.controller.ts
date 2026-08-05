@@ -1,28 +1,22 @@
-import type { Request, Response, NextFunction } from 'express';
-import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/shared-types';
-import { BadRequestError } from '../../common/errors/http-error.js';
+import type { Request, Response, RequestHandler } from 'express';
+import { ERROR_MESSAGES } from '@repo/constants';
+import { ApiError, ApiResponse, asyncHandler } from '@repo/utils';
+import { logger } from '@repo/logger';
+import { eventBus } from '@repo/events';
+import { EVENT_NAMES } from '@repo/constants';
 import { MediaService } from './media.service.js';
-import { parseResizeQuery } from './image-processing.js';
-import { eventBus } from '../../common/events/event-bus.js';
-import { parsePositiveIntParam } from '../../utils/pagination.util.js';
-import { extractStorageKey } from '../../utils/media.util.js';
-import {
-  DEFAULT_PAGE_SIZE,
-  MAX_PAGE_SIZE,
-} from '../../constants/media.constants.js';
-import {
-  EVENT_NAMES,
-  AUDIT_ACTIONS,
-} from '../../constants/events.constants.js';
+import { parseResizeQuery, extractStorageKey } from '@repo/storage';
+import { parsePositiveIntParam } from '@repo/utils';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@repo/constants';
+
 const mediaService = new MediaService();
-export const uploadMedia = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+
+export const uploadMedia: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('MediaController: uploadMedia start');
     if (!req.file) {
-      throw new BadRequestError(ERROR_MESSAGES.MEDIA.NO_FILE_UPLOADED);
+      logger.error('MediaController: no file uploaded');
+      throw new ApiError(400, ERROR_MESSAGES.MEDIA.NO_FILE_UPLOADED);
     }
 
     const body = req.body as Record<string, unknown>;
@@ -30,6 +24,10 @@ export const uploadMedia = async (
     const folderId =
       typeof body.folderId === 'string' ? body.folderId : undefined;
 
+    logger.debug(
+      { filename: req.file.originalname },
+      'MediaController: uploading file',
+    );
     const asset = await mediaService.upload({
       buffer: req.file.buffer,
       originalFilename: req.file.originalname,
@@ -39,34 +37,26 @@ export const uploadMedia = async (
       actorUserId: req.user!.id,
     });
 
-    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
-      action: AUDIT_ACTIONS.CREATE,
-      resourceType: 'media',
-      resourceId: asset.id,
-      actorUserId: req.user!.id,
-      afterState: asset,
-    });
-
-    // Thumbnail generation happens off-thread, in a queue worker (see
-    // queues/media.worker.ts) — the upload response doesn't wait on it.
+    logger.debug(
+      { assetId: asset.id },
+      'MediaController: emitting MEDIA_UPLOADED event',
+    );
     eventBus.emit(EVENT_NAMES.MEDIA_UPLOADED, {
       assetId: asset.id,
       storageKey: extractStorageKey(asset),
       mimeType: asset.mimeType,
     });
 
-    res.status(HTTP_STATUS.CREATED).json({ data: asset });
-  } catch (error) {
-    next(error);
-  }
-};
+    logger.info({ assetId: asset.id }, 'MediaController: uploadMedia end');
+    res
+      .status(201)
+      .json(new ApiResponse(201, asset, 'Media uploaded successfully'));
+  },
+);
 
-export const listMedia = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const listMedia: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('MediaController: listMedia start');
     const page = parsePositiveIntParam(req.query.page, 1, 'page');
     const pageSize = Math.min(
       parsePositiveIntParam(req.query.pageSize, DEFAULT_PAGE_SIZE, 'pageSize'),
@@ -75,78 +65,74 @@ export const listMedia = async (
     const folderId =
       typeof req.query.folderId === 'string' ? req.query.folderId : undefined;
 
+    logger.debug({ page, pageSize }, 'MediaController: fetching media list');
     const { assets, total } = await mediaService.list({
       page,
       pageSize,
       folderId,
     });
 
-    res.status(HTTP_STATUS.OK).json({
-      data: assets,
-      meta: {
-        pagination: {
-          page,
-          pageSize,
-          total,
-          pageCount: Math.ceil(total / pageSize),
+    logger.info('MediaController: listMedia end');
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          data: assets,
+          meta: {
+            pagination: {
+              page,
+              pageSize,
+              total,
+              pageCount: Math.ceil(total / pageSize),
+            },
+          },
         },
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+        'Media listed successfully',
+      ),
+    );
+  },
+);
 
-export const getMedia = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const asset = await mediaService.getById(req.params.id as string);
-    res.status(HTTP_STATUS.OK).json({ data: asset });
-  } catch (error) {
-    next(error);
-  }
-};
+export const getMedia: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'MediaController: getMedia start');
 
-export const serveMediaFile = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const asset = await mediaService.getByStorageKey(req.params.key as string);
+    logger.debug({ id }, 'MediaController: fetching media by ID');
+    const asset = await mediaService.getById(id as string);
+
+    logger.info({ id }, 'MediaController: getMedia end');
+    res
+      .status(200)
+      .json(new ApiResponse(200, asset, 'Media retrieved successfully'));
+  },
+);
+
+export const serveMediaFile: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { key } = req.params;
+    logger.info({ key }, 'MediaController: serveMediaFile start');
+
+    logger.debug({ key }, 'MediaController: fetching and processing file');
+    const asset = await mediaService.getByStorageKey(key as string);
     const resize = parseResizeQuery(req.query);
     const file = await mediaService.getFile(asset, resize);
 
     res.setHeader('Content-Type', file.mimeType);
-    res.status(HTTP_STATUS.OK).send(file.buffer);
-  } catch (error) {
-    next(error);
-  }
-};
+    logger.info({ key }, 'MediaController: serveMediaFile end');
+    res.status(200).send(file.buffer);
+  },
+);
 
-export const deleteMedia = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const asset = await mediaService.getById(req.params.id as string);
+export const deleteMedia: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'MediaController: deleteMedia start');
 
-    await mediaService.delete(req.params.id as string);
+    logger.debug({ id }, 'MediaController: deleting media');
+    await mediaService.delete(id as string);
 
-    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
-      action: AUDIT_ACTIONS.DELETE,
-      resourceType: 'media',
-      resourceId: req.params.id as string,
-      actorUserId: req.user?.id,
-      beforeState: asset,
-    });
-
-    res.status(HTTP_STATUS.NO_CONTENT).send();
-  } catch (error) {
-    next(error);
-  }
-};
+    logger.info({ id }, 'MediaController: deleteMedia end');
+    res.status(204).end();
+  },
+);
