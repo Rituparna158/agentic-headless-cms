@@ -1,6 +1,11 @@
-import { LocalesRepository } from './locales.repository.js';
-import { CreateLocaleInput } from '../../types/locales.types.js';
-import { ERROR_MESSAGES } from '@repo/shared-types';
+import { LocalesRepository } from '@repo/repository';
+import { CreateLocaleInput } from '@repo/types';
+import { ERROR_MESSAGES, EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
+import { ConflictError, ApiError } from '@repo/utils';
+import { logger } from '@repo/logger';
+import { eventBus } from '@repo/events';
+import { getAuditContext } from '../../utils/audit.js';
+import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 
 export class LocalesService {
   constructor(
@@ -8,22 +13,82 @@ export class LocalesService {
   ) {}
 
   async list() {
-    return this.repository.list();
+    try {
+      logger.info('LocalesService: list start');
+      const result = await this.repository.list();
+      logger.debug('LocalesService: list end');
+      return result;
+    } catch (error) {
+      logger.error({ err: error }, 'LocalesService Error in list:');
+      throw new ApiError(500, SERVICE_ERRORS.LIST_LOCALES_FAILED);
+    }
   }
 
   async create(data: CreateLocaleInput) {
-    const existing = await this.repository.getByCode(data.code);
-    if (existing) {
-      throw new Error(ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS);
+    try {
+      logger.info({ code: data.code }, 'LocalesService: create start');
+      const existing = await this.repository.getByCode(data.code);
+      if (existing) {
+        logger.warn({ code: data.code }, 'LocalesService: code already exists');
+        throw new ConflictError(ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS);
+      }
+      const result = await this.repository.create({
+        code: data.code,
+        name: data.name,
+        isDefault: data.isDefault ?? false,
+      });
+
+      logger.debug(
+        { id: result!.id },
+        'LocalesService: create successful, emitting audit log',
+      );
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.CREATE,
+        resourceType: 'locale',
+        resourceId: result!.id,
+        actorUserId,
+        actorAgentId,
+        beforeState: null,
+        afterState: result,
+        context,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error({ err: error }, 'LocalesService Error in create:');
+      if (error instanceof ConflictError) throw error;
+      throw new ApiError(500, SERVICE_ERRORS.CREATE_LOCALE_FAILED);
     }
-    return this.repository.create({
-      code: data.code,
-      name: data.name,
-      isDefault: data.isDefault ?? false,
-    });
   }
 
   async delete(id: string) {
-    return this.repository.delete(id);
+    try {
+      logger.info({ id }, 'LocalesService: delete start');
+      const beforeState = await this.repository.getById(id);
+
+      const result = await this.repository.delete(id);
+
+      logger.debug(
+        { id },
+        'LocalesService: delete successful, emitting audit log',
+      );
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.DELETE,
+        resourceType: 'locale',
+        resourceId: id,
+        actorUserId,
+        actorAgentId,
+        beforeState: beforeState,
+        afterState: null,
+        context,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error({ err: error }, 'LocalesService Error in delete:');
+      throw new ApiError(500, SERVICE_ERRORS.DELETE_LOCALE_FAILED);
+    }
   }
 }

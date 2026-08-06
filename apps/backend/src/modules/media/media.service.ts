@@ -1,96 +1,175 @@
-import { ERROR_MESSAGES } from '@repo/shared-types';
-import { getStorageAdapter } from '../../config/storage.js';
-import { NotFoundError } from '../../common/errors/http-error.js';
-import { MediaRepository, type MediaAssetRecord } from './media.repository.js';
+import { ERROR_MESSAGES } from '@repo/constants';
+import { getStorageAdapter } from '@repo/config';
+import { NotFoundError, ApiError } from '@repo/utils';
+import { logger } from '@repo/logger';
+import { eventBus } from '@repo/events';
+import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
+import { MediaRepository, type MediaAssetRecord } from '@repo/repository';
 import type {
   UploadMediaInput,
   ServedFile,
   ListMediaOptions,
-} from '../../types/media.types.js';
+} from '@repo/types';
 import {
   readImageDimensions,
   resizeImage,
   type ResizeOptions,
-} from './image-processing.js';
-
-import { buildStorageKey, extractStorageKey } from '../../utils/media.util.js';
+  buildStorageKey,
+  extractStorageKey,
+} from '@repo/storage';
+import { getAuditContext } from '../../utils/audit.js';
+import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 
 export class MediaService {
   private repository = new MediaRepository();
 
   async upload(input: UploadMediaInput): Promise<MediaAssetRecord> {
-    const storage = getStorageAdapter();
-    const key = buildStorageKey(input.originalFilename);
+    try {
+      logger.info(
+        { filename: input.originalFilename },
+        'MediaService: upload start',
+      );
+      const storage = getStorageAdapter();
+      const key = buildStorageKey(input.originalFilename);
 
-    // Only meaningful for images; sharp rejects non-image buffers, which
-    // readImageDimensions treats as "not an image" rather than an error.
-    const dimensions = await readImageDimensions(input.buffer);
+      logger.debug('MediaService: reading image dimensions');
+      const dimensions = await readImageDimensions(input.buffer);
 
-    const { url } = await storage.write(key, input.buffer, input.mimeType);
+      logger.debug('MediaService: writing file to storage');
+      const { url } = await storage.write(key, input.buffer, input.mimeType);
 
-    return this.repository.create({
-      filename: input.originalFilename,
-      mimeType: input.mimeType,
-      sizeBytes: input.buffer.length,
-      width: dimensions?.width,
-      height: dimensions?.height,
-      url,
-      altText: input.altText,
-      // No dedicated storageKey column on media_assets — stashed in the
-      // free-form metadata jsonb column instead, alongside `url`, so
-      // findByStorageKey() can resolve the file-serving route back to a row.
-      metadata: { storageKey: key },
-      storageProvider: storage.providerName,
-      folderId: input.folderId,
-      actorType: 'user',
-      uploadedByUserId: input.actorUserId,
-    });
+      logger.debug('MediaService: creating DB asset record');
+      const asset = await this.repository.create({
+        filename: input.originalFilename,
+        mimeType: input.mimeType,
+        sizeBytes: input.buffer.length,
+        width: dimensions?.width,
+        height: dimensions?.height,
+        url,
+        altText: input.altText,
+        metadata: { storageKey: key },
+        storageProvider: storage.providerName,
+        folderId: input.folderId,
+        actorType: 'user',
+        uploadedByUserId: input.actorUserId,
+      });
+
+      logger.debug(
+        { assetId: asset.id },
+        'MediaService: upload success, emitting audit log',
+      );
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.CREATE,
+        resourceType: 'media',
+        resourceId: asset.id,
+        actorUserId: actorUserId || input.actorUserId,
+        actorAgentId,
+        beforeState: null,
+        afterState: asset,
+        context,
+      });
+
+      return asset;
+    } catch (error) {
+      logger.error({ err: error }, 'MediaService Error in upload:');
+      throw new ApiError(500, SERVICE_ERRORS.UPLOAD_MEDIA_FAILED);
+    }
   }
 
   async list(options: ListMediaOptions) {
-    return this.repository.list(options);
+    try {
+      logger.info({ options }, 'MediaService: list');
+      return await this.repository.list(options);
+    } catch (error) {
+      logger.error({ err: error }, 'MediaService Error in list:');
+      throw new ApiError(500, SERVICE_ERRORS.LIST_MEDIA_FAILED);
+    }
   }
 
   async getById(id: string): Promise<MediaAssetRecord> {
-    const asset = await this.repository.findById(id);
-    if (!asset) {
-      throw new NotFoundError(ERROR_MESSAGES.MEDIA.ASSET_NOT_FOUND);
+    try {
+      logger.info({ id }, 'MediaService: getById');
+      const asset = await this.repository.findById(id);
+      if (!asset) {
+        logger.error({ id }, 'MediaService: asset not found by ID');
+        throw new NotFoundError(ERROR_MESSAGES.MEDIA.ASSET_NOT_FOUND);
+      }
+      return asset;
+    } catch (error) {
+      logger.error({ err: error }, 'MediaService Error in getById:');
+      if (error instanceof NotFoundError) throw error;
+      throw new ApiError(500, SERVICE_ERRORS.FETCH_MEDIA_FAILED);
     }
-    return asset;
   }
 
   async getByStorageKey(key: string): Promise<MediaAssetRecord> {
-    const asset = await this.repository.findByStorageKey(key);
-    if (!asset) {
-      throw new NotFoundError(ERROR_MESSAGES.MEDIA.ASSET_NOT_FOUND);
+    try {
+      logger.info({ key }, 'MediaService: getByStorageKey');
+      const asset = await this.repository.findByStorageKey(key);
+      if (!asset) {
+        logger.error({ key }, 'MediaService: asset not found by storage key');
+        throw new NotFoundError(ERROR_MESSAGES.MEDIA.ASSET_NOT_FOUND);
+      }
+      return asset;
+    } catch (error) {
+      logger.error({ err: error }, 'MediaService Error in getByStorageKey:');
+      if (error instanceof NotFoundError) throw error;
+      throw new ApiError(500, SERVICE_ERRORS.FETCH_MEDIA_FAILED);
     }
-    return asset;
   }
 
-  /** Reads the raw bytes for an asset, applying an on-the-fly resize when requested and the asset is an image. */
   async getFile(
     asset: MediaAssetRecord,
     resize?: ResizeOptions,
   ): Promise<ServedFile> {
-    const storage = getStorageAdapter();
-    const key = extractStorageKey(asset);
-    let buffer = await storage.read(key);
+    try {
+      logger.info({ assetId: asset.id, resize }, 'MediaService: getFile');
+      const storage = getStorageAdapter();
+      const key = extractStorageKey(asset);
 
-    if (resize && asset.mimeType.startsWith('image/')) {
-      buffer = await resizeImage(buffer, resize);
+      logger.debug('MediaService: reading file from storage');
+      let buffer = await storage.read(key);
+
+      if (resize && asset.mimeType.startsWith('image/')) {
+        logger.debug('MediaService: resizing image');
+        buffer = await resizeImage(buffer, resize);
+      }
+
+      return { buffer, mimeType: asset.mimeType, filename: asset.filename };
+    } catch (error) {
+      logger.error({ err: error }, 'MediaService Error in getFile:');
+      throw new ApiError(500, SERVICE_ERRORS.FETCH_MEDIA_FAILED);
     }
-
-    return { buffer, mimeType: asset.mimeType, filename: asset.filename };
   }
 
   async delete(id: string): Promise<void> {
-    const asset = await this.getById(id);
-    const key = extractStorageKey(asset);
+    try {
+      logger.info({ id }, 'MediaService: delete start');
+      const asset = await this.getById(id);
+      const key = extractStorageKey(asset);
 
-    // Soft-delete the row first — if the storage delete fails, the asset
-    // is still hidden from listings/serving rather than left fully live
-    // with a half-completed delete.
-    await this.repository.softDelete(id);
-    await getStorageAdapter().delete(key);
+      logger.debug({ id }, 'MediaService: soft deleting record');
+      await this.repository.softDelete(id);
+
+      logger.debug({ id }, 'MediaService: deleting file from storage');
+      await getStorageAdapter().delete(key);
+
+      logger.debug({ id }, 'MediaService: delete success, emitting audit log');
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.DELETE,
+        resourceType: 'media',
+        resourceId: id,
+        actorUserId,
+        actorAgentId,
+        beforeState: asset,
+        afterState: null,
+        context,
+      });
+    } catch (error) {
+      logger.error({ err: error }, 'MediaService Error in delete:');
+      throw new ApiError(500, SERVICE_ERRORS.DELETE_MEDIA_FAILED);
+    }
   }
 }

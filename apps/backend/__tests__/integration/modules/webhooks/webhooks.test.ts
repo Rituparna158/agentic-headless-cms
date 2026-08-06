@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
-import { env } from '../../../../src/config/env.js';
+import { env } from '@repo/config';
 
 vi.mock('../../../../src/modules/webhooks/webhooks.service.js', () => {
   const WebhooksService = vi.fn();
@@ -59,8 +59,8 @@ describe('Webhooks Module', () => {
         .get('/api/v1/webhooks')
         .set('Cookie', [`token=${adminToken}`]);
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].name).toBe('ISR Rebuild');
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].name).toBe('ISR Rebuild');
     });
   });
 
@@ -83,7 +83,7 @@ describe('Webhooks Module', () => {
           events: ['content.published'],
         });
       expect(res.status).toBe(201);
-      expect(res.body.secretKey).toBe('abc123');
+      expect(res.body.data.secretKey).toBe('abc123');
     });
   });
 

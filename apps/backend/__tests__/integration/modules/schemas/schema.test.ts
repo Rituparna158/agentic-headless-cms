@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { createApp } from '../../../../src/app.js';
-import { env } from '../../../../src/config/env.js';
+import { env } from '@repo/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
 import { createSchema, listSchemas, updateSchema } from '@repo/shared-db';
 
@@ -146,7 +146,7 @@ describe('Schemas Module', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.id).toBe('schema-1');
+      expect(res.body.data.id).toBe('schema-1');
       expect(createSchema).toHaveBeenCalledTimes(1);
       const [, input] = vi.mocked(createSchema).mock.calls[0]!;
       expect(input).toMatchObject({
@@ -183,8 +183,8 @@ describe('Schemas Module', () => {
         .set('Cookie', authCookie());
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].id).toBe('schema-1');
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].id).toBe('schema-1');
     });
   });
 
@@ -268,7 +268,7 @@ describe('Schemas Module', () => {
         .send({ name: 'Updated Article' });
 
       expect(res.status).toBe(200);
-      expect(res.body.version).toBe(2);
+      expect(res.body.data.version).toBe(2);
       expect(updateSchema).toHaveBeenCalledWith(
         expect.anything(),
         'schema-1',

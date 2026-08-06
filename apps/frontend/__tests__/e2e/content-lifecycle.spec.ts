@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { API_PATHS } from '@/lib/constants/api-paths';
 import { test, expect } from '@playwright/test';
 import { BACKEND_URL } from './constants';
 
@@ -6,7 +7,7 @@ async function createTitleOnlySchema(
   request: import('@playwright/test').APIRequestContext,
   slug: string,
 ) {
-  const res = await request.post(`${BACKEND_URL}/api/v1/schemas`, {
+  const res = await request.post(`${BACKEND_URL}${API_PATHS.SCHEMAS.BASE}`, {
     data: {
       name: `E2E Content ${slug}`,
       slug,

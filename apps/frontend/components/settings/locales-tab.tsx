@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/table';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
-import { LocaleRecord } from '@repo/shared-types';
+import { LocaleRecord } from '@repo/types';
 
 export function LocalesTab() {
   const queryClient = useQueryClient();

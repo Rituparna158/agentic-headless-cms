@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { requirePermission } from '../../../../src/common/middlewares/rbac.middleware.js';
+import { requirePermission } from '../../../../src/middlewares/rbac.middleware.js';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
 import type { Request, Response, NextFunction } from 'express';
 
@@ -43,7 +43,10 @@ describe('RBAC Middleware', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({
-      error: 'Unauthorized: User not authenticated',
+      error: {
+        message: 'Unauthorized: User not authenticated',
+        requestId: undefined,
+      },
     });
     expect(mockNext).not.toHaveBeenCalled();
   });
@@ -111,7 +114,10 @@ describe('RBAC Middleware', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(403);
     expect(mockRes.json).toHaveBeenCalledWith({
-      error: 'Forbidden: Insufficient permissions',
+      error: {
+        message: 'Forbidden: Insufficient permissions',
+        requestId: undefined,
+      },
     });
     expect(mockNext).not.toHaveBeenCalled();
   });

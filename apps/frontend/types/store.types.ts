@@ -1,5 +1,5 @@
-import { AuthenticatedUser } from '@repo/shared-types';
-import { LoginInput } from '@repo/shared-types';
+import { AuthenticatedUser } from '@repo/types';
+import { LoginInput } from '@repo/types';
 
 export interface AuthState {
   user: AuthenticatedUser | null;

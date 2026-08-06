@@ -1,0 +1,28 @@
+{
+  "name": "@repo/logger",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "5.9.2",
+    "pino-pretty": "^11.0.0",
+    "@types/pino": "^7.0.5"
+  },
+  "dependencies": {
+    "pino": "^9.0.0"
+  }
+}

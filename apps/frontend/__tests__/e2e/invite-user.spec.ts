@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { API_PATHS } from '@/lib/constants/api-paths';
 import { test, expect } from '@playwright/test';
 
 test('admin can invite a user, and the invited user can accept and log in', async ({
@@ -21,15 +22,16 @@ test('admin can invite a user, and the invited user can accept and log in', asyn
   const [inviteResponse] = await Promise.all([
     page.waitForResponse(
       (res) =>
-        res.url().includes('/api/v1/access/users/invite') &&
+        res.url().includes(API_PATHS.ACCESS.INVITE) &&
         res.request().method() === 'POST',
     ),
     page.getByRole('button', { name: 'Send Invite', exact: true }).click(),
   ]);
 
-  const { inviteUrl } = (await inviteResponse.json()) as {
-    inviteUrl?: string;
+  const { data } = (await inviteResponse.json()) as {
+    data?: { inviteUrl?: string };
   };
+  const inviteUrl = data?.inviteUrl;
   expect(inviteUrl).toBeTruthy();
 
   const token = new URL(inviteUrl!).searchParams.get('token');

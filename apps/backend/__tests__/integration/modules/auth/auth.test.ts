@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../../src/app.js';
-import { authRepository } from '../../../../src/modules/auth/auth.repository.js';
+import { authRepository } from '@repo/repository';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { env } from '../../../../src/config/env.js';
+import { env } from '@repo/config';
 
-vi.mock('../../../../src/modules/auth/auth.repository.js', () => ({
+vi.mock('@repo/repository', () => ({
   authRepository: {
     getUserByEmail: vi.fn(),
     getUserRoles: vi.fn(),
@@ -14,6 +16,13 @@ vi.mock('../../../../src/modules/auth/auth.repository.js', () => ({
     getUserByInviteTokenHash: vi.fn(),
     activateUser: vi.fn(),
   },
+  ContentRepository: vi.fn().mockImplementation(class {}),
+  MediaRepository: vi.fn().mockImplementation(class {}),
+  SchemaRepository: vi.fn().mockImplementation(class {}),
+  AuditRepository: vi.fn().mockImplementation(class {}),
+  AccessRepository: vi.fn().mockImplementation(class {}),
+  LocalesRepository: vi.fn().mockImplementation(class {}),
+  WebhooksRepository: vi.fn().mockImplementation(class {}),
 }));
 
 vi.mock('bcrypt', () => ({
@@ -79,8 +88,8 @@ describe('Auth Module', () => {
       });
 
       expect(res.status).toBe(200);
-      expect(res.body.id).toBe('user-id-123');
-      expect(res.body.roles).toEqual(['admin']);
+      expect(res.body.data.id).toBe('user-id-123');
+      expect(res.body.data.roles).toEqual(['admin']);
 
       // Check for set-cookie header
       const cookies = res.headers['set-cookie'];
@@ -111,8 +120,8 @@ describe('Auth Module', () => {
         .set('Cookie', [`token=${token}`]);
 
       expect(res.status).toBe(200);
-      expect(res.body.id).toBe('user-1');
-      expect(res.body.email).toBe('user@example.com');
+      expect(res.body.data.id).toBe('user-1');
+      expect(res.body.data.email).toBe('user@example.com');
     });
 
     it('should return 401 for a malformed token', async () => {

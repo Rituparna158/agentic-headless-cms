@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { API_PATHS } from '@/lib/constants/api-paths';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -93,7 +94,7 @@ describe('AcceptInviteForm', () => {
     await user.click(screen.getByRole('button', { name: 'Activate Account' }));
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
-    expect(mockApiFetch).toHaveBeenCalledWith('/api/v1/auth/accept-invite', {
+    expect(mockApiFetch).toHaveBeenCalledWith(API_PATHS.AUTH.ACCEPT_INVITE, {
       method: 'POST',
       body: JSON.stringify({
         token: 'a-valid-token',

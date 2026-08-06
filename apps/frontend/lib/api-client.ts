@@ -4,8 +4,9 @@
  * issue — the frontend never touches the token itself, only the browser's
  * cookie jar does, which is the point of HttpOnly.
  */
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+import { env } from './env';
+
+export const API_BASE_URL = env.NEXT_PUBLIC_API_URL;
 
 export class ApiError extends Error {
   constructor(
@@ -20,6 +21,16 @@ export class ApiError extends Error {
 
 interface ApiErrorResponseBody {
   error?: { message?: string; details?: unknown };
+}
+
+// The backend wraps every successful response in this envelope —
+// { statusCode, data, message, success } — so apiFetch unwraps `data`
+// here, once, rather than every caller having to know about the envelope.
+interface ApiSuccessResponseBody<T> {
+  statusCode: number;
+  data: T;
+  message: string;
+  success: true;
 }
 
 export async function apiFetch<T>(
@@ -70,5 +81,9 @@ export async function apiFetch<T>(
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  // Unwrap the backend's { statusCode, data, message, success } envelope —
+  // callers' generics (e.g. apiFetch<SchemaRecord[]>) describe the *data*
+  // shape, not the envelope.
+  const body = (await response.json()) as ApiSuccessResponseBody<T>;
+  return body.data;
 }

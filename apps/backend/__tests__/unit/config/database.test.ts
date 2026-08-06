@@ -1,25 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  getDatabaseAdapter,
-  resetDatabaseAdapterForTest,
-} from '../../../src/config/database.js';
+import { getDatabaseAdapter, resetDatabaseAdapterForTest } from '@repo/config';
 import { PostgresAdapter } from '@repo/shared-db';
-import { env } from '../../../src/config/env.js';
+import { env } from '@repo/config';
 
 vi.mock('@repo/shared-db', () => {
   const PostgresAdapter = vi.fn();
   return { PostgresAdapter };
 });
 
-vi.mock('../../../src/config/env.js', () => ({
-  env: {
-    DB_CLIENT: 'postgres',
-    DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
-    DATABASE_POOL_MAX: 10,
-    DATABASE_SSL: false,
-    LOG_LEVEL: 'info',
-  },
-}));
+// No mock needed for @repo/config, direct mutation of imported env works due to ESM reference sharing.
 
 describe('Database Configuration DI', () => {
   beforeEach(() => {

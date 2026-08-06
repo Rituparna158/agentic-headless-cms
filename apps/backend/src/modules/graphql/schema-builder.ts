@@ -1,6 +1,6 @@
 import { SchemaComposer } from 'graphql-compose';
 import type { GraphQLSchema } from 'graphql';
-import type { SchemaDefinition } from '@repo/shared-types';
+import type { SchemaDefinition } from '@repo/types';
 import type { SchemaRecord } from '@repo/shared-db';
 import { ContentService } from '../content/content.service.js';
 import { parseContentQuery } from '../content/query/content-query.util.js';
@@ -21,9 +21,7 @@ interface EntryPayload {
   updatedAt: string | Date | null;
 }
 
-/**
- * Normalizes backend entry responses for the GraphQL schema.
- */
+// Normalize backend entry
 function toEntryPayload(raw: {
   entryId?: string;
   id?: string;
@@ -43,14 +41,7 @@ function toEntryPayload(raw: {
   };
 }
 
-/**
- * Builds a GraphQL schema at server startup from every row currently in
- * the `schemas` table. Schemas created/updated afterward won't appear in
- * GraphQL until the process restarts — full runtime hot-reload of a live
- * Apollo schema is a materially bigger feature (tracked separately) and
- * out of scope for this issue's acceptance criteria ("Apollo Server boots
- * up and serves a valid GraphQL schema").
- */
+// Build GraphQL schema
 export function buildGraphQLSchema(schemas: SchemaRecord[]): GraphQLSchema {
   const composer = new SchemaComposer<GraphQLContext>();
   composer.createScalarTC(jsonScalarConfig);
@@ -65,9 +56,7 @@ export function buildGraphQLSchema(schemas: SchemaRecord[]): GraphQLSchema {
     },
   });
 
-  // The Query type must have at least one field even if no schemas exist
-  // yet (a fresh database) — GraphQL requires the root Query type to be a
-  // non-empty object type.
+  // Add default root query
   composer.Query.addFields({
     _ping: {
       type: 'String!',

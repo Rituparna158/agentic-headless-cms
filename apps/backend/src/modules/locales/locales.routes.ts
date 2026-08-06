@@ -4,10 +4,7 @@ import {
   createLocale,
   deleteLocale,
 } from './locales.controller.js';
-import {
-  authenticateToken,
-  requireAdmin,
-} from '../../common/middlewares/auth.middleware.js';
+import { authenticateToken, requireAdmin } from '@repo/middlewares';
 
 export const localesRouter = Router();
 

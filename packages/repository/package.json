@@ -1,0 +1,32 @@
+{
+  "name": "@repo/repository",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "@repo/shared-db": "workspace:*",
+    "@repo/logger": "workspace:*",
+    "@repo/config": "workspace:*",
+    "@repo/utils": "workspace:*",
+    "@repo/types": "workspace:*",
+    "@repo/constants": "workspace:*",
+    "drizzle-orm": "^0.36.4"
+  }
+}

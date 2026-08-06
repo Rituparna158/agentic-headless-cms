@@ -1,66 +1,72 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, RequestHandler } from 'express';
 import { LocalesService } from './locales.service.js';
-import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/shared-types';
+import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/constants';
+import { asyncHandler, ApiResponse } from '@repo/utils';
+import { logger } from '@repo/logger';
 
 const localesService = new LocalesService();
 
-export const listLocales = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const listLocales: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('LocalesController: listLocales start');
     const locales = await localesService.list();
-    res.json(locales);
-  } catch (error) {
-    next(error);
-  }
-};
+    logger.debug(
+      { count: locales.length },
+      'LocalesController: listLocales success',
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, locales, 'Locales listed successfully'));
+  },
+);
 
-export const createLocale = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const createLocale: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
     const body = req.body as {
       code: string;
       name: string;
       isDefault?: boolean;
     };
+    logger.info({ code: body.code }, 'LocalesController: createLocale start');
 
     if (!body.code || !body.name) {
-      res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: ERROR_MESSAGES.LOCALES.CODE_NAME_REQUIRED });
+      logger.warn('LocalesController: createLocale missing code or name');
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: { message: ERROR_MESSAGES.LOCALES.CODE_NAME_REQUIRED },
+      });
       return;
     }
 
-    const locale = await localesService.create(body);
-    res.status(HTTP_STATUS.CREATED).json(locale);
-  } catch (error: unknown) {
-    if (
-      error instanceof Error &&
-      error.message === ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS
-    ) {
+    try {
+      const locale = await localesService.create(body);
+      logger.debug(
+        { id: locale!.id },
+        'LocalesController: createLocale success',
+      );
       res
-        .status(HTTP_STATUS.CONFLICT)
-        .json({ error: ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS });
-      return;
+        .status(HTTP_STATUS.CREATED)
+        .json(new ApiResponse(201, locale, 'Locale created successfully'));
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message === ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS
+      ) {
+        res.status(HTTP_STATUS.CONFLICT).json({
+          error: { message: ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS },
+        });
+        return;
+      }
+      throw error;
     }
-    next(error);
-  }
-};
+  },
+);
 
-export const deleteLocale = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    await localesService.delete(req.params.id as string);
+export const deleteLocale: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'LocalesController: deleteLocale start');
+    await localesService.delete(id as string);
+    logger.debug({ id }, 'LocalesController: deleteLocale success');
     res.status(HTTP_STATUS.NO_CONTENT).send();
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);

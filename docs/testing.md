@@ -52,8 +52,8 @@ backend directly via `page.request`) rather than repeated per-file. Override
 defaults (`3001` / `3000`).
 
 Two prerequisites: Postgres itself must be reachable (`docker compose up` locally,
-or a Postgres service container in CI), and both `@repo/shared-types` and
-`@repo/shared-db` must already be built - the backend imports both, and
+or a Postgres service container in CI), and `@repo/types`, `@repo/validation`, and
+`@repo/shared-db` must already be built - the backend imports them, and
 `tsx watch` (its dev script) only compiles the backend's own source, not its
 workspace dependencies. Global setup itself also runs `drizzle-kit migrate`
 directly rather than through `@repo/shared-db`'s `db:migrate` script, since
@@ -66,6 +66,6 @@ To run the full suite locally:
 
 ```bash
 docker compose up -d
-pnpm --filter @repo/shared-types --filter @repo/shared-db run build   # only needed once, or after changes to either package
+pnpm --filter @repo/types --filter @repo/validation --filter @repo/shared-db run build   # only needed once, or after changes to either package
 pnpm --filter frontend test:e2e
 ```

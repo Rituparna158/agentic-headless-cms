@@ -1,6 +1,6 @@
 'use client';
 
-import { schemaFieldDataTypes } from '@repo/shared-types';
+import { schemaFieldDataTypes } from '@repo/validation';
 import { useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';

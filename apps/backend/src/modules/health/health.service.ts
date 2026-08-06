@@ -1,17 +1,23 @@
-import { getDatabaseAdapter } from '../../config/database.js';
+import { getDatabaseAdapter } from '@repo/config';
 import type {
   DependencyStatus,
   ReadinessResult,
 } from '../../types/health.types.js';
+import { ApiError } from '@repo/utils';
+import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 
-//Kubernetes readiness check
+// Kubernetes readiness check
 export async function checkReadiness(): Promise<ReadinessResult> {
-  const database = await checkDatabase();
+  try {
+    const database = await checkDatabase();
 
-  return {
-    healthy: database.status === 'up',
-    dependencies: { database },
-  };
+    return {
+      healthy: database.status === 'up',
+      dependencies: { database },
+    };
+  } catch {
+    throw new ApiError(500, SERVICE_ERRORS.HEALTH_CHECK_FAILED);
+  }
 }
 
 async function checkDatabase(): Promise<DependencyStatus> {

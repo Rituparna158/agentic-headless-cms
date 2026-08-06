@@ -1,11 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { SchemaDefinition, compileZodSchema } from '@repo/shared-types';
+import type { SchemaDefinition } from '@repo/types';
+import { compileZodSchema } from '@repo/validation';
 
-/**
- * Validates req.body against the schema resolved by resolveSchema
- * (registered ahead of this middleware on every content route), which is
- * why this no longer fetches the schema itself.
- */
+/** Validate request body */
 export const validateContentPayload = (
   req: Request,
   res: Response,

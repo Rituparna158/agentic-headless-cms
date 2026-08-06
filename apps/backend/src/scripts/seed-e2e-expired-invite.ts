@@ -1,10 +1,10 @@
 import crypto from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { getDatabaseAdapter } from '../config/database.js';
+import { getDatabaseAdapter } from '@repo/config';
 import { users } from '@repo/shared-db';
-import { logger } from '../common/logger.js';
+import { logger } from '@repo/logger';
 
-//fixture consumed by the E2E "expired invite" spec - the raw token is hardcoded here and in the spec since there's no way to wait 48 real hours for a normally-issued invite to actually expire.
+// E2E expired invite fixture
 export const EXPIRED_INVITE_EMAIL = 'expired-invite-e2e@agentic-cms.com';
 export const EXPIRED_INVITE_RAW_TOKEN = 'e2e-fixed-expired-invite-token';
 

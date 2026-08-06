@@ -1,0 +1,29 @@
+{
+  "name": "@repo/utils",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "5.9.2",
+    "@types/express": "^5.0.0"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "@repo/shared-db": "workspace:*",
+    "@repo/storage": "workspace:*"
+  }
+}

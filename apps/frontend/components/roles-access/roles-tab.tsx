@@ -1,10 +1,6 @@
 'use client';
 
-import type {
-  PermissionRecord,
-  RoleRecord,
-  SchemaRecord,
-} from '@repo/shared-types';
+import type { PermissionRecord, RoleRecord, SchemaRecord } from '@repo/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';

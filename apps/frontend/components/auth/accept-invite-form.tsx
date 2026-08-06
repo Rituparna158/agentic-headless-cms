@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
+import { API_PATHS } from '@/lib/constants/api-paths';
 
 export function AcceptInviteForm() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export function AcceptInviteForm() {
 
     setIsSubmitting(true);
     try {
-      await apiFetch('/api/v1/auth/accept-invite', {
+      await apiFetch(API_PATHS.AUTH.ACCEPT_INVITE, {
         method: 'POST',
         body: JSON.stringify({ token, newPassword: password }),
       });

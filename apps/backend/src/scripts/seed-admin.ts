@@ -1,14 +1,14 @@
 import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
-import { getDatabaseAdapter } from '../config/database.js';
+import { getDatabaseAdapter } from '@repo/config';
 import { users, roles, userRoles, permissions } from '@repo/shared-db';
-import { logger } from '../common/logger.js';
+import { logger } from '@repo/logger';
 
 async function seedAdmin() {
   logger.info('Starting admin seeding process...');
   const db = getDatabaseAdapter().getDb();
 
-  // Use environment variables for secure provisioning, with fallback only in development
+  // Use environment variables for provisioning
   const adminEmail =
     process.env.SEED_ADMIN_EMAIL ||
     (process.env.NODE_ENV === 'development' ? 'admin@agentic-cms.com' : null);
@@ -24,7 +24,7 @@ async function seedAdmin() {
   }
 
   try {
-    // 1. Create or get Admin Role
+    // Create admin role
     let roleId: string;
     const existingRole = await db
       .select()
@@ -47,7 +47,7 @@ async function seedAdmin() {
       roleId = newRole[0]!.id;
       logger.info({ roleId }, 'Created new Admin role.');
 
-      // Add wildcard permission for the admin role
+      // Add wildcard permission
       await db.insert(permissions).values({
         roleId,
         action: '*',
@@ -56,7 +56,7 @@ async function seedAdmin() {
       logger.info('Granted wildcard (*) permission to Admin role.');
     }
 
-    // 2. Create or get Admin User
+    // Create admin user
     let userId: string;
     const existingUser = await db
       .select()
@@ -87,7 +87,7 @@ async function seedAdmin() {
       );
     }
 
-    // 3. Link User to Role
+    // Link user to role
     const existingUserRole = await db
       .select()
       .from(userRoles)

@@ -1,8 +1,8 @@
-import { HTTP_STATUS } from '@repo/shared-types';
+import { HTTP_STATUS } from '@repo/constants';
 import { Request, Response } from 'express';
 import { register, collectDefaultMetrics } from 'prom-client';
 
-// Initialize default Node.js metrics
+// Initialize default metrics
 collectDefaultMetrics();
 
 export const getMetrics = async (req: Request, res: Response) => {

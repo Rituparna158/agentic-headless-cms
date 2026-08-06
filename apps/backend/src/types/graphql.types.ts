@@ -1,4 +1,4 @@
-import { type AuthenticatedUser } from '@repo/shared-types';
+import { type AuthenticatedUser } from '@repo/types';
 export interface GraphQLContext {
   user?: AuthenticatedUser;
 }

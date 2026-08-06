@@ -1,17 +1,14 @@
-import { eventBus } from '../common/events/event-bus.js';
-import { EVENT_NAMES } from '../constants/events.constants.js';
-import { logger } from '../common/logger.js';
-import { getQueue } from './queue.factory.js';
-import { QUEUE_NAMES } from './queue-names.constants.js';
-import type { MediaThumbnailJobData } from './media.worker.js';
+import { eventBus } from '@repo/events';
+import { EVENT_NAMES } from '@repo/constants';
+import { logger } from '@repo/logger';
+import { getQueue, QUEUE_NAMES } from '@repo/config';
 
-/**
- * Mirrors audit.listener.ts's shape: subscribe on the shared event bus,
- * enqueue inside a void-async try/catch so a queue outage degrades to a
- * logged error rather than taking the upload request down with it — the
- * asset itself is already saved by the time this fires (see
- * media.controller.ts's uploadMedia, which emits after the DB write).
- */
+export interface MediaThumbnailJobData {
+  assetId: string;
+  storageKey: string;
+  mimeType: string;
+}
+
 export function setupMediaQueueListener() {
   eventBus.on(EVENT_NAMES.MEDIA_UPLOADED, (payload) => {
     void (async () => {

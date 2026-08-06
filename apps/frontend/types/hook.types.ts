@@ -1,4 +1,4 @@
-import { ContentEntryRecord } from '@repo/shared-types';
+import { ContentEntryRecord } from '@repo/types';
 
 export interface RecentActivityItem {
   entryId: string;

@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 
 /**
- * Calls GET /api/v1/auth/me once on mount to restore session state from
- * the HttpOnly cookie (if any). middleware.ts already blocks unauthenticated
- * requests to dashboard routes when there's no session cookie at all, but it
- * can't verify the JWT itself - so if the cookie is present but expired or
- * invalid, /auth/me returns 401 and we redirect from here instead.
+ * Hydrates the Auth store on the initial client-side load.
+ * Calls GET `API_PATHS.AUTH.ME` once on mount to restore session state from
+ * the HttpOnly cookie. Rendered once near the top of the app tree.
+ * middleware.ts already blocks unauthenticated requests to dashboard routes
+ * when there's no session cookie at all, but it can't verify the JWT itself -
+ * so if the cookie is present but expired or invalid, the API returns 401
+ * and we redirect from here instead.
  */
 export function AuthHydrator() {
   const router = useRouter();

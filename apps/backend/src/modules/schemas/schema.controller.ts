@@ -1,113 +1,81 @@
-import type { Request, Response, NextFunction } from 'express';
-import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/shared-types';
-import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/shared-types';
-import { UnauthorizedError } from '../../common/errors/http-error.js';
+import type { Request, Response, RequestHandler } from 'express';
+import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/types';
+import { ERROR_MESSAGES } from '@repo/constants';
+import { ApiError, ApiResponse, asyncHandler } from '@repo/utils';
+import { logger } from '@repo/logger';
 import { schemaService } from './schema.service.js';
-import { eventBus } from '../../common/events/event-bus.js';
-import {
-  EVENT_NAMES,
-  AUDIT_ACTIONS,
-} from '../../constants/events.constants.js';
 
-export const createSchema = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const createSchema: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('SchemaController: createSchema start');
     if (!req.user) {
-      throw new UnauthorizedError(ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
+      logger.error('SchemaController: unauthorized request');
+      throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
-    // Already validated/defaulted by the validateBody(createSchemaSchema)
-    // middleware ahead of this handler.
+
     const input = req.body as CreateSchemaInput;
+    logger.debug(
+      { schemaName: input.name },
+      'SchemaController: creating schema',
+    );
     const schema = await schemaService.create(input, req.user.id);
 
-    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
-      action: AUDIT_ACTIONS.CREATE,
-      resourceType: 'schema',
-      resourceId: schema.id,
-      actorUserId: req.user.id,
-      afterState: schema,
-    });
+    logger.info({ schemaId: schema.id }, 'SchemaController: createSchema end');
+    res
+      .status(201)
+      .json(new ApiResponse(201, schema, 'Schema created successfully'));
+  },
+);
 
-    res.status(HTTP_STATUS.CREATED).json(schema);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const listSchemas = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const listSchemas: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('SchemaController: listSchemas start');
+    logger.debug('SchemaController: fetching schemas');
     const schemas = await schemaService.list();
-    res.json(schemas);
-  } catch (error) {
-    next(error);
-  }
-};
 
-export const updateSchema = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+    logger.info('SchemaController: listSchemas end');
+    res
+      .status(200)
+      .json(new ApiResponse(200, schemas, 'Schemas listed successfully'));
+  },
+);
+
+export const updateSchema: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'SchemaController: updateSchema start');
     if (!req.user) {
-      throw new UnauthorizedError(ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
+      logger.error('SchemaController: unauthorized request');
+      throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
-
-    const id = req.params.id as string;
-    const beforeState = await schemaService.getById(id);
 
     const input = req.body as UpdateSchemaInput;
-    const schema = await schemaService.update(id, input, req.user.id);
+    logger.debug({ id }, 'SchemaController: updating schema');
+    const schema = await schemaService.update(id as string, input, req.user.id);
 
-    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
-      action: AUDIT_ACTIONS.SCHEMA_CHANGE,
-      resourceType: 'schema',
-      resourceId: schema.id,
-      actorUserId: req.user.id,
-      beforeState: beforeState,
-      afterState: schema,
-    });
+    logger.info({ id }, 'SchemaController: updateSchema end');
+    res
+      .status(200)
+      .json(new ApiResponse(200, schema, 'Schema updated successfully'));
+  },
+);
 
-    res.json(schema);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const deleteSchema = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
+export const deleteSchema: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'SchemaController: deleteSchema start');
     if (!req.user) {
-      throw new UnauthorizedError(ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
+      logger.error('SchemaController: unauthorized request');
+      throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
 
-    const id = req.params.id as string;
     const force = req.query.force === 'true';
+    logger.debug({ id, force }, 'SchemaController: deleting schema');
+    await schemaService.delete(id as string, force);
 
-    const beforeState = await schemaService.getById(id);
-    await schemaService.delete(id, force);
-
-    eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
-      action: AUDIT_ACTIONS.SCHEMA_CHANGE,
-      resourceType: 'schema',
-      resourceId: id,
-      actorUserId: req.user.id,
-      beforeState: beforeState,
-      afterState: null,
-    });
-
-    res.status(HTTP_STATUS.NO_CONTENT).send();
-  } catch (error) {
-    next(error);
-  }
-};
+    logger.info({ id }, 'SchemaController: deleteSchema end');
+    res
+      .status(200)
+      .json(new ApiResponse(200, null, 'Schema deleted successfully'));
+  },
+);

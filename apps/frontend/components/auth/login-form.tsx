@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { loginSchema, type LoginInput } from '@repo/shared-types';
+import { loginSchema } from '@repo/validation';
+import { type LoginInput } from '@repo/types';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { API_BASE_URL } from '@/lib/api-client';
+import { API_PATHS } from '@/lib/constants/api-paths';
 import { useAuthStore } from '@/stores/auth-store';
 
 export function LoginForm() {
@@ -28,7 +30,8 @@ export function LoginForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(loginSchema) as any,
     defaultValues: { email: '', password: '', rememberMe: false },
   });
 
@@ -51,7 +54,7 @@ export function LoginForm() {
     // FR-AC-4 scopes SSO separately from #12's JWT-only auth) is planned
     // to add: GET /api/v1/auth/sso, which redirects to the configured
     // identity provider.
-    window.location.href = `${API_BASE_URL}/api/v1/auth/sso`;
+    window.location.href = `${API_BASE_URL}${API_PATHS.AUTH.SSO}`;
   }
 
   return (
