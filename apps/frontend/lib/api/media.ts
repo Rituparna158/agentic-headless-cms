@@ -5,6 +5,7 @@ import type {
   ListMediaOptions,
   ListMediaResult,
   MediaAsset,
+  MediaFolder,
 } from '@repo/types';
 
 /** The asset `url` the backend returns (e.g. "/media/file/<key>") is relative to the API host, not the frontend's. */
@@ -27,8 +28,8 @@ export function listMedia(
   return apiFetch<ListMediaResult>(API_PATHS.MEDIA.BASE(qs));
 }
 
-export function getMediaAsset(id: string): Promise<{ data: MediaAsset }> {
-  return apiFetch<{ data: MediaAsset }>(`/api/v1/media/${id}`);
+export function getMediaAsset(id: string): Promise<MediaAsset> {
+  return apiFetch<MediaAsset>(`/api/v1/media/${id}`);
 }
 
 export function deleteMedia(id: string): Promise<void> {
@@ -81,4 +82,25 @@ export async function uploadMedia(
 
   const { data } = (await response.json()) as { data: MediaAsset };
   return data;
+}
+
+export function listMediaFolders(
+  parentFolderId?: string,
+): Promise<MediaFolder[]> {
+  const qs = parentFolderId ? `?parentFolderId=${parentFolderId}` : '';
+  return apiFetch<MediaFolder[]>(`/api/v1/media-folders${qs}`);
+}
+
+export function createMediaFolder(
+  name: string,
+  parentFolderId?: string,
+): Promise<MediaFolder> {
+  return apiFetch<MediaFolder>(`/api/v1/media-folders`, {
+    method: 'POST',
+    body: JSON.stringify({ name, parentFolderId }),
+  });
+}
+
+export function deleteMediaFolder(id: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/media-folders/${id}`, { method: 'DELETE' });
 }
