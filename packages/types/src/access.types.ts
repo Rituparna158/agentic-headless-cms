@@ -9,6 +9,7 @@ export type PermissionData = {
 export interface CreateRoleInput {
   name: string;
   description?: string;
+  mfaRequired?: boolean;
   isSystem?: boolean;
   permissions?: PermissionData[];
 }
@@ -16,6 +17,7 @@ export interface CreateRoleInput {
 export interface UpdateRoleInput {
   name?: string;
   description?: string;
+  mfaRequired?: boolean;
   permissions?: PermissionData[];
 }
 
@@ -41,6 +43,7 @@ export interface RoleRecord {
   id: string;
   name: string;
   description?: string | null;
+  mfaRequired: boolean;
   isSystem: boolean;
   createdAt: string;
   updatedAt: string;
@@ -80,4 +83,5 @@ export interface AuthenticatedUser {
   firstName: string | null;
   lastName: string | null;
   roles: string[];
+  mfaEnabled: boolean;
 }
