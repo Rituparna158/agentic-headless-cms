@@ -3,9 +3,11 @@ import {
   getCurrentUser,
   login as loginRequest,
   logout as logoutRequest,
+  verifyMfaChallenge as verifyMfaChallengeRequest,
 } from '@/lib/api/auth';
 import { AuthState } from '@/types/store.types';
 import { ApiError } from '@/lib/api-client';
+import type { AuthenticatedUser } from '@repo/types';
 
 /**
  * No persist middleware here deliberately: the session itself lives in an
@@ -19,12 +21,27 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   status: 'idle',
   error: null,
+  mfaToken: null,
 
   login: async (input) => {
-    set({ status: 'loading', error: null });
+    set({ status: 'loading', error: null, mfaToken: null });
     try {
-      const user = await loginRequest(input);
-      set({ user, status: 'authenticated', error: null });
+      const res = await loginRequest(input);
+      if (res && 'mfaRequired' in res && res.mfaRequired) {
+        set({
+          user: null,
+          status: 'mfa_challenge_required',
+          error: null,
+          mfaToken: res.mfaToken,
+        });
+      } else {
+        set({
+          user: res as AuthenticatedUser,
+          status: 'authenticated',
+          error: null,
+          mfaToken: null,
+        });
+      }
     } catch (error) {
       set({
         user: null,
@@ -33,6 +50,28 @@ export const useAuthStore = create<AuthState>((set) => ({
           error instanceof ApiError
             ? error.message
             : 'Login failed. Please try again.',
+        mfaToken: null,
+      });
+      throw error;
+    }
+  },
+
+  verifyMfaChallenge: async (code) => {
+    const { mfaToken } = useAuthStore.getState();
+    if (!mfaToken) {
+      throw new Error('No active MFA challenge session');
+    }
+    set({ status: 'loading', error: null });
+    try {
+      const user = await verifyMfaChallengeRequest(mfaToken, code);
+      set({ user, status: 'authenticated', error: null, mfaToken: null });
+    } catch (error) {
+      set({
+        status: 'mfa_challenge_required',
+        error:
+          error instanceof ApiError
+            ? error.message
+            : 'MFA verification failed. Please try again.',
       });
       throw error;
     }
@@ -42,7 +81,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await logoutRequest();
     } finally {
-      set({ user: null, status: 'unauthenticated', error: null });
+      set({
+        user: null,
+        status: 'unauthenticated',
+        error: null,
+        mfaToken: null,
+      });
     }
   },
 
@@ -50,10 +94,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ status: 'loading' });
     try {
       const user = await getCurrentUser();
-      set({ user, status: 'authenticated', error: null });
+      set({ user, status: 'authenticated', error: null, mfaToken: null });
     } catch {
       await logoutRequest().catch(() => {});
-      set({ user: null, status: 'unauthenticated', error: null });
+      set({
+        user: null,
+        status: 'unauthenticated',
+        error: null,
+        mfaToken: null,
+      });
     }
   },
 }));

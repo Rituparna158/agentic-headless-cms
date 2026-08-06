@@ -7,7 +7,6 @@ import type {
   MediaAsset,
 } from '@repo/types';
 
-/** The asset `url` the backend returns (e.g. "/media/file/<key>") is relative to the API host, not the frontend's. */
 export function mediaFileUrl(asset: MediaAsset): string {
   return `${API_BASE_URL}${asset.url}`;
 }
@@ -28,19 +27,13 @@ export function listMedia(
 }
 
 export function getMediaAsset(id: string): Promise<{ data: MediaAsset }> {
-  return apiFetch<{ data: MediaAsset }>(`/api/v1/media/${id}`);
+  return apiFetch<{ data: MediaAsset }>(API_PATHS.MEDIA.BY_ID(id));
 }
 
 export function deleteMedia(id: string): Promise<void> {
   return apiFetch<void>(API_PATHS.MEDIA.BY_ID(id), { method: 'DELETE' });
 }
 
-/**
- * Uploads bypass `apiFetch` entirely — it unconditionally sets
- * `Content-Type: application/json`, which is wrong for `FormData` (the
- * browser needs to set its own `multipart/form-data; boundary=...` header
- * based on the actual body it's sending).
- */
 export async function uploadMedia(
   file: File,
   options?: { altText?: string; folderId?: string },
