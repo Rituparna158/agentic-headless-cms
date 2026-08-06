@@ -1,6 +1,5 @@
 'use client';
 
-import type { SchemaDefinition } from '@repo/types';
 import {
   keepPreviousData,
   useMutation,
@@ -23,15 +22,10 @@ import {
 } from '@/components/ui/table';
 import { deleteContentEntry, listContentEntries } from '@/lib/api/content';
 import type { ContentEntryListProps } from '@/types/component.types';
+import { pickTitleField } from '@/utils/schema';
+import { MediaThumbnailCell } from './media-thumbnail-cell';
 
 const PAGE_SIZE = 25;
-
-/** The first text/richtext field is used as the entry's display title in the list — schemas have no dedicated "title field" concept, so this is the closest reasonable stand-in. */
-function pickTitleField(definition: SchemaDefinition) {
-  return definition.fields.find(
-    (f) => f.dataType === 'text' || f.dataType === 'richtext',
-  );
-}
 
 export function ContentEntryList({ schema }: ContentEntryListProps) {
   const queryClient = useQueryClient();
@@ -131,10 +125,21 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
               {entries.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell className="font-medium">
-                    {titleField &&
-                    typeof entry.data[titleField.apiId] === 'string'
-                      ? (entry.data[titleField.apiId] as string)
-                      : entry.id}
+                    {titleField?.dataType === 'media' &&
+                    typeof entry.data[titleField.apiId] === 'string' &&
+                    entry.data[titleField.apiId] ? (
+                      <MediaThumbnailCell
+                        assetId={entry.data[titleField.apiId] as string}
+                        alt={titleField.displayName}
+                      />
+                    ) : titleField &&
+                      typeof entry.data[titleField.apiId] === 'string' ? (
+                      (entry.data[titleField.apiId] as string)
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        {entry.id}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground capitalize">
                     {entry.status}

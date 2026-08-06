@@ -190,6 +190,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           schemaSlug={schema.slug}
           entryId={entry.id}
           currentEntry={entry}
+          schema={schema}
           open={isVersionHistoryOpen}
           onOpenChange={setIsVersionHistoryOpen}
         />
