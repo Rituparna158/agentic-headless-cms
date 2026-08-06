@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -78,7 +77,7 @@ export class AccessService {
         actorUserId,
         actorAgentId,
         beforeState: null,
-        afterState: result as any,
+        afterState: result,
         context,
       });
 
@@ -114,8 +113,8 @@ export class AccessService {
         resourceId: id,
         actorUserId,
         actorAgentId,
-        beforeState: beforeState as any,
-        afterState: result as any,
+        beforeState: beforeState,
+        afterState: result,
         context,
       });
 
@@ -144,7 +143,7 @@ export class AccessService {
         resourceId: id,
         actorUserId,
         actorAgentId,
-        beforeState: beforeState as any,
+        beforeState: beforeState,
         afterState: null,
         context,
       });
@@ -300,7 +299,7 @@ export class AccessService {
           id: user.id,
           email: user.email,
           status: user.status,
-        } as any,
+        },
         context,
       });
 
@@ -365,7 +364,7 @@ export class AccessService {
           id: token!.id,
           name: token!.name,
           type: token!.type,
-        } as any,
+        },
         context,
       });
 
@@ -394,7 +393,7 @@ export class AccessService {
         resourceId: id,
         actorUserId,
         actorAgentId,
-        beforeState: beforeState as any,
+        beforeState: beforeState,
         afterState: null,
         context,
       });

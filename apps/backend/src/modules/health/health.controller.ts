@@ -4,9 +4,10 @@ import { asyncHandler } from '@repo/utils';
 import { logger } from '@repo/logger';
 
 export const liveness: RequestHandler = asyncHandler(
-  async (_req: Request, res: Response) => {
+  (_req: Request, res: Response) => {
     logger.info('HealthController: liveness start');
     res.status(200).json({ status: 'ok' });
+    return Promise.resolve();
   },
 );
 

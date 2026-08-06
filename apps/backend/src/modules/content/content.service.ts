@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ContentRepository } from '@repo/repository';
 import { DEFAULT_LOCALE } from '@repo/constants';
 import { logger } from '@repo/logger';
@@ -89,7 +88,7 @@ export class ContentService {
         actorUserId: actorUserId || userId,
         actorAgentId,
         beforeState: null,
-        afterState: result as any,
+        afterState: result,
         context,
       });
 
@@ -131,8 +130,8 @@ export class ContentService {
         resourceId: entryId,
         actorUserId: actorUserId || userId,
         actorAgentId,
-        beforeState: beforeState as any,
-        afterState: result as any,
+        beforeState: beforeState,
+        afterState: result,
         context,
       });
 
@@ -172,8 +171,8 @@ export class ContentService {
         resourceId: entryId,
         actorUserId: actorUserId || userId,
         actorAgentId,
-        beforeState: beforeState as any,
-        afterState: result as any,
+        beforeState: beforeState,
+        afterState: result,
         context,
       });
 
@@ -218,8 +217,8 @@ export class ContentService {
         resourceId: entryId,
         actorUserId: actorUserId || userId,
         actorAgentId,
-        beforeState: beforeState as any,
-        afterState: result as any,
+        beforeState: beforeState,
+        afterState: result,
         context,
       });
 
@@ -264,7 +263,7 @@ export class ContentService {
         resourceId: entryId,
         actorUserId,
         actorAgentId,
-        beforeState: beforeState as any,
+        beforeState: beforeState,
         afterState: null,
         context,
       });

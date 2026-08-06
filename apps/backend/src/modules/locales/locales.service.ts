@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { LocalesRepository } from '@repo/repository';
 import { CreateLocaleInput } from '@repo/types';
 import { ERROR_MESSAGES, EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
@@ -51,7 +50,7 @@ export class LocalesService {
         actorUserId,
         actorAgentId,
         beforeState: null,
-        afterState: result as any,
+        afterState: result,
         context,
       });
 
@@ -81,7 +80,7 @@ export class LocalesService {
         resourceId: id,
         actorUserId,
         actorAgentId,
-        beforeState: beforeState as any,
+        beforeState: beforeState,
         afterState: null,
         context,
       });

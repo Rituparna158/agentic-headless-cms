@@ -28,9 +28,10 @@ test('admin can invite a user, and the invited user can accept and log in', asyn
     page.getByRole('button', { name: 'Send Invite', exact: true }).click(),
   ]);
 
-  const { inviteUrl } = (await inviteResponse.json()) as {
-    inviteUrl?: string;
+  const { data } = (await inviteResponse.json()) as {
+    data?: { inviteUrl?: string };
   };
+  const inviteUrl = data?.inviteUrl;
   expect(inviteUrl).toBeTruthy();
 
   const token = new URL(inviteUrl!).searchParams.get('token');
