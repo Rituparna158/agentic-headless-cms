@@ -83,6 +83,11 @@ const baseEnvSchema = z.object({
     .default('redis://localhost:6379'),
   QUEUE_JOB_ATTEMPTS: z.coerce.number().int().positive().default(3),
   QUEUE_JOB_BACKOFF_DELAY_MS: z.coerce.number().int().positive().default(5000),
+
+  OIDC_ISSUER_URL: z.string().url().optional(),
+  OIDC_CLIENT_ID: z.string().optional(),
+  OIDC_CLIENT_SECRET: z.string().optional(),
+  OIDC_REDIRECT_URI: z.string().url().optional(),
 });
 
 const envSchema = baseEnvSchema.superRefine((data, ctx) => {
@@ -99,6 +104,32 @@ const envSchema = baseEnvSchema.superRefine((data, ctx) => {
         code: 'custom',
         path: ['STORAGE_S3_REGION'],
         message: 'STORAGE_S3_REGION is required when STORAGE_ADAPTER=s3',
+      });
+    }
+  }
+
+  if (data.OIDC_ISSUER_URL) {
+    if (!data.OIDC_CLIENT_ID) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OIDC_CLIENT_ID'],
+        message: 'OIDC_CLIENT_ID is required when OIDC_ISSUER_URL is provided',
+      });
+    }
+    if (!data.OIDC_CLIENT_SECRET) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OIDC_CLIENT_SECRET'],
+        message:
+          'OIDC_CLIENT_SECRET is required when OIDC_ISSUER_URL is provided',
+      });
+    }
+    if (!data.OIDC_REDIRECT_URI) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['OIDC_REDIRECT_URI'],
+        message:
+          'OIDC_REDIRECT_URI is required when OIDC_ISSUER_URL is provided',
       });
     }
   }
