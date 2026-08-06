@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
-import { hasPermission, Permission } from './rbac.util.js';
+import { hasPermission, Permission } from '@repo/utils/rbac';
 
 function errorJson(res: Response, status: number, message: string) {
   const req = res.req as unknown as Request;
