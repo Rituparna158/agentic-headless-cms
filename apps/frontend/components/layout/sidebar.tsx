@@ -13,7 +13,6 @@ export function Sidebar() {
     setMounted(true);
   }, []);
 
-  // During SSR or initial client render, render the sidebar normally to match the server HTML
   if (!mounted) {
     return (
       <aside className="bg-background hidden w-64 shrink-0 border-r md:flex md:flex-col">
