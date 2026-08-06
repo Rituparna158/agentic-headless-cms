@@ -50,6 +50,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2",
     "nodemailer": "^9.0.3",
+    "openid-client": "^5.7.1",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "pluralize": "^8.0.0",
