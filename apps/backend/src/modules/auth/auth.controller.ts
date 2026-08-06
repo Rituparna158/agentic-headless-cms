@@ -22,7 +22,7 @@ export const login: RequestHandler = asyncHandler(
     res.cookie(AUTH_COOKIES.NAME, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
 
@@ -37,7 +37,7 @@ export const logout: RequestHandler = asyncHandler(
     res.clearCookie(AUTH_COOKIES.NAME, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
     });
     logger.info('AuthController: logout success');
     res.status(HTTP_STATUS.NO_CONTENT).send();
@@ -98,5 +98,75 @@ export const acceptInvite: RequestHandler = asyncHandler(
       }
       throw error;
     }
+  },
+);
+
+export const ssoLogin: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: ssoLogin start');
+    const { url, state, nonce, codeVerifier } =
+      await authService.getOidcAuthorizationUrl();
+
+    res.cookie('sso_state', state, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      maxAge: 5 * 60 * 1000,
+    });
+    res.cookie('sso_nonce', nonce, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      maxAge: 5 * 60 * 1000,
+    });
+    res.cookie('sso_code_verifier', codeVerifier, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      maxAge: 5 * 60 * 1000,
+    });
+
+    res.redirect(url);
+  },
+);
+
+export const ssoCallback: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: ssoCallback start');
+
+    const cookies = req.cookies as Record<string, unknown> | undefined;
+    const state = cookies?.sso_state;
+    const nonce = cookies?.sso_nonce;
+    const codeVerifier = cookies?.sso_code_verifier;
+
+    if (
+      typeof state !== 'string' ||
+      typeof nonce !== 'string' ||
+      typeof codeVerifier !== 'string'
+    ) {
+      throw new BadRequestError('Missing or expired SSO cookies');
+    }
+
+    const protocol = req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3000';
+    const reqUrl = `${protocol}://${host}${req.originalUrl}`;
+
+    const { user, token } = await authService.ssoCallback(
+      reqUrl,
+      state,
+      nonce,
+      codeVerifier,
+    );
+
+    res.clearCookie('sso_state');
+    res.clearCookie('sso_nonce');
+    res.clearCookie('sso_code_verifier');
+
+    res.cookie(AUTH_COOKIES.NAME, token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: AUTH_COOKIES.MAX_AGE_MS,
+    });
+
+    logger.info({ userId: user.id }, 'AuthController: ssoCallback success');
+    res.redirect(`${env.APP_URL}/`);
   },
 );
