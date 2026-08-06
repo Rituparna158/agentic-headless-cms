@@ -49,6 +49,7 @@ export const createRole: RequestHandler = asyncHandler(
     const body = req.body as {
       name: string;
       description?: string;
+      mfaRequired?: boolean;
       isSystem?: boolean;
       permissions?: PermissionData[];
     };
@@ -70,6 +71,7 @@ export const updateRole: RequestHandler = asyncHandler(
       req.body as {
         name?: string;
         description?: string;
+        mfaRequired?: boolean;
         permissions?: PermissionData[];
       },
     );

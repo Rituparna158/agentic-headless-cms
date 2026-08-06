@@ -1,5 +1,10 @@
-import { loginSchema } from '@repo/validation';
+import {
+  loginSchema,
+  mfaVerifySchema,
+  mfaChallengeSchema,
+} from '@repo/validation';
 import { AUTH_COOKIES, ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
+import type { AuthenticatedUser } from '@repo/types';
 import { Request, Response, RequestHandler } from 'express';
 
 import {
@@ -16,7 +21,26 @@ export const login: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: login start');
     const input = loginSchema.parse(req.body);
-    const { user, token } = await authService.login(input);
+    const result = await authService.login(input);
+
+    if ('mfaRequired' in result && result.mfaRequired) {
+      logger.info('AuthController: login MFA challenge required');
+      res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            { mfaRequired: true, mfaToken: result.mfaToken },
+            'MFA challenge required',
+          ),
+        );
+      return;
+    }
+
+    const { user, token } = result as {
+      user: AuthenticatedUser;
+      token: string;
+    };
 
     logger.debug({ email: input.email }, 'AuthController: setting auth cookie');
     res.cookie(AUTH_COOKIES.NAME, token, {
@@ -168,5 +192,93 @@ export const ssoCallback: RequestHandler = asyncHandler(
 
     logger.info({ userId: user.id }, 'AuthController: ssoCallback success');
     res.redirect(`${env.APP_URL}/`);
+  },
+);
+
+export const enrollMfa: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: enrollMfa start');
+    const userId = req.user!.id;
+    const result = await authService.enrollMfa(userId);
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, 'MFA enrollment initiated'));
+  },
+);
+
+export const verifyMfa: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: verifyMfa start');
+    const userId = req.user!.id;
+    const input = mfaVerifySchema.parse(req.body);
+    const { user, token } = await authService.verifyMfa(userId, input.code);
+
+    logger.debug(
+      { userId },
+      'AuthController: setting updated auth cookie from MFA verification',
+    );
+    res.cookie(AUTH_COOKIES.NAME, token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: AUTH_COOKIES.MAX_AGE_MS,
+    });
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, user, 'MFA verified and enabled successfully'),
+      );
+  },
+);
+
+export const disableMfa: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: disableMfa start');
+    const userId = req.user!.id;
+    const { user, token } = await authService.disableMfa(userId);
+
+    logger.debug(
+      { userId },
+      'AuthController: setting updated auth cookie from MFA disablement',
+    );
+    res.cookie(AUTH_COOKIES.NAME, token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: AUTH_COOKIES.MAX_AGE_MS,
+    });
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, user, 'MFA disabled successfully'));
+  },
+);
+
+export const verifyMfaChallenge: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: verifyMfaChallenge start');
+    const input = mfaChallengeSchema.parse(req.body);
+    const { user, token } = await authService.verifyMfaChallenge(
+      input.mfaToken,
+      input.code,
+    );
+
+    logger.debug(
+      { userId: user.id },
+      'AuthController: setting auth cookie from MFA challenge',
+    );
+    res.cookie(AUTH_COOKIES.NAME, token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: AUTH_COOKIES.MAX_AGE_MS,
+    });
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, user, 'MFA challenge verification successful'),
+      );
   },
 );
