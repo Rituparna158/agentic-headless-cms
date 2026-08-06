@@ -27,8 +27,8 @@ export function listMedia(
   return apiFetch<ListMediaResult>(API_PATHS.MEDIA.BASE(qs));
 }
 
-export function getMediaAsset(id: string): Promise<{ data: MediaAsset }> {
-  return apiFetch<{ data: MediaAsset }>(API_PATHS.MEDIA.BY_ID(id));
+export function getMediaAsset(id: string): Promise<MediaAsset> {
+  return apiFetch<MediaAsset>(API_PATHS.MEDIA.BY_ID(id));
 }
 
 export function deleteMedia(id: string): Promise<void> {
