@@ -5,7 +5,8 @@ import type {
   ContentEntryRecord,
   SchemaField,
   SchemaRecord,
-   MediaAsset
+  MediaAsset,
+  MediaFolder,
 } from '@repo/types';
 import type { z } from 'zod';
 
@@ -103,4 +104,11 @@ export interface ConfirmDialogProps {
 export interface MediaLibraryProps {
   selectedId: string;
   onSelect: (asset: MediaAsset) => void;
+}
+
+export interface FolderNodeProps {
+  folder: MediaFolder;
+  activeFolderId: string;
+  onSelectFolder: (id: string) => void;
+  level: number;
 }

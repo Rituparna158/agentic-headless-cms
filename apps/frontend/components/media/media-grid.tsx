@@ -18,7 +18,13 @@ import { deleteMedia, listMedia, mediaFileUrl } from '@/lib/api/media';
 
 const PAGE_SIZE = 24;
 
-function AssetThumbnail({ asset }: { asset: MediaAsset }) {
+function AssetThumbnail({
+  asset,
+  priority = false,
+}: {
+  asset: MediaAsset;
+  priority?: boolean;
+}) {
   if (asset.mimeType.startsWith('image/')) {
     return (
       <Image
@@ -26,6 +32,7 @@ function AssetThumbnail({ asset }: { asset: MediaAsset }) {
         alt={asset.altText ?? asset.filename}
         fill
         unoptimized
+        priority={priority}
         className="object-cover"
       />
     );
@@ -38,14 +45,14 @@ function AssetThumbnail({ asset }: { asset: MediaAsset }) {
   );
 }
 
-export function MediaGrid() {
+export function MediaGrid({ folderId }: { folderId?: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pendingDelete, setPendingDelete] = useState<MediaAsset | null>(null);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['media', page],
-    queryFn: () => listMedia({ page, pageSize: PAGE_SIZE }),
+    queryKey: ['media', page, folderId],
+    queryFn: () => listMedia({ page, pageSize: PAGE_SIZE, folderId }),
     placeholderData: keepPreviousData,
   });
 
@@ -85,10 +92,10 @@ export function MediaGrid() {
   return (
     <div className="grid gap-3">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {assets.map((asset) => (
+        {assets.map((asset, index) => (
           <div key={asset.id} className="grid gap-1">
             <div className="bg-muted relative aspect-square overflow-hidden rounded-md border">
-              <AssetThumbnail asset={asset} />
+              <AssetThumbnail asset={asset} priority={index < 8} />
               <Button
                 type="button"
                 variant="destructive"

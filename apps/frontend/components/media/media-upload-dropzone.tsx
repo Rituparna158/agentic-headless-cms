@@ -9,12 +9,15 @@ import { uploadMedia } from '@/lib/api/media';
 import { ApiError } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
-export function MediaUploadDropzone() {
+export function MediaUploadDropzone({ folderId }: { folderId?: string }) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => uploadMedia(file),
+    mutationFn: (file: File) =>
+      uploadMedia(file, {
+        folderId: folderId === 'root' ? undefined : folderId,
+      }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['media'] }),
   });
 
