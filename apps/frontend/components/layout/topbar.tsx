@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Bell,
   HelpCircle,
@@ -49,6 +49,11 @@ export function Topbar() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function handleLogout() {
     await logout();
@@ -59,32 +64,41 @@ export function Topbar() {
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
     : 'Not signed in';
 
+  const hasRoles = mounted ? !!(user && user.roles.length > 0) : true;
+
   return (
     <header className="bg-background flex h-14 shrink-0 items-center gap-3 border-b px-4">
-      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-        <SheetContent side="left" className="w-64 p-0">
-          <SheetHeader className="border-b">
-            <SheetTitle>Agentic CMS</SheetTitle>
-          </SheetHeader>
-          <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
-        </SheetContent>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          onClick={() => setMobileNavOpen(true)}
-          aria-label="Open navigation"
-        >
-          <Menu className="size-5" />
-        </Button>
-      </Sheet>
+      {hasRoles ? (
+        <>
+          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+            <SheetContent side="left" className="w-64 p-0">
+              <SheetHeader className="border-b">
+                <SheetTitle>Agentic CMS</SheetTitle>
+              </SheetHeader>
+              <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
+            </SheetContent>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Open navigation"
+            >
+              <Menu className="size-5" />
+            </Button>
+          </Sheet>
+          <span className="hidden font-semibold md:inline">Agentic CMS</span>
+        </>
+      ) : (
+        <span className="font-semibold">Agentic CMS</span>
+      )}
 
-      <span className="hidden font-semibold md:inline">Agentic CMS</span>
-
-      <div className="relative ml-2 hidden max-w-sm flex-1 md:block">
-        <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-        <Input placeholder="Search" className="pl-8" />
-      </div>
+      {hasRoles && (
+        <div className="relative ml-2 hidden max-w-sm flex-1 md:block">
+          <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
+          <Input placeholder="Search" className="pl-8" />
+        </div>
+      )}
 
       <div className="ml-auto flex items-center gap-1">
         <Button variant="ghost" size="icon" aria-label="Help">
