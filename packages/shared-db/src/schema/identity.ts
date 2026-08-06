@@ -16,6 +16,7 @@ export const roles = pgTable('roles', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull().unique(),
   description: text('description'),
+  mfaRequired: boolean('mfa_required').notNull().default(false),
   isSystem: boolean('is_system').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
