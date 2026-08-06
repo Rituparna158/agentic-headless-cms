@@ -108,12 +108,15 @@ export class MediaRepository {
   ): Promise<{ assets: MediaAssetRecord[]; total: number }> {
     try {
       logger.info({ options }, 'MediaRepository: listing media assets');
-      const where = options.folderId
-        ? and(
-            isNull(mediaAssets.deletedAt),
-            eq(mediaAssets.folderId, options.folderId),
-          )
-        : isNull(mediaAssets.deletedAt);
+      const where =
+        options.folderId === 'root'
+          ? and(isNull(mediaAssets.deletedAt), isNull(mediaAssets.folderId))
+          : options.folderId
+            ? and(
+                isNull(mediaAssets.deletedAt),
+                eq(mediaAssets.folderId, options.folderId),
+              )
+            : isNull(mediaAssets.deletedAt);
 
       const page = options.page ?? 1;
       const pageSize = options.pageSize ?? 10;

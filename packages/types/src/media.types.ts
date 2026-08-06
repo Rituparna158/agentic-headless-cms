@@ -60,3 +60,16 @@ export interface ListMediaResult {
     };
   };
 }
+
+export interface MediaFolder {
+  id: string;
+  name: string;
+  parentFolderId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMediaFolderInput {
+  name: string;
+  parentFolderId?: string | null;
+}

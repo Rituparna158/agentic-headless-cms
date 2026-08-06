@@ -37,7 +37,7 @@ export function MediaPickerField({
     staleTime: 60_000,
   });
 
-  const selected: MediaAsset | null = selectedData?.data ?? null;
+  const selected: MediaAsset | null = selectedData ?? null;
 
   function handleSelect(asset: MediaAsset) {
     onChange(asset.id);
