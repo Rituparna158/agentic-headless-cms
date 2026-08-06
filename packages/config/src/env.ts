@@ -28,7 +28,7 @@ const baseEnvSchema = z.object({
     .default('false')
     .transform((value) => value === 'true'),
 
-  CORS_ORIGIN: z.string().default('*'),
+  CORS_ORIGIN: z.string().default('http://localhost:3001'),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
