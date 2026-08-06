@@ -22,6 +22,7 @@ vi.mock('@repo/repository', () => ({
   },
   ContentRepository: vi.fn().mockImplementation(class {}),
   MediaRepository: vi.fn().mockImplementation(class {}),
+  MediaFoldersRepository: vi.fn().mockImplementation(class {}),
   SchemaRepository: vi.fn().mockImplementation(class {}),
   AuditRepository: vi.fn().mockImplementation(class {}),
   AccessRepository: vi.fn().mockImplementation(class {}),

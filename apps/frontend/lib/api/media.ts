@@ -5,6 +5,7 @@ import type {
   ListMediaOptions,
   ListMediaResult,
   MediaAsset,
+  MediaFolder,
 } from '@repo/types';
 
 export function mediaFileUrl(asset: MediaAsset): string {
@@ -74,4 +75,25 @@ export async function uploadMedia(
 
   const { data } = (await response.json()) as { data: MediaAsset };
   return data;
+}
+
+export function listMediaFolders(
+  parentFolderId?: string,
+): Promise<MediaFolder[]> {
+  const qs = parentFolderId ? `?parentFolderId=${parentFolderId}` : '';
+  return apiFetch<MediaFolder[]>(`/api/v1/media-folders${qs}`);
+}
+
+export function createMediaFolder(
+  name: string,
+  parentFolderId?: string,
+): Promise<MediaFolder> {
+  return apiFetch<MediaFolder>(`/api/v1/media-folders`, {
+    method: 'POST',
+    body: JSON.stringify({ name, parentFolderId }),
+  });
+}
+
+export function deleteMediaFolder(id: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/media-folders/${id}`, { method: 'DELETE' });
 }

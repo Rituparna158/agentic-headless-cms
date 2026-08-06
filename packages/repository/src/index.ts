@@ -1,5 +1,6 @@
 export * from './content.repository.js';
 export * from './media.repository.js';
+export * from './media-folders.repository.js';
 export * from './schema.repository.js';
 export * from './audit.repository.js';
 export * from './access.repository.js';
