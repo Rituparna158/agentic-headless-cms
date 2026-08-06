@@ -25,7 +25,17 @@ export const authenticateToken = (
   }
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as AuthenticatedUser;
+    const decoded = jwt.verify(token, env.JWT_SECRET) as AuthenticatedUser & {
+      isMfaChallenge?: boolean;
+    };
+    if (decoded.isMfaChallenge) {
+      errorJson(
+        res,
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.AUTH.INVALID_TOKEN,
+      );
+      return;
+    }
     req.user = decoded;
     next();
   } catch {
