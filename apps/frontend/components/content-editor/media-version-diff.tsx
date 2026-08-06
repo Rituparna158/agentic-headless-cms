@@ -35,13 +35,13 @@ export function MediaVersionDiff({
   ) => (
     <div className="flex flex-col items-center gap-1">
       <span className="text-muted-foreground text-xs font-medium">{label}</span>
-      {asset?.data ? (
+      {asset ? (
         <Image
           unoptimized
           width={96}
           height={96}
-          src={mediaFileUrl(asset.data)}
-          alt={asset.data.filename}
+          src={mediaFileUrl(asset)}
+          alt={asset.filename}
           className="border rounded-md object-cover size-24"
         />
       ) : (

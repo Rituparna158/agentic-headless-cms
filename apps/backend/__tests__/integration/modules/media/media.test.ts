@@ -39,6 +39,7 @@ vi.mock('@repo/repository', () => ({
       softDelete: vi.fn().mockResolvedValue(testAsset),
     };
   }),
+  MediaFoldersRepository: vi.fn().mockImplementation(class {}),
   ContentRepository: vi.fn().mockImplementation(class {}),
   SchemaRepository: vi.fn().mockImplementation(class {}),
   AuditRepository: vi.fn().mockImplementation(class {}),
