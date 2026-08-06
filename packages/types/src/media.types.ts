@@ -68,3 +68,8 @@ export interface MediaFolder {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CreateMediaFolderInput {
+  name: string;
+  parentFolderId?: string | null;
+}
