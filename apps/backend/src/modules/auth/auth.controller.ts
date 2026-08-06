@@ -51,7 +51,9 @@ export const login: RequestHandler = asyncHandler(
     });
 
     logger.info({ userId: user.id }, 'AuthController: login success');
-    res.status(200).json(new ApiResponse(200, user, 'Login successful'));
+    const permissions = await authService.getUserPermissions(user.id);
+    const userWithPermissions = { ...user, permissions };
+    res.status(200).json(new ApiResponse(200, userWithPermissions, 'Login successful'));
   },
 );
 
@@ -69,7 +71,7 @@ export const logout: RequestHandler = asyncHandler(
 );
 
 export const getCurrentUser: RequestHandler = asyncHandler(
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     logger.info('AuthController: getCurrentUser start');
     if (!req.user) {
       logger.warn('AuthController: getCurrentUser user not authenticated');
@@ -79,9 +81,11 @@ export const getCurrentUser: RequestHandler = asyncHandler(
       { userId: req.user.id },
       'AuthController: getCurrentUser success',
     );
+    const permissions = await authService.getUserPermissions(req.user.id);
+    const userWithPermissions = { ...req.user, permissions };
     res
       .status(200)
-      .json(new ApiResponse(200, req.user, 'User retrieved successfully'));
+      .json(new ApiResponse(200, userWithPermissions, 'User retrieved successfully'));
   },
 );
 
