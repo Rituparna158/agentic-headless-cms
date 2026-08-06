@@ -17,7 +17,7 @@ export function MediaThumbnailCell({
     staleTime: 60_000,
   });
 
-  if (!data?.data) {
+  if (!data) {
     return (
       <span className="text-muted-foreground text-xs italic">Loading…</span>
     );
@@ -28,7 +28,7 @@ export function MediaThumbnailCell({
       unoptimized
       width={40}
       height={40}
-      src={mediaFileUrl(data.data)}
+      src={mediaFileUrl(data)}
       alt={alt}
       className="size-10 rounded object-cover"
     />
