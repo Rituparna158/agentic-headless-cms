@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useHasPermission } from '@/hooks/use-permissions';
 import { deleteContentEntry, listContentEntries } from '@/lib/api/content';
 import type { ContentEntryListProps } from '@/types/component.types';
 import { pickTitleField } from '@/utils/schema';
@@ -60,6 +61,8 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['content', schema.slug] }),
   });
+
+  const canDelete = useHasPermission('delete', schema.id);
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">Loading entries…</p>;
@@ -155,14 +158,22 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
                         Edit
                       </Link>
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={deleteMutation.isPending}
-                      onClick={() => deleteMutation.mutate(entry.id)}
+                    <span
+                      title={
+                        !canDelete
+                          ? 'You do not have permission to delete.'
+                          : ''
+                      }
                     >
-                      Delete
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={!canDelete || deleteMutation.isPending}
+                        onClick={() => deleteMutation.mutate(entry.id)}
+                      >
+                        Delete
+                      </Button>
+                    </span>
                   </TableCell>
                 </TableRow>
               ))}

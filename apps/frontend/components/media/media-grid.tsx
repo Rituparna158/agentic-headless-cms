@@ -11,6 +11,7 @@ import { FileIcon, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
+import { useHasPermission } from '@/hooks/use-permissions';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -64,6 +65,8 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
     },
   });
 
+  const canDelete = useHasPermission('delete');
+
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">Loading media…</p>;
   }
@@ -96,17 +99,24 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
           <div key={asset.id} className="grid gap-1">
             <div className="bg-muted relative aspect-square overflow-hidden rounded-md border">
               <AssetThumbnail asset={asset} priority={index < 8} />
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
+              <span
                 className="absolute top-1 right-1 size-7"
-                aria-label={`Delete ${asset.filename}`}
-                disabled={deleteMutation.isPending}
-                onClick={() => setPendingDelete(asset)}
+                title={
+                  !canDelete ? 'You do not have permission to delete.' : ''
+                }
               >
-                <Trash2 className="size-3.5" />
-              </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="size-full"
+                  aria-label={`Delete ${asset.filename}`}
+                  disabled={!canDelete || deleteMutation.isPending}
+                  onClick={() => setPendingDelete(asset)}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </span>
             </div>
             <p className="truncate text-xs" title={asset.filename}>
               {asset.filename}
