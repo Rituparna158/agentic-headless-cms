@@ -27,6 +27,7 @@ vi.mock('@/lib/api/schemas', () => ({
 const editorRole: RoleRecord = {
   id: 'role-1',
   name: 'Editor',
+  mfaRequired: false,
   isSystem: false,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),

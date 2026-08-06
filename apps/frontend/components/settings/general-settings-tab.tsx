@@ -7,7 +7,7 @@ export function GeneralSettingsTab() {
         <CardTitle>General</CardTitle>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
-        General instance settings will live here as they&apos;re added.
+        General instance settings.
       </CardContent>
     </Card>
   );

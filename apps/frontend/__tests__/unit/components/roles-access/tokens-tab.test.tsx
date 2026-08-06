@@ -24,6 +24,7 @@ vi.mock('@/lib/api/access', () => ({
 const adminRole: RoleRecord = {
   id: 'role-admin',
   name: 'admin',
+  mfaRequired: false,
   isSystem: true,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),

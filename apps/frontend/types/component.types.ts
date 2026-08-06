@@ -5,7 +5,7 @@ import type {
   ContentEntryRecord,
   SchemaField,
   SchemaRecord,
-   MediaAsset
+  MediaAsset,
 } from '@repo/types';
 import type { z } from 'zod';
 

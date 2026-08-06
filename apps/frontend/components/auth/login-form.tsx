@@ -27,7 +27,12 @@ import { useAuthStore } from '@/stores/auth-store';
 export function LoginForm() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
+  const status = useAuthStore((state) => state.status);
+  const verifyMfaChallenge = useAuthStore((state) => state.verifyMfaChallenge);
+
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   const form = useForm<LoginInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,7 +44,9 @@ export function LoginForm() {
     setSubmitError(null);
     try {
       await login(values);
-      router.push('/');
+      if (useAuthStore.getState().status === 'authenticated') {
+        router.push('/');
+      }
     } catch {
       // useAuthStore already recorded a user-facing message; read it back
       // rather than duplicating the error-shaping logic here.
@@ -47,6 +54,82 @@ export function LoginForm() {
         useAuthStore.getState().error ?? 'Login failed. Please try again.',
       );
     }
+  }
+
+  if (status === 'mfa_challenge_required') {
+    return (
+      <div className="grid gap-4">
+        <div className="space-y-1 text-center">
+          <h2 className="text-xl font-semibold tracking-tight">
+            Two-Factor Authentication
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Enter the 6-digit code from your authenticator app to complete your
+            sign in.
+          </p>
+        </div>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setSubmitError(null);
+            setVerifying(true);
+            try {
+              await verifyMfaChallenge(code);
+              router.push('/');
+            } catch {
+              setSubmitError(
+                useAuthStore.getState().error ??
+                  'MFA verification failed. Please try again.',
+              );
+            } finally {
+              setVerifying(false);
+            }
+          }}
+          className="grid gap-4"
+        >
+          <div className="space-y-2">
+            <Input
+              type="text"
+              pattern="[0-9]*"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="000000"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              className="text-center text-lg tracking-widest font-mono"
+              required
+              autoFocus
+            />
+          </div>
+
+          {submitError ? (
+            <p role="alert" className="text-destructive text-sm text-center">
+              {submitError}
+            </p>
+          ) : null}
+
+          <Button type="submit" disabled={verifying || code.length !== 6}>
+            {verifying ? 'Verifying…' : 'Verify'}
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              useAuthStore.setState({
+                status: 'unauthenticated',
+                mfaToken: null,
+                error: null,
+              });
+              setCode('');
+              setSubmitError(null);
+            }}
+          >
+            Cancel and Sign In Again
+          </Button>
+        </form>
+      </div>
+    );
   }
 
   function handleSsoLogin() {

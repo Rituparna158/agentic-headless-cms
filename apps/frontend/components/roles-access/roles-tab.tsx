@@ -254,6 +254,21 @@ function RoleDetails({
             placeholder="Optional description"
           />
         </div>
+        <div className="flex flex-row items-center gap-2 space-y-0 pt-2">
+          <Checkbox
+            id="mfaRequired"
+            checked={activeRole.mfaRequired || false}
+            onCheckedChange={(checked) =>
+              onUpdateRole({ mfaRequired: !!checked })
+            }
+          />
+          <label
+            htmlFor="mfaRequired"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+          >
+            Require Multi-Factor Authentication (MFA)
+          </label>
+        </div>
       </div>
 
       <div className="space-y-4">
