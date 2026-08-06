@@ -58,7 +58,7 @@ describe('MediaUploadDropzone', () => {
     input.dispatchEvent(new Event('change', { bubbles: true }));
 
     await waitFor(() => {
-      expect(mockUpload).toHaveBeenCalledWith(file);
+      expect(mockUpload).toHaveBeenCalledWith(file, { folderId: undefined });
     });
   });
 
