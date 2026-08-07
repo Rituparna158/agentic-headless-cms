@@ -292,3 +292,82 @@
  *       204:
  *         description: Token revoked
  */
+
+/**
+ * @swagger
+ * /access/mfa-requests:
+ *   get:
+ *     summary: List MFA reset requests
+ *     tags: [Access]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, approved, rejected, history]
+ *         description: Filter requests by status (or use 'history' for all non-pending)
+ *     responses:
+ *       200:
+ *         description: List of MFA reset requests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       userId:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ */
+
+/**
+ * @swagger
+ * /access/mfa-requests/{id}/approve:
+ *   post:
+ *     summary: Approve an MFA reset request
+ *     tags: [Access]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "req_123"
+ *     responses:
+ *       200:
+ *         description: Request approved successfully
+ */
+
+/**
+ * @swagger
+ * /access/mfa-requests/{id}/reject:
+ *   post:
+ *     summary: Reject an MFA reset request
+ *     tags: [Access]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "req_123"
+ *     responses:
+ *       200:
+ *         description: Request rejected successfully
+ */
