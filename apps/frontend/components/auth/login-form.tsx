@@ -34,6 +34,10 @@ export function LoginForm() {
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
 
+  const [resetRequested, setResetRequested] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
   const form = useForm<LoginInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(loginSchema) as any,
@@ -123,10 +127,63 @@ export function LoginForm() {
               });
               setCode('');
               setSubmitError(null);
+              setResetRequested(false);
+              setResetError(null);
             }}
           >
             Cancel and Sign In Again
           </Button>
+
+          <div className="flex flex-col items-center gap-2 mt-4 border-t pt-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Lost access to your authenticator app?
+            </p>
+            {resetRequested ? (
+              <p className="text-sm text-green-600 text-center font-medium">
+                Reset request sent to administrators.
+              </p>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={resetting}
+                onClick={async () => {
+                  setResetError(null);
+                  setResetting(true);
+                  try {
+                    const res = await fetch(
+                      `${API_BASE_URL}${API_PATHS.AUTH.MFA_RESET_REQUEST}`,
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          email: form.getValues('email'),
+                        }),
+                      },
+                    );
+                    if (!res.ok) {
+                      throw new Error('Failed to request reset');
+                    }
+                    setResetRequested(true);
+                  } catch (_e) {
+                    setResetError(
+                      'Failed to request MFA reset. Please try again.',
+                    );
+                  } finally {
+                    setResetting(false);
+                  }
+                }}
+              >
+                {resetting ? 'Requesting...' : 'Request MFA Reset'}
+              </Button>
+            )}
+            {resetError && (
+              <p className="text-sm text-destructive text-center">
+                {resetError}
+              </p>
+            )}
+          </div>
         </form>
       </div>
     );
