@@ -643,6 +643,141 @@ export class AuthService {
       throw new ApiError(500, 'Failed to complete MFA reset');
     }
   }
+
+  async requestPasswordReset(email: string) {
+    try {
+      logger.info({ email }, 'AuthService: requestPasswordReset start');
+      const user = await authRepository.getUserByEmail(email);
+      if (!user) {
+        // Prevent user enumeration
+        logger.warn(
+          { email },
+          'AuthService: requestPasswordReset user not found',
+        );
+        return {
+          message: 'If the email exists, a password reset link has been sent.',
+        };
+      }
+
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+      await authRepository.createPasswordResetRequest(
+        user.id,
+        tokenHash,
+        expiresAt,
+      );
+
+      if (env.SMTP_HOST) {
+        const transporter = nodemailer.createTransport({
+          host: env.SMTP_HOST,
+          port: env.SMTP_PORT,
+          secure: env.SMTP_PORT === 465,
+          auth: {
+            user: env.SMTP_USER,
+            pass: env.SMTP_PASS,
+          },
+        });
+
+        // Use frontend URL from env or fallback to localhost
+        const frontendUrl = env.APP_URL || 'http://localhost:3001';
+        const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
+
+        const htmlTemplatePath = path.join(
+          __dirname,
+          '../access/templates/password-reset.liquid',
+        );
+        let htmlContent = '';
+        try {
+          htmlContent = await fs.readFile(htmlTemplatePath, 'utf8');
+          htmlContent = htmlContent
+            .replace(/\{\{userEmail\}\}/g, user.email)
+            .replace(/\{\{resetUrl\}\}/g, resetUrl);
+        } catch {
+          htmlContent = `<p>Hello,</p><p>Please reset your password using this link: <a href="${resetUrl}">Reset Password</a></p>`;
+        }
+
+        await transporter.sendMail({
+          from: env.EMAIL_FROM,
+          to: user.email,
+          subject: 'Password Reset Request',
+          html: htmlContent,
+        });
+
+        logger.info(
+          { userId: user.id },
+          'AuthService: password reset email sent',
+        );
+      } else {
+        logger.warn(
+          'Password Reset requested, but SMTP is not configured. Token generated but email not sent.',
+        );
+      }
+
+      return {
+        message: 'If the email exists, a password reset link has been sent.',
+      };
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthService Error in requestPasswordReset:',
+      );
+      throw new ApiError(500, 'Failed to request password reset');
+    }
+  }
+
+  async resetPassword(rawToken: string, newPassword: string) {
+    try {
+      logger.info('AuthService: resetPassword start');
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
+
+      const request =
+        await authRepository.getPasswordResetRequestByTokenHash(tokenHash);
+
+      if (!request || request.usedAt) {
+        throw new BadRequestError('Invalid or already used reset token');
+      }
+
+      if (request.expiresAt && new Date() > request.expiresAt) {
+        throw new BadRequestError('Reset token has expired');
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+
+      await authRepository.updateUserPassword(request.userId, passwordHash);
+      await authRepository.updatePasswordResetRequest(request.id, new Date());
+
+      logger.info(
+        { userId: request.userId },
+        'AuthService: password reset completed successfully',
+      );
+
+      const { context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.UPDATE,
+        resourceType: 'user',
+        resourceId: request.userId,
+        actorUserId: request.userId,
+        actorAgentId: undefined,
+        beforeState: null,
+        afterState: { passwordReset: true },
+        context,
+      });
+
+      return { success: true };
+    } catch (error) {
+      logger.error({ err: error }, 'AuthService Error in resetPassword:');
+      if (error instanceof BadRequestError) throw error;
+      throw new ApiError(500, 'Failed to reset password');
+    }
+  }
 }
 
 export const authService = new AuthService();
