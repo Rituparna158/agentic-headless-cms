@@ -69,6 +69,22 @@ export const mfaResetRequests = pgTable('mfa_reset_requests', {
     .defaultNow(),
 });
 
+export const passwordResetRequests = pgTable('password_reset_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 255 }).notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 // Multi-role support — a user can be Editor via one role and Reviewer via
 // another, rather than being pinned to a single role.
 export const userRoles = pgTable(
@@ -160,7 +176,18 @@ export const usersRelations = relations(users, ({ many }) => ({
   identities: many(userIdentities),
   apiTokens: many(apiTokens),
   mfaResetRequests: many(mfaResetRequests),
+  passwordResetRequests: many(passwordResetRequests),
 }));
+
+export const passwordResetRequestsRelations = relations(
+  passwordResetRequests,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [passwordResetRequests.userId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const mfaResetRequestsRelations = relations(
   mfaResetRequests,
