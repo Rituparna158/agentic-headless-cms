@@ -8,6 +8,43 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { env } from '@repo/config';
 
+const { mockGetAdminUsers } = vi.hoisted(() => ({
+  mockGetAdminUsers: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('@repo/config', () => ({
+  env: {
+    NODE_ENV: 'test',
+    DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
+    JWT_SECRET: 'super_secret_jwt_key_that_is_at_least_32_chars_long',
+    JWT_EXPIRES_IN: '1d',
+    SMTP_HOST: 'localhost',
+    SMTP_PORT: 1025,
+    SMTP_USER: 'user',
+    SMTP_PASS: 'pass',
+    EMAIL_FROM: 'noreply@example.com',
+    APP_URL: 'http://localhost:3000',
+  },
+}));
+
+vi.mock('node:fs/promises', () => ({
+  default: {
+    readFile: vi
+      .fn()
+      .mockResolvedValue(
+        'Mocked template: userEmail={{userEmail}} requestId={{requestId}}',
+      ),
+  },
+}));
+
+vi.mock('nodemailer', () => ({
+  default: {
+    createTransport: vi.fn().mockReturnValue({
+      sendMail: vi.fn().mockResolvedValue(true),
+    }),
+  },
+}));
+
 vi.mock('@repo/repository', () => ({
   authRepository: {
     getUserByEmail: vi.fn(),
@@ -19,13 +56,24 @@ vi.mock('@repo/repository', () => ({
     getUserById: vi.fn(),
     updateMfaSecret: vi.fn(),
     enableMfa: vi.fn(),
+    createMfaResetRequest: vi.fn(),
+    getMfaResetRequestById: vi.fn(),
+    getPendingMfaResetRequests: vi.fn(),
+    getMfaResetRequestByTokenHash: vi.fn(),
+    updateMfaResetRequest: vi.fn(),
+    disableMfa: vi.fn(),
   },
   ContentRepository: vi.fn().mockImplementation(class {}),
   MediaRepository: vi.fn().mockImplementation(class {}),
   MediaFoldersRepository: vi.fn().mockImplementation(class {}),
   SchemaRepository: vi.fn().mockImplementation(class {}),
   AuditRepository: vi.fn().mockImplementation(class {}),
-  AccessRepository: vi.fn().mockImplementation(class {}),
+  AccessRepository: vi.fn().mockImplementation(
+    class {
+      getAdminUsers = mockGetAdminUsers;
+      getUsersByRoleName = vi.fn().mockResolvedValue([]);
+    },
+  ),
   LocalesRepository: vi.fn().mockImplementation(class {}),
   WebhooksRepository: vi.fn().mockImplementation(class {}),
 }));
@@ -377,6 +425,150 @@ describe('Auth Module', () => {
 
         expect(res.status).toBe(401);
         expect(res.body.error.message).toBe('Invalid or expired MFA session');
+      });
+    });
+
+    describe('POST /api/v1/auth/mfa/reset-request', () => {
+      it('should return 400 if email is missing', async () => {
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/reset-request')
+          .send({});
+        expect(res.status).toBe(400);
+        expect(res.body.error.message).toBe('Email is required');
+      });
+
+      it('should return 200 silently if user is not found to prevent enumeration', async () => {
+        vi.mocked(authRepository.getUserByEmail).mockResolvedValue(null);
+
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/reset-request')
+          .send({ email: 'nonexistent@example.com' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.message).toContain(
+          'If the email exists, a request has been sent',
+        );
+      });
+
+      it('should return 400 if MFA is not enabled for the user', async () => {
+        vi.mocked(authRepository.getUserByEmail).mockResolvedValue({
+          id: 'user-id-123',
+          email: 'user@example.com',
+          mfaEnabled: false,
+        } as never);
+
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/reset-request')
+          .send({ email: 'user@example.com' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.message).toBe(
+          'MFA is not enabled for this user.',
+        );
+      });
+
+      it('should successfully create MFA reset request, fetch admin users, and return 200', async () => {
+        vi.mocked(authRepository.getUserByEmail).mockResolvedValue({
+          id: 'user-id-123',
+          email: 'user@example.com',
+          mfaEnabled: true,
+        } as never);
+
+        vi.mocked(authRepository.createMfaResetRequest).mockResolvedValue({
+          id: 'request-id-123',
+          userId: 'user-id-123',
+          status: 'pending',
+        } as never);
+
+        mockGetAdminUsers.mockResolvedValue([
+          { id: 'admin-1', email: 'admin@example.com' },
+        ]);
+
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/reset-request')
+          .send({ email: 'user@example.com' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.message).toContain(
+          'If the email exists, a request has been sent',
+        );
+        expect(authRepository.createMfaResetRequest).toHaveBeenCalledWith(
+          'user-id-123',
+        );
+      });
+    });
+
+    describe('POST /api/v1/auth/mfa/reset-complete', () => {
+      it('should return 400 if token is missing', async () => {
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/reset-complete')
+          .send({});
+        expect(res.status).toBe(400);
+        expect(res.body.error.message).toBe('Token is required');
+      });
+
+      it('should return 400 if token is invalid or request is not approved', async () => {
+        vi.mocked(
+          authRepository.getMfaResetRequestByTokenHash,
+        ).mockResolvedValue(null);
+
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/reset-complete')
+          .send({ token: 'invalid-token' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.message).toBe(
+          'Invalid or unapproved reset token',
+        );
+      });
+
+      it('should return 400 if token has expired', async () => {
+        vi.mocked(
+          authRepository.getMfaResetRequestByTokenHash,
+        ).mockResolvedValue({
+          id: 'request-id-123',
+          userId: 'user-id-123',
+          status: 'approved',
+          expiresAt: new Date(Date.now() - 3600000), // Expired 1 hour ago
+        } as never);
+
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/reset-complete')
+          .send({ token: 'expired-token' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.message).toBe('Reset token has expired');
+        expect(authRepository.updateMfaResetRequest).toHaveBeenCalledWith(
+          'request-id-123',
+          {
+            status: 'expired',
+          },
+        );
+      });
+
+      it('should successfully complete MFA reset and disable MFA', async () => {
+        vi.mocked(
+          authRepository.getMfaResetRequestByTokenHash,
+        ).mockResolvedValue({
+          id: 'request-id-123',
+          userId: 'user-id-123',
+          status: 'approved',
+          expiresAt: new Date(Date.now() + 3600000), // Valid
+        } as never);
+
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/reset-complete')
+          .send({ token: 'valid-token' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.success).toBe(true);
+        expect(authRepository.disableMfa).toHaveBeenCalledWith('user-id-123');
+        expect(authRepository.updateMfaResetRequest).toHaveBeenCalledWith(
+          'request-id-123',
+          {
+            status: 'completed',
+          },
+        );
       });
     });
   });

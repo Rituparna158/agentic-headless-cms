@@ -68,3 +68,30 @@ export const requireAdmin = (
 
   next();
 };
+
+export const requireAdminOrSupport = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user) {
+    errorJson(
+      res,
+      HTTP_STATUS.UNAUTHORIZED,
+      ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED,
+    );
+    return;
+  }
+
+  const isAdminOrSupport = req.user.roles?.some((role) => {
+    const lowerRole = role.toLowerCase();
+    return lowerRole === 'admin' || lowerRole === 'support';
+  });
+
+  if (!isAdminOrSupport) {
+    errorJson(res, HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.RBAC.FORBIDDEN);
+    return;
+  }
+
+  next();
+};

@@ -9,6 +9,8 @@ export const API_PATHS = {
     MFA_VERIFY: '/api/v1/auth/mfa/verify',
     MFA_CHALLENGE: '/api/v1/auth/mfa/challenge',
     MFA_DISABLE: '/api/v1/auth/mfa/disable',
+    MFA_RESET_REQUEST: '/api/v1/auth/mfa/reset-request',
+    MFA_RESET_COMPLETE: '/api/v1/auth/mfa/reset-complete',
   },
   ACCESS: {
     ROLES: '/api/v1/access/roles',
@@ -19,6 +21,11 @@ export const API_PATHS = {
     INVITE: '/api/v1/access/users/invite',
     TOKENS: '/api/v1/access/tokens',
     TOKEN: (id: string) => `/api/v1/access/tokens/${id}`,
+    MFA_REQUESTS: '/api/v1/access/mfa-requests',
+    MFA_REQUEST_APPROVE: (id: string) =>
+      `/api/v1/access/mfa-requests/${id}/approve`,
+    MFA_REQUEST_REJECT: (id: string) =>
+      `/api/v1/access/mfa-requests/${id}/reject`,
   },
   SCHEMAS: {
     BASE: '/api/v1/schemas',

@@ -18,7 +18,8 @@
     "E2E_BACKEND_URL",
     "E2E_DATABASE_URL",
     "API_INTERNAL_URL",
-    "NEXT_PUBLIC_API_URL"
+    "NEXT_PUBLIC_API_URL",
+    "SUPPORT_EMAIL"
   ],
   "tasks": {
     "build": {

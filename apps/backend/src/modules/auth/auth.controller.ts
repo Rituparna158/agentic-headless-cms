@@ -53,7 +53,9 @@ export const login: RequestHandler = asyncHandler(
     logger.info({ userId: user.id }, 'AuthController: login success');
     const permissions = await authService.getUserPermissions(user.id);
     const userWithPermissions = { ...user, permissions };
-    res.status(200).json(new ApiResponse(200, userWithPermissions, 'Login successful'));
+    res
+      .status(200)
+      .json(new ApiResponse(200, userWithPermissions, 'Login successful'));
   },
 );
 
@@ -85,7 +87,13 @@ export const getCurrentUser: RequestHandler = asyncHandler(
     const userWithPermissions = { ...req.user, permissions };
     res
       .status(200)
-      .json(new ApiResponse(200, userWithPermissions, 'User retrieved successfully'));
+      .json(
+        new ApiResponse(
+          200,
+          userWithPermissions,
+          'User retrieved successfully',
+        ),
+      );
   },
 );
 
@@ -284,5 +292,33 @@ export const verifyMfaChallenge: RequestHandler = asyncHandler(
       .json(
         new ApiResponse(200, user, 'MFA challenge verification successful'),
       );
+  },
+);
+
+export const requestMfaReset: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: requestMfaReset start');
+    const { email } = req.body as { email?: string };
+    if (!email) {
+      throw new BadRequestError('Email is required');
+    }
+    const result = await authService.requestMfaReset(email);
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, 'MFA reset request submitted'));
+  },
+);
+
+export const completeMfaReset: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: completeMfaReset start');
+    const { token } = req.body as { token?: string };
+    if (!token) {
+      throw new BadRequestError('Token is required');
+    }
+    const result = await authService.completeMfaReset(token);
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, 'MFA reset completed successfully'));
   },
 );

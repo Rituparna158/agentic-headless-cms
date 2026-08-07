@@ -10,7 +10,11 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { tokenTypeEnum, userStatusEnum } from './enums.js';
+import {
+  mfaResetRequestStatusEnum,
+  tokenTypeEnum,
+  userStatusEnum,
+} from './enums.js';
 
 export const roles = pgTable('roles', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -38,6 +42,25 @@ export const users = pgTable('users', {
   inviteTokenHash: varchar('invite_token_hash', { length: 255 }),
   inviteExpiresAt: timestamp('invite_expires_at', { withTimezone: true }),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const mfaResetRequests = pgTable('mfa_reset_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  status: mfaResetRequestStatusEnum('status').notNull().default('pending'),
+  adminId: uuid('admin_id').references(() => users.id, {
+    onDelete: 'set null',
+  }),
+  tokenHash: varchar('token_hash', { length: 255 }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -136,7 +159,22 @@ export const usersRelations = relations(users, ({ many }) => ({
   userRoles: many(userRoles),
   identities: many(userIdentities),
   apiTokens: many(apiTokens),
+  mfaResetRequests: many(mfaResetRequests),
 }));
+
+export const mfaResetRequestsRelations = relations(
+  mfaResetRequests,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [mfaResetRequests.userId],
+      references: [users.id],
+    }),
+    admin: one(users, {
+      fields: [mfaResetRequests.adminId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const userRolesRelations = relations(userRoles, ({ one }) => ({
   user: one(users, { fields: [userRoles.userId], references: [users.id] }),

@@ -12,6 +12,8 @@ import {
   verifyMfa,
   verifyMfaChallenge,
   disableMfa,
+  requestMfaReset,
+  completeMfaReset,
 } from './auth.controller.js';
 
 export const authRouter = Router();
@@ -28,3 +30,7 @@ authRouter.post('/mfa/enroll', authenticateToken, enrollMfa);
 authRouter.post('/mfa/verify', authenticateToken, verifyMfa);
 authRouter.post('/mfa/challenge', verifyMfaChallenge);
 authRouter.post('/mfa/disable', authenticateToken, disableMfa);
+
+// MFA Reset flow routes (Public)
+authRouter.post('/mfa/reset-request', requestMfaReset);
+authRouter.post('/mfa/reset-complete', completeMfaReset);

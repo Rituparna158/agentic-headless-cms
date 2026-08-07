@@ -236,3 +236,60 @@
  *               example:
  *                 success: true
  */
+
+/**
+ * @swagger
+ * /auth/mfa/reset-request:
+ *   post:
+ *     summary: Request MFA reset
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *             example:
+ *               email: "user@example.com"
+ *     responses:
+ *       200:
+ *         description: Reset request sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 message: "If the email exists, a request has been sent to the admins."
+ */
+
+/**
+ * @swagger
+ * /auth/mfa/reset-complete:
+ *   post:
+ *     summary: Complete MFA reset
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *             example:
+ *               token: "abcdef123456"
+ *     responses:
+ *       200:
+ *         description: MFA reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 message: "MFA disabled successfully."
+ */

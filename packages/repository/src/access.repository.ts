@@ -267,6 +267,50 @@ export class AccessRepository {
     }
   }
 
+  async getAdminUsers() {
+    try {
+      logger.info('AccessRepository: fetching admin users');
+      const adminUsers = await this.db
+        .select({
+          id: users.id,
+          email: users.email,
+        })
+        .from(users)
+        .innerJoin(userRoles, eq(users.id, userRoles.userId))
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(eq(roles.name, 'admin'));
+
+      return adminUsers;
+    } catch (error) {
+      logger.error({ err: error }, 'AccessRepository Error in getAdminUsers:');
+      throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
+    }
+  }
+
+  async getUsersByRoleName(roleName: string) {
+    try {
+      logger.info(
+        { roleName },
+        'AccessRepository: fetching users by role name',
+      );
+      return await this.db
+        .select({
+          id: users.id,
+          email: users.email,
+        })
+        .from(users)
+        .innerJoin(userRoles, eq(users.id, userRoles.userId))
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(eq(roles.name, roleName));
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AccessRepository Error in getUsersByRoleName:',
+      );
+      throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
+    }
+  }
+
   async createUser(data: {
     email: string;
     firstName?: string;

@@ -43,6 +43,7 @@ const baseEnvSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().default('"Agentic CMS" <noreply@agentic-cms.com>'),
+  SUPPORT_EMAIL: z.email().optional(),
 
   STORAGE_ADAPTER: z.enum(['local', 's3']).default('local'),
   STORAGE_LOCAL_UPLOAD_DIR: z.string().default('./uploads'),

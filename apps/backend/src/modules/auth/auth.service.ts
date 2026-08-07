@@ -7,11 +7,23 @@ import type { LoginInput } from '@repo/types';
 import { Issuer, Client, generators } from 'openid-client';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import nodemailer from 'nodemailer';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 authenticator.options = { window: 1 };
 
 const accessRepository = new AccessRepository();
-import { UnauthorizedError, ApiError, BadRequestError } from '@repo/utils';
+import {
+  UnauthorizedError,
+  ApiError,
+  BadRequestError,
+  InternalServerError,
+} from '@repo/utils';
 import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
 import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
@@ -509,6 +521,126 @@ export class AuthService {
       logger.error({ err: error }, 'AuthService Error in verifyMfaChallenge:');
       if (error instanceof UnauthorizedError) throw error;
       throw new ApiError(500, 'Failed to complete MFA challenge');
+    }
+  }
+
+  async requestMfaReset(email: string) {
+    try {
+      logger.info({ email }, 'AuthService: requestMfaReset start');
+      const user = await authRepository.getUserByEmail(email);
+      if (!user) {
+        // To prevent user enumeration, just return silently
+        logger.warn({ email }, 'AuthService: requestMfaReset user not found');
+        return {
+          message:
+            'If the email exists, a request has been sent to the administrators.',
+        };
+      }
+
+      if (!user.mfaEnabled) {
+        throw new BadRequestError('MFA is not enabled for this user.');
+      }
+
+      const request = await authRepository.createMfaResetRequest(user.id);
+
+      if (!request) {
+        throw new InternalServerError('Failed to create MFA reset request');
+      }
+
+      if (env.SMTP_HOST) {
+        const transporter = nodemailer.createTransport({
+          host: env.SMTP_HOST,
+          port: env.SMTP_PORT,
+          secure: env.SMTP_PORT === 465,
+          auth: {
+            user: env.SMTP_USER,
+            pass: env.SMTP_PASS,
+          },
+        });
+
+        // Resolve support email logic
+        const supportUsers =
+          await accessRepository.getUsersByRoleName('support');
+        const targetEmails = supportUsers.map((u) => u.email);
+
+        if (targetEmails.length === 0 && env.SUPPORT_EMAIL) {
+          targetEmails.push(env.SUPPORT_EMAIL);
+        }
+
+        if (targetEmails.length > 0) {
+          const htmlTemplatePath = path.join(
+            __dirname,
+            '../access/templates/mfa-reset-admin-notification.liquid',
+          );
+          let htmlContent = '';
+          try {
+            htmlContent = await fs.readFile(htmlTemplatePath, 'utf8');
+            htmlContent = htmlContent
+              .replace(/\{\{userEmail\}\}/g, user.email)
+              .replace(/\{\{requestId\}\}/g, request.id);
+          } catch {
+            htmlContent = `<p>User ${user.email} has requested an MFA reset. Please review request ID: ${request.id}</p>`;
+          }
+
+          await transporter.sendMail({
+            from: env.EMAIL_FROM,
+            to: targetEmails.join(','),
+            subject: 'Action Required: MFA Reset Request',
+            html: htmlContent,
+          });
+        } else {
+          logger.warn(
+            'MFA Reset requested, but no support users or SUPPORT_EMAIL configured. Admins must check the dashboard manually.',
+          );
+        }
+      }
+
+      return {
+        message:
+          'If the email exists, a request has been sent to the administrators.',
+      };
+    } catch (error) {
+      logger.error({ err: error }, 'AuthService Error in requestMfaReset:');
+      if (error instanceof BadRequestError) throw error;
+      throw new ApiError(500, 'Failed to request MFA reset');
+    }
+  }
+
+  async completeMfaReset(rawToken: string) {
+    try {
+      logger.info('AuthService: completeMfaReset start');
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
+      const request =
+        await authRepository.getMfaResetRequestByTokenHash(tokenHash);
+
+      if (!request || request.status !== 'approved') {
+        throw new BadRequestError('Invalid or unapproved reset token');
+      }
+
+      if (request.expiresAt && new Date() > request.expiresAt) {
+        await authRepository.updateMfaResetRequest(request.id, {
+          status: 'expired',
+        });
+        throw new BadRequestError('Reset token has expired');
+      }
+
+      await authRepository.disableMfa(request.userId);
+      await authRepository.updateMfaResetRequest(request.id, {
+        status: 'completed',
+      });
+
+      logger.info(
+        { userId: request.userId },
+        'AuthService: completeMfaReset successfully disabled MFA',
+      );
+      return { success: true };
+    } catch (error) {
+      logger.error({ err: error }, 'AuthService Error in completeMfaReset:');
+      if (error instanceof BadRequestError) throw error;
+      throw new ApiError(500, 'Failed to complete MFA reset');
     }
   }
 }

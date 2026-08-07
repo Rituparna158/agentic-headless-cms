@@ -9,7 +9,8 @@
     "strictNullChecks": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@repo/utils/rbac": ["../../packages/utils/src/rbac.util.ts"]
     }
   },
   "include": [
