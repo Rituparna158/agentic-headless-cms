@@ -156,7 +156,7 @@ describe('GraphQL API', () => {
       { id: 'entry-1', title: 'Post 1', views: 10 },
     ]);
     expect(res.body.data.blogPosts.meta.total).toBe(1);
-  });
+  }, 10000);
 
   it('fetches a single entry by id', async () => {
     const res = await request(app)

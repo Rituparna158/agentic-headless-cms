@@ -23,6 +23,10 @@ const {
   mockDelete: vi.fn(),
 }));
 
+vi.mock('@/hooks/use-permissions', () => ({
+  useHasPermission: vi.fn(() => true),
+}));
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
 }));
