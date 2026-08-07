@@ -15,9 +15,13 @@ export const authenticateToken = (
   res: Response,
   next: NextFunction,
 ) => {
-  const token = (req.cookies as Record<string, string> | undefined)?.[
+  let token = (req.cookies as Record<string, string> | undefined)?.[
     AUTH_COOKIES.NAME
   ];
+
+  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
 
   if (!token) {
     errorJson(res, HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.AUTH.NO_TOKEN);
