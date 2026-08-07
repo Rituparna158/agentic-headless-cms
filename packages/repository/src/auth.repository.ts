@@ -7,6 +7,7 @@ import {
   roles,
   permissions,
   mfaResetRequests,
+  passwordResetRequests,
 } from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
@@ -326,6 +327,86 @@ export class AuthRepository {
       logger.error(
         { err: error },
         'AuthRepository Error in updateMfaResetRequest:',
+      );
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
+
+  async createPasswordResetRequest(
+    userId: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ) {
+    try {
+      logger.info(
+        { userId },
+        'AuthRepository: creating password reset request',
+      );
+      const db = getDatabaseAdapter().getDb();
+      const result = await db
+        .insert(passwordResetRequests)
+        .values({ userId, tokenHash, expiresAt })
+        .returning();
+      return result[0];
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in createPasswordResetRequest:',
+      );
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
+
+  async getPasswordResetRequestByTokenHash(hash: string) {
+    try {
+      logger.info('AuthRepository: fetching password reset request by hash');
+      const db = getDatabaseAdapter().getDb();
+      const result = await db
+        .select()
+        .from(passwordResetRequests)
+        .where(eq(passwordResetRequests.tokenHash, hash))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in getPasswordResetRequestByTokenHash:',
+      );
+      throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
+    }
+  }
+
+  async updatePasswordResetRequest(id: string, usedAt: Date) {
+    try {
+      logger.info({ id }, 'AuthRepository: updating password reset request');
+      const db = getDatabaseAdapter().getDb();
+      const result = await db
+        .update(passwordResetRequests)
+        .set({ usedAt, updatedAt: new Date() })
+        .where(eq(passwordResetRequests.id, id))
+        .returning();
+      return result[0] || null;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in updatePasswordResetRequest:',
+      );
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
+
+  async updateUserPassword(userId: string, passwordHash: string) {
+    try {
+      logger.info({ userId }, 'AuthRepository: updating user password');
+      const db = getDatabaseAdapter().getDb();
+      await db
+        .update(users)
+        .set({ passwordHash, updatedAt: new Date() })
+        .where(eq(users.id, userId));
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in updateUserPassword:',
       );
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
