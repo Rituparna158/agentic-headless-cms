@@ -35,6 +35,15 @@ vi.mock('../../../../src/modules/access/access.service.js', () => {
     inviteUrl: 'http://localhost:3001/accept-invite?token=abc123',
     user: { id: 'u2', email: 'invitee@example.com', status: 'invited' },
   });
+  AccessService.prototype.listMfaRequests = vi
+    .fn()
+    .mockResolvedValue([{ id: 'req-1', status: 'pending' }]);
+  AccessService.prototype.approveMfaResetRequest = vi
+    .fn()
+    .mockResolvedValue({ success: true });
+  AccessService.prototype.rejectMfaResetRequest = vi
+    .fn()
+    .mockResolvedValue({ success: true });
   return { AccessService };
 });
 
@@ -158,6 +167,63 @@ describe('Access Module', () => {
     it('should revoke the token for an admin', async () => {
       const res = await request(app)
         .delete('/api/v1/access/tokens/t1')
+        .set('Cookie', [`token=${validToken}`]);
+      expect(res.status).toBe(200);
+      expect(res.body.data.success).toBe(true);
+    });
+  });
+
+  describe('GET /api/v1/access/mfa-requests', () => {
+    it('should require authentication', async () => {
+      const res = await request(app).get('/api/v1/access/mfa-requests');
+      expect(res.status).toBe(401);
+    });
+
+    it('should reject non-admin users', async () => {
+      const res = await request(app)
+        .get('/api/v1/access/mfa-requests')
+        .set('Cookie', [`token=${nonAdminToken}`]);
+      expect(res.status).toBe(403);
+    });
+
+    it('should return pending MFA reset requests for an admin', async () => {
+      const res = await request(app)
+        .get('/api/v1/access/mfa-requests')
+        .set('Cookie', [`token=${validToken}`]);
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].id).toBe('req-1');
+    });
+  });
+
+  describe('POST /api/v1/access/mfa-requests/:id/approve', () => {
+    it('should reject non-admin users', async () => {
+      const res = await request(app)
+        .post('/api/v1/access/mfa-requests/req-1/approve')
+        .set('Cookie', [`token=${nonAdminToken}`]);
+      expect(res.status).toBe(403);
+    });
+
+    it('should successfully approve the request for an admin', async () => {
+      const res = await request(app)
+        .post('/api/v1/access/mfa-requests/req-1/approve')
+        .set('Cookie', [`token=${validToken}`]);
+      expect(res.status).toBe(200);
+      expect(res.body.data.success).toBe(true);
+    });
+  });
+
+  describe('POST /api/v1/access/mfa-requests/:id/reject', () => {
+    it('should reject non-admin users', async () => {
+      const res = await request(app)
+        .post('/api/v1/access/mfa-requests/req-1/reject')
+        .set('Cookie', [`token=${nonAdminToken}`]);
+      expect(res.status).toBe(403);
+    });
+
+    it('should successfully reject the request for an admin', async () => {
+      const res = await request(app)
+        .post('/api/v1/access/mfa-requests/req-1/reject')
         .set('Cookie', [`token=${validToken}`]);
       expect(res.status).toBe(200);
       expect(res.body.data.success).toBe(true);

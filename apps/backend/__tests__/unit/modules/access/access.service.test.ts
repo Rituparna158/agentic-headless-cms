@@ -3,7 +3,7 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AccessService } from '../../../../src/modules/access/access.service.js';
-import { AccessRepository } from '@repo/repository';
+import { AccessRepository, authRepository } from '@repo/repository';
 import { eventBus } from '@repo/events';
 import { EVENT_NAMES, AUDIT_ACTIONS, ERROR_MESSAGES } from '@repo/constants';
 import nodemailer from 'nodemailer';
@@ -286,6 +286,121 @@ describe('AccessService', () => {
           beforeState: beforeToken,
         }),
       );
+    });
+  });
+
+  describe('MFA Reset Requests', () => {
+    it('should list MFA reset requests', async () => {
+      const mockRequests = [{ id: 'req-1', status: 'pending' }];
+      vi.mocked(authRepository.getAllMfaResetRequests).mockResolvedValue(
+        mockRequests as any,
+      );
+
+      const result = await accessService.listMfaRequests('pending');
+
+      expect(authRepository.getAllMfaResetRequests).toHaveBeenCalledWith(
+        'pending',
+      );
+      expect(result).toEqual([
+        {
+          id: 'req-1',
+          userId: undefined,
+          status: 'pending',
+          createdAt: undefined,
+          user: undefined,
+          admin: undefined,
+        },
+      ]);
+    });
+
+    it('should throw NotFoundError if MFA request not found on approval', async () => {
+      vi.mocked(authRepository.getMfaResetRequestById).mockResolvedValue(null);
+
+      await expect(
+        accessService.approveMfaResetRequest('req-1', 'admin-1'),
+      ).rejects.toThrow(
+        ERROR_MESSAGES.ACCESS.MFA_REQUEST_NOT_FOUND ||
+          'Request not found or not in pending state',
+      );
+    });
+
+    it('should approve MFA reset request, send email and emit audit log', async () => {
+      const mockRequest = {
+        id: 'req-1',
+        userId: 'user-1',
+        status: 'pending',
+        user: { email: 'test@example.com', firstName: 'John' },
+      };
+      vi.mocked(authRepository.getMfaResetRequestById).mockResolvedValue(
+        mockRequest as any,
+      );
+      vi.mocked(authRepository.updateMfaResetRequest).mockResolvedValue({
+        ...mockRequest,
+        status: 'approved',
+      } as any);
+      vi.mocked(authRepository.getUserById).mockResolvedValue({
+        id: 'user-1',
+        email: 'test@example.com',
+      } as any);
+
+      const transporterMock = nodemailer.createTransport();
+
+      const result = await accessService.approveMfaResetRequest(
+        'req-1',
+        'admin-1',
+      );
+
+      expect(authRepository.updateMfaResetRequest).toHaveBeenCalledWith(
+        'req-1',
+        expect.objectContaining({ status: 'approved', adminId: 'admin-1' }),
+      );
+      expect(transporterMock.sendMail).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should throw NotFoundError if MFA request not found on rejection', async () => {
+      vi.mocked(authRepository.getMfaResetRequestById).mockResolvedValue(null);
+
+      await expect(
+        accessService.rejectMfaResetRequest('req-1', 'admin-1'),
+      ).rejects.toThrow(
+        ERROR_MESSAGES.ACCESS.MFA_REQUEST_NOT_FOUND ||
+          'Request not found or not in pending state',
+      );
+    });
+
+    it('should reject MFA reset request, send email and emit audit log', async () => {
+      const mockRequest = {
+        id: 'req-1',
+        userId: 'user-1',
+        status: 'pending',
+        user: { email: 'test@example.com', firstName: 'John' },
+      };
+      vi.mocked(authRepository.getMfaResetRequestById).mockResolvedValue(
+        mockRequest as any,
+      );
+      vi.mocked(authRepository.updateMfaResetRequest).mockResolvedValue({
+        ...mockRequest,
+        status: 'rejected',
+      } as any);
+      vi.mocked(authRepository.getUserById).mockResolvedValue({
+        id: 'user-1',
+        email: 'test@example.com',
+      } as any);
+
+      const transporterMock = nodemailer.createTransport();
+
+      const result = await accessService.rejectMfaResetRequest(
+        'req-1',
+        'admin-1',
+      );
+
+      expect(authRepository.updateMfaResetRequest).toHaveBeenCalledWith(
+        'req-1',
+        { status: 'rejected', adminId: 'admin-1' },
+      );
+      expect(transporterMock.sendMail).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
     });
   });
 });
