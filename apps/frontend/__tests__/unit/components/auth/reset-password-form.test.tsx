@@ -58,7 +58,7 @@ describe('ResetPasswordForm', () => {
 
   it('submits the form successfully and displays success message', async () => {
     vi.mocked(authApi.resetPassword).mockResolvedValue({
-      message: 'Password successfully reset.',
+      success: true,
     });
 
     const user = userEvent.setup();
