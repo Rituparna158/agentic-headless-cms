@@ -198,14 +198,53 @@ export class AccessRepository {
     try {
       logger.info('AccessRepository: listing users');
       const allUsers = await this.db.select().from(users);
+      const allUserRoles = await this.db.select().from(userRoles);
       logger.debug(
         { userCount: allUsers.length },
         'AccessRepository: listUsers complete',
       );
-      return allUsers;
+      return allUsers.map((u) => ({
+        ...u,
+        roleId: allUserRoles.find((ur) => ur.userId === u.id)?.roleId ?? null,
+      }));
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in listUsers:');
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
+    }
+  }
+
+  async deleteUser(id: string) {
+    try {
+      logger.info({ id }, 'AccessRepository: deleting user');
+      await this.db.delete(userRoles).where(eq(userRoles.userId, id));
+      const [deleted] = await this.db
+        .delete(users)
+        .where(eq(users.id, id))
+        .returning({ id: users.id });
+      if (!deleted) {
+        throw new RecordNotFoundError('User not found');
+      }
+      logger.debug({ id }, 'AccessRepository: deleteUser complete');
+      return deleted;
+    } catch (error) {
+      logger.error({ err: error }, 'AccessRepository Error in deleteUser:');
+      if (error instanceof RecordNotFoundError) throw error;
+      throw new ApiError(500, REPO_ERRORS.DB_DELETE_FAILED);
+    }
+  }
+
+  async updateUserRole(userId: string, roleId: string) {
+    try {
+      logger.info({ userId, roleId }, 'AccessRepository: updating user role');
+      await this.db.delete(userRoles).where(eq(userRoles.userId, userId));
+      await this.db.insert(userRoles).values({ userId, roleId });
+      logger.debug(
+        { userId, roleId },
+        'AccessRepository: updateUserRole complete',
+      );
+    } catch (error) {
+      logger.error({ err: error }, 'AccessRepository Error in updateUserRole:');
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
 

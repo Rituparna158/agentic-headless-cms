@@ -148,6 +148,38 @@ export const inviteUser: RequestHandler = asyncHandler(
   },
 );
 
+export const deleteUser: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'AccessController: deleteUser start');
+    await accessService.deleteUser(id as string);
+    logger.debug({ id }, 'AccessController: deleteUser success');
+    res.status(HTTP_STATUS.NO_CONTENT).send();
+  },
+);
+
+export const updateUserRole: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { roleId } = req.body as { roleId: string };
+    logger.info({ id, roleId }, 'AccessController: updateUserRole start');
+    if (!roleId) {
+      throw new BadRequestError('roleId is required');
+    }
+    await accessService.updateUserRole(id as string, roleId);
+    logger.debug({ id, roleId }, 'AccessController: updateUserRole success');
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { success: true },
+          'User role updated successfully',
+        ),
+      );
+  },
+);
+
 export const listTokens: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listTokens start');

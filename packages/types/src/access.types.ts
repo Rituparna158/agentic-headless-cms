@@ -56,6 +56,7 @@ export interface UserRecord {
   firstName?: string | null;
   lastName?: string | null;
   status: string;
+  roleId?: string | null;
   createdAt: string;
 }
 
