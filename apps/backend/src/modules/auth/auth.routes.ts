@@ -14,6 +14,8 @@ import {
   disableMfa,
   requestMfaReset,
   completeMfaReset,
+  requestPasswordReset,
+  resetPassword,
 } from './auth.controller.js';
 
 export const authRouter = Router();
@@ -34,3 +36,7 @@ authRouter.post('/mfa/disable', authenticateToken, disableMfa);
 // MFA Reset flow routes (Public)
 authRouter.post('/mfa/reset-request', requestMfaReset);
 authRouter.post('/mfa/reset-complete', completeMfaReset);
+
+// Password Reset flow routes (Public)
+authRouter.post('/forgot-password', requestPasswordReset);
+authRouter.post('/reset-password', resetPassword);
