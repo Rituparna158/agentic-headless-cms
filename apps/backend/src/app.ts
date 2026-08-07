@@ -19,6 +19,8 @@ import { healthRouter } from './modules/health/health.routes.js';
 import { metricsRouter } from './modules/observability/metrics.routes.js';
 import { setupMediaQueueListener } from './queues/media-queue.listener.js';
 import { apiRouter } from './routes/index.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './utils/swagger.js';
 
 // App assembly
 export function createApp(): Express {
@@ -65,6 +67,7 @@ export function createApp(): Express {
 
   app.use('/health', healthRouter);
   app.use('/metrics', metricsRouter);
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   app.use('/api/v1', apiRouter);
   app.use('/graphql', graphqlRouter);
 
