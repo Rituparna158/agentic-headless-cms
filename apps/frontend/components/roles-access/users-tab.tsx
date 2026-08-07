@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -29,8 +30,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { inviteUser, listRoles, listUsers } from '@/lib/api/access';
+import {
+  deleteUser,
+  inviteUser,
+  listRoles,
+  listUsers,
+  updateUserRole,
+} from '@/lib/api/access';
 import { UsersTabProps } from '@/types/component.types';
+import type { RoleRecord, UserRecord } from '@repo/types';
 
 export function UsersTab({ isAdmin = false }: UsersTabProps) {
   const queryClient = useQueryClient();
@@ -40,15 +48,17 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
   const [lastName, setLastName] = useState('');
   const [roleId, setRoleId] = useState('');
   const [devInviteUrl, setDevInviteUrl] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserRecord | null>(null);
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['access', 'users'],
     queryFn: listUsers,
   });
 
-  const { data: roles = [] } = useQuery({
+  const { data: roles = [] } = useQuery<RoleRecord[]>({
     queryKey: ['access', 'roles'],
     queryFn: listRoles,
+    enabled: isAdmin,
   });
 
   const inviteMutation = useMutation({
@@ -68,6 +78,39 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
     onError: (error: unknown) => {
       const msg =
         error instanceof Error ? error.message : 'Failed to invite user';
+      toast.error(msg);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteUser(id),
+    onSuccess: () => {
+      toast.success('User deleted');
+      queryClient.invalidateQueries({ queryKey: ['access', 'users'] });
+      setUserToDelete(null);
+    },
+    onError: (error: unknown) => {
+      const msg =
+        error instanceof Error ? error.message : 'Failed to delete user';
+      toast.error(msg);
+    },
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({
+      userId,
+      newRoleId,
+    }: {
+      userId: string;
+      newRoleId: string;
+    }) => updateUserRole(userId, newRoleId),
+    onSuccess: () => {
+      toast.success('Role updated');
+      queryClient.invalidateQueries({ queryKey: ['access', 'users'] });
+    },
+    onError: (error: unknown) => {
+      const msg =
+        error instanceof Error ? error.message : 'Failed to update role';
       toast.error(msg);
     },
   });
@@ -198,6 +241,45 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
         </div>
       )}
 
+      {/* Confirm Delete Dialog */}
+      <Dialog
+        open={!!userToDelete}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to permanently delete{' '}
+              <span className="font-medium text-foreground">
+                {userToDelete?.email}
+              </span>
+              ? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setUserToDelete(null)}
+                disabled={deleteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={deleteMutation.isPending}
+                onClick={() =>
+                  userToDelete && deleteMutation.mutate(userToDelete.id)
+                }
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="border rounded-md overflow-x-auto">
         <Table>
           <TableHeader>
@@ -205,7 +287,9 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
               <TableHead>Email</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Role</TableHead>
               <TableHead>Created At</TableHead>
+              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -217,13 +301,57 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                 </TableCell>
                 <TableCell className="capitalize">{user.status}</TableCell>
                 <TableCell>
+                  {isAdmin ? (
+                    <Select
+                      value={user.roleId ?? ''}
+                      onValueChange={(newRoleId) =>
+                        updateRoleMutation.mutate({
+                          userId: user.id,
+                          newRoleId,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-36 text-xs">
+                        <SelectValue placeholder="No role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map((r) => (
+                          <SelectItem key={r.id} value={r.id}>
+                            {r.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">
+                      {roles.find((r) => r.id === user.roleId)?.name ?? '—'}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
                   {new Date(user.createdAt).toLocaleDateString()}
                 </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      aria-label={`Delete ${user.email}`}
+                      onClick={() => setUserToDelete(user)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {users.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell
+                  colSpan={isAdmin ? 6 : 5}
+                  className="h-24 text-center"
+                >
                   No users found.
                 </TableCell>
               </TableRow>

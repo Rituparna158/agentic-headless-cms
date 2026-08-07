@@ -32,6 +32,17 @@ export function listUsers(): Promise<UserRecord[]> {
   return apiFetch<UserRecord[]>(API_PATHS.ACCESS.USERS);
 }
 
+export function deleteUser(id: string): Promise<void> {
+  return apiFetch<void>(API_PATHS.ACCESS.USER(id), { method: 'DELETE' });
+}
+
+export function updateUserRole(id: string, roleId: string): Promise<void> {
+  return apiFetch<void>(API_PATHS.ACCESS.USER_ROLE(id), {
+    method: 'PATCH',
+    body: JSON.stringify({ roleId }),
+  });
+}
+
 export function inviteUser(data: {
   email: string;
   firstName?: string;

@@ -14,6 +14,8 @@ export const API_PATHS = {
     ROLES: '/api/v1/access/roles',
     ROLE: (id: string) => `/api/v1/access/roles/${id}`,
     USERS: '/api/v1/access/users',
+    USER: (id: string) => `/api/v1/access/users/${id}`,
+    USER_ROLE: (id: string) => `/api/v1/access/users/${id}/role`,
     INVITE: '/api/v1/access/users/invite',
     TOKENS: '/api/v1/access/tokens',
     TOKEN: (id: string) => `/api/v1/access/tokens/${id}`,
