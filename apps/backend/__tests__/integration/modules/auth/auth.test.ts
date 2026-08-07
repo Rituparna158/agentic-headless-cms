@@ -621,7 +621,9 @@ describe('Auth Module', () => {
           .send({ token: 'invalid-token', password: 'newPassword123' });
 
         expect(res.status).toBe(400);
-        expect(res.body.message).toBe('Invalid or already used reset token');
+        expect(res.body.error.message).toBe(
+          'Invalid or already used reset token',
+        );
       });
 
       it('should update password and invalidate token on success', async () => {
@@ -639,7 +641,7 @@ describe('Auth Module', () => {
           .send({ token: 'valid-token', password: 'newPassword123' });
 
         expect(res.status).toBe(200);
-        expect(res.body.data.message).toBe('Password successfully reset.');
+        expect(res.body.message).toBe('Password reset successfully');
         expect(authRepository.updateUserPassword).toHaveBeenCalledWith(
           'user-id-1',
           'hashed-password',
