@@ -10,6 +10,8 @@ import {
   createToken,
   revokeToken,
   inviteUser,
+  deleteUser,
+  updateUserRole,
 } from './access.controller.js';
 import { authenticateToken, requireAdmin } from '@repo/middlewares';
 
@@ -27,6 +29,8 @@ accessRouter.delete('/roles/:id', requireAdmin, deleteRole);
 // Users
 accessRouter.get('/users', listUsers);
 accessRouter.post('/users/invite', requireAdmin, inviteUser);
+accessRouter.delete('/users/:id', requireAdmin, deleteUser);
+accessRouter.patch('/users/:id/role', requireAdmin, updateUserRole);
 
 // Tokens
 accessRouter.get('/tokens', requireAdmin, listTokens);

@@ -163,7 +163,44 @@ export class AccessService {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'AccessService Error in listUsers:');
-      throw new ApiError(500, SERVICE_ERRORS.FETCH_ROLES_FAILED); // Using existing constant or create new
+      throw new ApiError(500, SERVICE_ERRORS.FETCH_ROLES_FAILED);
+    }
+  }
+
+  async deleteUser(id: string) {
+    try {
+      logger.info({ id }, 'AccessService: deleteUser start');
+      const result = await this.repository.deleteUser(id);
+      logger.debug(
+        { id },
+        'AccessService: deleteUser success, emitting audit log',
+      );
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.DELETE,
+        resourceType: 'user',
+        resourceId: id,
+        actorUserId,
+        actorAgentId,
+        beforeState: { id },
+        afterState: null,
+        context,
+      });
+      return result;
+    } catch (error) {
+      logger.error({ err: error }, 'AccessService Error in deleteUser:');
+      throw new ApiError(500, SERVICE_ERRORS.DELETE_ROLE_FAILED);
+    }
+  }
+
+  async updateUserRole(userId: string, roleId: string) {
+    try {
+      logger.info({ userId, roleId }, 'AccessService: updateUserRole start');
+      await this.repository.updateUserRole(userId, roleId);
+      logger.debug({ userId, roleId }, 'AccessService: updateUserRole success');
+    } catch (error) {
+      logger.error({ err: error }, 'AccessService Error in updateUserRole:');
+      throw new ApiError(500, SERVICE_ERRORS.UPDATE_ROLE_FAILED);
     }
   }
 
