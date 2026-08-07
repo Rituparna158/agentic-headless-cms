@@ -25,7 +25,6 @@ export function useDashboardOverview() {
     queryFn: listSchemas,
   });
   const schemas = schemasQuery.isSuccess ? schemasQuery.data : [];
-  console.log('raw schemas data:', schemasQuery.data);
 
   const entriesQuery = useQuery({
     queryKey: ['dashboard-overview', schemas.map((s) => s.slug)],
