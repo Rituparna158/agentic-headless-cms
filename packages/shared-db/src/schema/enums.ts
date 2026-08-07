@@ -7,6 +7,13 @@ export const userStatusEnum = pgEnum('user_status', [
   'invited',
   'suspended',
 ]);
+export const mfaResetRequestStatusEnum = pgEnum('mfa_reset_request_status', [
+  'pending',
+  'approved',
+  'rejected',
+  'completed',
+  'expired',
+]);
 export const schemaTypeEnum = pgEnum('schema_type', [
   'collection',
   'single_type',
