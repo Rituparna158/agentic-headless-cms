@@ -8,6 +8,10 @@ import {
   logout,
   ssoLogin,
   ssoCallback,
+  enrollMfa,
+  verifyMfa,
+  verifyMfaChallenge,
+  disableMfa,
 } from './auth.controller.js';
 
 export const authRouter = Router();
@@ -19,3 +23,8 @@ authRouter.post('/accept-invite', acceptInvite);
 
 authRouter.get('/sso', ssoLogin);
 authRouter.get('/sso/callback', ssoCallback);
+
+authRouter.post('/mfa/enroll', authenticateToken, enrollMfa);
+authRouter.post('/mfa/verify', authenticateToken, verifyMfa);
+authRouter.post('/mfa/challenge', verifyMfaChallenge);
+authRouter.post('/mfa/disable', authenticateToken, disableMfa);

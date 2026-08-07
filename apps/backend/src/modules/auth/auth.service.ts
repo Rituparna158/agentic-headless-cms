@@ -5,9 +5,13 @@ import { env } from '@repo/config';
 import { authRepository, AccessRepository } from '@repo/repository';
 import type { LoginInput } from '@repo/types';
 import { Issuer, Client, generators } from 'openid-client';
+import { authenticator } from 'otplib';
+import QRCode from 'qrcode';
+
+authenticator.options = { window: 1 };
 
 const accessRepository = new AccessRepository();
-import { UnauthorizedError, ApiError } from '@repo/utils';
+import { UnauthorizedError, ApiError, BadRequestError } from '@repo/utils';
 import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
 import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
@@ -125,6 +129,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles,
+        mfaEnabled: user.mfaEnabled,
       };
 
       const token = jwt.sign(payload, env.JWT_SECRET, {
@@ -171,8 +176,43 @@ export class AuthService {
         throw new UnauthorizedError('Invalid email or password');
       }
 
-      logger.debug({ userId: user.id }, 'AuthService: fetching user roles');
-      const roles = await authRepository.getUserRoles(user.id);
+      logger.debug(
+        { userId: user.id },
+        'AuthService: fetching user roles with MFA info',
+      );
+      const userRolesWithMfa = await authRepository.getUserRolesWithMfaInfo(
+        user.id,
+      );
+      const roles = userRolesWithMfa.map((r) => r.name);
+
+      // 1. If user has MFA enabled, return challenge state instead of session token
+      if (user.mfaEnabled) {
+        logger.info(
+          { userId: user.id },
+          'AuthService: user has MFA enabled, issuing challenge token',
+        );
+        const mfaToken = jwt.sign(
+          { userId: user.id, isMfaChallenge: true },
+          env.JWT_SECRET,
+          { expiresIn: '5m' },
+        );
+        return {
+          mfaRequired: true,
+          mfaToken,
+        };
+      }
+
+      // 2. If user does NOT have MFA enabled, but has a role requiring MFA, block login
+      const requiresMfa = userRolesWithMfa.some((r) => r.mfaRequired);
+      if (requiresMfa) {
+        logger.warn(
+          { userId: user.id },
+          'AuthService: user role requires MFA but user is not enrolled',
+        );
+        throw new UnauthorizedError(
+          'Multi-factor authentication is required for your role but has not been set up. Please contact your administrator.',
+        );
+      }
 
       const payload = {
         id: user.id,
@@ -180,6 +220,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles,
+        mfaEnabled: user.mfaEnabled,
       };
 
       logger.debug({ userId: user.id }, 'AuthService: signing JWT token');
@@ -281,6 +322,193 @@ export class AuthService {
       logger.error({ err: error }, 'AuthService Error in acceptInvite:');
       if (error instanceof UnauthorizedError) throw error;
       throw new ApiError(500, SERVICE_ERRORS.ACTIVATE_ACCOUNT_FAILED);
+    }
+  }
+
+  async enrollMfa(userId: string) {
+    try {
+      logger.info({ userId }, 'AuthService: enrollMfa start');
+      const user = await authRepository.getUserById(userId);
+      if (!user) {
+        throw new BadRequestError('User not found');
+      }
+
+      const secret = authenticator.generateSecret();
+      const keyuri = authenticator.keyuri(user.email, 'Agentic CMS', secret);
+      const qrCode = await QRCode.toDataURL(keyuri);
+
+      await authRepository.updateMfaSecret(userId, secret);
+      logger.info(
+        { userId },
+        'AuthService: enrollMfa secret generated successfully',
+      );
+
+      return {
+        secret,
+        qrCode,
+      };
+    } catch (error) {
+      logger.error({ err: error }, 'AuthService Error in enrollMfa:');
+      if (error instanceof BadRequestError) throw error;
+      throw new ApiError(500, 'Failed to enroll in MFA');
+    }
+  }
+
+  async verifyMfa(userId: string, code: string) {
+    try {
+      logger.info({ userId }, 'AuthService: verifyMfa start');
+      const user = await authRepository.getUserById(userId);
+      if (!user || !user.mfaSecret) {
+        throw new BadRequestError('MFA enrollment has not been started');
+      }
+
+      const isValid = authenticator.verify({
+        token: code,
+        secret: user.mfaSecret,
+      });
+      if (!isValid) {
+        throw new BadRequestError('Invalid verification code');
+      }
+
+      await authRepository.enableMfa(userId);
+      logger.info(
+        { userId },
+        'AuthService: verifyMfa successfully verified and enabled',
+      );
+
+      const roles = await authRepository.getUserRoles(userId);
+      const payload = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        roles,
+        mfaEnabled: true,
+      };
+
+      const token = jwt.sign(payload, env.JWT_SECRET, {
+        expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+      });
+
+      return { user: payload, token };
+    } catch (error) {
+      logger.error({ err: error }, 'AuthService Error in verifyMfa:');
+      if (error instanceof BadRequestError) throw error;
+      throw new ApiError(500, 'Failed to verify MFA');
+    }
+  }
+
+  async disableMfa(userId: string) {
+    try {
+      logger.info({ userId }, 'AuthService: disableMfa start');
+      const user = await authRepository.getUserById(userId);
+      if (!user) {
+        throw new BadRequestError('User not found');
+      }
+
+      await authRepository.disableMfa(userId);
+      logger.info({ userId }, 'AuthService: disableMfa successfully disabled');
+
+      const roles = await authRepository.getUserRoles(userId);
+      const payload = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        roles,
+        mfaEnabled: false,
+      };
+
+      const token = jwt.sign(payload, env.JWT_SECRET, {
+        expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+      });
+
+      return { user: payload, token };
+    } catch (error) {
+      logger.error({ err: error }, 'AuthService Error in disableMfa:');
+      if (error instanceof BadRequestError) throw error;
+      throw new ApiError(500, 'Failed to disable MFA');
+    }
+  }
+
+  async verifyMfaChallenge(mfaToken: string, code: string) {
+    try {
+      logger.info('AuthService: verifyMfaChallenge start');
+      let decoded: { userId: string; isMfaChallenge?: boolean };
+      try {
+        decoded = jwt.verify(mfaToken, env.JWT_SECRET) as {
+          userId: string;
+          isMfaChallenge?: boolean;
+        };
+      } catch {
+        logger.warn('AuthService: verifyMfaChallenge invalid token');
+        throw new UnauthorizedError('Invalid or expired MFA session');
+      }
+
+      if (!decoded.isMfaChallenge || !decoded.userId) {
+        logger.warn('AuthService: verifyMfaChallenge missing challenge claims');
+        throw new UnauthorizedError('Invalid or expired MFA session');
+      }
+
+      const user = await authRepository.getUserById(decoded.userId);
+      if (!user || !user.mfaSecret || !user.mfaEnabled) {
+        logger.warn(
+          { userId: decoded.userId },
+          'AuthService: verifyMfaChallenge user not found or MFA not enabled',
+        );
+        throw new UnauthorizedError('Invalid or expired MFA session');
+      }
+
+      const isValid = authenticator.verify({
+        token: code,
+        secret: user.mfaSecret,
+      });
+      if (!isValid) {
+        logger.warn(
+          { userId: user.id },
+          'AuthService: verifyMfaChallenge incorrect code',
+        );
+        throw new UnauthorizedError('Invalid or expired MFA session');
+      }
+
+      logger.debug({ userId: user.id }, 'AuthService: fetching user roles');
+      const roles = await authRepository.getUserRoles(user.id);
+
+      const payload = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        roles,
+        mfaEnabled: true,
+      };
+
+      logger.debug({ userId: user.id }, 'AuthService: signing session JWT');
+      const token = jwt.sign(payload, env.JWT_SECRET, {
+        expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+      });
+
+      // Emit login event since the challenge is now complete
+      const { context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.LOGIN,
+        resourceType: 'user',
+        resourceId: user.id,
+        actorUserId: user.id,
+        actorAgentId: undefined,
+        beforeState: null,
+        afterState: { email: user.email, mfaCompleted: true },
+        context,
+      });
+
+      return {
+        user: payload,
+        token,
+      };
+    } catch (error) {
+      logger.error({ err: error }, 'AuthService Error in verifyMfaChallenge:');
+      if (error instanceof UnauthorizedError) throw error;
+      throw new ApiError(500, 'Failed to complete MFA challenge');
     }
   }
 }

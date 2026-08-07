@@ -23,6 +23,7 @@ describe('RBAC Middleware', () => {
         roles: [],
         firstName: 'Test',
         lastName: 'User',
+        mfaEnabled: false,
       },
     };
     mockRes = {

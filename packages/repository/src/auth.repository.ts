@@ -120,6 +120,95 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_PERMISSIONS_FAILED);
     }
   }
+
+  async getUserRolesWithMfaInfo(userId: string) {
+    try {
+      logger.info(
+        { userId },
+        'AuthRepository: fetching user roles with mfa info',
+      );
+      const db = getDatabaseAdapter().getDb();
+      const rows = await db
+        .select({
+          id: roles.id,
+          name: roles.name,
+          mfaRequired: roles.mfaRequired,
+        })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(eq(userRoles.userId, userId));
+
+      logger.debug(
+        { userId, roles: rows },
+        'AuthRepository: getUserRolesWithMfaInfo complete',
+      );
+      return rows;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in getUserRolesWithMfaInfo:',
+      );
+      throw new ApiError(500, REPO_ERRORS.FETCH_USER_ROLES_FAILED);
+    }
+  }
+
+  async getUserById(id: string) {
+    try {
+      logger.info({ id }, 'AuthRepository: fetching user by ID');
+      const db = getDatabaseAdapter().getDb();
+      const result = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      logger.error({ err: error }, 'AuthRepository Error in getUserById:');
+      throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
+    }
+  }
+
+  async updateMfaSecret(userId: string, secret: string | null) {
+    try {
+      logger.info({ userId }, 'AuthRepository: updating user MFA secret');
+      const db = getDatabaseAdapter().getDb();
+      await db
+        .update(users)
+        .set({ mfaSecret: secret, mfaEnabled: false }) // Disable MFA until verified
+        .where(eq(users.id, userId));
+    } catch (error) {
+      logger.error({ err: error }, 'AuthRepository Error in updateMfaSecret:');
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
+
+  async enableMfa(userId: string) {
+    try {
+      logger.info({ userId }, 'AuthRepository: enabling MFA for user');
+      const db = getDatabaseAdapter().getDb();
+      await db
+        .update(users)
+        .set({ mfaEnabled: true })
+        .where(eq(users.id, userId));
+    } catch (error) {
+      logger.error({ err: error }, 'AuthRepository Error in enableMfa:');
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
+
+  async disableMfa(userId: string) {
+    try {
+      logger.info({ userId }, 'AuthRepository: disabling MFA for user');
+      const db = getDatabaseAdapter().getDb();
+      await db
+        .update(users)
+        .set({ mfaEnabled: false, mfaSecret: null })
+        .where(eq(users.id, userId));
+    } catch (error) {
+      logger.error({ err: error }, 'AuthRepository Error in disableMfa:');
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
 }
 
 export const authRepository = new AuthRepository();

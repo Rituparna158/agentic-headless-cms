@@ -5,6 +5,10 @@ export const API_PATHS = {
     ME: '/api/v1/auth/me',
     ACCEPT_INVITE: '/api/v1/auth/accept-invite',
     SSO: '/api/v1/auth/sso',
+    MFA_ENROLL: '/api/v1/auth/mfa/enroll',
+    MFA_VERIFY: '/api/v1/auth/mfa/verify',
+    MFA_CHALLENGE: '/api/v1/auth/mfa/challenge',
+    MFA_DISABLE: '/api/v1/auth/mfa/disable',
   },
   ACCESS: {
     ROLES: '/api/v1/access/roles',

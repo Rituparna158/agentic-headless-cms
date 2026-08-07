@@ -12,9 +12,13 @@ vi.mock('@repo/repository', () => ({
   authRepository: {
     getUserByEmail: vi.fn(),
     getUserRoles: vi.fn(),
+    getUserRolesWithMfaInfo: vi.fn(),
     getUserPermissions: vi.fn(),
     getUserByInviteTokenHash: vi.fn(),
     activateUser: vi.fn(),
+    getUserById: vi.fn(),
+    updateMfaSecret: vi.fn(),
+    enableMfa: vi.fn(),
   },
   ContentRepository: vi.fn().mockImplementation(class {}),
   MediaRepository: vi.fn().mockImplementation(class {}),
@@ -80,6 +84,9 @@ describe('Auth Module', () => {
         >,
       );
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+      vi.mocked(authRepository.getUserRolesWithMfaInfo).mockResolvedValue([
+        { id: 'role-1', name: 'admin', mfaRequired: false },
+      ]);
       vi.mocked(authRepository.getUserRoles).mockResolvedValue(['admin']);
 
       const res = await request(app).post('/api/v1/auth/login').send({
@@ -222,6 +229,155 @@ describe('Auth Module', () => {
         'user-3',
         expect.any(String),
       );
+    });
+  });
+
+  describe('MFA Endpoints', () => {
+    const userPayload = {
+      id: 'user-id-123',
+      email: 'admin@example.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      roles: ['admin'],
+      mfaEnabled: false,
+    };
+    const validToken = jwt.sign(userPayload, env.JWT_SECRET);
+
+    describe('POST /api/v1/auth/mfa/enroll', () => {
+      it('should return 401 if unauthenticated', async () => {
+        const res = await request(app).post('/api/v1/auth/mfa/enroll');
+        expect(res.status).toBe(401);
+      });
+
+      it('should return 200 with secret and qrCode if authenticated', async () => {
+        vi.mocked(authRepository.getUserById).mockResolvedValue({
+          id: 'user-id-123',
+          email: 'admin@example.com',
+        } as never);
+
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/enroll')
+          .set('Cookie', [`token=${validToken}`]);
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.secret).toBeDefined();
+        expect(res.body.data.qrCode).toBeDefined();
+        expect(authRepository.updateMfaSecret).toHaveBeenCalledWith(
+          'user-id-123',
+          expect.any(String),
+        );
+      });
+    });
+
+    describe('POST /api/v1/auth/mfa/verify', () => {
+      it('should return 400 for malformed payload', async () => {
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/verify')
+          .set('Cookie', [`token=${validToken}`])
+          .send({ code: '12' });
+
+        expect(res.status).toBe(400);
+      });
+
+      it('should return 400 for incorrect verification code', async () => {
+        vi.mocked(authRepository.getUserById).mockResolvedValue({
+          id: 'user-id-123',
+          mfaSecret: 'JBSWY3DPEHPK3PXP', // Valid base32 secret
+        } as never);
+
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/verify')
+          .set('Cookie', [`token=${validToken}`])
+          .send({ code: '000000' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.message).toBe('Invalid verification code');
+      });
+    });
+
+    describe('Login MFA Challenge flows', () => {
+      it('should return 200 with mfaRequired and mfaToken if user has MFA enabled', async () => {
+        const mockUser = {
+          id: 'user-id-123',
+          email: 'admin@example.com',
+          passwordHash: 'hashed-password',
+          mfaEnabled: true,
+          mfaSecret: 'JBSWY3DPEHPK3PXP',
+        };
+
+        vi.mocked(authRepository.getUserByEmail).mockResolvedValue(
+          mockUser as never,
+        );
+        vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+        vi.mocked(authRepository.getUserRolesWithMfaInfo).mockResolvedValue([
+          { id: 'role-1', name: 'admin', mfaRequired: false },
+        ]);
+
+        const res = await request(app).post('/api/v1/auth/login').send({
+          email: 'admin@example.com',
+          password: 'password123',
+          rememberMe: false,
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.mfaRequired).toBe(true);
+        expect(res.body.data.mfaToken).toBeDefined();
+
+        // Should not set the session cookie
+        expect(res.headers['set-cookie']).toBeUndefined();
+      });
+
+      it('should block login with 401 if user does not have MFA enabled but role requires it', async () => {
+        const mockUser = {
+          id: 'user-id-123',
+          email: 'admin@example.com',
+          passwordHash: 'hashed-password',
+          mfaEnabled: false,
+        };
+
+        vi.mocked(authRepository.getUserByEmail).mockResolvedValue(
+          mockUser as never,
+        );
+        vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+        vi.mocked(authRepository.getUserRolesWithMfaInfo).mockResolvedValue([
+          { id: 'role-1', name: 'admin', mfaRequired: true },
+        ]);
+
+        const res = await request(app).post('/api/v1/auth/login').send({
+          email: 'admin@example.com',
+          password: 'password123',
+          rememberMe: false,
+        });
+
+        expect(res.status).toBe(401);
+        expect(res.body.error.message).toContain(
+          'Multi-factor authentication is required for your role',
+        );
+      });
+    });
+
+    describe('POST /api/v1/auth/mfa/challenge', () => {
+      it('should reject wrong MFA challenge code or invalid token', async () => {
+        const challengeToken = jwt.sign(
+          { userId: 'user-id-123', isMfaChallenge: true },
+          env.JWT_SECRET,
+          { expiresIn: '5m' },
+        );
+
+        vi.mocked(authRepository.getUserById).mockResolvedValue({
+          id: 'user-id-123',
+          mfaSecret: 'JBSWY3DPEHPK3PXP',
+          mfaEnabled: true,
+        } as never);
+
+        const res = await request(app).post('/api/v1/auth/mfa/challenge').send({
+          mfaToken: challengeToken,
+          code: '000000',
+        });
+
+        expect(res.status).toBe(401);
+        expect(res.body.error.message).toBe('Invalid or expired MFA session');
+      });
     });
   });
 });

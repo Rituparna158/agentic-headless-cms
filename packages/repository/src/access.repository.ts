@@ -69,7 +69,12 @@ export class AccessRepository {
   }
 
   async createRole(
-    data: { name: string; description?: string | null; isSystem?: boolean },
+    data: {
+      name: string;
+      description?: string | null;
+      isSystem?: boolean;
+      mfaRequired?: boolean;
+    },
     perms: PermissionData[],
   ) {
     try {
@@ -116,7 +121,7 @@ export class AccessRepository {
 
   async updateRole(
     id: string,
-    data: { name?: string; description?: string | null },
+    data: { name?: string; description?: string | null; mfaRequired?: boolean },
     perms?: PermissionData[],
   ) {
     try {
