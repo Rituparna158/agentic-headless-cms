@@ -1,7 +1,13 @@
-import { eq } from 'drizzle-orm';
+import { eq, ne } from 'drizzle-orm';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
-import { users, userRoles, roles, permissions } from '@repo/shared-db';
+import {
+  users,
+  userRoles,
+  roles,
+  permissions,
+  mfaResetRequests,
+} from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
 
@@ -206,6 +212,121 @@ export class AuthRepository {
         .where(eq(users.id, userId));
     } catch (error) {
       logger.error({ err: error }, 'AuthRepository Error in disableMfa:');
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
+
+  async createMfaResetRequest(userId: string) {
+    try {
+      logger.info({ userId }, 'AuthRepository: creating MFA reset request');
+      const db = getDatabaseAdapter().getDb();
+      const result = await db
+        .insert(mfaResetRequests)
+        .values({ userId })
+        .returning();
+      return result[0];
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in createMfaResetRequest:',
+      );
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
+
+  async getMfaResetRequestById(id: string) {
+    try {
+      logger.info({ id }, 'AuthRepository: fetching MFA reset request by ID');
+      const db = getDatabaseAdapter().getDb();
+      const result = await db
+        .select()
+        .from(mfaResetRequests)
+        .where(eq(mfaResetRequests.id, id))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in getMfaResetRequestById:',
+      );
+      throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED); // or custom error
+    }
+  }
+
+  async getAllMfaResetRequests(statusFilter?: string) {
+    try {
+      logger.info('AuthRepository: fetching MFA reset requests');
+      const db = getDatabaseAdapter().getDb();
+      let whereClause;
+      if (statusFilter === 'history') {
+        whereClause = ne(mfaResetRequests.status, 'pending');
+      } else if (statusFilter) {
+        whereClause = eq(mfaResetRequests.status, statusFilter as 'pending');
+      }
+
+      const result = await db.query.mfaResetRequests.findMany({
+        where: whereClause,
+        with: {
+          user: true,
+          admin: true,
+        },
+        orderBy: (mfaResetRequests, { desc }) => [
+          desc(mfaResetRequests.createdAt),
+        ],
+      });
+
+      return result;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in getAllMfaResetRequests:',
+      );
+      throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
+    }
+  }
+
+  async getMfaResetRequestByTokenHash(hash: string) {
+    try {
+      logger.info('AuthRepository: fetching MFA reset request by token hash');
+      const db = getDatabaseAdapter().getDb();
+      const result = await db
+        .select()
+        .from(mfaResetRequests)
+        .where(eq(mfaResetRequests.tokenHash, hash))
+        .limit(1);
+      return result[0] || null;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in getMfaResetRequestByTokenHash:',
+      );
+      throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
+    }
+  }
+
+  async updateMfaResetRequest(
+    id: string,
+    data: {
+      status?: 'pending' | 'approved' | 'rejected' | 'completed' | 'expired';
+      adminId?: string;
+      tokenHash?: string;
+      expiresAt?: Date;
+    },
+  ) {
+    try {
+      logger.info({ id }, 'AuthRepository: updating MFA reset request');
+      const db = getDatabaseAdapter().getDb();
+      const result = await db
+        .update(mfaResetRequests)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(mfaResetRequests.id, id))
+        .returning();
+      return result[0] || null;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AuthRepository Error in updateMfaResetRequest:',
+      );
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
