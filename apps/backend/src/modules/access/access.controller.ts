@@ -227,3 +227,42 @@ export const revokeToken: RequestHandler = asyncHandler(
       );
   },
 );
+
+export const listMfaRequests: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AccessController: listMfaRequests start');
+    const { status } = req.query as { status?: string };
+    const requests = await accessService.listMfaRequests(status);
+    res
+      .status(200)
+      .json(new ApiResponse(200, requests, 'MFA requests listed successfully'));
+  },
+);
+
+export const approveMfaResetRequest: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'AccessController: approveMfaResetRequest start');
+    const result = await accessService.approveMfaResetRequest(
+      id as string,
+      req.user!.id,
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, 'MFA reset request approved'));
+  },
+);
+
+export const rejectMfaResetRequest: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'AccessController: rejectMfaResetRequest start');
+    const result = await accessService.rejectMfaResetRequest(
+      id as string,
+      req.user!.id,
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, 'MFA reset request rejected'));
+  },
+);

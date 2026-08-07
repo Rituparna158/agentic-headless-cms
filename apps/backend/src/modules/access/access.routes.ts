@@ -12,8 +12,15 @@ import {
   inviteUser,
   deleteUser,
   updateUserRole,
+  listMfaRequests,
+  approveMfaResetRequest,
+  rejectMfaResetRequest,
 } from './access.controller.js';
-import { authenticateToken, requireAdmin } from '@repo/middlewares';
+import {
+  authenticateToken,
+  requireAdmin,
+  requireAdminOrSupport,
+} from '@repo/middlewares';
 
 export const accessRouter = Router();
 
@@ -36,3 +43,16 @@ accessRouter.patch('/users/:id/role', requireAdmin, updateUserRole);
 accessRouter.get('/tokens', requireAdmin, listTokens);
 accessRouter.post('/tokens', requireAdmin, createToken);
 accessRouter.delete('/tokens/:id', requireAdmin, revokeToken);
+
+// MFA Admin routes
+accessRouter.get('/mfa-requests', requireAdminOrSupport, listMfaRequests);
+accessRouter.post(
+  '/mfa-requests/:id/approve',
+  requireAdminOrSupport,
+  approveMfaResetRequest,
+);
+accessRouter.post(
+  '/mfa-requests/:id/reject',
+  requireAdminOrSupport,
+  rejectMfaResetRequest,
+);
