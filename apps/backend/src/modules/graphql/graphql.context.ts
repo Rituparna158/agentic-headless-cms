@@ -1,6 +1,6 @@
 import { ERROR_MESSAGES } from '@repo/constants';
 import { authService } from '../auth/auth.service.js';
-import { hasPermission } from '@repo/middlewares';
+import { hasPermission } from '@repo/utils/rbac';
 import { ForbiddenError, UnauthorizedError } from '@repo/utils';
 import { GraphQLContext } from '../../types/graphql.types.js';
 

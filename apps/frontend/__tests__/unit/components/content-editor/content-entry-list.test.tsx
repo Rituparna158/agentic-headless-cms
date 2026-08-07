@@ -12,6 +12,10 @@ const { mockList, mockDelete } = vi.hoisted(() => ({
   mockDelete: vi.fn(),
 }));
 
+vi.mock('@/hooks/use-permissions', () => ({
+  useHasPermission: vi.fn(() => true),
+}));
+
 vi.mock('@/lib/api/content', () => ({
   listContentEntries: mockList,
   deleteContentEntry: mockDelete,

@@ -20,6 +20,7 @@ import { Form } from '@/components/ui/form';
 import { DynamicField } from './dynamic-field';
 import { VersionHistoryDrawer } from './version-history-drawer';
 import type { ContentEntryFormProps } from '@/types/component.types';
+import { useHasPermission } from '@/hooks/use-permissions';
 
 import { buildDefaultValues } from '@/utils/form';
 
@@ -28,6 +29,9 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+
+  const canPublish = useHasPermission('publish', schema.id);
+  const canDelete = useHasPermission('delete', schema.id);
 
   const definition = schema.definition;
   // Rebuilt only when the schema itself changes, not on every render — the
@@ -155,31 +159,47 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
             </Button>
 
             {entry ? (
-              <Button
-                type="button"
-                variant="outline"
-                disabled={
-                  publishMutation.isPending || entry.status === 'published'
+              <span
+                title={
+                  !canPublish ? 'You do not have permission to publish.' : ''
                 }
-                onClick={() => publishMutation.mutate()}
               >
-                {publishMutation.isPending
-                  ? 'Publishing…'
-                  : entry.status === 'published'
-                    ? 'Published'
-                    : 'Publish'}
-              </Button>
+                <Button
+                  className="w-full"
+                  type="button"
+                  variant="outline"
+                  disabled={
+                    !canPublish ||
+                    publishMutation.isPending ||
+                    entry.status === 'published'
+                  }
+                  onClick={() => publishMutation.mutate()}
+                >
+                  {publishMutation.isPending
+                    ? 'Publishing…'
+                    : entry.status === 'published'
+                      ? 'Published'
+                      : 'Publish'}
+                </Button>
+              </span>
             ) : null}
 
             {entry ? (
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={deleteMutation.isPending}
-                onClick={() => deleteMutation.mutate()}
+              <span
+                title={
+                  !canDelete ? 'You do not have permission to delete.' : ''
+                }
               >
-                {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
-              </Button>
+                <Button
+                  className="w-full"
+                  type="button"
+                  variant="destructive"
+                  disabled={!canDelete || deleteMutation.isPending}
+                  onClick={() => deleteMutation.mutate()}
+                >
+                  {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                </Button>
+              </span>
             ) : null}
           </div>
         </div>

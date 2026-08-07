@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./rbac": {
+      "types": "./dist/rbac.util.d.ts",
+      "default": "./dist/rbac.util.js"
     }
   },
   "scripts": {

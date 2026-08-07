@@ -9,7 +9,9 @@ const { mockList, mockDelete } = vi.hoisted(() => ({
   mockList: vi.fn(),
   mockDelete: vi.fn(),
 }));
-
+vi.mock('@/hooks/use-permissions', () => ({
+  useHasPermission: vi.fn(() => true),
+}));
 vi.mock('@/lib/api/media', async () => {
   const actual =
     await vi.importActual<typeof import('@/lib/api/media')>('@/lib/api/media');

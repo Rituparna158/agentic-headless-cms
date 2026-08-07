@@ -23,11 +23,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { deleteSchema } from '@/lib/api/schemas';
 import type { SchemaRecord } from '@repo/types';
+import { useHasPermission } from '@/hooks/use-permissions';
 
 export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showForceDeleteDialog, setShowForceDeleteDialog] = useState(false);
+
+  const canDelete = useHasPermission('delete', schema.id);
 
   const deleteMutation = useMutation({
     mutationFn: ({ id, force }: { id: string; force: boolean }) =>
@@ -67,7 +70,12 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
-            onClick={() => setShowDeleteDialog(true)}
+            onClick={(e) => {
+              if (canDelete) setShowDeleteDialog(true);
+              else e.preventDefault();
+            }}
+            disabled={!canDelete}
+            title={!canDelete ? 'You do not have permission to delete.' : ''}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete

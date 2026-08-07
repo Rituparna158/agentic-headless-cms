@@ -84,4 +84,5 @@ export interface AuthenticatedUser {
   lastName: string | null;
   roles: string[];
   mfaEnabled: boolean;
+  permissions?: { action: string; schemaId: string | null; effect: string }[];
 }
