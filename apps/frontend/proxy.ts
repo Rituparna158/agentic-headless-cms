@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { AUTH_COOKIES } from '@repo/constants';
 
-const AUTH_ROUTES = ['/login', '/accept-invite'];
+const AUTH_ROUTES = [
+  '/login',
+  '/accept-invite',
+  '/forgot-password',
+  '/reset-password',
+];
 
 //it only confirms a session cookie exists.
 

@@ -11,6 +11,8 @@ export const API_PATHS = {
     MFA_DISABLE: '/api/v1/auth/mfa/disable',
     MFA_RESET_REQUEST: '/api/v1/auth/mfa/reset-request',
     MFA_RESET_COMPLETE: '/api/v1/auth/mfa/reset-complete',
+    FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
+    RESET_PASSWORD: '/api/v1/auth/reset-password',
   },
   ACCESS: {
     ROLES: '/api/v1/access/roles',

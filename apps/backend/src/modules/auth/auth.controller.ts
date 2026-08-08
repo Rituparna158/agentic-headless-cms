@@ -2,6 +2,8 @@ import {
   loginSchema,
   mfaVerifySchema,
   mfaChallengeSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '@repo/validation';
 import { AUTH_COOKIES, ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
 import type { AuthenticatedUser } from '@repo/types';
@@ -320,5 +322,27 @@ export const completeMfaReset: RequestHandler = asyncHandler(
     res
       .status(200)
       .json(new ApiResponse(200, result, 'MFA reset completed successfully'));
+  },
+);
+
+export const requestPasswordReset: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: requestPasswordReset start');
+    const input = forgotPasswordSchema.parse(req.body);
+    const result = await authService.requestPasswordReset(input.email);
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, 'Password reset request processed'));
+  },
+);
+
+export const resetPassword: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('AuthController: resetPassword start');
+    const input = resetPasswordSchema.parse(req.body);
+    const result = await authService.resetPassword(input.token, input.password);
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, 'Password reset successfully'));
   },
 );

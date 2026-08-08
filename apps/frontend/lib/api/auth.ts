@@ -53,3 +53,22 @@ export function disableMfa(): Promise<AuthenticatedUser> {
     method: 'POST',
   });
 }
+
+export function requestPasswordReset(
+  email: string,
+): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(API_PATHS.AUTH.FORGOT_PASSWORD, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function resetPassword(
+  token: string,
+  password: string,
+): Promise<{ success: boolean }> {
+  return apiFetch<{ success: boolean }>(API_PATHS.AUTH.RESET_PASSWORD, {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  });
+}

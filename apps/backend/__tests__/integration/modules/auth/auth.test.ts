@@ -62,6 +62,10 @@ vi.mock('@repo/repository', () => ({
     getMfaResetRequestByTokenHash: vi.fn(),
     updateMfaResetRequest: vi.fn(),
     disableMfa: vi.fn(),
+    createPasswordResetRequest: vi.fn(),
+    getPasswordResetRequestByTokenHash: vi.fn(),
+    updatePasswordResetRequest: vi.fn(),
+    updateUserPassword: vi.fn(),
   },
   ContentRepository: vi.fn().mockImplementation(class {}),
   MediaRepository: vi.fn().mockImplementation(class {}),
@@ -569,6 +573,80 @@ describe('Auth Module', () => {
             status: 'completed',
           },
         );
+      });
+    });
+  });
+
+  describe('Password Reset Endpoints', () => {
+    describe('POST /api/v1/auth/forgot-password', () => {
+      it('should always return success message to prevent enumeration', async () => {
+        vi.mocked(authRepository.getUserByEmail).mockResolvedValue(null);
+
+        const res = await request(app)
+          .post('/api/v1/auth/forgot-password')
+          .send({ email: 'nonexistent@example.com' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.message).toBe(
+          'If the email exists, a password reset link has been sent.',
+        );
+        expect(
+          authRepository.createPasswordResetRequest,
+        ).not.toHaveBeenCalled();
+      });
+
+      it('should create token and send email if user exists', async () => {
+        vi.mocked(authRepository.getUserByEmail).mockResolvedValue({
+          id: 'user-id-1',
+          email: 'user@example.com',
+        } as never);
+
+        const res = await request(app)
+          .post('/api/v1/auth/forgot-password')
+          .send({ email: 'user@example.com' });
+
+        expect(res.status).toBe(200);
+        expect(authRepository.createPasswordResetRequest).toHaveBeenCalled();
+      });
+    });
+
+    describe('POST /api/v1/auth/reset-password', () => {
+      it('should return 400 for invalid token', async () => {
+        vi.mocked(
+          authRepository.getPasswordResetRequestByTokenHash,
+        ).mockResolvedValue(null);
+
+        const res = await request(app)
+          .post('/api/v1/auth/reset-password')
+          .send({ token: 'invalid-token', password: 'newPassword123' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.message).toBe(
+          'Invalid or already used reset token',
+        );
+      });
+
+      it('should update password and invalidate token on success', async () => {
+        vi.mocked(
+          authRepository.getPasswordResetRequestByTokenHash,
+        ).mockResolvedValue({
+          id: 'req-1',
+          userId: 'user-id-1',
+          expiresAt: new Date(Date.now() + 3600000),
+          usedAt: null,
+        } as never);
+
+        const res = await request(app)
+          .post('/api/v1/auth/reset-password')
+          .send({ token: 'valid-token', password: 'newPassword123' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.message).toBe('Password reset successfully');
+        expect(authRepository.updateUserPassword).toHaveBeenCalledWith(
+          'user-id-1',
+          'hashed-password',
+        );
+        expect(authRepository.updatePasswordResetRequest).toHaveBeenCalled();
       });
     });
   });
