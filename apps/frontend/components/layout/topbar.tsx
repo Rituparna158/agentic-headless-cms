@@ -82,13 +82,13 @@ export function Topbar() {
 
       {hasRoles && (
         <div className="relative ml-2 hidden max-w-sm flex-1 md:block">
-          <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
           <Input
             value=""
             onChange={() => {}}
             placeholder="Search"
             variant="default"
-            className="pl-8"
+            icon={Search}
+            className="mb-0"
           />
         </div>
       )}

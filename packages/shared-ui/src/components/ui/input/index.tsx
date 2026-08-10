@@ -206,20 +206,22 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
       variants={variants?.container}
     >
       {/* Enhanced Label */}
-      <motion.label
-        className={cn(
-          'absolute top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 z-10 origin-left',
-          Icon ? 'left-9' : 'left-4',
-          'text-muted-foreground group-focus-within:text-primary',
-          error && 'text-red-500',
-          success && 'text-emerald-500',
-          sizeConfig[size].label,
-          labelClassName,
-        )}
-        variants={variants?.label}
-      >
-        {placeholder}
-      </motion.label>
+      {variants?.label && (
+        <motion.label
+          className={cn(
+            'absolute top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 z-10 origin-left',
+            Icon ? 'left-9' : 'left-4',
+            'text-muted-foreground group-focus-within:text-primary',
+            error && 'text-red-500',
+            success && 'text-emerald-500',
+            sizeConfig[size].label,
+            labelClassName,
+          )}
+          variants={variants.label}
+        >
+          {placeholder}
+        </motion.label>
+      )}
 
       {/* Input Container */}
       <div className="relative">
@@ -248,6 +250,7 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
           id={id}
           autoFocus={autoFocus}
           type={inputType}
+          placeholder={!variants?.label ? placeholder : ''}
           className={cn(
             // Base enhanced styles
             'w-full bg-background/90 backdrop-blur-sm border border-border/60 rounded-xl',
