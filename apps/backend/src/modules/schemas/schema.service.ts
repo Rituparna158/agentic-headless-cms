@@ -138,6 +138,9 @@ export class SchemaService {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'SchemaService Error in delete:');
+      if (error instanceof ApiError) {
+        throw error;
+      }
       throw new ApiError(500, SERVICE_ERRORS.DELETE_SCHEMA_FAILED);
     }
   }
