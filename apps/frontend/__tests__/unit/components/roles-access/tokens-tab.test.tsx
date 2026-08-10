@@ -105,7 +105,8 @@ describe('TokensTab', () => {
       screen.getByPlaceholderText('e.g. CI/CD Script'),
       'My New Token',
     );
-    await user.selectOptions(screen.getByRole('combobox'), 'role-admin');
+    await user.click(screen.getByRole('button', { name: 'Select a role...' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'admin' }));
     await user.click(screen.getByRole('button', { name: 'Generate' }));
 
     await waitFor(() =>

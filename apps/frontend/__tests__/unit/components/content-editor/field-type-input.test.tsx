@@ -74,7 +74,7 @@ describe('FieldTypeInput', () => {
         onChange={onChange}
       />,
     );
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'draft' })).toBeInTheDocument();
   });
 
   it('falls back to a text input for dataType "enum" with no configured options', () => {
@@ -87,7 +87,7 @@ describe('FieldTypeInput', () => {
       />,
     );
     expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('renders the Lexical rich text editor for dataType "richtext"', () => {

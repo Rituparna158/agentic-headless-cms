@@ -62,27 +62,48 @@ describe('WebhooksTable', () => {
     expect(screen.getByText('Active')).toBeInTheDocument();
   });
 
-  it('disables Register until name, url, and at least one event are set', async () => {
-    const user = userEvent.setup();
+  it('does not register a webhook until name, url, and at least one event are set', async () => {
     renderTable();
+    const user = userEvent.setup();
+
     await screen.findByText('No webhooks registered yet.');
 
+    // 1. Submit empty
     await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
-    const registerButton = screen.getByRole('button', { name: 'Register' });
-    expect(registerButton).toBeDisabled();
+    let registerButton = await screen.findByRole('button', {
+      name: 'Register',
+    });
+    await user.click(registerButton);
+    expect(mockCreate).not.toHaveBeenCalled();
 
+    // 2. Submit with only name and url (modal closed, so open again)
+    await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
     await user.type(
-      screen.getByPlaceholderText('e.g. Next.js ISR Rebuild'),
+      await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
       'My Hook',
     );
     await user.type(
-      screen.getByPlaceholderText('https://example.com/api/revalidate'),
+      await screen.findByPlaceholderText('https://example.com/api/revalidate'),
       'https://example.com/hook',
     );
-    expect(registerButton).toBeDisabled();
+    registerButton = await screen.findByRole('button', { name: 'Register' });
+    await user.click(registerButton);
+    expect(mockCreate).not.toHaveBeenCalled();
 
+    // 3. Submit with everything
+    await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
+    await user.type(
+      await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
+      'My Hook',
+    );
+    await user.type(
+      await screen.findByPlaceholderText('https://example.com/api/revalidate'),
+      'https://example.com/hook',
+    );
     await user.click(screen.getByText('content.published'));
-    expect(registerButton).toBeEnabled();
+    registerButton = await screen.findByRole('button', { name: 'Register' });
+    await user.click(registerButton);
+    expect(mockCreate).toHaveBeenCalled();
   });
 
   it('registers a webhook with the selected events', async () => {
@@ -93,14 +114,18 @@ describe('WebhooksTable', () => {
 
     await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
     await user.type(
-      screen.getByPlaceholderText('e.g. Next.js ISR Rebuild'),
+      await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
       'My Hook',
     );
     await user.type(
-      screen.getByPlaceholderText('https://example.com/api/revalidate'),
+      await screen.findByPlaceholderText('https://example.com/api/revalidate'),
       'https://example.com/hook',
     );
     await user.click(screen.getByText('content.published'));
+
+    // Clear the previous mock calls from other tests just in case, though beforeEach should handle it
+    mockCreate.mockClear();
+
     await user.click(screen.getByRole('button', { name: 'Register' }));
 
     await waitFor(() =>
