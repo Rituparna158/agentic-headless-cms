@@ -4,25 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listWebhooks, createWebhook, deleteWebhook } from '@/lib/api/webhooks';
 import { WebhookRecord } from '@repo/types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button, Input, Checkbox, Modal, Table } from '@repo/shared-ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
 
@@ -86,123 +68,107 @@ export function WebhooksTable() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsCreateOpen(true)}>
-              Register Webhook
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Register Webhook</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
+        <Button onClick={() => setIsCreateOpen(true)}>Register Webhook</Button>
+        <Modal
+          isOpen={isCreateOpen}
+          onClose={closeDialog}
+          title="Register Webhook"
+          confirmText={createMutation.isPending ? 'Registering...' : 'Register'}
+          cancelText="Cancel"
+          onConfirm={() => {
+            if (name && url && events.length > 0 && !createMutation.isPending) {
+              createMutation.mutate();
+            }
+          }}
+          onCancel={closeDialog}
+        >
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Name</label>
+              <Input
+                placeholder="e.g. Next.js ISR Rebuild"
+                variant="default"
+                value={name}
+                onChange={(val) => setName(val)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">URL</label>
+              <Input
+                placeholder="https://example.com/api/revalidate"
+                variant="default"
+                value={url}
+                onChange={(val) => setUrl(val)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Events</label>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  placeholder="e.g. Next.js ISR Rebuild"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">URL</label>
-                <Input
-                  placeholder="https://example.com/api/revalidate"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Events</label>
-                <div className="space-y-2">
-                  {AVAILABLE_EVENTS.map((event) => (
-                    <label
-                      key={event}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <Checkbox
-                        checked={events.includes(event)}
-                        onCheckedChange={() => toggleEvent(event)}
-                      />
-                      {event}
-                    </label>
-                  ))}
-                </div>
+                {AVAILABLE_EVENTS.map((event) => (
+                  <label
+                    key={event}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <Checkbox
+                      checked={events.includes(event)}
+                      onChange={() => toggleEvent(event)}
+                    />
+                    {event}
+                  </label>
+                ))}
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={closeDialog}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => createMutation.mutate()}
-                disabled={
-                  !name ||
-                  !url ||
-                  events.length === 0 ||
-                  createMutation.isPending
-                }
-              >
-                {createMutation.isPending ? 'Registering...' : 'Register'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </Modal>
       </div>
 
       <div className="border rounded-md overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>URL</TableHead>
-              <TableHead>Events</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {webhooks.map((webhook) => (
-              <TableRow key={webhook.id}>
-                <TableCell>{webhook.name}</TableCell>
-                <TableCell className="max-w-xs truncate font-mono text-xs">
-                  {webhook.url}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {webhook.events.join(', ')}
-                </TableCell>
-                <TableCell>
-                  {webhook.isActive ? (
-                    <span className="text-green-500 font-medium">Active</span>
-                  ) : (
-                    <span className="text-muted-foreground font-medium">
-                      Inactive
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:text-red-600"
-                    onClick={() => setPendingDelete(webhook)}
-                    title="Delete Webhook"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {webhooks.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  No webhooks registered yet.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <Table
+          headings={[
+            { label: 'Name', key: 'name', sort: 'asc' },
+            { label: 'URL', key: 'url', sort: 'asc' },
+            { label: 'Events', key: 'events', sort: 'asc' },
+            { label: 'Status', key: 'status', sort: 'asc' },
+            { label: 'Actions', key: 'actions', sort: 'asc' },
+          ]}
+          data={webhooks.map((webhook) => ({
+            name: webhook.name,
+            url: (
+              <span className="max-w-xs truncate font-mono text-xs">
+                {webhook.url}
+              </span>
+            ),
+            events: (
+              <span className="text-xs text-muted-foreground">
+                {webhook.events.join(', ')}
+              </span>
+            ),
+            status: webhook.isActive ? (
+              <span className="text-green-500 font-medium">Active</span>
+            ) : (
+              <span className="text-muted-foreground font-medium">
+                Inactive
+              </span>
+            ),
+            actions: (
+              <div className="text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-500 hover:text-red-600"
+                  onClick={() => setPendingDelete(webhook)}
+                  title="Delete Webhook"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ),
+          }))}
+          applySort={() => {}}
+          currentPage={1}
+          totalPages={1}
+          onPageChange={() => {}}
+        />
       </div>
 
       <ConfirmDialog

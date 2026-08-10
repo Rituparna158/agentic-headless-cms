@@ -9,17 +9,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button, Card, CardContent, Input, Table } from '@repo/shared-ui';
 import { useHasPermission } from '@/hooks/use-permissions';
 import { deleteContentEntry, listContentEntries } from '@/lib/api/content';
 import type { ContentEntryListProps } from '@/types/component.types';
@@ -86,11 +76,12 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
           <Input
             placeholder={`Search by ${titleField.displayName}…`}
             value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
+            onChange={(val) => {
+              setSearch(val);
               setPage(1);
             }}
             className="max-w-xs"
+            variant="default"
           />
         ) : null}
 
@@ -115,99 +106,69 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
         </Card>
       ) : (
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{titleField?.displayName ?? 'Entry'}</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell className="font-medium">
-                    {titleField?.dataType === 'media' &&
-                    typeof entry.data[titleField.apiId] === 'string' &&
-                    entry.data[titleField.apiId] ? (
-                      <MediaThumbnailCell
-                        assetId={entry.data[titleField.apiId] as string}
-                        alt={titleField.displayName}
-                      />
-                    ) : titleField &&
-                      typeof entry.data[titleField.apiId] === 'string' ? (
-                      (entry.data[titleField.apiId] as string)
-                    ) : (
-                      <span className="text-muted-foreground text-xs">
-                        {entry.id}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground capitalize">
-                    {entry.status}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {entry.updatedAt
-                      ? new Date(entry.updatedAt).toLocaleString()
-                      : '—'}
-                  </TableCell>
-                  <TableCell className="flex justify-end gap-2 text-right">
-                    <Button asChild variant="ghost" size="sm">
-                      <Link href={`/content/${schema.slug}/${entry.id}`}>
-                        Edit
-                      </Link>
-                    </Button>
-                    <span
-                      title={
-                        !canDelete
-                          ? 'You do not have permission to delete.'
-                          : ''
-                      }
+          <Table
+            headings={[
+              {
+                label: titleField?.displayName ?? 'Entry',
+                key: 'entry',
+                sort: 'asc',
+              },
+              { label: 'Status', key: 'status', sort: 'asc' },
+              { label: 'Updated', key: 'updated', sort: 'asc' },
+              { label: 'Actions', key: 'actions', sort: 'asc' },
+            ]}
+            data={entries.map((entry) => ({
+              entry:
+                titleField?.dataType === 'media' &&
+                typeof entry.data[titleField.apiId] === 'string' &&
+                entry.data[titleField.apiId] ? (
+                  <MediaThumbnailCell
+                    assetId={entry.data[titleField.apiId] as string}
+                    alt={titleField.displayName}
+                  />
+                ) : titleField &&
+                  typeof entry.data[titleField.apiId] === 'string' ? (
+                  (entry.data[titleField.apiId] as string)
+                ) : (
+                  <span className="text-muted-foreground text-xs">
+                    {entry.id}
+                  </span>
+                ),
+              status: <span className="capitalize">{entry.status}</span>,
+              updated: entry.updatedAt
+                ? new Date(entry.updatedAt).toLocaleString()
+                : '—',
+              actions: (
+                <div className="flex justify-end gap-2 text-right">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/content/${schema.slug}/${entry.id}`}>
+                      Edit
+                    </Link>
+                  </Button>
+                  <span
+                    title={
+                      !canDelete ? 'You do not have permission to delete.' : ''
+                    }
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={!canDelete || deleteMutation.isPending}
+                      onClick={() => deleteMutation.mutate(entry.id)}
                     >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={!canDelete || deleteMutation.isPending}
-                        onClick={() => deleteMutation.mutate(entry.id)}
-                      >
-                        Delete
-                      </Button>
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      Delete
+                    </Button>
+                  </span>
+                </div>
+              ),
+            }))}
+            applySort={() => {}}
+            currentPage={pagination?.page ?? 1}
+            totalPages={pagination?.pageCount ?? 1}
+            onPageChange={(newPage) => setPage(newPage)}
+          />
         </Card>
       )}
-
-      {pagination && pagination.pageCount > 1 ? (
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm">
-            Page {pagination.page} of {pagination.pageCount} ({pagination.total}{' '}
-            entries)
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= pagination.pageCount}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/shared-ui';
 
 /**
  * "New Entry" has no single target — content creation is always scoped to a

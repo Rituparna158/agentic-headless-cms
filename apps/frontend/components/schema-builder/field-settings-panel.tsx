@@ -1,26 +1,19 @@
 'use client';
 
 import { schemaFieldDataTypes } from '@repo/validation';
-import { useWatch } from 'react-hook-form';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Controller, useWatch } from 'react-hook-form';
 import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Checkbox,
+  Dropdown,
+  DropdownItem,
+  Input,
+  Typography,
+} from '@repo/shared-ui';
 
 import type {
   FieldSettingsPanelProps,
@@ -59,121 +52,122 @@ export function FieldSettingsPanel({
         <CardTitle>Field settings</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <FormField
+        <Controller
           control={control}
           name={`fields.${index}.displayName`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Display name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Title" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <div className="grid gap-2">
+              <Typography variant="label">Display name</Typography>
+              <Input placeholder="e.g. Title" variant="default" {...field} />
+              {fieldState.error?.message ? (
+                <p className="text-sm font-medium text-destructive">
+                  {fieldState.error.message}
+                </p>
+              ) : null}
+            </div>
           )}
         />
 
-        <FormField
+        <Controller
           control={control}
           name={`fields.${index}.apiId`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>API ID</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. title" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <div className="grid gap-2">
+              <Typography variant="label">API ID</Typography>
+              <Input placeholder="e.g. title" variant="default" {...field} />
+              {fieldState.error?.message ? (
+                <p className="text-sm font-medium text-destructive">
+                  {fieldState.error.message}
+                </p>
+              ) : null}
+            </div>
           )}
         />
 
-        <FormField
+        <Controller
           control={control}
           name={`fields.${index}.dataType`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {schemaFieldDataTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <div className="grid gap-2">
+              <Typography variant="label">Type</Typography>
+              <Dropdown
+                trigger={
+                  <button
+                    type="button"
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {field.value || 'Select a type'}
+                  </button>
+                }
+              >
+                {schemaFieldDataTypes.map((type) => (
+                  <DropdownItem
+                    key={type}
+                    onSelect={() => field.onChange(type)}
+                  >
+                    {type}
+                  </DropdownItem>
+                ))}
+              </Dropdown>
+              {fieldState.error?.message ? (
+                <p className="text-sm font-medium text-destructive">
+                  {fieldState.error.message}
+                </p>
+              ) : null}
+            </div>
           )}
         />
 
         <div className="grid grid-cols-2 gap-3">
-          <FormField
+          <Controller
             control={control}
             name={`fields.${index}.isRequired`}
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel className="font-normal">Required</FormLabel>
-              </FormItem>
+              <div className="flex flex-row items-center gap-2">
+                <Checkbox checked={field.value} onChange={field.onChange} />
+                <Typography variant="label" className="font-normal m-0">
+                  Required
+                </Typography>
+              </div>
             )}
           />
 
-          <FormField
+          <Controller
             control={control}
             name={`fields.${index}.isUnique`}
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel className="font-normal">Unique</FormLabel>
-              </FormItem>
+              <div className="flex flex-row items-center gap-2">
+                <Checkbox checked={field.value} onChange={field.onChange} />
+                <Typography variant="label" className="font-normal m-0">
+                  Unique
+                </Typography>
+              </div>
             )}
           />
 
-          <FormField
+          <Controller
             control={control}
             name={`fields.${index}.isLocalized`}
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel className="font-normal">Localized</FormLabel>
-              </FormItem>
+              <div className="flex flex-row items-center gap-2">
+                <Checkbox checked={field.value} onChange={field.onChange} />
+                <Typography variant="label" className="font-normal m-0">
+                  Localized
+                </Typography>
+              </div>
             )}
           />
 
-          <FormField
+          <Controller
             control={control}
             name={`fields.${index}.isRepeatable`}
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormLabel className="font-normal">Repeatable</FormLabel>
-              </FormItem>
+              <div className="flex flex-row items-center gap-2">
+                <Checkbox checked={field.value} onChange={field.onChange} />
+                <Typography variant="label" className="font-normal m-0">
+                  Repeatable
+                </Typography>
+              </div>
             )}
           />
         </div>
@@ -184,74 +178,71 @@ export function FieldSettingsPanel({
             <div className="flex flex-wrap gap-3">
               {showLengthLimits ? (
                 <>
-                  <FormField
+                  <Controller
                     control={control}
                     name={`fields.${index}.validation.min`}
                     render={({ field }) => (
-                      <FormItem className="w-24">
-                        <FormLabel className="font-normal">Min</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            value={(field.value as number | undefined) ?? ''}
-                            onChange={(event) =>
-                              field.onChange(
-                                event.target.value === ''
-                                  ? undefined
-                                  : Number(event.target.value),
-                              )
-                            }
-                          />
-                        </FormControl>
-                      </FormItem>
+                      <div className="grid gap-2 w-24">
+                        <Typography variant="label" className="font-normal">
+                          Min
+                        </Typography>
+                        <Input
+                          type="number"
+                          variant="default"
+                          placeholder="Min"
+                          value={
+                            field.value !== undefined ? String(field.value) : ''
+                          }
+                          onChange={(val) =>
+                            field.onChange(val === '' ? undefined : Number(val))
+                          }
+                        />
+                      </div>
                     )}
                   />
-                  <FormField
+                  <Controller
                     control={control}
                     name={`fields.${index}.validation.max`}
                     render={({ field }) => (
-                      <FormItem className="w-24">
-                        <FormLabel className="font-normal">Max</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            value={(field.value as number | undefined) ?? ''}
-                            onChange={(event) =>
-                              field.onChange(
-                                event.target.value === ''
-                                  ? undefined
-                                  : Number(event.target.value),
-                              )
-                            }
-                          />
-                        </FormControl>
-                      </FormItem>
+                      <div className="grid gap-2 w-24">
+                        <Typography variant="label" className="font-normal">
+                          Max
+                        </Typography>
+                        <Input
+                          type="number"
+                          variant="default"
+                          placeholder="Max"
+                          value={
+                            field.value !== undefined ? String(field.value) : ''
+                          }
+                          onChange={(val) =>
+                            field.onChange(val === '' ? undefined : Number(val))
+                          }
+                        />
+                      </div>
                     )}
                   />
                 </>
               ) : null}
 
               {showRegex ? (
-                <FormField
+                <Controller
                   control={control}
                   name={`fields.${index}.validation.regex`}
                   render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel className="font-normal">Regex</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. ^[a-z0-9-]+$"
-                          value={(field.value as string | undefined) ?? ''}
-                          onChange={(event) =>
-                            field.onChange(
-                              event.target.value === ''
-                                ? undefined
-                                : event.target.value,
-                            )
-                          }
-                        />
-                      </FormControl>
-                    </FormItem>
+                    <div className="grid gap-2 flex-1">
+                      <Typography variant="label" className="font-normal">
+                        Regex
+                      </Typography>
+                      <Input
+                        placeholder="e.g. ^[a-z0-9-]+$"
+                        variant="default"
+                        value={(field.value as string | undefined) ?? ''}
+                        onChange={(val) =>
+                          field.onChange(val === '' ? undefined : val)
+                        }
+                      />
+                    </div>
                   )}
                 />
               ) : null}
@@ -262,7 +253,7 @@ export function FieldSettingsPanel({
         <div className="flex justify-end border-t pt-4">
           <Button
             type="button"
-            variant="destructive"
+            variant="danger"
             size="sm"
             onClick={() => onRemove(index)}
           >

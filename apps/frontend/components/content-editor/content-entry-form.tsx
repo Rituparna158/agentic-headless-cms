@@ -14,9 +14,9 @@ import {
   updateContentEntry,
 } from '@/lib/api/content';
 import { ApiError } from '@/lib/api-client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form } from '@/components/ui/form';
+import { Button } from '@repo/shared-ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
+import { FormProvider } from 'react-hook-form';
 import { DynamicField } from './dynamic-field';
 import { VersionHistoryDrawer } from './version-history-drawer';
 import type { ContentEntryFormProps } from '@/types/component.types';
@@ -98,7 +98,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   }
 
   return (
-    <Form {...form}>
+    <FormProvider {...form}>
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="grid gap-6 lg:grid-cols-[1fr_18rem]"
@@ -193,7 +193,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 <Button
                   className="w-full"
                   type="button"
-                  variant="destructive"
+                  variant="danger"
                   disabled={!canDelete || deleteMutation.isPending}
                   onClick={() => deleteMutation.mutate()}
                 >
@@ -215,6 +215,6 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           onOpenChange={setIsVersionHistoryOpen}
         />
       ) : null}
-    </Form>
+    </FormProvider>
   );
 }

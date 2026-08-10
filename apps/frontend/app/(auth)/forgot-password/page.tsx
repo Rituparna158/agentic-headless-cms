@@ -5,7 +5,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@repo/shared-ui';
 import { ForgotPasswordForm } from '@/components/auth/forgot-password-form';
 
 export const metadata: Metadata = {

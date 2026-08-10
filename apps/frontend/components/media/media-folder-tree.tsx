@@ -13,8 +13,8 @@ import {
   Home,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@repo/shared-ui';
+import { Input } from '@repo/shared-ui';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import type { FolderNodeProps } from '@/types/component.types';
@@ -221,11 +221,15 @@ export function MediaFolderTree({
           <form onSubmit={handleCreate} className="flex gap-2">
             <Input
               autoFocus
-              size={1}
-              className="h-8 text-sm flex-1"
-              placeholder="Folder name..."
+              variant="default"
+              placeholder="Folder name"
+              className="h-8 flex-1"
               value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
+              onChange={(val) => setNewFolderName(val)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreate(e);
+                if (e.key === 'Escape') setIsCreating(false);
+              }}
             />
             <Button
               type="submit"

@@ -7,16 +7,8 @@ import { useForm } from 'react-hook-form';
 import { forgotPasswordSchema } from '@repo/validation';
 import { z } from 'zod';
 
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Button, Input, Form, FormField, Typography } from '@repo/shared-ui';
+import { Controller } from 'react-hook-form';
 import { requestPasswordReset } from '@/lib/api/auth';
 
 type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
@@ -64,24 +56,25 @@ export function ForgotPasswordForm() {
           </Button>
         </div>
       ) : (
-        <Form {...form}>
+        <Form spacing="comfortable">
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-            <FormField
+            <Controller
               control={form.control}
               name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      autoComplete="email"
-                      placeholder="you@example.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              render={({ field, fieldState }) => (
+                <FormField>
+                  <Typography variant="label" className="block mb-1">
+                    Email
+                  </Typography>
+                  <Input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={field.value}
+                    onChange={(val) => field.onChange(val)}
+                    error={fieldState.error?.message}
+                    variant="default"
+                  />
+                </FormField>
               )}
             />
 

@@ -9,10 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '@repo/shared-ui';
+import { Button, Input, Typography } from '@repo/shared-ui';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';
@@ -93,25 +91,29 @@ export function AcceptInviteForm() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password">New Password</Label>
+            <Typography variant="label" className="block mb-1">
+              New Password
+            </Typography>
             <Input
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
+              onChange={(val) => setPassword(val)}
+              variant="default"
+              placeholder="Enter new password"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Typography variant="label" className="block mb-1">
+              Confirm Password
+            </Typography>
             <Input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={8}
+              onChange={(val) => setConfirmPassword(val)}
+              variant="default"
+              placeholder="Confirm new password"
             />
           </div>
         </CardContent>

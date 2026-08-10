@@ -4,14 +4,7 @@ import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Button, Drawer } from '@repo/shared-ui';
 import { listContentVersions, revertContentEntry } from '@/lib/api/content';
 import type { VersionHistoryDrawerProps } from '@/types/component.types';
 import { formatFieldValue } from '@/utils/lexical';
@@ -195,19 +188,16 @@ export function VersionHistoryDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-[80vw] sm:max-w-[80vw] flex flex-col p-0 gap-0"
-      >
-        <SheetHeader className="p-4 border-b">
-          <SheetTitle>Version History</SheetTitle>
-          <SheetDescription>
-            Compare the current entry with previous versions.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="flex-1 min-h-0 overflow-hidden">{renderContent()}</div>
-      </SheetContent>
-    </Sheet>
+    <Drawer isOpen={open} onClose={() => onOpenChange(false)} position="right">
+      <div className="w-[500px] sm:w-[540px] h-full flex flex-col p-6 bg-background">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold">Version History</h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            View past versions and revert changes.
+          </p>
+        </div>
+        <div className="flex-1 overflow-y-auto">{renderContent()}</div>
+      </div>
+    </Drawer>
   );
 }

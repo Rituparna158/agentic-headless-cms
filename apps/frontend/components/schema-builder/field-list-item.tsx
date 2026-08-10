@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2 } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/shared-ui';
 import { cn } from '@/lib/utils';
 
 import type {

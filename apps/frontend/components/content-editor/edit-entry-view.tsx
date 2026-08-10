@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
 import { getContentEntry } from '@/lib/api/content';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
 import { ContentEntryForm } from './content-entry-form';
 
 export function EditEntryView({

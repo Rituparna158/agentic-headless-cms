@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PlusIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/shared-ui';
 import { SchemaList } from '@/components/schema-builder/schema-list';
 
 export const metadata: Metadata = {

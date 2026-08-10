@@ -3,24 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listLocales, createLocale, deleteLocale } from '@/lib/api/locales';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button, Input, Modal, Table } from '@repo/shared-ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
 import { LocaleRecord } from '@repo/types';
@@ -68,87 +51,76 @@ export function LocalesTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsCreateOpen(true)}>Add Locale</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Locale</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Code</label>
-                <Input
-                  placeholder="e.g. fr-FR"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  placeholder="e.g. French"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
+        <Button onClick={() => setIsCreateOpen(true)}>Add Locale</Button>
+        <Modal
+          isOpen={isCreateOpen}
+          onClose={closeDialog}
+          title="Add Locale"
+          showFooter={true}
+          confirmText={createMutation.isPending ? 'Adding...' : 'Add'}
+          cancelText="Cancel"
+          onConfirm={() => createMutation.mutate()}
+          onCancel={closeDialog}
+        >
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Code</label>
+              <Input
+                placeholder="e.g. fr-FR"
+                value={code}
+                onChange={(val) => setCode(val)}
+                variant="default"
+              />
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={closeDialog}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => createMutation.mutate()}
-                disabled={!code || !name || createMutation.isPending}
-              >
-                {createMutation.isPending ? 'Adding...' : 'Add'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Name</label>
+              <Input
+                placeholder="e.g. French"
+                value={name}
+                onChange={(val) => setName(val)}
+                variant="default"
+              />
+            </div>
+          </div>
+        </Modal>
       </div>
 
       <div className="border rounded-md overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Default</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {locales.map((locale) => (
-              <TableRow key={locale.id}>
-                <TableCell className="font-mono text-xs">
-                  {locale.code}
-                </TableCell>
-                <TableCell>{locale.name}</TableCell>
-                <TableCell>{locale.isDefault ? 'Yes' : ''}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:text-red-600"
-                    onClick={() => setPendingDelete(locale)}
-                    title="Delete Locale"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {locales.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
-                  No locales configured yet.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <Table
+          headings={[
+            { label: 'Code', key: 'code', sort: 'asc' },
+            { label: 'Name', key: 'name', sort: 'asc' },
+            { label: 'Default', key: 'isDefault', sort: 'asc' },
+            { label: 'Actions', key: 'actions', sort: 'asc' },
+          ]}
+          data={locales.map((locale) => ({
+            code: <span className="font-mono text-xs">{locale.code}</span>,
+            name: locale.name,
+            isDefault: locale.isDefault ? 'Yes' : '',
+            actions: (
+              <div className="text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-500 hover:text-red-600"
+                  onClick={() => setPendingDelete(locale)}
+                  title="Delete Locale"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ),
+          }))}
+          applySort={() => {}}
+          currentPage={1}
+          totalPages={1}
+          onPageChange={() => {}}
+        />
+        {locales.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground border-t">
+            No locales configured yet.
+          </div>
+        )}
       </div>
 
       <ConfirmDialog

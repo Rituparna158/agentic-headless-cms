@@ -8,16 +8,8 @@ import { useForm } from 'react-hook-form';
 import { resetPasswordSchema } from '@repo/validation';
 import { z } from 'zod';
 
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { Button, Input, Form, FormField, Typography } from '@repo/shared-ui';
+import { Controller } from 'react-hook-form';
 import { resetPassword } from '@/lib/api/auth';
 
 type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
@@ -82,23 +74,25 @@ export function ResetPasswordForm() {
         </p>
       </div>
 
-      <Form {...form}>
+      <Form spacing="comfortable">
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-          <FormField
+          <Controller
             control={form.control}
             name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>New Password</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    autoComplete="new-password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            render={({ field, fieldState }) => (
+              <FormField>
+                <Typography variant="label" className="block mb-1">
+                  New Password
+                </Typography>
+                <Input
+                  type="password"
+                  value={field.value}
+                  onChange={(val) => field.onChange(val)}
+                  error={fieldState.error?.message}
+                  variant="default"
+                  placeholder="Enter new password"
+                />
+              </FormField>
             )}
           />
 

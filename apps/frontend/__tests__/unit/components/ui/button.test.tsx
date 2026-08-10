@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/shared-ui';
 
 describe('Button', () => {
   it('renders its children', () => {

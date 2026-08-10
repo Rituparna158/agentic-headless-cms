@@ -8,18 +8,15 @@ import { useForm } from 'react-hook-form';
 import { loginSchema } from '@repo/validation';
 import { type LoginInput } from '@repo/types';
 
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
+  Button,
+  Input,
+  Checkbox,
   Form,
-  FormControl,
   FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+  Typography,
+} from '@repo/shared-ui';
+import { Controller } from 'react-hook-form';
 import { API_BASE_URL } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';
 import { useAuthStore } from '@/stores/auth-store';
@@ -93,16 +90,11 @@ export function LoginForm() {
         >
           <div className="space-y-2">
             <Input
-              type="text"
-              pattern="[0-9]*"
-              inputMode="numeric"
-              maxLength={6}
               placeholder="000000"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              onChange={(val) => setCode(val.replace(/\D/g, ''))}
               className="text-center text-lg tracking-widest font-mono"
-              required
-              autoFocus
+              variant="default"
             />
           </div>
 
@@ -198,61 +190,61 @@ export function LoginForm() {
   }
 
   return (
-    <Form {...form}>
+    <Form spacing="comfortable">
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="grid gap-4"
       >
-        <FormField
+        <Controller
           control={form.control}
           name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <FormField>
+              <Typography variant="label" className="block mb-1">
+                Email
+              </Typography>
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                value={field.value}
+                onChange={(val) => field.onChange(val)}
+                error={fieldState.error?.message}
+                variant="default"
+              />
+            </FormField>
           )}
         />
 
-        <FormField
+        <Controller
           control={form.control}
           name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <FormField>
+              <Typography variant="label" className="block mb-1">
+                Password
+              </Typography>
+              <Input
+                type="password"
+                value={field.value}
+                onChange={(val) => field.onChange(val)}
+                error={fieldState.error?.message}
+                variant="default"
+                placeholder="Enter your password"
+              />
+            </FormField>
           )}
         />
 
-        <FormField
+        <Controller
           control={form.control}
           name="rememberMe"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center gap-2 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <FormLabel className="font-normal">Remember me</FormLabel>
-            </FormItem>
+            <FormField className="flex flex-row items-center gap-2 space-y-0 mt-2">
+              <Checkbox checked={field.value} onChange={field.onChange} />
+              <Typography variant="label" className="font-normal">
+                Remember me
+              </Typography>
+            </FormField>
           )}
         />
 
@@ -266,10 +258,10 @@ export function LoginForm() {
           {form.formState.isSubmitting ? 'Signing in…' : 'Sign in'}
         </Button>
 
-        <div className="flex items-center gap-2">
-          <Separator className="flex-1" />
+        <div className="flex items-center gap-2 py-2">
+          <hr className="flex-1 border-t" />
           <span className="text-muted-foreground text-xs">or</span>
-          <Separator className="flex-1" />
+          <hr className="flex-1 border-t" />
         </div>
 
         <Button type="button" variant="outline" onClick={handleSsoLogin}>

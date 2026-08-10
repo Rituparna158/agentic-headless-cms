@@ -1,6 +1,7 @@
 'use client';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useMemo } from 'react';
+import { Tabs } from '@repo/shared-ui';
 import { RolesTab } from '@/components/roles-access/roles-tab';
 import { UsersTab } from '@/components/roles-access/users-tab';
 import { TokensTab } from '@/components/roles-access/tokens-tab';
@@ -16,6 +17,21 @@ export default function RolesAccessPage() {
       ['admin', 'support'].includes(role.toLowerCase()),
     ) || false;
 
+  const tabs = useMemo(() => {
+    const t = [];
+    if (isAdmin) t.push({ label: 'Roles', id: 'roles' });
+    t.push({ label: 'Users', id: 'users' });
+    if (isAdmin) t.push({ label: 'API Tokens', id: 'tokens' });
+    if (isAdminOrSupport) t.push({ label: 'MFA Requests', id: 'mfa-requests' });
+    return t;
+  }, [isAdmin, isAdminOrSupport]);
+
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'roles' : 'users');
+  const activeIndex = Math.max(
+    0,
+    tabs.findIndex((t) => t.id === activeTab),
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -25,37 +41,35 @@ export default function RolesAccessPage() {
         </p>
       </div>
 
-      <Tabs defaultValue={isAdmin ? 'roles' : 'users'} className="space-y-4">
-        <TabsList>
-          {isAdmin && <TabsTrigger value="roles">Roles</TabsTrigger>}
-          <TabsTrigger value="users">Users</TabsTrigger>
-          {isAdmin && <TabsTrigger value="tokens">API Tokens</TabsTrigger>}
-          {isAdminOrSupport && (
-            <TabsTrigger value="mfa-requests">MFA Requests</TabsTrigger>
-          )}
-        </TabsList>
-        {isAdmin && (
-          <TabsContent
-            value="roles"
-            className="space-y-4 h-[calc(100vh-14rem)]"
-          >
+      <div className="space-y-4">
+        <Tabs
+          options={tabs.map((t) => t.label)}
+          selected={activeIndex}
+          value={(idx) => {
+            if (tabs[idx]) setActiveTab(tabs[idx].id);
+          }}
+        />
+        {activeTab === 'roles' && isAdmin && (
+          <div className="space-y-4 h-[calc(100vh-14rem)]">
             <RolesTab />
-          </TabsContent>
+          </div>
         )}
-        <TabsContent value="users" className="space-y-4">
-          <UsersTab isAdmin={isAdmin} />
-        </TabsContent>
-        {isAdmin && (
-          <TabsContent value="tokens" className="space-y-4">
+        {activeTab === 'users' && (
+          <div className="space-y-4">
+            <UsersTab isAdmin={isAdmin} />
+          </div>
+        )}
+        {activeTab === 'tokens' && isAdmin && (
+          <div className="space-y-4">
             <TokensTab />
-          </TabsContent>
+          </div>
         )}
-        {isAdminOrSupport && (
-          <TabsContent value="mfa-requests" className="space-y-4">
+        {activeTab === 'mfa-requests' && isAdminOrSupport && (
+          <div className="space-y-4">
             <MfaRequestsTab />
-          </TabsContent>
+          </div>
         )}
-      </Tabs>
+      </div>
     </div>
   );
 }

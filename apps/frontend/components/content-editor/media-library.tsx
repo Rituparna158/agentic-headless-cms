@@ -6,7 +6,7 @@ import { SearchIcon, CheckIcon, UploadIcon } from 'lucide-react';
 
 import { listMedia, mediaFileUrl } from '@/lib/api/media';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+import { Input } from '@repo/shared-ui';
 import type { MediaAsset } from '@repo/types';
 import Image from 'next/image';
 
@@ -36,8 +36,9 @@ export function MediaLibrary({ selectedId, onSelect }: MediaLibraryProps) {
         <Input
           autoFocus
           placeholder="Search assets…"
+          variant="default"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(val) => setSearch(val)}
           className="pl-9"
         />
       </div>

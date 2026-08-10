@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
 import { SchemaBuilderForm } from './schema-builder-form';
 
