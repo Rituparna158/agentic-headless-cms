@@ -19,4 +19,33 @@ describe('AuthClient', () => {
     client.setToken(undefined);
     expect(client.getToken()).toBeUndefined();
   });
+  it('should throw error on login if transport not initialized', async () => {
+    const client = new AuthClient();
+    await expect(
+      client.login({ email: 'test', password: 'password', rememberMe: false }),
+    ).rejects.toThrow('Transport not initialized');
+  });
+
+  describe('with transport injected', () => {
+    it('login, logout, and me methods', async () => {
+      const client = new AuthClient();
+      const mockTransport = {
+        request: async () => ({ data: { id: 'user1' } }),
+      } as unknown as import('../src/transport/http.js').HttpTransport;
+      client.setTransport(mockTransport);
+
+      const loginRes = await client.login({
+        email: 'e',
+        password: 'p',
+        rememberMe: true,
+      });
+      expect(loginRes).toEqual({ id: 'user1' });
+
+      await client.logout();
+      expect(client.getToken()).toBeUndefined();
+
+      const meRes = await client.me();
+      expect(meRes).toEqual({ id: 'user1' });
+    });
+  });
 });
