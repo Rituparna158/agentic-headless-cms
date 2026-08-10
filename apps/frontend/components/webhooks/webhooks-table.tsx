@@ -31,7 +31,8 @@ export function WebhooksTable() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => createWebhook({ name, url, events }),
+    mutationFn: (variables: { name: string; url: string; events: string[] }) =>
+      createWebhook(variables),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['webhooks'] });
       closeDialog();
@@ -65,6 +66,79 @@ export function WebhooksTable() {
     );
   }
 
+  if (webhooks.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          <Button onClick={() => setIsCreateOpen(true)}>
+            Register Webhook
+          </Button>
+          <Modal
+            isOpen={isCreateOpen}
+            onClose={closeDialog}
+            title="Register Webhook"
+            confirmText={
+              createMutation.isPending ? 'Registering...' : 'Register'
+            }
+            cancelText="Cancel"
+            onConfirm={() => {
+              if (
+                name &&
+                url &&
+                events.length > 0 &&
+                !createMutation.isPending
+              ) {
+                createMutation.mutate({ name, url, events });
+              }
+            }}
+            onCancel={closeDialog}
+          >
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name</label>
+                <Input
+                  placeholder="e.g. Next.js ISR Rebuild"
+                  variant="default"
+                  value={name}
+                  onChange={(val) => setName(val)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">URL</label>
+                <Input
+                  placeholder="https://example.com/api/revalidate"
+                  variant="default"
+                  value={url}
+                  onChange={(val) => setUrl(val)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Events</label>
+                <div className="space-y-2">
+                  {AVAILABLE_EVENTS.map((event) => (
+                    <label
+                      key={event}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <Checkbox
+                        checked={events.includes(event)}
+                        onChange={() => toggleEvent(event)}
+                      />
+                      {event}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Modal>
+        </div>
+        <div className="text-center text-muted-foreground py-8 border rounded-md">
+          No webhooks registered yet.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -77,7 +151,7 @@ export function WebhooksTable() {
           cancelText="Cancel"
           onConfirm={() => {
             if (name && url && events.length > 0 && !createMutation.isPending) {
-              createMutation.mutate();
+              createMutation.mutate({ name, url, events });
             }
           }}
           onCancel={closeDialog}

@@ -56,11 +56,7 @@ export function LocalesTab() {
           isOpen={isCreateOpen}
           onClose={closeDialog}
           title="Add Locale"
-          showFooter={true}
-          confirmText={createMutation.isPending ? 'Adding...' : 'Add'}
-          cancelText="Cancel"
-          onConfirm={() => createMutation.mutate()}
-          onCancel={closeDialog}
+          showFooter={false}
         >
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -80,6 +76,18 @@ export function LocalesTab() {
                 onChange={(val) => setName(val)}
                 variant="default"
               />
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={closeDialog}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => createMutation.mutate()}
+                disabled={!code || !name || createMutation.isPending}
+              >
+                {createMutation.isPending ? 'Adding...' : 'Add'}
+              </Button>
             </div>
           </div>
         </Modal>
