@@ -25,5 +25,7 @@ test('shows an error for an expired invite token', async ({ page }) => {
     .getByRole('button', { name: 'Activate Account', exact: true })
     .click();
 
-  await expect(page.getByText('Invitation token has expired')).toBeVisible();
+  await expect(
+    page.getByText('Invalid or expired invitation token'),
+  ).toBeVisible();
 });

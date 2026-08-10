@@ -181,8 +181,13 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
           name="name"
           render={({ field, fieldState }) => (
             <div className="grid gap-2 max-w-sm">
-              <Typography variant="label">Name</Typography>
+              <label htmlFor="name">
+                <Typography as="span" variant="label">
+                  Name
+                </Typography>
+              </label>
               <Input
+                id="name"
                 placeholder="e.g. Blog Post"
                 variant="default"
                 {...field}
@@ -254,8 +259,13 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                   name="slug"
                   render={({ field, fieldState }) => (
                     <div className="grid gap-2">
-                      <Typography variant="label">Slug</Typography>
+                      <label htmlFor="slug">
+                        <Typography as="span" variant="label">
+                          Slug
+                        </Typography>
+                      </label>
                       <Input
+                        id="slug"
                         placeholder="e.g. blog-post"
                         disabled={isEditing}
                         variant="default"
@@ -275,7 +285,9 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                   name="type"
                   render={({ field, fieldState }) => (
                     <div className="grid gap-2">
-                      <Typography variant="label">Kind</Typography>
+                      <Typography as="span" variant="label">
+                        Kind
+                      </Typography>
                       <Dropdown
                         trigger={
                           <button

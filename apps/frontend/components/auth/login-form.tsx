@@ -200,10 +200,13 @@ export function LoginForm() {
           name="email"
           render={({ field, fieldState }) => (
             <FormField>
-              <Typography variant="label" className="block mb-1">
-                Email
-              </Typography>
+              <label htmlFor="email">
+                <Typography variant="label" className="block mb-1">
+                  Email
+                </Typography>
+              </label>
               <Input
+                id="email"
                 type="email"
                 placeholder="you@example.com"
                 value={field.value}
@@ -220,10 +223,13 @@ export function LoginForm() {
           name="password"
           render={({ field, fieldState }) => (
             <FormField>
-              <Typography variant="label" className="block mb-1">
-                Password
-              </Typography>
+              <label htmlFor="password">
+                <Typography variant="label" className="block mb-1">
+                  Password
+                </Typography>
+              </label>
               <Input
+                id="password"
                 type="password"
                 value={field.value}
                 onChange={(val) => field.onChange(val)}

@@ -103,7 +103,11 @@ export function Topbar() {
 
         <Dropdown
           trigger={
-            <Button variant="ghost" className="relative size-8 rounded-full">
+            <Button
+              variant="ghost"
+              className="relative size-8 rounded-full"
+              aria-label={displayName}
+            >
               <Avatar
                 className="size-8"
                 letters={initialsFor(displayName, user?.email ?? '??')}

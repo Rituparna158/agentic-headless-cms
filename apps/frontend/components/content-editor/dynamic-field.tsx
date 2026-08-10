@@ -20,11 +20,14 @@ export function DynamicField({ field, control }: DynamicFieldProps) {
       name={field.apiId}
       render={({ field: rhfField, fieldState }) => (
         <div className="grid gap-2">
-          <Typography variant="label">
-            {field.displayName}
-            {field.isRequired ? ' *' : ''}
-          </Typography>
+          <label htmlFor={field.apiId}>
+            <Typography variant="label">
+              {field.displayName}
+              {field.isRequired ? ' *' : ''}
+            </Typography>
+          </label>
           <FieldTypeInput
+            id={field.apiId}
             field={field}
             value={rhfField.value}
             onChange={rhfField.onChange}
@@ -69,6 +72,7 @@ function RepeatableDynamicField({ field, control }: DynamicFieldProps) {
                 <div className="flex flex-row items-start gap-2">
                   <div className="flex-1">
                     <FieldTypeInput
+                      id={`${field.apiId}-${index}`}
                       field={field}
                       value={rhfField.value}
                       onChange={rhfField.onChange}

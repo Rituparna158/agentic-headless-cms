@@ -83,22 +83,24 @@ export function TokensTab() {
           isOpen={isCreateOpen}
           onClose={closeDialog}
           title="Generate API Token"
-          showFooter={!generatedToken}
-          confirmText={createMutation.isPending ? 'Generating...' : 'Generate'}
-          cancelText="Cancel"
-          onConfirm={() => createMutation.mutate()}
-          onCancel={closeDialog}
+          showFooter={false}
         >
           {generatedToken ? (
             <div className="space-y-4 py-4">
               <p className="text-sm font-medium text-green-600">
-                Token generated successfully! Please copy it now, as you
-                won&apos;t be able to see it again.
+                Token generated successfully
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Please copy it now, as you won&apos;t be able to see it again.
               </p>
               <div className="flex gap-2 items-center">
-                <div className="p-2 border rounded-md bg-muted/20 font-mono text-sm break-all flex-1">
-                  {generatedToken}
-                </div>
+                <Input
+                  disabled
+                  placeholder="Token string"
+                  variant="default"
+                  value={generatedToken}
+                  className="font-mono text-sm flex-1"
+                />
                 <Button variant="outline" size="icon" onClick={handleCopy}>
                   {copied ? (
                     <Check className="size-4 text-green-600" />
@@ -146,6 +148,15 @@ export function TokensTab() {
                     ))}
                   </Dropdown>
                 </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+                <Button type="button" variant="outline" onClick={closeDialog}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={() => createMutation.mutate()}>
+                  {createMutation.isPending ? 'Generating...' : 'Generate'}
+                </Button>
               </div>
             </div>
           )}

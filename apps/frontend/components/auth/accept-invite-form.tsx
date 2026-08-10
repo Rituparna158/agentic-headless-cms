@@ -91,9 +91,11 @@ export function AcceptInviteForm() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Typography variant="label" className="block mb-1">
-              New Password
-            </Typography>
+            <label htmlFor="password">
+              <Typography variant="label" className="block mb-1">
+                New Password
+              </Typography>
+            </label>
             <Input
               id="password"
               type="password"
@@ -104,9 +106,11 @@ export function AcceptInviteForm() {
             />
           </div>
           <div className="space-y-2">
-            <Typography variant="label" className="block mb-1">
-              Confirm Password
-            </Typography>
+            <label htmlFor="confirmPassword">
+              <Typography variant="label" className="block mb-1">
+                Confirm Password
+              </Typography>
+            </label>
             <Input
               id="confirmPassword"
               type="password"

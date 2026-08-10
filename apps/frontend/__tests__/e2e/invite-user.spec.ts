@@ -10,14 +10,17 @@ test('admin can invite a user, and the invited user can accept and log in', asyn
   const password = 'a-strong-password-123';
 
   await page.goto('/roles-access');
-  await page.getByRole('tab', { name: 'Users' }).click();
+  await page.getByRole('button', { name: 'Users', exact: true }).click();
   await page.getByRole('button', { name: '+ Invite User' }).click();
 
   await page.locator('#email').fill(email);
   await page.locator('#firstName').fill('Test');
   await page.locator('#lastName').fill('Invitee');
-  await page.locator('#role').click();
-  await page.getByRole('option').first().click();
+  await page.getByRole('button', { name: 'Select a role' }).click();
+  await page
+    .getByRole('menuitem')
+    .first()
+    .evaluate((node) => node.click());
 
   const [inviteResponse] = await Promise.all([
     page.waitForResponse(

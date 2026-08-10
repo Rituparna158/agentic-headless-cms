@@ -36,7 +36,7 @@ test('admin can create a role with a content-type permission', async ({
   expect(schemaRes.ok()).toBeTruthy();
 
   await page.goto('/roles-access');
-  await page.getByRole('tab', { name: 'Roles' }).click();
+  await page.getByRole('button', { name: 'Roles', exact: true }).click();
 
   await page.getByRole('button', { name: '+ Create New Role' }).click();
 

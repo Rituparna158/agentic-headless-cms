@@ -4,22 +4,26 @@ import { test, expect } from '@playwright/test';
 test('admin can generate an API token, see the raw value once, and revoke it', async ({
   page,
 }) => {
+  page.on('console', (msg) => console.log('BROWSER CONSOLE:', msg.text()));
   const tokenName = `E2E Token ${crypto.randomUUID()}`;
 
   await page.goto('/roles-access');
-  await page.getByRole('tab', { name: 'API Tokens' }).click();
+  await page.getByRole('button', { name: 'API Tokens', exact: true }).click();
 
   await page.getByRole('button', { name: 'Generate Token' }).click();
   await page.getByPlaceholder('e.g. CI/CD Script').fill(tokenName);
 
-  await page.locator('select').selectOption({ label: 'admin' });
+  await page.getByRole('button', { name: 'Select a role...' }).click();
+  await page
+    .getByRole('menuitem', { name: 'admin', exact: true })
+    .evaluate((node) => node.click());
 
   await page.getByRole('button', { name: 'Generate', exact: true }).click();
 
   await expect(page.getByText('Token generated successfully')).toBeVisible({
     timeout: 15_000,
   });
-  const rawToken = await page.getByRole('textbox').inputValue();
+  const rawToken = await page.getByRole('textbox').last().inputValue();
   expect(rawToken.length).toBeGreaterThan(10);
 
   await page.getByRole('button', { name: 'Done' }).click();

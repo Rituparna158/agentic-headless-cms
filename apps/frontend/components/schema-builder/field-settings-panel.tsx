@@ -57,8 +57,17 @@ export function FieldSettingsPanel({
           name={`fields.${index}.displayName`}
           render={({ field, fieldState }) => (
             <div className="grid gap-2">
-              <Typography variant="label">Display name</Typography>
-              <Input placeholder="e.g. Title" variant="default" {...field} />
+              <label htmlFor={`display-name-${index}`}>
+                <Typography as="span" variant="label">
+                  Display name
+                </Typography>
+              </label>
+              <Input
+                id={`display-name-${index}`}
+                placeholder="e.g. Title"
+                variant="default"
+                {...field}
+              />
               {fieldState.error?.message ? (
                 <p className="text-sm font-medium text-destructive">
                   {fieldState.error.message}
@@ -73,8 +82,17 @@ export function FieldSettingsPanel({
           name={`fields.${index}.apiId`}
           render={({ field, fieldState }) => (
             <div className="grid gap-2">
-              <Typography variant="label">API ID</Typography>
-              <Input placeholder="e.g. title" variant="default" {...field} />
+              <label htmlFor={`api-id-${index}`}>
+                <Typography as="span" variant="label">
+                  API ID
+                </Typography>
+              </label>
+              <Input
+                id={`api-id-${index}`}
+                placeholder="e.g. title"
+                variant="default"
+                {...field}
+              />
               {fieldState.error?.message ? (
                 <p className="text-sm font-medium text-destructive">
                   {fieldState.error.message}
@@ -89,7 +107,9 @@ export function FieldSettingsPanel({
           name={`fields.${index}.dataType`}
           render={({ field, fieldState }) => (
             <div className="grid gap-2">
-              <Typography variant="label">Type</Typography>
+              <Typography as="span" variant="label">
+                Type
+              </Typography>
               <Dropdown
                 trigger={
                   <button

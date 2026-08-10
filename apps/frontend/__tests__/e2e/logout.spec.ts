@@ -6,7 +6,7 @@ test('signed-in user can log out', async ({ page }) => {
 
   // Display name for the seeded admin
   await page.getByRole('button', { name: 'System Administrator' }).click();
-  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await page.getByRole('menuitem', { name: 'Log out' }).click();
 
   await expect(page).toHaveURL('/login');
   await expect(

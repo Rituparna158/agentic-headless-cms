@@ -9,15 +9,21 @@ test('admin can create a schema with two fields and reorder them via drag-and-dr
 
   await page.goto('/content-types/new');
 
-  await page.getByLabel('Name', { exact: true }).fill(`E2E Article ${id}`);
-  await page.getByLabel('Slug', { exact: true }).fill(slug);
+  await page.getByPlaceholder('e.g. Blog Post').fill(`E2E Article ${id}`);
+  await page.getByPlaceholder('e.g. blog-post').fill(slug);
 
-  await page.getByLabel('Display name').fill('Alpha Field');
-  await page.getByLabel('API ID').fill('alpha_field');
+  await page
+    .getByPlaceholder('e.g. Title', { exact: true })
+    .nth(0)
+    .fill('Alpha Field');
+  await page
+    .getByPlaceholder('e.g. title', { exact: true })
+    .nth(0)
+    .fill('alpha_field');
 
   await page.getByRole('button', { name: 'Add field' }).click();
-  await page.getByLabel('Display name').fill('Beta Field');
-  await page.getByLabel('API ID').fill('beta_field');
+  await page.getByPlaceholder('e.g. Title', { exact: true }).fill('Beta Field');
+  await page.getByPlaceholder('e.g. title', { exact: true }).fill('beta_field');
 
   const rowNames = page.locator(
     '[data-slot="field-list-item"] span.font-medium',
@@ -54,6 +60,6 @@ test('admin can create a schema with two fields and reorder them via drag-and-dr
     timeout: 15_000,
   });
   await expect(
-    page.getByRole('cell', { name: `E2E Article ${id}` }),
+    page.getByRole('cell', { name: `E2E Article ${id}` }).first(),
   ).toBeVisible();
 });
