@@ -20,7 +20,7 @@ test('admin can invite a user, and the invited user can accept and log in', asyn
   await page
     .getByRole('menuitem')
     .first()
-    .evaluate((node) => node.click());
+    .evaluate((node) => (node as HTMLElement).click());
 
   const [inviteResponse] = await Promise.all([
     page.waitForResponse(

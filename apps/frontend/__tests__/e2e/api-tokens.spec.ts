@@ -16,7 +16,7 @@ test('admin can generate an API token, see the raw value once, and revoke it', a
   await page.getByRole('button', { name: 'Select a role...' }).click();
   await page
     .getByRole('menuitem', { name: 'admin', exact: true })
-    .evaluate((node) => node.click());
+    .evaluate((node) => (node as HTMLElement).click());
 
   await page.getByRole('button', { name: 'Generate', exact: true }).click();
 

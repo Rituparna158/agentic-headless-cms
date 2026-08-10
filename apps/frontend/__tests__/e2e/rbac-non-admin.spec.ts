@@ -28,7 +28,7 @@ test('a non-admin role cannot see or perform admin-only actions', async ({
   await page.getByRole('button', { name: 'Select a role' }).click();
   await page
     .getByRole('menuitem', { name: roleName })
-    .evaluate((node) => node.click());
+    .evaluate((node) => (node as HTMLElement).click());
 
   const [inviteResponse] = await Promise.all([
     page.waitForResponse(
