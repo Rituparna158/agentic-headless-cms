@@ -1,7 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+
+configure({ asyncUtilTimeout: 10000 });
 
 // vitest.config.ts sets globals: false, so RTL's usual auto-cleanup (which
 // hooks into a global afterEach) never registers — without this, each test
