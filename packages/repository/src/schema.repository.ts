@@ -97,6 +97,19 @@ export class SchemaRepository {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'SchemaRepository Error in delete:');
+      const err = error as Record<string, unknown>;
+      if (
+        err?.code === '23503' ||
+        (error instanceof Error &&
+          (error.message.toLowerCase().includes('foreign key constraint') ||
+            error.message.toLowerCase().includes('constraint') ||
+            error.message.toLowerCase().includes('conflict')))
+      ) {
+        throw new ApiError(
+          409,
+          'Cannot delete schema with existing content entries (FOREIGN_KEY_VIOLATION)',
+        );
+      }
       throw new ApiError(500, REPO_ERRORS.DELETE_SCHEMA_FAILED);
     }
   }
