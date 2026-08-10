@@ -165,7 +165,7 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
             applySort={() => {}}
             currentPage={pagination?.page ?? 1}
             totalPages={pagination?.pageCount ?? 1}
-            onPageChange={(newPage) => setPage(newPage)}
+            onPageChange={(newPage: number) => setPage(newPage)}
           />
         </Card>
       )}
