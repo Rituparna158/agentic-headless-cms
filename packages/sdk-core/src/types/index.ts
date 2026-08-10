@@ -1,3 +1,5 @@
+import type { AuthenticatedUser } from '@repo/types';
+
 export interface ClientConfig {
   baseUrl: string;
   apiToken?: string;
@@ -18,3 +20,7 @@ export interface UploadMediaOptions {
   altText?: string;
   folderId?: string;
 }
+
+export type LoginResult =
+  | AuthenticatedUser
+  | { mfaRequired: true; mfaToken: string };

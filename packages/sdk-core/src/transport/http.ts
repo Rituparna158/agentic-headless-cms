@@ -29,7 +29,12 @@ export class HttpTransport {
     }
 
     const headers = new Headers(options.headers);
-    headers.set('Content-Type', 'application/json');
+
+    // Auto-set JSON content type if it's not FormData
+    if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+
     headers.set('Accept', 'application/json');
 
     const token = this.authClient.getToken();
@@ -37,10 +42,15 @@ export class HttpTransport {
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const { params: _params, ...fetchOptions } = options;
+    const {
+      params: _params,
+      credentials = 'include',
+      ...fetchOptions
+    } = options;
 
     const response = await fetch(url.toString(), {
       ...fetchOptions,
+      credentials,
       headers,
     });
 
