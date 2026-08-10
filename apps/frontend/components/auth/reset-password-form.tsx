@@ -81,10 +81,13 @@ export function ResetPasswordForm() {
             name="password"
             render={({ field, fieldState }) => (
               <FormField>
-                <Typography variant="label" className="block mb-1">
-                  New Password
-                </Typography>
+                <label htmlFor="password">
+                  <Typography variant="label" as="span" className="block mb-1">
+                    New Password
+                  </Typography>
+                </label>
                 <Input
+                  id="password"
                   type="password"
                   value={field.value}
                   onChange={(val) => field.onChange(val)}

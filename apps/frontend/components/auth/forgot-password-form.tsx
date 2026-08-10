@@ -63,10 +63,17 @@ export function ForgotPasswordForm() {
               name="email"
               render={({ field, fieldState }) => (
                 <FormField>
-                  <Typography variant="label" className="block mb-1">
-                    Email
-                  </Typography>
+                  <label htmlFor="email">
+                    <Typography
+                      variant="label"
+                      as="span"
+                      className="block mb-1"
+                    >
+                      Email
+                    </Typography>
+                  </label>
                   <Input
+                    id="email"
                     type="email"
                     placeholder="you@example.com"
                     value={field.value}

@@ -127,7 +127,11 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
           >
             <form onSubmit={handleInvite} className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Typography variant="label">Email *</Typography>
+                <label htmlFor="email">
+                  <Typography as="span" variant="label">
+                    Email *
+                  </Typography>
+                </label>
                 <Input
                   id="email"
                   type="email"
@@ -139,7 +143,11 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Typography variant="label">First Name</Typography>
+                  <label htmlFor="firstName">
+                    <Typography as="span" variant="label">
+                      First Name
+                    </Typography>
+                  </label>
                   <Input
                     id="firstName"
                     value={firstName}
@@ -149,7 +157,11 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Typography variant="label">Last Name</Typography>
+                  <label htmlFor="lastName">
+                    <Typography as="span" variant="label">
+                      Last Name
+                    </Typography>
+                  </label>
                   <Input
                     id="lastName"
                     value={lastName}
