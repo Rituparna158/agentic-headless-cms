@@ -92,7 +92,9 @@ export function MfaRequestsTab() {
         <Tabs
           options={['Pending', 'History']}
           selected={activeTab === 'pending' ? 0 : 1}
-          value={(idx) => setActiveTab(idx === 0 ? 'pending' : 'history')}
+          value={(idx: number) =>
+            setActiveTab(idx === 0 ? 'pending' : 'history')
+          }
         />
 
         <div className="mt-4">

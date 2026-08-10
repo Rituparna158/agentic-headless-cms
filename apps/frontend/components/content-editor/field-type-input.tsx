@@ -43,7 +43,7 @@ export function FieldTypeInput({
       return (
         <Switch
           checked={Boolean(value)}
-          onChange={(checked) => onChange(checked)}
+          onCheckedChange={(checked: boolean) => onChange(checked)}
           disabled={disabled}
           {...rest}
         />
@@ -57,7 +57,9 @@ export function FieldTypeInput({
           variant="default"
           placeholder={field.displayName}
           value={typeof value === 'number' ? value.toString() : ''}
-          onChange={(val) => onChange(val === '' ? undefined : Number(val))}
+          onChange={(val: string) =>
+            onChange(val === '' ? undefined : Number(val))
+          }
           {...rest}
         />
       );
@@ -70,7 +72,9 @@ export function FieldTypeInput({
           variant="default"
           placeholder={field.displayName}
           value={typeof value === 'string' ? value.slice(0, 10) : ''}
-          onChange={(val) => onChange(val ? new Date(val).toISOString() : '')}
+          onChange={(val: string) =>
+            onChange(val ? new Date(val).toISOString() : '')
+          }
           {...rest}
         />
       );
@@ -83,7 +87,9 @@ export function FieldTypeInput({
           variant="default"
           placeholder={field.displayName}
           value={typeof value === 'string' ? value.slice(0, 16) : ''}
-          onChange={(val) => onChange(val ? new Date(val).toISOString() : '')}
+          onChange={(val: string) =>
+            onChange(val ? new Date(val).toISOString() : '')
+          }
           {...rest}
         />
       );
@@ -100,7 +106,7 @@ export function FieldTypeInput({
               ? value
               : JSON.stringify(value ?? {}, null, 2)
           }
-          onChange={(val) => onChange(val)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
@@ -123,7 +129,7 @@ export function FieldTypeInput({
           disabled={disabled}
           variant="default"
           value={typeof value === 'string' ? value : ''}
-          onChange={(val) => onChange(val)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
@@ -144,7 +150,7 @@ export function FieldTypeInput({
             variant="default"
             placeholder={field.displayName}
             value={typeof value === 'string' ? value : ''}
-            onChange={(val) => onChange(val)}
+            onChange={(val: string) => onChange(val)}
             {...rest}
           />
         );
@@ -180,7 +186,7 @@ export function FieldTypeInput({
           variant="default"
           placeholder={field.displayName}
           value={typeof value === 'string' ? value : ''}
-          onChange={(val) => onChange(val)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
@@ -193,7 +199,7 @@ export function FieldTypeInput({
           variant="default"
           placeholder={field.displayName}
           value={typeof value === 'string' ? value : ''}
-          onChange={(val) => onChange(val)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
@@ -206,7 +212,7 @@ export function FieldTypeInput({
           variant="default"
           placeholder={field.displayName}
           value={typeof value === 'string' ? value : ''}
-          onChange={(val) => onChange(val)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );

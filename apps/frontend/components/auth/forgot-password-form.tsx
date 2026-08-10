@@ -77,7 +77,7 @@ export function ForgotPasswordForm() {
                     type="email"
                     placeholder="you@example.com"
                     value={field.value}
-                    onChange={(val) => field.onChange(val)}
+                    onChange={(val: string) => field.onChange(val)}
                     error={fieldState.error?.message}
                     variant="default"
                   />

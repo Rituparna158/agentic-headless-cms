@@ -201,7 +201,9 @@ export function SecurityTab() {
                       <Input
                         placeholder="000000"
                         value={code}
-                        onChange={(val) => setCode(val.replace(/\D/g, ''))}
+                        onChange={(val: string) =>
+                          setCode(val.replace(/\D/g, ''))
+                        }
                         className="text-center font-mono text-lg tracking-widest"
                         variant="default"
                       />

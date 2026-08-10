@@ -45,7 +45,7 @@ export default function RolesAccessPage() {
         <Tabs
           options={tabs.map((t) => t.label)}
           selected={activeIndex}
-          value={(idx) => {
+          value={(idx: number) => {
             if (tabs[idx]) setActiveTab(tabs[idx].id);
           }}
         />

@@ -90,7 +90,7 @@ export function ResetPasswordForm() {
                   id="password"
                   type="password"
                   value={field.value}
-                  onChange={(val) => field.onChange(val)}
+                  onChange={(val: string) => field.onChange(val)}
                   error={fieldState.error?.message}
                   variant="default"
                   placeholder="Enter new password"

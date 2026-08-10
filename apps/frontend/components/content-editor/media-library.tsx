@@ -38,7 +38,7 @@ export function MediaLibrary({ selectedId, onSelect }: MediaLibraryProps) {
           placeholder="Search assets…"
           variant="default"
           value={search}
-          onChange={(val) => setSearch(val)}
+          onChange={(val: string) => setSearch(val)}
           className="pl-9"
         />
       </div>

@@ -120,7 +120,7 @@ export function TokensTab() {
                 <Input
                   placeholder="e.g. CI/CD Script"
                   value={newTokenName}
-                  onChange={(val) => setNewTokenName(val)}
+                  onChange={(val: string) => setNewTokenName(val)}
                   variant="default"
                 />
               </div>

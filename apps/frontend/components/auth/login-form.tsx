@@ -70,7 +70,7 @@ export function LoginForm() {
           </p>
         </div>
         <form
-          onSubmit={async (e) => {
+          onSubmit={async (e: React.FormEvent) => {
             e.preventDefault();
             setSubmitError(null);
             setVerifying(true);
@@ -92,7 +92,7 @@ export function LoginForm() {
             <Input
               placeholder="000000"
               value={code}
-              onChange={(val) => setCode(val.replace(/\D/g, ''))}
+              onChange={(val: string) => setCode(val.replace(/\D/g, ''))}
               className="text-center text-lg tracking-widest font-mono"
               variant="default"
             />
@@ -210,7 +210,7 @@ export function LoginForm() {
                 type="email"
                 placeholder="you@example.com"
                 value={field.value}
-                onChange={(val) => field.onChange(val)}
+                onChange={(val: string) => field.onChange(val)}
                 error={fieldState.error?.message}
                 variant="default"
               />
@@ -232,7 +232,7 @@ export function LoginForm() {
                 id="password"
                 type="password"
                 value={field.value}
-                onChange={(val) => field.onChange(val)}
+                onChange={(val: string) => field.onChange(val)}
                 error={fieldState.error?.message}
                 variant="default"
                 placeholder="Enter your password"

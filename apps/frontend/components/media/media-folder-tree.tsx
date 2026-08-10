@@ -63,7 +63,7 @@ function FolderNode({
           onClick={() => onSelectFolder(folder.id)}
         >
           <div
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
@@ -85,7 +85,7 @@ function FolderNode({
           variant="ghost"
           size="icon"
           className="w-6 h-6 opacity-0 group-hover:opacity-100 h-full text-muted-foreground hover:text-destructive"
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             setPendingDelete(folder.id);
           }}
@@ -225,8 +225,8 @@ export function MediaFolderTree({
               placeholder="Folder name"
               className="h-8 flex-1"
               value={newFolderName}
-              onChange={(val) => setNewFolderName(val)}
-              onKeyDown={(e) => {
+              onChange={(val: string) => setNewFolderName(val)}
+              onKeyDown={(e: React.KeyboardEvent) => {
                 if (e.key === 'Enter') handleCreate(e);
                 if (e.key === 'Escape') setIsCreating(false);
               }}

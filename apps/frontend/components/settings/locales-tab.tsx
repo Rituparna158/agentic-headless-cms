@@ -64,7 +64,7 @@ export function LocalesTab() {
               <Input
                 placeholder="e.g. fr-FR"
                 value={code}
-                onChange={(val) => setCode(val)}
+                onChange={(val: string) => setCode(val)}
                 variant="default"
               />
             </div>
@@ -73,7 +73,7 @@ export function LocalesTab() {
               <Input
                 placeholder="e.g. French"
                 value={name}
-                onChange={(val) => setName(val)}
+                onChange={(val: string) => setName(val)}
                 variant="default"
               />
             </div>

@@ -54,7 +54,7 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
       >
         <DropdownItem
           className="text-destructive focus:text-destructive"
-          onSelect={(e) => {
+          onSelect={(e: Event) => {
             if (canDelete) setShowDeleteDialog(true);
             else e.preventDefault();
           }}

@@ -213,7 +213,7 @@ export function FieldSettingsPanel({
                           value={
                             field.value !== undefined ? String(field.value) : ''
                           }
-                          onChange={(val) =>
+                          onChange={(val: string) =>
                             field.onChange(val === '' ? undefined : Number(val))
                           }
                         />
@@ -235,7 +235,7 @@ export function FieldSettingsPanel({
                           value={
                             field.value !== undefined ? String(field.value) : ''
                           }
-                          onChange={(val) =>
+                          onChange={(val: string) =>
                             field.onChange(val === '' ? undefined : Number(val))
                           }
                         />
@@ -258,7 +258,7 @@ export function FieldSettingsPanel({
                         placeholder="e.g. ^[a-z0-9-]+$"
                         variant="default"
                         value={(field.value as string | undefined) ?? ''}
-                        onChange={(val) =>
+                        onChange={(val: string) =>
                           field.onChange(val === '' ? undefined : val)
                         }
                       />

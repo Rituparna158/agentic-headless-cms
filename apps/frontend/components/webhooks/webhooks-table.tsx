@@ -56,7 +56,9 @@ export function WebhooksTable() {
 
   const toggleEvent = (event: string) => {
     setEvents((prev) =>
-      prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event],
+      prev.includes(event)
+        ? prev.filter((e: string) => e !== event)
+        : [...prev, event],
     );
   };
 
@@ -100,7 +102,7 @@ export function WebhooksTable() {
                   placeholder="e.g. Next.js ISR Rebuild"
                   variant="default"
                   value={name}
-                  onChange={(val) => setName(val)}
+                  onChange={(val: string) => setName(val)}
                 />
               </div>
               <div className="space-y-2">
@@ -109,7 +111,7 @@ export function WebhooksTable() {
                   placeholder="https://example.com/api/revalidate"
                   variant="default"
                   value={url}
-                  onChange={(val) => setUrl(val)}
+                  onChange={(val: string) => setUrl(val)}
                 />
               </div>
               <div className="space-y-2">
@@ -163,7 +165,7 @@ export function WebhooksTable() {
                 placeholder="e.g. Next.js ISR Rebuild"
                 variant="default"
                 value={name}
-                onChange={(val) => setName(val)}
+                onChange={(val: string) => setName(val)}
               />
             </div>
             <div className="space-y-2">
@@ -172,7 +174,7 @@ export function WebhooksTable() {
                 placeholder="https://example.com/api/revalidate"
                 variant="default"
                 value={url}
-                onChange={(val) => setUrl(val)}
+                onChange={(val: string) => setUrl(val)}
               />
             </div>
             <div className="space-y-2">

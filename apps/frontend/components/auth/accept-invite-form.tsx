@@ -100,7 +100,7 @@ export function AcceptInviteForm() {
               id="password"
               type="password"
               value={password}
-              onChange={(val) => setPassword(val)}
+              onChange={(val: string) => setPassword(val)}
               variant="default"
               placeholder="Enter new password"
             />
@@ -115,7 +115,7 @@ export function AcceptInviteForm() {
               id="confirmPassword"
               type="password"
               value={confirmPassword}
-              onChange={(val) => setConfirmPassword(val)}
+              onChange={(val: string) => setConfirmPassword(val)}
               variant="default"
               placeholder="Confirm new password"
             />

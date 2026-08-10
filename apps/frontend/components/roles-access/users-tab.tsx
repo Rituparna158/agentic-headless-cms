@@ -136,7 +136,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(val) => setEmail(val)}
+                  onChange={(val: string) => setEmail(val)}
                   placeholder="user@example.com"
                   variant="default"
                 />
@@ -151,7 +151,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                   <Input
                     id="firstName"
                     value={firstName}
-                    onChange={(val) => setFirstName(val)}
+                    onChange={(val: string) => setFirstName(val)}
                     placeholder="John"
                     variant="default"
                   />
@@ -165,7 +165,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                   <Input
                     id="lastName"
                     value={lastName}
-                    onChange={(val) => setLastName(val)}
+                    onChange={(val: string) => setLastName(val)}
                     placeholder="Doe"
                     variant="default"
                   />

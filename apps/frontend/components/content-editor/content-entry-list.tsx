@@ -76,7 +76,7 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
           <Input
             placeholder={`Search by ${titleField.displayName}…`}
             value={search}
-            onChange={(val) => {
+            onChange={(val: string) => {
               setSearch(val);
               setPage(1);
             }}

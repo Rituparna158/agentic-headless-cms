@@ -231,7 +231,7 @@ function RoleDetails({
           <label className="text-sm font-medium">Role Name</label>
           <Input
             value={activeRole.name || ''}
-            onChange={(val) => onUpdateRole({ name: val })}
+            onChange={(val: string) => onUpdateRole({ name: val })}
             placeholder="e.g. Content Editor"
             variant="default"
           />
@@ -240,7 +240,7 @@ function RoleDetails({
           <label className="text-sm font-medium">Description</label>
           <Input
             value={activeRole.description || ''}
-            onChange={(val) => onUpdateRole({ description: val })}
+            onChange={(val: string) => onUpdateRole({ description: val })}
             placeholder="Optional description"
             variant="default"
           />
@@ -249,7 +249,9 @@ function RoleDetails({
           <Checkbox
             id="mfaRequired"
             checked={activeRole.mfaRequired || false}
-            onChange={(checked) => onUpdateRole({ mfaRequired: !!checked })}
+            onChange={(checked: boolean) =>
+              onUpdateRole({ mfaRequired: !!checked })
+            }
           />
           <label
             htmlFor="mfaRequired"
