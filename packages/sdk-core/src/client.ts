@@ -4,6 +4,8 @@ import { ClientConfig } from './types/index.js';
 import { ContentModule } from './modules/content.module.js';
 import { SchemaModule } from './modules/schema.module.js';
 import { MediaModule } from './modules/media.module.js';
+import { GraphQLModule } from './modules/graphql.module.js';
+import { SearchModule } from './modules/search.module.js';
 
 export class AgenticCmsClient {
   public auth: AuthClient;
@@ -11,6 +13,8 @@ export class AgenticCmsClient {
   public content: ContentModule;
   public schema: SchemaModule;
   public media: MediaModule;
+  public graphql: GraphQLModule;
+  public search: SearchModule;
 
   constructor(config: ClientConfig) {
     this.auth = new AuthClient(config.apiToken);
@@ -22,6 +26,8 @@ export class AgenticCmsClient {
     this.content = new ContentModule(this.transport);
     this.schema = new SchemaModule(this.transport);
     this.media = new MediaModule(this.transport);
+    this.graphql = new GraphQLModule(this.transport);
+    this.search = new SearchModule(this.transport);
   }
 }
 

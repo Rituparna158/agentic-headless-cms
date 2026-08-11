@@ -6,3 +6,5 @@ export * from './transport/http.js';
 export * from './modules/content.module.js';
 export * from './modules/schema.module.js';
 export * from './modules/media.module.js';
+export * from './modules/graphql.module.js';
+export * from './modules/search.module.js';
