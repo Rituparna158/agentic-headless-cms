@@ -12,13 +12,21 @@ export class HttpTransport {
     this.authClient = authClient;
   }
 
+  public getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   public async request<TResponse>(
     path: string,
     options: FetchOptions = {},
   ): Promise<TResponse> {
-    const url = new URL(
-      `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`,
-    );
+    const isAbsoluteUrl =
+      path.startsWith('http://') || path.startsWith('https://');
+    const urlString = isAbsoluteUrl
+      ? path
+      : `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+
+    const url = new URL(urlString);
 
     if (options.params) {
       Object.entries(options.params).forEach(([key, value]) => {

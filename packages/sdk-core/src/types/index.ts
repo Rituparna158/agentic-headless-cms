@@ -24,3 +24,14 @@ export interface UploadMediaOptions {
 export type LoginResult =
   | AuthenticatedUser
   | { mfaRequired: true; mfaToken: string };
+
+export interface SearchOptions {
+  locale?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface GraphQLResponse<T> {
+  data?: T;
+  errors?: Array<{ message: string; [key: string]: unknown }>;
+}
