@@ -77,7 +77,7 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
         onConfirm={() => deleteMutation.mutate({ id: schema.id, force: false })}
         onCancel={() => setShowDeleteDialog(false)}
       >
-        <div className="text-sm text-muted-foreground py-4">
+        <div className="text-sm text-muted-foreground py-4 wrap-break-word">
           This will permanently delete the <strong>{schema.name}</strong>{' '}
           content type.
         </div>

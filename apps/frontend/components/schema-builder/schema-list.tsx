@@ -38,54 +38,52 @@ export function SchemaList() {
   }
 
   return (
-    <Card>
-      <Table
-        headings={[
-          { label: 'Name', key: 'name', sort: 'asc' },
-          { label: 'API ID', key: 'slug', sort: 'asc' },
-          { label: 'Kind', key: 'kind', sort: 'asc' },
-          { label: 'Fields', key: 'fields', sort: 'asc' },
-          { label: 'Localized', key: 'localized', sort: 'asc' },
-          { label: 'Actions', key: 'actions', sort: 'asc' },
-        ]}
-        data={data.map((schema) => {
-          const isLocalized = schema.definition.fields.some(
-            (field) => field.isLocalized,
-          );
-          return {
-            name: <span className="font-medium">{schema.name}</span>,
-            slug: <span className="text-muted-foreground">{schema.slug}</span>,
-            kind: <span className="text-muted-foreground">{schema.type}</span>,
-            fields: (
-              <span className="text-muted-foreground">
-                {schema.definition.fields.length}
-              </span>
-            ),
-            localized: (
-              <span className="text-muted-foreground">
-                {isLocalized ? 'Yes' : 'No'}
-              </span>
-            ),
-            actions: (
-              <div className="flex items-center justify-end gap-2">
-                <Button variant="ghost" size="icon" asChild>
-                  <Link
-                    href={`/content-types/${schema.slug}/edit`}
-                    title="Edit content type"
-                  >
-                    <PencilIcon className="size-4" />
-                  </Link>
-                </Button>
-                <SchemaRowActions schema={schema} />
-              </div>
-            ),
-          };
-        })}
-        applySort={() => {}}
-        currentPage={1}
-        totalPages={1}
-        onPageChange={() => {}}
-      />
-    </Card>
+    <Table
+      headings={[
+        { label: 'Name', key: 'name', sort: 'asc' },
+        { label: 'API ID', key: 'slug', sort: 'asc' },
+        { label: 'Kind', key: 'kind', sort: 'asc' },
+        { label: 'Fields', key: 'fields', sort: 'asc' },
+        { label: 'Localized', key: 'localized', sort: 'asc' },
+        { label: 'Actions', key: 'actions', sort: 'asc' },
+      ]}
+      data={data.map((schema) => {
+        const isLocalized = schema.definition.fields.some(
+          (field) => field.isLocalized,
+        );
+        return {
+          name: <span className="font-medium">{schema.name}</span>,
+          slug: <span className="text-muted-foreground">{schema.slug}</span>,
+          kind: <span className="text-muted-foreground">{schema.type}</span>,
+          fields: (
+            <span className="text-muted-foreground">
+              {schema.definition.fields.length}
+            </span>
+          ),
+          localized: (
+            <span className="text-muted-foreground">
+              {isLocalized ? 'Yes' : 'No'}
+            </span>
+          ),
+          actions: (
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="ghost" size="icon" asChild>
+                <Link
+                  href={`/content-types/${schema.slug}/edit`}
+                  title="Edit content type"
+                >
+                  <PencilIcon className="size-4" />
+                </Link>
+              </Button>
+              <SchemaRowActions schema={schema} />
+            </div>
+          ),
+        };
+      })}
+      applySort={() => {}}
+      currentPage={1}
+      totalPages={1}
+      onPageChange={() => {}}
+    />
   );
 }
