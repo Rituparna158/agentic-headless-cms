@@ -1,9 +1,10 @@
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
-import { env } from '@repo/config';
+import { env, getDatabaseAdapter } from '@repo/config';
 import { authRepository, AccessRepository } from '@repo/repository';
 import type { LoginInput } from '@repo/types';
+import { userApplications } from '@repo/shared-db';
 import { Issuer, Client, generators } from 'openid-client';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
@@ -118,6 +119,18 @@ export class AuthService {
           status: 'active',
         });
         if (!newUser) throw new ApiError(500, 'Failed to create user from SSO');
+
+        logger.info(
+          { userId: newUser.id },
+          'AuthService: Granting default HEADLESS_CMS app access to new SSO user',
+        );
+        const db = getDatabaseAdapter().getDb();
+        await db.insert(userApplications).values({
+          userId: newUser.id,
+          application: 'HEADLESS_CMS',
+          status: 'active',
+        });
+
         user = newUser;
         isNewUser = true;
       } else if (user.status !== 'active') {
@@ -131,6 +144,10 @@ export class AuthService {
         } else {
           throw new UnauthorizedError('User account is suspended');
         }
+      }
+
+      if (userInfo.sub) {
+        await authRepository.linkUserIdentity(user.id, 'oidc', userInfo.sub);
       }
 
       const roles = await authRepository.getUserRoles(user.id);
