@@ -58,3 +58,14 @@ export const auditActionEnum = pgEnum('audit_action', [
   'login',
   'schema_change',
 ]);
+
+export const applicationTypeEnum = pgEnum('application_type', [
+  'HEADLESS_CMS',
+  'CMS_UI',
+]);
+
+export const appAccessStatusEnum = pgEnum('app_access_status', [
+  'invited',
+  'active',
+  'revoked',
+]);
