@@ -36,11 +36,6 @@ export const schemas = pgTable('schemas', {
     .defaultNow(),
 });
 
-// Normalized projection of `schemas.definition`, kept in sync whenever the
-// definition changes. The JSONB definition stays the schema-as-code source
-// of truth (diffable, version-controlled); this table exists so permission
-// checks, relation integrity, and "which schemas have a field of type X"
-// queries don't require parsing JSON on every request.
 export const fields = pgTable(
   'fields',
   {
@@ -73,9 +68,6 @@ export const fields = pgTable(
   }),
 );
 
-// Schema-level relation declarations (which field, between which schemas,
-// what cardinality) — distinct from entry_relations, which holds the actual
-// instance rows.
 export const relationDefs = pgTable('relation_defs', {
   id: uuid('id').primaryKey().defaultRandom(),
   fieldId: uuid('field_id')
@@ -96,8 +88,6 @@ export const relationDefs = pgTable('relation_defs', {
     .defaultNow(),
 });
 
-// Fixes FR-CM-8: every schema definition change is snapshotted so a migration
-// can be previewed and rolled back instead of only living in audit_logs.
 export const schemaVersions = pgTable('schema_versions', {
   id: uuid('id').primaryKey().defaultRandom(),
   schemaId: uuid('schema_id')
@@ -140,11 +130,6 @@ export const contentEntries = pgTable('content_entries', {
     .defaultNow(),
 });
 
-// Current-state read path — one row per (entry, locale), kept in sync with
-// contentVersions on every write. Delivery APIs read this single indexed
-// row instead of deriving "what's current" from version history (NFR-P-1).
-// The one-row-per-locale shape also makes "only one published version at a
-// time" a structural guarantee rather than something enforced by an index.
 export const entryLocalizations = pgTable(
   'entry_localizations',
   {
@@ -177,7 +162,7 @@ export const entryLocalizations = pgTable(
     ),
     searchIndex: index('entry_localizations_search_idx').using(
       'gin',
-      sql`jsonb_to_tsvector('english', ${table.data}, '["string"]')`,
+      sql`to_tsvector('english', ${table.data}::text)`,
     ),
   }),
 );
@@ -248,7 +233,10 @@ export const schemasRelations = relations(schemas, ({ many }) => ({
 
 export const fieldsRelations = relations(fields, ({ one, many }) => ({
   schema: one(schemas, { fields: [fields.schemaId], references: [schemas.id] }),
-  relationDefs: many(relationDefs),
+  relationDefs: many(relationDefs, { relationName: 'relationDefField' }),
+  inverseRelationDefs: many(relationDefs, {
+    relationName: 'relationDefInverseField',
+  }),
   entryRelations: many(entryRelations),
 }));
 
