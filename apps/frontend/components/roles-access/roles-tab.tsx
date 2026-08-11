@@ -5,9 +5,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button, Input, Checkbox, Textarea, Table } from '@repo/shared-ui';
+import { Button, Input, Checkbox, Textarea } from '@repo/shared-ui';
 import { createRole, listRoles, updateRole } from '@/lib/api/access';
 import { listSchemas } from '@/lib/api/schemas';
+import { DataTable } from '@repo/shared-ui';
 
 export function RolesTab() {
   const queryClient = useQueryClient();
@@ -265,16 +266,16 @@ function RoleDetails({
       <div className="space-y-4">
         <h3 className="font-medium">Permissions per content-type</h3>
         <div className="border rounded-md overflow-x-auto">
-          <Table
-            headings={[
-              { label: 'Type', key: 'type', sort: 'asc' },
-              { label: 'Read', key: 'read', sort: 'asc' },
-              { label: 'Create', key: 'create', sort: 'asc' },
-              { label: 'Update', key: 'update', sort: 'asc' },
-              { label: 'Delete', key: 'delete', sort: 'asc' },
-              { label: 'Publish', key: 'publish', sort: 'asc' },
+          <DataTable
+            columns={[
+              { label: 'Type', key: 'type', sortable: true },
+              { label: 'Read', key: 'read', sortable: false },
+              { label: 'Create', key: 'create', sortable: false },
+              { label: 'Update', key: 'update', sortable: false },
+              { label: 'Delete', key: 'delete', sortable: false },
+              { label: 'Publish', key: 'publish', sortable: false },
             ]}
-            data={schemas.map((schema) => ({
+            rows={schemas.map((schema) => ({
               type: schema.name,
               read: (
                 <div className="flex justify-center">
@@ -317,10 +318,6 @@ function RoleDetails({
                 </div>
               ),
             }))}
-            applySort={() => {}}
-            currentPage={1}
-            totalPages={1}
-            onPageChange={() => {}}
           />
         </div>
       </div>

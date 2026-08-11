@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listLocales, createLocale, deleteLocale } from '@/lib/api/locales';
-import { Button, Input, Modal, Table } from '@repo/shared-ui';
+import { Button, Input, Modal, DataTable } from '@repo/shared-ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
 import { LocaleRecord } from '@repo/types';
@@ -94,14 +94,14 @@ export function LocalesTab() {
       </div>
 
       <div className="border rounded-md overflow-x-auto">
-        <Table
-          headings={[
-            { label: 'Code', key: 'code', sort: 'asc' },
-            { label: 'Name', key: 'name', sort: 'asc' },
-            { label: 'Default', key: 'isDefault', sort: 'asc' },
-            { label: 'Actions', key: 'actions', sort: 'asc' },
+        <DataTable
+          columns={[
+            { label: 'Code', key: 'code', sortable: true },
+            { label: 'Name', key: 'name', sortable: true },
+            { label: 'Default', key: 'isDefault', sortable: true },
+            { label: 'Actions', key: 'actions', sortable: false },
           ]}
-          data={locales.map((locale) => ({
+          rows={locales.map((locale) => ({
             code: <span className="font-mono text-xs">{locale.code}</span>,
             name: locale.name,
             isDefault: locale.isDefault ? 'Yes' : '',
@@ -119,10 +119,6 @@ export function LocalesTab() {
               </div>
             ),
           }))}
-          applySort={() => {}}
-          currentPage={1}
-          totalPages={1}
-          onPageChange={() => {}}
         />
         {locales.length === 0 && (
           <div className="p-8 text-center text-muted-foreground border-t">

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { PencilIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
-import { Button, Card, CardContent, Table } from '@repo/shared-ui';
+import { Button, Card, CardContent, DataTable } from '@repo/shared-ui';
 import { SchemaRowActions } from './schema-row-actions';
 
 export function SchemaList() {
@@ -38,16 +38,16 @@ export function SchemaList() {
   }
 
   return (
-    <Table
-      headings={[
-        { label: 'Name', key: 'name', sort: 'asc' },
-        { label: 'API ID', key: 'slug', sort: 'asc' },
-        { label: 'Kind', key: 'kind', sort: 'asc' },
-        { label: 'Fields', key: 'fields', sort: 'asc' },
-        { label: 'Localized', key: 'localized', sort: 'asc' },
-        { label: 'Actions', key: 'actions', sort: 'asc' },
+    <DataTable
+      columns={[
+        { label: 'Name', key: 'name', sortable: true },
+        { label: 'API ID', key: 'slug', sortable: true },
+        { label: 'Kind', key: 'kind', sortable: true },
+        { label: 'Fields', key: 'fields', sortable: true },
+        { label: 'Localized', key: 'localized', sortable: true },
+        { label: 'Actions', key: 'actions', sortable: false },
       ]}
-      data={data.map((schema) => {
+      rows={data.map((schema) => {
         const isLocalized = schema.definition.fields.some(
           (field) => field.isLocalized,
         );
@@ -80,10 +80,6 @@ export function SchemaList() {
           ),
         };
       })}
-      applySort={() => {}}
-      currentPage={1}
-      totalPages={1}
-      onPageChange={() => {}}
     />
   );
 }

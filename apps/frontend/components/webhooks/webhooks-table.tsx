@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listWebhooks, createWebhook, deleteWebhook } from '@/lib/api/webhooks';
 import { WebhookRecord } from '@repo/types';
-import { Button, Input, Checkbox, Modal, Table } from '@repo/shared-ui';
+import { Button, Input, Checkbox, Modal, DataTable } from '@repo/shared-ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
 
@@ -199,15 +199,15 @@ export function WebhooksTable() {
       </div>
 
       <div className="border rounded-md overflow-x-auto">
-        <Table
-          headings={[
-            { label: 'Name', key: 'name', sort: 'asc' },
-            { label: 'URL', key: 'url', sort: 'asc' },
-            { label: 'Events', key: 'events', sort: 'asc' },
-            { label: 'Status', key: 'status', sort: 'asc' },
-            { label: 'Actions', key: 'actions', sort: 'asc' },
+        <DataTable
+          columns={[
+            { label: 'Name', key: 'name', sortable: true },
+            { label: 'URL', key: 'url', sortable: true },
+            { label: 'Events', key: 'events', sortable: false },
+            { label: 'Status', key: 'status', sortable: true },
+            { label: 'Actions', key: 'actions', sortable: false },
           ]}
-          data={webhooks.map((webhook) => ({
+          rows={webhooks.map((webhook) => ({
             name: webhook.name,
             url: (
               <span className="max-w-xs truncate font-mono text-xs">
@@ -240,10 +240,6 @@ export function WebhooksTable() {
               </div>
             ),
           }))}
-          applySort={() => {}}
-          currentPage={1}
-          totalPages={1}
-          onPageChange={() => {}}
         />
       </div>
 

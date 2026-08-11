@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@repo/shared-ui';
-import { Table } from '@repo/shared-ui';
+import { DataTable } from '@repo/shared-ui';
 import {
   Card,
   CardContent,
@@ -109,13 +109,13 @@ export function MfaRequestsTab() {
               </div>
             ) : (
               <div className="border rounded-md">
-                <Table
-                  headings={[
-                    { label: 'User Email', key: 'email', sort: 'asc' },
-                    { label: 'Requested', key: 'requested', sort: 'asc' },
-                    { label: 'Actions', key: 'actions', sort: 'asc' },
+                <DataTable
+                  columns={[
+                    { label: 'User Email', key: 'email', sortable: true },
+                    { label: 'Requested', key: 'requested', sortable: true },
+                    { label: 'Actions', key: 'actions', sortable: false },
                   ]}
-                  data={requests.map((req) => ({
+                  rows={requests.map((req) => ({
                     email: (
                       <div>
                         <div className="font-medium">
@@ -153,10 +153,6 @@ export function MfaRequestsTab() {
                       </div>
                     ),
                   }))}
-                  applySort={() => {}}
-                  currentPage={1}
-                  totalPages={1}
-                  onPageChange={() => {}}
                 />
               </div>
             ))}
@@ -172,14 +168,14 @@ export function MfaRequestsTab() {
               </div>
             ) : (
               <div className="border rounded-md">
-                <Table
-                  headings={[
-                    { label: 'User Email', key: 'email', sort: 'asc' },
-                    { label: 'Requested', key: 'requested', sort: 'asc' },
-                    { label: 'Status', key: 'status', sort: 'asc' },
-                    { label: 'Admin', key: 'admin', sort: 'asc' },
+                <DataTable
+                  columns={[
+                    { label: 'User Email', key: 'email', sortable: true },
+                    { label: 'Requested', key: 'requested', sortable: true },
+                    { label: 'Status', key: 'status', sortable: true },
+                    { label: 'Admin', key: 'admin', sortable: true },
                   ]}
-                  data={requests.map((req) => ({
+                  rows={requests.map((req) => ({
                     email: (
                       <div className="font-medium">
                         {req.user?.email || req.userId}
@@ -203,10 +199,6 @@ export function MfaRequestsTab() {
                     ),
                     admin: req.admin?.email || 'System',
                   }))}
-                  applySort={() => {}}
-                  currentPage={1}
-                  totalPages={1}
-                  onPageChange={() => {}}
                 />
               </div>
             ))}

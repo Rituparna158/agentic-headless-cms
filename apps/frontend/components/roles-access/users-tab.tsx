@@ -12,7 +12,7 @@ import {
   Typography,
   Dropdown,
   DropdownItem,
-  Table,
+  DataTable,
 } from '@repo/shared-ui';
 import {
   deleteUser,
@@ -262,18 +262,18 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
       </Modal>
 
       <div className="border rounded-md overflow-x-auto">
-        <Table
-          headings={[
-            { label: 'Email', key: 'email', sort: 'asc' },
-            { label: 'Name', key: 'name', sort: 'asc' },
-            { label: 'Status', key: 'status', sort: 'asc' },
-            { label: 'Role', key: 'role', sort: 'asc' },
-            { label: 'Created At', key: 'createdAt', sort: 'asc' },
+        <DataTable
+          columns={[
+            { label: 'Email', key: 'email', sortable: true },
+            { label: 'Name', key: 'name', sortable: true },
+            { label: 'Status', key: 'status', sortable: true },
+            { label: 'Role', key: 'role', sortable: true },
+            { label: 'Created At', key: 'createdAt', sortable: true },
             ...(isAdmin
-              ? [{ label: 'Actions', key: 'actions', sort: 'asc' as const }]
+              ? [{ label: 'Actions', key: 'actions', sortable: false }]
               : []),
           ]}
-          data={users.map((user) => ({
+          rows={users.map((user) => ({
             email: user.email,
             name: `${user.firstName} ${user.lastName}`,
             status: <span className="capitalize">{user.status}</span>,
@@ -326,10 +326,6 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                 }
               : {}),
           }))}
-          applySort={() => {}}
-          currentPage={1}
-          totalPages={1}
-          onPageChange={() => {}}
         />
         {users.length === 0 && (
           <div className="p-8 text-center text-muted-foreground border-t">

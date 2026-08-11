@@ -11,7 +11,7 @@ import {
   Typography,
   Dropdown,
   DropdownItem,
-  Table,
+  DataTable,
 } from '@repo/shared-ui';
 import {
   createToken,
@@ -164,15 +164,15 @@ export function TokensTab() {
       </div>
 
       <div className="border rounded-md overflow-x-auto">
-        <Table
-          headings={[
-            { label: 'Name', key: 'name', sort: 'asc' },
-            { label: 'Role', key: 'role', sort: 'asc' },
-            { label: 'Created At', key: 'createdAt', sort: 'asc' },
-            { label: 'Status', key: 'status', sort: 'asc' },
-            { label: 'Actions', key: 'actions', sort: 'asc' },
+        <DataTable
+          columns={[
+            { label: 'Name', key: 'name', sortable: true },
+            { label: 'Role', key: 'role', sortable: true },
+            { label: 'Created At', key: 'createdAt', sortable: true },
+            { label: 'Status', key: 'status', sortable: true },
+            { label: 'Actions', key: 'actions', sortable: false },
           ]}
-          data={tokens.map((token) => ({
+          rows={tokens.map((token) => ({
             name: token.name,
             role: roles.find((r) => r.id === token.roleId)?.name || 'Unknown',
             createdAt: new Date(token.createdAt).toLocaleDateString(),
@@ -197,10 +197,6 @@ export function TokensTab() {
               </div>
             ),
           }))}
-          applySort={() => {}}
-          currentPage={1}
-          totalPages={1}
-          onPageChange={() => {}}
         />
         {tokens.length === 0 && (
           <div className="p-8 text-center text-muted-foreground border-t">

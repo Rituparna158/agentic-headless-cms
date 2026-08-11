@@ -9,12 +9,13 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Button, Card, CardContent, Input, Table } from '@repo/shared-ui';
+import { Button, Card, CardContent, Input } from '@repo/shared-ui';
 import { useHasPermission } from '@/hooks/use-permissions';
 import { deleteContentEntry, listContentEntries } from '@/lib/api/content';
 import type { ContentEntryListProps } from '@/types/component.types';
 import { pickTitleField } from '@/utils/schema';
 import { MediaThumbnailCell } from './media-thumbnail-cell';
+import { DataTable } from '@repo/shared-ui';
 
 const PAGE_SIZE = 25;
 
@@ -67,7 +68,6 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
   }
 
   const entries = data?.data ?? [];
-  const pagination = data?.meta.pagination;
 
   return (
     <div className="grid gap-3">
@@ -106,18 +106,18 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
         </Card>
       ) : (
         <Card>
-          <Table
-            headings={[
+          <DataTable
+            columns={[
               {
                 label: titleField?.displayName ?? 'Entry',
                 key: 'entry',
-                sort: 'asc',
+                sortable: true,
               },
-              { label: 'Status', key: 'status', sort: 'asc' },
-              { label: 'Updated', key: 'updated', sort: 'asc' },
-              { label: 'Actions', key: 'actions', sort: 'asc' },
+              { label: 'Status', key: 'status', sortable: true },
+              { label: 'Updated', key: 'updated', sortable: true },
+              { label: 'Actions', key: 'actions', sortable: false },
             ]}
-            data={entries.map((entry) => ({
+            rows={entries.map((entry) => ({
               entry:
                 titleField?.dataType === 'media' &&
                 typeof entry.data[titleField.apiId] === 'string' &&
@@ -162,10 +162,6 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
                 </div>
               ),
             }))}
-            applySort={() => {}}
-            currentPage={pagination?.page ?? 1}
-            totalPages={pagination?.pageCount ?? 1}
-            onPageChange={(newPage: number) => setPage(newPage)}
           />
         </Card>
       )}
