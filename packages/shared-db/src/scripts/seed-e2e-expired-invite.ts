@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { getDatabaseAdapter } from '@repo/config';
-import { users } from '@repo/shared-db';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
+import { users } from '../index.js';
 import { logger } from '@repo/logger';
 
 // E2E expired invite fixture
@@ -10,7 +11,12 @@ export const EXPIRED_INVITE_RAW_TOKEN = 'e2e-fixed-expired-invite-token';
 
 async function seedExpiredInvite() {
   logger.info('Seeding expired-invite E2E fixture...');
-  const db = getDatabaseAdapter().getDb();
+  if (!process.env.DATABASE_URL) {
+    logger.error('CRITICAL: DATABASE_URL environment variable is required.');
+    process.exit(1);
+  }
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle(pool);
 
   const inviteTokenHash = crypto
     .createHash('sha256')

@@ -8,6 +8,7 @@ export type PermissionData = {
 
 export interface CreateRoleInput {
   name: string;
+  application: 'HEADLESS_CMS' | 'CMS_UI';
   description?: string;
   mfaRequired?: boolean;
   isSystem?: boolean;
@@ -42,6 +43,7 @@ export interface PermissionRecord {
 export interface RoleRecord {
   id: string;
   name: string;
+  application: 'HEADLESS_CMS' | 'CMS_UI';
   description?: string | null;
   mfaRequired: boolean;
   isSystem: boolean;

@@ -1,12 +1,24 @@
 import bcrypt from 'bcrypt';
-import { eq } from 'drizzle-orm';
-import { getDatabaseAdapter } from '@repo/config';
-import { users, roles, userRoles, permissions } from '@repo/shared-db';
+import { eq, and } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
+import {
+  users,
+  roles,
+  userRoles,
+  permissions,
+  userApplications,
+} from '../index.js';
 import { logger } from '@repo/logger';
 
 async function seedAdmin() {
   logger.info('Starting admin seeding process...');
-  const db = getDatabaseAdapter().getDb();
+  if (!process.env.DATABASE_URL) {
+    logger.error('CRITICAL: DATABASE_URL environment variable is required.');
+    process.exit(1);
+  }
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle(pool);
 
   // Use environment variables for provisioning
   const adminEmail =
@@ -29,7 +41,9 @@ async function seedAdmin() {
     const existingRole = await db
       .select()
       .from(roles)
-      .where(eq(roles.name, 'admin'))
+      .where(
+        and(eq(roles.name, 'admin'), eq(roles.application, 'HEADLESS_CMS')),
+      )
       .limit(1);
 
     if (existingRole.length > 0) {
@@ -40,6 +54,7 @@ async function seedAdmin() {
         .insert(roles)
         .values({
           name: 'admin',
+          application: 'HEADLESS_CMS',
           description: 'Super administrator with full access',
         })
         .returning({ id: roles.id });
@@ -87,16 +102,42 @@ async function seedAdmin() {
       );
     }
 
-    // Link user to role
+    // Link user to role via user_applications
+    let userAppId: string;
+    const existingUserApp = await db
+      .select()
+      .from(userApplications)
+      .where(
+        and(
+          eq(userApplications.userId, userId),
+          eq(userApplications.application, 'HEADLESS_CMS'),
+        ),
+      )
+      .limit(1);
+
+    if (existingUserApp.length > 0) {
+      userAppId = existingUserApp[0]!.id;
+    } else {
+      const newUserApp = await db
+        .insert(userApplications)
+        .values({
+          userId,
+          application: 'HEADLESS_CMS',
+          status: 'active',
+        })
+        .returning({ id: userApplications.id });
+      userAppId = newUserApp[0]!.id;
+    }
+
     const existingUserRole = await db
       .select()
       .from(userRoles)
-      .where(eq(userRoles.userId, userId))
+      .where(eq(userRoles.userApplicationId, userAppId))
       .limit(1);
 
     if (existingUserRole.length === 0) {
       await db.insert(userRoles).values({
-        userId,
+        userApplicationId: userAppId,
         roleId,
       });
       logger.info('Linked Admin user to Admin role.');

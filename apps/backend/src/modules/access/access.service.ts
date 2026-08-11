@@ -58,10 +58,10 @@ export class AccessService {
 
   async createRole(data: CreateRoleInput) {
     try {
-      const { name, description, isSystem, permissions } = data;
+      const { name, application, description, isSystem, permissions } = data;
       logger.info({ name }, 'AccessService: createRole start');
       const result = await this.repository.createRole(
-        { name, description, isSystem },
+        { name, application, description, isSystem },
         permissions || [],
       );
 

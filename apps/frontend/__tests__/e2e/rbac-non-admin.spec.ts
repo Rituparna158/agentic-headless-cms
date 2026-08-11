@@ -16,7 +16,7 @@ test('a non-admin role cannot see or perform admin-only actions', async ({
   const roleRes = await page.request.post(
     `${BACKEND_URL}${API_PATHS.ACCESS.ROLES}`,
     {
-      data: { name: roleName, permissions: [] },
+      data: { name: roleName, permissions: [], application: 'HEADLESS_CMS' },
     },
   );
   expect(roleRes.ok()).toBeTruthy();

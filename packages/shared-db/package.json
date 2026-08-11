@@ -20,17 +20,23 @@
     "db:push": "pnpm build && drizzle-kit push",
     "db:studio": "pnpm build && drizzle-kit studio",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed:admin": "tsx --env-file=../../.env src/scripts/seed-admin.ts",
+    "seed:e2e-expired-invite": "tsx --env-file=../../.env src/scripts/seed-e2e-expired-invite.ts"
   },
   "dependencies": {
+    "@repo/logger": "workspace:^",
+    "bcrypt": "^6.0.0",
     "drizzle-orm": "^0.36.4",
     "pg": "^8.13.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/bcrypt": "^6.0.0",
     "@types/pg": "^8.11.10",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "drizzle-kit": "^0.28.1",
+    "tsx": "^4.23.0",
     "typescript": "5.9.2",
     "vitest": "^4.1.10"
   }
