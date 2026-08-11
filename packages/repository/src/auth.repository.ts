@@ -1,13 +1,15 @@
-import { eq, ne } from 'drizzle-orm';
+import { eq, ne, and } from 'drizzle-orm';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import {
   users,
   userRoles,
+  userApplications,
   roles,
   permissions,
   mfaResetRequests,
   passwordResetRequests,
+  userIdentities,
 } from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
@@ -83,8 +85,17 @@ export class AuthRepository {
       const rows = await db
         .select({ roleName: roles.name })
         .from(userRoles)
+        .innerJoin(
+          userApplications,
+          eq(userRoles.userApplicationId, userApplications.id),
+        )
         .innerJoin(roles, eq(userRoles.roleId, roles.id))
-        .where(eq(userRoles.userId, userId));
+        .where(
+          and(
+            eq(userApplications.userId, userId),
+            eq(userApplications.status, 'active'),
+          ),
+        );
 
       const roleNames = rows.map((r: { roleName: string }) => r.roleName);
       logger.debug(
@@ -111,8 +122,17 @@ export class AuthRepository {
           condition: permissions.condition,
         })
         .from(userRoles)
+        .innerJoin(
+          userApplications,
+          eq(userRoles.userApplicationId, userApplications.id),
+        )
         .innerJoin(permissions, eq(userRoles.roleId, permissions.roleId))
-        .where(eq(userRoles.userId, userId));
+        .where(
+          and(
+            eq(userApplications.userId, userId),
+            eq(userApplications.status, 'active'),
+          ),
+        );
 
       logger.debug(
         { userId, permissionsCount: rows.length },
@@ -142,8 +162,17 @@ export class AuthRepository {
           mfaRequired: roles.mfaRequired,
         })
         .from(userRoles)
+        .innerJoin(
+          userApplications,
+          eq(userRoles.userApplicationId, userApplications.id),
+        )
         .innerJoin(roles, eq(userRoles.roleId, roles.id))
-        .where(eq(userRoles.userId, userId));
+        .where(
+          and(
+            eq(userApplications.userId, userId),
+            eq(userApplications.status, 'active'),
+          ),
+        );
 
       logger.debug(
         { userId, roles: rows },
@@ -408,6 +437,33 @@ export class AuthRepository {
         { err: error },
         'AuthRepository Error in updateUserPassword:',
       );
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
+
+  async linkUserIdentity(
+    userId: string,
+    provider: string,
+    providerUserId: string,
+  ) {
+    try {
+      logger.info(
+        { userId, provider },
+        'AuthRepository: linking user identity',
+      );
+      const db = getDatabaseAdapter().getDb();
+      await db
+        .insert(userIdentities)
+        .values({
+          userId,
+          provider,
+          providerUserId,
+        })
+        .onConflictDoNothing({
+          target: [userIdentities.provider, userIdentities.providerUserId],
+        });
+    } catch (error) {
+      logger.error({ err: error }, 'AuthRepository Error in linkUserIdentity:');
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
