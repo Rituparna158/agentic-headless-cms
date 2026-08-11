@@ -48,6 +48,7 @@ export const createRole: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const body = req.body as {
       name: string;
+      application: 'HEADLESS_CMS' | 'CMS_UI';
       description?: string;
       mfaRequired?: boolean;
       isSystem?: boolean;
