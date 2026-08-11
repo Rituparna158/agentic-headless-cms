@@ -39,7 +39,7 @@ export default defineConfig({
     {
       command: 'pnpm --filter backend dev',
       url: BACKEND_HEALTH_URL,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       cwd: monorepoRoot,
       timeout: 120_000,
       env: { DATABASE_URL: E2E_DATABASE_URL },
@@ -47,7 +47,7 @@ export default defineConfig({
     {
       command: 'pnpm --filter frontend dev',
       url: FRONTEND_URL,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       cwd: monorepoRoot,
       timeout: 120_000,
     },

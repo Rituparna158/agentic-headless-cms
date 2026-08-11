@@ -46,12 +46,12 @@ export default async function globalSetup() {
     env: testDbEnv,
   });
 
-  execSync('pnpm --filter backend run seed:admin', {
+  execSync('pnpm --filter @repo/shared-db run seed:admin', {
     cwd: repoRoot,
     stdio: 'inherit',
     env: testDbEnv,
   });
-  execSync('pnpm --filter backend run seed:e2e-expired-invite', {
+  execSync('pnpm --filter @repo/shared-db run seed:e2e-expired-invite', {
     cwd: repoRoot,
     stdio: 'inherit',
     env: testDbEnv,
