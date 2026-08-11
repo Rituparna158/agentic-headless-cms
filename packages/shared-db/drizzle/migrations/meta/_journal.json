@@ -50,6 +50,20 @@
       "when": 1786098382439,
       "tag": "0006_moaning_killraven",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786432208921,
+      "tag": "0007_glamorous_supernaut",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786432785683,
+      "tag": "0008_conscious_karnak",
+      "breakpoints": true
     }
   ]
 }
