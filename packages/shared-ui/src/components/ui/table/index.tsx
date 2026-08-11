@@ -402,6 +402,54 @@ export interface DataTableProps {
    * Default: `[5, 10, 20]`.
    */
   rowsPerPageOptions?: number[];
+
+  /**
+   * Use backend pagination instead of client-side slicing.
+   */
+  manualPagination?: boolean;
+
+  /**
+   * Use backend sorting instead of client-side sorting.
+   */
+  manualSorting?: boolean;
+
+  /**
+   * Use backend filtering instead of client-side filtering.
+   */
+  manualFiltering?: boolean;
+
+  /**
+   * Total number of pages from the backend (used with manualPagination).
+   */
+  pageCount?: number;
+
+  /**
+   * Total number of rows across all pages (optional, used for display).
+   */
+  totalCount?: number;
+
+  /**
+   * Current active page (1-indexed). Use with manualPagination.
+   */
+  page?: number;
+
+  /**
+   * Callback when the page changes.
+   */
+  onPageChange?: (page: number) => void;
+
+  /**
+   * Callback when sort changes.
+   */
+  onSortChange?: (
+    key: DataTableColumnKey,
+    direction: DataTableSortDirection,
+  ) => void;
+
+  /**
+   * Callback when the search filter changes.
+   */
+  onSearchChange?: (query: string) => void;
 }
 
 /**
@@ -459,6 +507,15 @@ export const DataTable: React.FC<DataTableProps> = ({
   initialPage = 1,
   initialRowsPerPage = 5,
   rowsPerPageOptions = [5, 10, 20],
+  manualPagination,
+  manualSorting,
+  manualFiltering,
+  pageCount,
+  totalCount: manualTotalCount,
+  page: manualPage,
+  onPageChange: manualOnPageChange,
+  onSortChange: manualOnSortChange,
+  onSearchChange: manualOnSearchChange,
 }) => {
   const effectiveRows = rows;
   const effectiveColumns = columns;
@@ -478,7 +535,10 @@ export const DataTable: React.FC<DataTableProps> = ({
   // Filter state
   const [filterQuery, setFilterQuery] = useState('');
 
-  const totalCount = effectiveRows.length;
+  const totalCount =
+    manualPagination && manualTotalCount !== undefined
+      ? manualTotalCount
+      : effectiveRows.length;
   const normalizedFilter = enableFiltering
     ? filterQuery.trim().toLowerCase()
     : '';
@@ -488,7 +548,8 @@ export const DataTable: React.FC<DataTableProps> = ({
    * Memoized to avoid recalculating on every render.
    */
   const filteredRows = useMemo<DataTableRow[]>(() => {
-    if (!enableFiltering || !normalizedFilter) return effectiveRows;
+    if (manualFiltering || !enableFiltering || !normalizedFilter)
+      return effectiveRows;
 
     return effectiveRows.filter((row) =>
       effectiveColumns.some((column) => {
@@ -502,28 +563,45 @@ export const DataTable: React.FC<DataTableProps> = ({
         return false;
       }),
     );
-  }, [enableFiltering, effectiveRows, effectiveColumns, normalizedFilter]);
+  }, [
+    manualFiltering,
+    enableFiltering,
+    effectiveRows,
+    effectiveColumns,
+    normalizedFilter,
+  ]);
 
-  const totalFilteredCount = filteredRows.length;
+  const totalFilteredCount =
+    manualPagination && manualTotalCount !== undefined
+      ? manualTotalCount
+      : filteredRows.length;
 
   /**
    * Total number of pages based on filtered rows and rows per page.
    * Memoized to avoid recalculating on every render.
    */
-  const totalPages = useMemo(
-    () =>
-      enablePagination
-        ? Math.max(1, Math.ceil(totalFilteredCount / rowsPerPage))
-        : 1,
-    [enablePagination, totalFilteredCount, rowsPerPage],
-  );
+  const totalPages = useMemo(() => {
+    if (manualPagination && pageCount !== undefined) return pageCount;
+    return enablePagination
+      ? Math.max(1, Math.ceil(totalFilteredCount / rowsPerPage))
+      : 1;
+  }, [
+    enablePagination,
+    totalFilteredCount,
+    rowsPerPage,
+    manualPagination,
+    pageCount,
+  ]);
+
+  const activePage =
+    manualPagination && manualPage !== undefined ? manualPage : currentPage;
 
   /**
    * Clamp current page when filter or rowsPerPage changes.
    */
   useEffect(() => {
-    if (!enablePagination) {
-      setCurrentPage(1);
+    if (manualPagination || !enablePagination) {
+      if (!enablePagination) setCurrentPage(1);
       return;
     }
 
@@ -532,7 +610,7 @@ export const DataTable: React.FC<DataTableProps> = ({
       if (prev < 1) return 1;
       return prev;
     });
-  }, [enablePagination, totalPages]);
+  }, [enablePagination, totalPages, manualPagination]);
 
   /**
    * Paginated rows based on current page and rows per page.
@@ -540,12 +618,18 @@ export const DataTable: React.FC<DataTableProps> = ({
    * Memoized to avoid recalculating on every render.
    */
   const paginatedRows = useMemo<DataTableRow[]>(() => {
-    if (!enablePagination) {
+    if (manualPagination || !enablePagination) {
       return filteredRows;
     }
-    const startIndex = (currentPage - 1) * rowsPerPage;
+    const startIndex = (activePage - 1) * rowsPerPage;
     return filteredRows.slice(startIndex, startIndex + rowsPerPage);
-  }, [enablePagination, filteredRows, currentPage, rowsPerPage]);
+  }, [
+    enablePagination,
+    manualPagination,
+    filteredRows,
+    activePage,
+    rowsPerPage,
+  ]);
 
   /**
    * Sorted rows based on the current sort key and direction.
@@ -554,7 +638,7 @@ export const DataTable: React.FC<DataTableProps> = ({
    * Memoized to avoid recalculating on every render.
    */
   const sortedRows = useMemo<DataTableRow[]>(() => {
-    if (!enableSorting || !sortKey) return paginatedRows;
+    if (manualSorting || !enableSorting || !sortKey) return paginatedRows;
 
     const columnForSort = effectiveColumns.find(
       (column) => column.key === sortKey,
@@ -612,7 +696,14 @@ export const DataTable: React.FC<DataTableProps> = ({
     });
 
     return copy;
-  }, [enableSorting, paginatedRows, sortKey, sortDirection, effectiveColumns]);
+  }, [
+    manualSorting,
+    enableSorting,
+    paginatedRows,
+    sortKey,
+    sortDirection,
+    effectiveColumns,
+  ]);
 
   /**
    * Handle column header click to toggle sorting.
@@ -624,18 +715,20 @@ export const DataTable: React.FC<DataTableProps> = ({
       if (!enableSorting) return;
       const column = columns.find((col) => col.key === columnKey);
       if (!column || column.sortable === false) return;
-      // Don't reset page when sorting - we're sorting only the current page
-      // If clicking a new column, sort ascending
+
+      let newDirection: DataTableSortDirection = 'asc';
       if (sortKey !== columnKey) {
         setSortKey(columnKey);
-        setSortDirection('asc');
       } else {
-        // If clicking the same column, toggle direction
-        const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
         setSortDirection(newDirection);
       }
+
+      if (manualOnSortChange) {
+        manualOnSortChange(columnKey, newDirection);
+      }
     },
-    [enableSorting, columns, sortKey, sortDirection],
+    [enableSorting, columns, sortKey, sortDirection, manualOnSortChange],
   );
 
   /**
@@ -646,9 +739,14 @@ export const DataTable: React.FC<DataTableProps> = ({
     (page: number) => {
       if (!enablePagination) return;
       if (page < 1 || page > totalPages) return;
-      setCurrentPage(page);
+      if (!manualPagination) {
+        setCurrentPage(page);
+      }
+      if (manualOnPageChange) {
+        manualOnPageChange(page);
+      }
     },
-    [enablePagination, totalPages],
+    [enablePagination, totalPages, manualPagination, manualOnPageChange],
   );
 
   /**
@@ -659,9 +757,11 @@ export const DataTable: React.FC<DataTableProps> = ({
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       const value = Number(event.target.value) || 5;
       setRowsPerPage(value);
-      setCurrentPage(1);
+      if (!manualPagination) {
+        setCurrentPage(1);
+      }
     },
-    [],
+    [manualPagination],
   );
 
   /**
@@ -672,9 +772,14 @@ export const DataTable: React.FC<DataTableProps> = ({
     (value: string) => {
       if (!enableFiltering) return;
       setFilterQuery(value);
-      setCurrentPage(1);
+      if (!manualPagination) {
+        setCurrentPage(1);
+      }
+      if (manualOnSearchChange) {
+        manualOnSearchChange(value);
+      }
     },
-    [enableFiltering],
+    [enableFiltering, manualPagination, manualOnSearchChange],
   );
 
   /**
@@ -684,18 +789,31 @@ export const DataTable: React.FC<DataTableProps> = ({
   const handleClearFilter = useCallback(() => {
     if (!enableFiltering) return;
     setFilterQuery('');
-    setCurrentPage(1);
-  }, [enableFiltering]);
+    if (!manualPagination) {
+      setCurrentPage(1);
+    }
+    if (manualOnSearchChange) {
+      manualOnSearchChange('');
+    }
+  }, [enableFiltering, manualPagination, manualOnSearchChange]);
 
   const startRowIndex =
     totalFilteredCount === 0
       ? 0
-      : enablePagination
-        ? (currentPage - 1) * rowsPerPage + 1
-        : 1;
-  const endRowIndex = enablePagination
-    ? Math.min(currentPage * rowsPerPage, totalFilteredCount)
-    : totalFilteredCount;
+      : enablePagination && !manualPagination
+        ? (activePage - 1) * rowsPerPage + 1
+        : manualPagination
+          ? (activePage - 1) * rowsPerPage + 1
+          : 1;
+
+  const endRowIndex =
+    totalFilteredCount === 0
+      ? 0
+      : manualPagination
+        ? startRowIndex + sortedRows.length - 1
+        : enablePagination
+          ? Math.min(activePage * rowsPerPage, totalFilteredCount)
+          : totalFilteredCount;
 
   /**
    * Array of page numbers for pagination controls.
@@ -784,7 +902,7 @@ export const DataTable: React.FC<DataTableProps> = ({
           </span>
           {enablePagination && (
             <span>
-              Page {currentPage} of {totalPages}
+              Page {activePage} of {totalPages}
             </span>
           )}
         </div>
@@ -847,7 +965,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                 variant="outline"
                 size="icon"
                 onClick={() => handlePageChange(1)}
-                disabled={currentPage === 1}
+                disabled={activePage === 1}
                 aria-label="First page"
               >
                 <ChevronsLeft className="h-4 w-4" />
@@ -855,8 +973,8 @@ export const DataTable: React.FC<DataTableProps> = ({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
+                onClick={() => handlePageChange(activePage - 1)}
+                disabled={activePage === 1}
                 aria-label="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -866,10 +984,10 @@ export const DataTable: React.FC<DataTableProps> = ({
                 {pageNumbers.map((page) => (
                   <Button
                     key={page}
-                    variant={page === currentPage ? 'default' : 'ghost'}
+                    variant={page === activePage ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => handlePageChange(page)}
-                    aria-current={page === currentPage ? 'page' : undefined}
+                    aria-current={page === activePage ? 'page' : undefined}
                   >
                     {page}
                   </Button>
@@ -879,8 +997,8 @@ export const DataTable: React.FC<DataTableProps> = ({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(activePage + 1)}
+                disabled={activePage === totalPages}
                 aria-label="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -889,7 +1007,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                 variant="outline"
                 size="icon"
                 onClick={() => handlePageChange(totalPages)}
-                disabled={currentPage === totalPages}
+                disabled={activePage === totalPages}
                 aria-label="Last page"
               >
                 <ChevronsRight className="h-4 w-4" />

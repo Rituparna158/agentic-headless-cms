@@ -9,7 +9,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Button, Card, CardContent, Input } from '@repo/shared-ui';
+import { Button, Card } from '@repo/shared-ui';
 import { useHasPermission } from '@/hooks/use-permissions';
 import { deleteContentEntry, listContentEntries } from '@/lib/api/content';
 import type { ContentEntryListProps } from '@/types/component.types';
@@ -71,100 +71,87 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
 
   return (
     <div className="grid gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {titleField ? (
-          <Input
-            placeholder={`Search by ${titleField.displayName}…`}
-            value={search}
-            onChange={(val: string) => {
-              setSearch(val);
-              setPage(1);
-            }}
-            className="max-w-xs"
-            variant="default"
-          />
-        ) : null}
-
-        <select
-          aria-label="Sort"
-          value={sort}
-          onChange={(event) => setSort(event.target.value)}
-          className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
-        >
-          <option value="updatedAt:desc">Recently updated</option>
-          <option value="updatedAt:asc">Least recently updated</option>
-          <option value="createdAt:desc">Newest first</option>
-          <option value="createdAt:asc">Oldest first</option>
-        </select>
-      </div>
-
-      {entries.length === 0 ? (
-        <Card>
-          <CardContent className="text-muted-foreground py-8 text-center text-sm">
-            No entries yet. Create one to get started.
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <DataTable
-            columns={[
-              {
-                label: titleField?.displayName ?? 'Entry',
-                key: 'entry',
-                sortable: true,
-              },
-              { label: 'Status', key: 'status', sortable: true },
-              { label: 'Updated', key: 'updated', sortable: true },
-              { label: 'Actions', key: 'actions', sortable: false },
-            ]}
-            rows={entries.map((entry) => ({
-              entry:
-                titleField?.dataType === 'media' &&
-                typeof entry.data[titleField.apiId] === 'string' &&
-                entry.data[titleField.apiId] ? (
-                  <MediaThumbnailCell
-                    assetId={entry.data[titleField.apiId] as string}
-                    alt={titleField.displayName}
-                  />
-                ) : titleField &&
-                  typeof entry.data[titleField.apiId] === 'string' ? (
-                  (entry.data[titleField.apiId] as string)
-                ) : (
-                  <span className="text-muted-foreground text-xs">
-                    {entry.id}
-                  </span>
-                ),
-              status: <span className="capitalize">{entry.status}</span>,
-              updated: entry.updatedAt
-                ? new Date(entry.updatedAt).toLocaleString()
-                : '—',
-              actions: (
-                <div className="flex justify-end gap-2 text-right">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href={`/content/${schema.slug}/${entry.id}`}>
-                      Edit
-                    </Link>
-                  </Button>
-                  <span
-                    title={
-                      !canDelete ? 'You do not have permission to delete.' : ''
-                    }
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={!canDelete || deleteMutation.isPending}
-                      onClick={() => deleteMutation.mutate(entry.id)}
-                    >
-                      Delete
-                    </Button>
-                  </span>
-                </div>
+      <Card>
+        <DataTable
+          columns={[
+            {
+              label: titleField?.displayName ?? 'Entry',
+              key: titleField?.apiId ?? 'id',
+              sortable: true,
+            },
+            { label: 'Status', key: 'status', sortable: true },
+            { label: 'Updated', key: 'updatedAt', sortable: true },
+            { label: 'Actions', key: 'actions', sortable: false },
+          ]}
+          rows={entries.map((entry) => ({
+            [titleField?.apiId ?? 'id']:
+              titleField?.dataType === 'media' &&
+              typeof entry.data[titleField.apiId] === 'string' &&
+              entry.data[titleField.apiId] ? (
+                <MediaThumbnailCell
+                  assetId={entry.data[titleField.apiId] as string}
+                  alt={titleField.displayName}
+                />
+              ) : titleField &&
+                typeof entry.data[titleField.apiId] === 'string' ? (
+                (entry.data[titleField.apiId] as string)
+              ) : (
+                <span className="text-muted-foreground text-xs">
+                  {entry.id}
+                </span>
               ),
-            }))}
-          />
-        </Card>
-      )}
+            status: <span className="capitalize">{entry.status}</span>,
+            updatedAt: entry.updatedAt
+              ? new Date(entry.updatedAt).toLocaleString()
+              : '—',
+            actions: (
+              <div className="flex justify-end gap-2 text-right">
+                <Button asChild variant="ghost" size="sm">
+                  <Link href={`/content/${schema.slug}/${entry.id}`}>Edit</Link>
+                </Button>
+                <span
+                  title={
+                    !canDelete ? 'You do not have permission to delete.' : ''
+                  }
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={!canDelete || deleteMutation.isPending}
+                    onClick={() => deleteMutation.mutate(entry.id)}
+                  >
+                    Delete
+                  </Button>
+                </span>
+              </div>
+            ),
+          }))}
+          enableFiltering={!!titleField}
+          manualFiltering={true}
+          filterPlaceholder={`Search by ${titleField?.displayName ?? 'Entry'}...`}
+          onSearchChange={(val: string) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          enableSorting={true}
+          manualSorting={true}
+          defaultSortKey={sort.split(':')[0]}
+          defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
+          onSortChange={(
+            key: string | number | symbol,
+            direction: 'asc' | 'desc',
+          ) => {
+            setSort(`${String(key)}:${direction}`);
+            setPage(1);
+          }}
+          enablePagination={true}
+          manualPagination={true}
+          page={page}
+          pageCount={data?.meta?.pagination?.pageCount ?? 1}
+          totalCount={data?.meta?.pagination?.total ?? 0}
+          onPageChange={(newPage: number) => setPage(newPage)}
+        />
+      </Card>
     </div>
   );
 }

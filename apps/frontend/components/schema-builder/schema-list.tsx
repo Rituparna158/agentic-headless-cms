@@ -80,6 +80,7 @@ export function SchemaList() {
           ),
         };
       })}
+      enablePagination={false}
     />
   );
 }
