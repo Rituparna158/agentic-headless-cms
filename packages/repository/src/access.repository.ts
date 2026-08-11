@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import {
@@ -7,6 +7,7 @@ import {
   users,
   apiTokens,
   userRoles,
+  userApplications,
   withTransaction,
   RecordNotFoundError,
 } from '@repo/shared-db';
@@ -71,6 +72,7 @@ export class AccessRepository {
   async createRole(
     data: {
       name: string;
+      application: 'HEADLESS_CMS' | 'CMS_UI';
       description?: string | null;
       isSystem?: boolean;
       mfaRequired?: boolean;
@@ -198,15 +200,23 @@ export class AccessRepository {
     try {
       logger.info('AccessRepository: listing users');
       const allUsers = await this.db.select().from(users);
+      const allUserApps = await this.db.select().from(userApplications);
       const allUserRoles = await this.db.select().from(userRoles);
       logger.debug(
         { userCount: allUsers.length },
         'AccessRepository: listUsers complete',
       );
-      return allUsers.map((u) => ({
-        ...u,
-        roleId: allUserRoles.find((ur) => ur.userId === u.id)?.roleId ?? null,
-      }));
+      return allUsers.map((u) => {
+        const userAppIds = allUserApps
+          .filter((ua) => ua.userId === u.id)
+          .map((ua) => ua.id);
+        return {
+          ...u,
+          roleId:
+            allUserRoles.find((ur) => userAppIds.includes(ur.userApplicationId))
+              ?.roleId ?? null,
+        };
+      });
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in listUsers:');
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
@@ -216,7 +226,9 @@ export class AccessRepository {
   async deleteUser(id: string) {
     try {
       logger.info({ id }, 'AccessRepository: deleting user');
-      await this.db.delete(userRoles).where(eq(userRoles.userId, id));
+      await this.db
+        .delete(userApplications)
+        .where(eq(userApplications.userId, id));
       const [deleted] = await this.db
         .delete(users)
         .where(eq(users.id, id))
@@ -236,8 +248,38 @@ export class AccessRepository {
   async updateUserRole(userId: string, roleId: string) {
     try {
       logger.info({ userId, roleId }, 'AccessRepository: updating user role');
-      await this.db.delete(userRoles).where(eq(userRoles.userId, userId));
-      await this.db.insert(userRoles).values({ userId, roleId });
+      const [role] = await this.db
+        .select()
+        .from(roles)
+        .where(eq(roles.id, roleId))
+        .limit(1);
+      if (!role) throw new ApiError(400, 'Role not found');
+
+      let [userApp] = await this.db
+        .select()
+        .from(userApplications)
+        .where(
+          and(
+            eq(userApplications.userId, userId),
+            eq(userApplications.application, role.application),
+          ),
+        )
+        .limit(1);
+
+      if (!userApp) {
+        const [newApp] = await this.db
+          .insert(userApplications)
+          .values({ userId, application: role.application, status: 'active' })
+          .returning();
+        userApp = newApp;
+      }
+
+      await this.db
+        .delete(userRoles)
+        .where(eq(userRoles.userApplicationId, userApp!.id));
+      await this.db
+        .insert(userRoles)
+        .values({ userApplicationId: userApp!.id, roleId });
       logger.debug(
         { userId, roleId },
         'AccessRepository: updateUserRole complete',
@@ -276,9 +318,15 @@ export class AccessRepository {
           email: users.email,
         })
         .from(users)
-        .innerJoin(userRoles, eq(users.id, userRoles.userId))
+        .innerJoin(userApplications, eq(users.id, userApplications.userId))
+        .innerJoin(
+          userRoles,
+          eq(userApplications.id, userRoles.userApplicationId),
+        )
         .innerJoin(roles, eq(userRoles.roleId, roles.id))
-        .where(eq(roles.name, 'admin'));
+        .where(
+          and(eq(roles.name, 'admin'), eq(userApplications.status, 'active')),
+        );
 
       return adminUsers;
     } catch (error) {
@@ -299,9 +347,15 @@ export class AccessRepository {
           email: users.email,
         })
         .from(users)
-        .innerJoin(userRoles, eq(users.id, userRoles.userId))
+        .innerJoin(userApplications, eq(users.id, userApplications.userId))
+        .innerJoin(
+          userRoles,
+          eq(userApplications.id, userRoles.userApplicationId),
+        )
         .innerJoin(roles, eq(userRoles.roleId, roles.id))
-        .where(eq(roles.name, roleName));
+        .where(
+          and(eq(roles.name, roleName), eq(userApplications.status, 'active')),
+        );
     } catch (error) {
       logger.error(
         { err: error },
@@ -339,7 +393,35 @@ export class AccessRepository {
         { userId, roleId },
         'AccessRepository: assigning role to user',
       );
-      await this.db.insert(userRoles).values({ userId, roleId });
+      const [role] = await this.db
+        .select()
+        .from(roles)
+        .where(eq(roles.id, roleId))
+        .limit(1);
+      if (!role) throw new ApiError(400, 'Role not found');
+
+      let [userApp] = await this.db
+        .select()
+        .from(userApplications)
+        .where(
+          and(
+            eq(userApplications.userId, userId),
+            eq(userApplications.application, role.application),
+          ),
+        )
+        .limit(1);
+
+      if (!userApp) {
+        const [newApp] = await this.db
+          .insert(userApplications)
+          .values({ userId, application: role.application, status: 'active' })
+          .returning();
+        userApp = newApp;
+      }
+
+      await this.db
+        .insert(userRoles)
+        .values({ userApplicationId: userApp!.id, roleId });
       logger.debug('AccessRepository: assignUserRole complete');
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in assignUserRole:');
