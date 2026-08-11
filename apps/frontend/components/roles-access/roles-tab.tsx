@@ -53,7 +53,11 @@ export function RolesTab() {
   // Derived state for the currently active role form
   const activeRole =
     selectedRoleId === 'new'
-      ? editingRole || { name: '', permissions: [] }
+      ? editingRole || {
+          name: '',
+          application: 'HEADLESS_CMS',
+          permissions: [],
+        }
       : editingRole && editingRole.id === selectedRoleId
         ? editingRole
         : roles.find((r) => r.id === selectedRoleId);
