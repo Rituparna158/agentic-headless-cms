@@ -35,10 +35,4 @@ export default defineConfig({
     target: 'esnext',
     minify: 'esbuild',
   },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: './src/test/setup.ts',
-    css: true,
-  },
 });

@@ -14,12 +14,14 @@
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
     "@repo/eslint-config": "workspace:*",
+    "@vitest/coverage-v8": "4.1.7",
     "globals": "^17.7.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
     "prettier": "^3.7.4",
     "turbo": "^2.10.4",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vitest": "4.1.7"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
