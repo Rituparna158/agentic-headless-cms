@@ -43,7 +43,7 @@ function renderTable() {
 describe('WebhooksTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockList.mockResolvedValue([]);
+    mockList.mockResolvedValue({ data: [], meta: { total: 0 } });
   });
 
   it('shows an empty state when there are no webhooks', async () => {
@@ -54,7 +54,7 @@ describe('WebhooksTable', () => {
   });
 
   it('lists an existing webhook with its active status', async () => {
-    mockList.mockResolvedValue([webhook]);
+    mockList.mockResolvedValue({ data: [webhook], meta: { total: 1 } });
     renderTable();
 
     expect(await screen.findByText('ISR Rebuild')).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe('WebhooksTable', () => {
   });
 
   it('deletes a webhook after confirming', async () => {
-    mockList.mockResolvedValue([webhook]);
+    mockList.mockResolvedValue({ data: [webhook], meta: { total: 1 } });
     mockDelete.mockResolvedValue(undefined);
     const user = userEvent.setup();
     renderTable();

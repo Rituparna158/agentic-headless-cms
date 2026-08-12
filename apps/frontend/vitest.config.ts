@@ -1,18 +1,10 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      react$: require.resolve('react'),
-      'react/jsx-runtime$': require.resolve('react/jsx-runtime'),
-      'react/jsx-dev-runtime$': require.resolve('react/jsx-dev-runtime'),
-      'react-dom$': require.resolve('react-dom'),
-    },
+    dedupe: ['react', 'react-dom'],
     tsconfigPaths: true,
   },
   test: {

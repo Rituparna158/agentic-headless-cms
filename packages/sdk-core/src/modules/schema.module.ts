@@ -14,11 +14,15 @@ export class SchemaModule {
   public async list(
     options?: BaseQueryOptions,
   ): Promise<PaginatedResult<SchemaRecord>> {
-    const res = await this.transport.request<
-      ApiResponse<PaginatedResult<SchemaRecord>>
-    >('/schemas', {
-      params: options as Record<string, string | number>,
-    });
+    const res = options
+      ? await this.transport.request<
+          ApiResponse<PaginatedResult<SchemaRecord>>
+        >('/schemas', {
+          params: options as Record<string, string | number>,
+        })
+      : await this.transport.request<
+          ApiResponse<PaginatedResult<SchemaRecord>>
+        >('/schemas');
     return res.data;
   }
 

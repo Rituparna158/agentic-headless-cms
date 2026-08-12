@@ -55,7 +55,7 @@ describe('SchemaList', () => {
   });
 
   it('shows an empty state when there are no schemas', async () => {
-    mockListSchemas.mockResolvedValue([]);
+    mockListSchemas.mockResolvedValue({ data: [], meta: { total: 0 } });
     renderList();
 
     expect(
@@ -75,7 +75,7 @@ describe('SchemaList', () => {
   });
 
   it('lists a schema with its field count and localized status', async () => {
-    mockListSchemas.mockResolvedValue([schema]);
+    mockListSchemas.mockResolvedValue({ data: [schema], meta: { total: 1 } });
     renderList();
 
     expect(await screen.findByText('Blog Post')).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('SchemaList', () => {
   });
 
   it('links each row to its edit page', async () => {
-    mockListSchemas.mockResolvedValue([schema]);
+    mockListSchemas.mockResolvedValue({ data: [schema], meta: { total: 1 } });
     renderList();
 
     const editLink = await screen.findByRole('link', {

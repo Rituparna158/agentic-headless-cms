@@ -51,7 +51,7 @@ function renderTab(isAdmin: boolean) {
 describe('UsersTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListUsers.mockResolvedValue([]);
+    mockListUsers.mockResolvedValue({ data: [], meta: { total: 0 } });
     mockListRoles.mockResolvedValue([]);
   });
 
@@ -76,7 +76,7 @@ describe('UsersTab', () => {
   });
 
   it('lists an existing user', async () => {
-    mockListUsers.mockResolvedValue([user]);
+    mockListUsers.mockResolvedValue({ data: [user], meta: { total: 1 } });
     renderTab(true);
 
     expect(await screen.findByText('reader@example.com')).toBeInTheDocument();
@@ -97,7 +97,10 @@ describe('UsersTab', () => {
 
   it('handles user invitation successfully', async () => {
     const user2 = userEvent.setup();
-    mockListRoles.mockResolvedValue([{ id: 'r1', name: 'Admin' }]);
+    mockListRoles.mockResolvedValue({
+      data: [{ id: 'r1', name: 'Admin' }],
+      meta: { total: 1 },
+    });
     vi.mocked(inviteUser).mockResolvedValueOnce({
       id: '2',
       email: 'new@example.com',
@@ -135,7 +138,10 @@ describe('UsersTab', () => {
 
   it('handles user invitation failure', async () => {
     const user2 = userEvent.setup();
-    mockListRoles.mockResolvedValue([{ id: 'r1', name: 'Admin' }]);
+    mockListRoles.mockResolvedValue({
+      data: [{ id: 'r1', name: 'Admin' }],
+      meta: { total: 1 },
+    });
     vi.mocked(inviteUser).mockRejectedValueOnce(new Error('Invite failed'));
 
     renderTab(true);
@@ -157,7 +163,10 @@ describe('UsersTab', () => {
 
   it('shows dev invite url dialog when provided in response and can copy to clipboard', async () => {
     const user2 = userEvent.setup();
-    mockListRoles.mockResolvedValue([{ id: 'r1', name: 'Admin' }]);
+    mockListRoles.mockResolvedValue({
+      data: [{ id: 'r1', name: 'Admin' }],
+      meta: { total: 1 },
+    });
     vi.mocked(inviteUser).mockResolvedValueOnce({
       id: '2',
       email: 'new@example.com',

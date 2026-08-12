@@ -46,7 +46,7 @@ describe('StatsCards', () => {
   });
 
   it('renders the four stat labels', () => {
-    mockListSchemas.mockResolvedValue([]);
+    mockListSchemas.mockResolvedValue({ data: [], meta: { total: 0 } });
     renderCards();
 
     expect(screen.getByText('Total Entries')).toBeInTheDocument();
@@ -56,19 +56,22 @@ describe('StatsCards', () => {
   });
 
   it('tallies total/published/draft counts across schemas', async () => {
-    mockListSchemas.mockResolvedValue([
-      {
-        id: 's1',
-        name: 'Article',
-        slug: 'article',
-        type: 'collection',
-        definition,
-        status: 'published',
-        version: 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ]);
+    mockListSchemas.mockResolvedValue({
+      data: [
+        {
+          id: 's1',
+          name: 'Article',
+          slug: 'article',
+          type: 'collection',
+          definition,
+          status: 'published',
+          version: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      meta: { total: 1 },
+    });
     mockListContentEntries.mockResolvedValue({
       data: [
         {
@@ -98,7 +101,7 @@ describe('StatsCards', () => {
   });
 
   it('shows Pending Approvals as a placeholder since no such data exists yet', async () => {
-    mockListSchemas.mockResolvedValue([]);
+    mockListSchemas.mockResolvedValue({ data: [], meta: { total: 0 } });
     renderCards();
 
     await waitFor(() => {
