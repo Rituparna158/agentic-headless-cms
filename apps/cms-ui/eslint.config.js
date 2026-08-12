@@ -4,8 +4,6 @@ import { config as reactInternal } from '@repo/eslint-config/react-internal';
 export default [
   ...reactInternal,
   {
-    rules: {
-      // additional project specific rules here
-    },
+    rules: {},
   },
 ];
