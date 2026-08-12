@@ -3,20 +3,37 @@ import { LocalesService } from './locales.service.js';
 import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/constants';
 import { asyncHandler, ApiResponse } from '@repo/utils';
 import { logger } from '@repo/logger';
-
+import {
+  parseQueryOptions,
+  formatPaginatedResponse,
+} from '../../utils/pagination.util.js';
 const localesService = new LocalesService();
 
 export const listLocales: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('LocalesController: listLocales start');
-    const locales = await localesService.list();
+
+    const options = parseQueryOptions(req.query);
+    const [locales, total] = await localesService.list(options);
+
     logger.debug(
-      { count: locales.length },
+      { count: locales.length, total },
       'LocalesController: listLocales success',
     );
     res
       .status(200)
-      .json(new ApiResponse(200, locales, 'Locales listed successfully'));
+      .json(
+        new ApiResponse(
+          200,
+          formatPaginatedResponse(
+            locales,
+            total,
+            options.page!,
+            options.pageSize!,
+          ),
+          'Locales listed successfully',
+        ),
+      );
   },
 );
 

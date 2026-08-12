@@ -17,7 +17,7 @@ let apolloServerPromise: Promise<ApolloServer<GraphQLContext>> | null = null;
 function getApolloServer(): Promise<ApolloServer<GraphQLContext>> {
   apolloServerPromise ??= (async () => {
     const db = getDatabaseAdapter().getDb();
-    const schemas = await listSchemas(db);
+    const [schemas] = await listSchemas(db);
     const schema = buildGraphQLSchema(schemas);
 
     const server = new ApolloServer<GraphQLContext>({

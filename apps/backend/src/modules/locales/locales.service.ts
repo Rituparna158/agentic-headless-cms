@@ -1,5 +1,5 @@
 import { LocalesRepository } from '@repo/repository';
-import { CreateLocaleInput } from '@repo/types';
+import type { CreateLocaleInput, BaseQueryOptions } from '@repo/types';
 import { ERROR_MESSAGES, EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
 import { ConflictError, ApiError } from '@repo/utils';
 import { logger } from '@repo/logger';
@@ -12,10 +12,10 @@ export class LocalesService {
     private readonly repository: LocalesRepository = new LocalesRepository(),
   ) {}
 
-  async list() {
+  async list(options: BaseQueryOptions = {}) {
     try {
       logger.info('LocalesService: list start');
-      const result = await this.repository.list();
+      const result = await this.repository.list(options);
       logger.debug('LocalesService: list end');
       return result;
     } catch (error) {

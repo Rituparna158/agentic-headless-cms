@@ -1,4 +1,8 @@
-import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/types';
+import type {
+  CreateSchemaInput,
+  UpdateSchemaInput,
+  BaseQueryOptions,
+} from '@repo/types';
 import { SchemaRepository } from '@repo/repository';
 import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
@@ -49,10 +53,10 @@ export class SchemaService {
     }
   }
 
-  async list() {
+  async list(options: BaseQueryOptions = {}) {
     try {
       logger.info('SchemaService: list');
-      return await this.repository.list();
+      return await this.repository.list(options);
     } catch (error) {
       logger.error({ err: error }, 'SchemaService Error in list:');
       throw new ApiError(500, SERVICE_ERRORS.LIST_SCHEMAS_FAILED);

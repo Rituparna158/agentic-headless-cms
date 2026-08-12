@@ -6,3 +6,4 @@ export * from './access.types.js';
 export * from './webhooks.types.js';
 export * from './locales.types.js';
 export * from './schema.types.js';
+export * from './common.types.js';

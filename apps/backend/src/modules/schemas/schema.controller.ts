@@ -4,6 +4,10 @@ import { ERROR_MESSAGES } from '@repo/constants';
 import { ApiError, ApiResponse, asyncHandler } from '@repo/utils';
 import { logger } from '@repo/logger';
 import { schemaService } from './schema.service.js';
+import {
+  parseQueryOptions,
+  formatPaginatedResponse,
+} from '../../utils/pagination.util.js';
 
 export const createSchema: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
@@ -31,12 +35,25 @@ export const listSchemas: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('SchemaController: listSchemas start');
     logger.debug('SchemaController: fetching schemas');
-    const schemas = await schemaService.list();
+
+    const options = parseQueryOptions(req.query);
+    const [schemas, total] = await schemaService.list(options);
 
     logger.info('SchemaController: listSchemas end');
     res
       .status(200)
-      .json(new ApiResponse(200, schemas, 'Schemas listed successfully'));
+      .json(
+        new ApiResponse(
+          200,
+          formatPaginatedResponse(
+            schemas,
+            total,
+            options.page!,
+            options.pageSize!,
+          ),
+          'Schemas listed successfully',
+        ),
+      );
   },
 );
 
