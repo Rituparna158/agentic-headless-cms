@@ -1,6 +1,6 @@
 import type { WebhookRecord } from '@repo/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -78,13 +78,13 @@ describe('WebhooksTable', () => {
 
     // 2. Submit with only name and url (modal closed, so open again)
     await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
-    await user.type(
+    fireEvent.change(
       await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
-      'My Hook',
+      { target: { value: 'My Hook' } },
     );
-    await user.type(
+    fireEvent.change(
       await screen.findByPlaceholderText('https://example.com/api/revalidate'),
-      'https://example.com/hook',
+      { target: { value: 'https://example.com/hook' } },
     );
     registerButton = await screen.findByRole('button', { name: 'Register' });
     await user.click(registerButton);
@@ -92,13 +92,13 @@ describe('WebhooksTable', () => {
 
     // 3. Submit with everything
     await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
-    await user.type(
+    fireEvent.change(
       await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
-      'My Hook',
+      { target: { value: 'My Hook' } },
     );
-    await user.type(
+    fireEvent.change(
       await screen.findByPlaceholderText('https://example.com/api/revalidate'),
-      'https://example.com/hook',
+      { target: { value: 'https://example.com/hook' } },
     );
     await user.click(screen.getByText('content.published'));
     registerButton = await screen.findByRole('button', { name: 'Register' });
@@ -113,13 +113,13 @@ describe('WebhooksTable', () => {
     await screen.findByText('No webhooks registered yet.');
 
     await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
-    await user.type(
+    fireEvent.change(
       await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
-      'My Hook',
+      { target: { value: 'My Hook' } },
     );
-    await user.type(
+    fireEvent.change(
       await screen.findByPlaceholderText('https://example.com/api/revalidate'),
-      'https://example.com/hook',
+      { target: { value: 'https://example.com/hook' } },
     );
     await user.click(screen.getByText('content.published'));
 

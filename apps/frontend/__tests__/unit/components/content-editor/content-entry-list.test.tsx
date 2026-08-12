@@ -73,7 +73,9 @@ describe('ContentEntryList', () => {
     renderList();
 
     await waitFor(() => {
-      expect(screen.getByText(/no entries yet/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/no rows match your filter/i),
+      ).toBeInTheDocument();
     });
   });
 
@@ -109,12 +111,10 @@ describe('ContentEntryList', () => {
     renderList();
 
     await waitFor(() => {
-      expect(
-        screen.getByPlaceholderText(/search by title/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/search by title/i)).toBeInTheDocument();
     });
 
-    await user.type(screen.getByPlaceholderText(/search by title/i), 'World');
+    await user.type(screen.getByRole('textbox'), 'World');
 
     await waitFor(() => {
       const lastCall = mockList.mock.calls.at(-1)!;

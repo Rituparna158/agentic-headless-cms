@@ -23,7 +23,7 @@ test('admin can generate an API token, see the raw value once, and revoke it', a
   await expect(page.getByText('Token generated successfully')).toBeVisible({
     timeout: 15_000,
   });
-  const rawToken = await page.locator('input[readonly]').inputValue();
+  const rawToken = await page.locator('input:disabled').inputValue();
   expect(rawToken.length).toBeGreaterThan(10);
 
   await page.getByRole('button', { name: 'Done' }).click();

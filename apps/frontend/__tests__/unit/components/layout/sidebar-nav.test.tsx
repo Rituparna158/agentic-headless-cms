@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AnchorHTMLAttributes } from 'react';
 
@@ -20,9 +19,17 @@ vi.mock(
       default: ({
         href,
         children,
+        onClick,
         ...rest
       }: AnchorHTMLAttributes<HTMLAnchorElement>) => (
-        <a href={href} {...rest}>
+        <a
+          href={href}
+          onClick={(e) => {
+            e.preventDefault();
+            onClick?.(e);
+          }}
+          {...rest}
+        >
           {children}
         </a>
       ),
@@ -61,13 +68,13 @@ describe('SidebarNav', () => {
     );
   });
 
-  it('calls onNavigate when a nav link is clicked', async () => {
+  it('calls onNavigate when a nav link is clicked', () => {
     mockUsePathname.mockReturnValue('/');
     const onNavigate = vi.fn();
-    const user = userEvent.setup();
     render(<SidebarNav onNavigate={onNavigate} />);
 
-    await user.click(screen.getByRole('link', { name: /Media/ }));
+    const link = screen.getByRole('link', { name: /Media/ });
+    fireEvent.click(link);
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
 });

@@ -21,7 +21,8 @@ export default defineConfig({
     testTimeout: 15000,
     include: ['__tests__/unit/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', '.next'],
-    setupFiles: ['./vitest.setup.ts'],
+    setupFiles: ['./vitest.setup.tsx'],
+    fileParallelism: false,
     server: {
       deps: {
         inline: ['@repo/shared-ui'],
