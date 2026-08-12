@@ -5,6 +5,7 @@
       "@/*": ["./*"],
       "@repo/utils/rbac": ["../../packages/utils/src/rbac.util.ts"],
       "@repo/shared-ui": ["./types/shared-ui-mock.d.ts"]
-    }
+    },
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest"]
   }
 }
