@@ -43,7 +43,10 @@ test('admin can create a role with a content-type permission', async ({
   await page.getByPlaceholder('e.g. Content Editor').fill(roleName);
 
   const schemaRow = page.getByRole('row', { name: schemaName });
-  await schemaRow.getByRole('checkbox').nth(0).check({ force: true });
+  await schemaRow
+    .locator('input[type="checkbox"]')
+    .nth(0)
+    .check({ force: true });
 
   await page.getByRole('button', { name: 'Save Role', exact: true }).click();
 
