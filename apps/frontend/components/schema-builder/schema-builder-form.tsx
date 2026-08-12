@@ -21,24 +21,18 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormProvider, Controller } from 'react-hook-form';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Dropdown,
+  DropdownItem,
+  Typography,
+} from '@repo/shared-ui';
 import { createSchema, updateSchema } from '@/lib/api/schemas';
 import { ApiError } from '@/lib/api-client';
 import type { SchemaBuilderFieldValues } from '@/types/component.types';
@@ -177,22 +171,33 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
   }
 
   return (
-    <Form {...form}>
+    <FormProvider {...form}>
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="grid gap-6"
       >
-        <FormField
+        <Controller
           control={form.control}
           name="name"
-          render={({ field }) => (
-            <FormItem className="max-w-sm">
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Blog Post" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <div className="grid gap-2 max-w-sm">
+              <label htmlFor="name">
+                <Typography as="span" variant="label">
+                  Name
+                </Typography>
+              </label>
+              <Input
+                id="name"
+                placeholder="e.g. Blog Post"
+                variant="default"
+                {...field}
+              />
+              {fieldState.error?.message ? (
+                <p className="text-sm font-medium text-destructive">
+                  {fieldState.error.message}
+                </p>
+              ) : null}
+            </div>
           )}
         />
 
@@ -249,50 +254,66 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                 <CardTitle className="text-sm">Type options</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                <FormField
+                <Controller
                   control={form.control}
                   name="slug"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Slug</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. blog-post"
-                          disabled={isEditing}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  render={({ field, fieldState }) => (
+                    <div className="grid gap-2">
+                      <label htmlFor="slug">
+                        <Typography as="span" variant="label">
+                          Slug
+                        </Typography>
+                      </label>
+                      <Input
+                        id="slug"
+                        placeholder="e.g. blog-post"
+                        disabled={isEditing}
+                        variant="default"
+                        {...field}
+                      />
+                      {fieldState.error?.message ? (
+                        <p className="text-sm font-medium text-destructive">
+                          {fieldState.error.message}
+                        </p>
+                      ) : null}
+                    </div>
                   )}
                 />
 
-                <FormField
+                <Controller
                   control={form.control}
                   name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Kind</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={isEditing}
+                  render={({ field, fieldState }) => (
+                    <div className="grid gap-2">
+                      <Typography as="span" variant="label">
+                        Kind
+                      </Typography>
+                      <Dropdown
+                        trigger={
+                          <button
+                            type="button"
+                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={isEditing}
+                          >
+                            {field.value || 'Select…'}
+                          </button>
+                        }
                       >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {schemaTypeValues.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                        {schemaTypeValues.map((type) => (
+                          <DropdownItem
+                            key={type}
+                            onSelect={() => field.onChange(type)}
+                          >
+                            {type}
+                          </DropdownItem>
+                        ))}
+                      </Dropdown>
+                      {fieldState.error?.message ? (
+                        <p className="text-sm font-medium text-destructive">
+                          {fieldState.error.message}
+                        </p>
+                      ) : null}
+                    </div>
                   )}
                 />
               </CardContent>
@@ -324,6 +345,6 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
           </Button>
         </div>
       </form>
-    </Form>
+    </FormProvider>
   );
 }

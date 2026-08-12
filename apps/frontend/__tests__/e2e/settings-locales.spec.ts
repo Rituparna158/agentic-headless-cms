@@ -6,7 +6,7 @@ test('admin can add and delete a locale', async ({ page }) => {
   const name = `E2E Locale ${crypto.randomUUID()}`;
 
   await page.goto('/settings');
-  await page.getByRole('tab', { name: 'Locales' }).click();
+  await page.getByRole('button', { name: 'Locales', exact: true }).click();
 
   await page.getByRole('button', { name: 'Add Locale' }).click();
   await page.getByPlaceholder('e.g. fr-FR').fill(code);

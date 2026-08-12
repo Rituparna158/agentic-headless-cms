@@ -4,24 +4,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Button,
+  Modal,
+  Input,
+  Typography,
+  Dropdown,
+  DropdownItem,
+  DataTable,
+} from '@repo/shared-ui';
 import {
   createToken,
   listRoles,
@@ -87,141 +78,131 @@ export function TokensTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsCreateOpen(true)}>
-              Generate Token
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Generate API Token</DialogTitle>
-            </DialogHeader>
-
-            {generatedToken ? (
-              <div className="space-y-4 py-4">
-                <p className="text-sm font-medium text-green-600">
-                  Token generated successfully! Please copy it now, as you
-                  won&apos;t be able to see it again.
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    value={generatedToken}
-                    readOnly
-                    className="font-mono text-sm"
-                  />
-                  <Button variant="outline" size="icon" onClick={handleCopy}>
-                    {copied ? (
-                      <Check className="size-4 text-green-600" />
-                    ) : (
-                      <Copy className="size-4" />
-                    )}
-                  </Button>
-                </div>
-                <DialogFooter>
-                  <Button onClick={closeDialog}>Done</Button>
-                </DialogFooter>
+        <Button onClick={() => setIsCreateOpen(true)}>Generate Token</Button>
+        <Modal
+          isOpen={isCreateOpen}
+          onClose={closeDialog}
+          title="Generate API Token"
+          showFooter={false}
+        >
+          {generatedToken ? (
+            <div className="space-y-4 py-4">
+              <p className="text-sm font-medium text-green-600">
+                Token generated successfully
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Please copy it now, as you won&apos;t be able to see it again.
+              </p>
+              <div className="flex gap-2 items-center">
+                <Input
+                  disabled
+                  placeholder="Token string"
+                  variant="default"
+                  value={generatedToken}
+                  className="font-mono text-sm flex-1"
+                />
+                <Button variant="outline" size="icon" onClick={handleCopy}>
+                  {copied ? (
+                    <Check className="size-4 text-green-600" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                </Button>
               </div>
-            ) : (
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Token Name</label>
-                  <Input
-                    placeholder="e.g. CI/CD Script"
-                    value={newTokenName}
-                    onChange={(e) => setNewTokenName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Role</label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={newTokenRoleId}
-                    onChange={(e) => setNewTokenRoleId(e.target.value)}
-                  >
-                    <option value="" disabled>
-                      Select a role...
-                    </option>
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={closeDialog}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => createMutation.mutate()}
-                    disabled={
-                      !newTokenName ||
-                      !newTokenRoleId ||
-                      createMutation.isPending
+              <div className="flex justify-end pt-2">
+                <Button onClick={closeDialog}>Done</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Typography variant="label">Token Name</Typography>
+                <Input
+                  placeholder="e.g. CI/CD Script"
+                  value={newTokenName}
+                  onChange={(val: string) => setNewTokenName(val)}
+                  variant="default"
+                />
+              </div>
+              <div className="space-y-2">
+                <Typography variant="label">Role</Typography>
+                <div>
+                  <Dropdown
+                    trigger={
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        {roles.find((r) => r.id === newTokenRoleId)?.name ||
+                          'Select a role...'}
+                      </Button>
                     }
                   >
-                    {createMutation.isPending ? 'Generating...' : 'Generate'}
-                  </Button>
-                </DialogFooter>
+                    {roles.map((r) => (
+                      <DropdownItem
+                        key={r.id}
+                        onSelect={() => setNewTokenRoleId(r.id)}
+                      >
+                        {r.name}
+                      </DropdownItem>
+                    ))}
+                  </Dropdown>
+                </div>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+
+              <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+                <Button type="button" variant="outline" onClick={closeDialog}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={() => createMutation.mutate()}>
+                  {createMutation.isPending ? 'Generating...' : 'Generate'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
 
       <div className="border rounded-md overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {tokens.map((token) => (
-              <TableRow key={token.id}>
-                <TableCell>{token.name}</TableCell>
-                <TableCell>
-                  {roles.find((r) => r.id === token.roleId)?.name || 'Unknown'}
-                </TableCell>
-                <TableCell>
-                  {new Date(token.createdAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  {token.revokedAt ? (
-                    <span className="text-red-500 font-medium">Revoked</span>
-                  ) : (
-                    <span className="text-green-500 font-medium">Active</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {!token.revokedAt && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => revokeMutation.mutate(token.id)}
-                      title="Revoke Token"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-            {tokens.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  No tokens generated yet.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={[
+            { label: 'Name', key: 'name', sortable: true },
+            { label: 'Role', key: 'role', sortable: true },
+            { label: 'Created At', key: 'createdAt', sortable: true },
+            { label: 'Status', key: 'status', sortable: true },
+            { label: 'Actions', key: 'actions', sortable: false },
+          ]}
+          rows={tokens.map((token) => ({
+            name: token.name,
+            role: roles.find((r) => r.id === token.roleId)?.name || 'Unknown',
+            createdAt: new Date(token.createdAt).toLocaleDateString(),
+            status: token.revokedAt ? (
+              <span className="text-red-500 font-medium">Revoked</span>
+            ) : (
+              <span className="text-green-500 font-medium">Active</span>
+            ),
+            actions: (
+              <div className="text-right">
+                {!token.revokedAt && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:text-red-600"
+                    onClick={() => revokeMutation.mutate(token.id)}
+                    title="Revoke Token"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                )}
+              </div>
+            ),
+          }))}
+        />
+        {tokens.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground border-t">
+            No tokens generated yet.
+          </div>
+        )}
       </div>
     </div>
   );

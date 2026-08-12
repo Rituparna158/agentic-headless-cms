@@ -2,16 +2,13 @@
 
 import type * as React from 'react';
 import type { FieldTypeInputProps } from '@/types/component.types';
-import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
+  Input,
+  Switch,
+  Textarea,
+  Dropdown,
+  DropdownItem,
+} from '@repo/shared-ui';
 
 import { LexicalRichTextField } from './lexical-rich-text-field';
 import { MediaPickerField } from './media-picker-field';
@@ -46,7 +43,7 @@ export function FieldTypeInput({
       return (
         <Switch
           checked={Boolean(value)}
-          onCheckedChange={onChange}
+          onCheckedChange={(checked: boolean) => onChange(checked)}
           disabled={disabled}
           {...rest}
         />
@@ -57,13 +54,11 @@ export function FieldTypeInput({
         <Input
           type="number"
           disabled={disabled}
-          value={typeof value === 'number' ? value : ''}
-          onChange={(event) =>
-            onChange(
-              event.target.value === ''
-                ? undefined
-                : Number(event.target.value),
-            )
+          variant="default"
+          placeholder={field.displayName}
+          value={typeof value === 'number' ? value.toString() : ''}
+          onChange={(val: string) =>
+            onChange(val === '' ? undefined : Number(val))
           }
           {...rest}
         />
@@ -74,13 +69,11 @@ export function FieldTypeInput({
         <Input
           type="date"
           disabled={disabled}
+          variant="default"
+          placeholder={field.displayName}
           value={typeof value === 'string' ? value.slice(0, 10) : ''}
-          onChange={(event) =>
-            onChange(
-              event.target.value
-                ? new Date(event.target.value).toISOString()
-                : '',
-            )
+          onChange={(val: string) =>
+            onChange(val ? new Date(val).toISOString() : '')
           }
           {...rest}
         />
@@ -91,13 +84,11 @@ export function FieldTypeInput({
         <Input
           type="datetime-local"
           disabled={disabled}
+          variant="default"
+          placeholder={field.displayName}
           value={typeof value === 'string' ? value.slice(0, 16) : ''}
-          onChange={(event) =>
-            onChange(
-              event.target.value
-                ? new Date(event.target.value).toISOString()
-                : '',
-            )
+          onChange={(val: string) =>
+            onChange(val ? new Date(val).toISOString() : '')
           }
           {...rest}
         />
@@ -107,14 +98,15 @@ export function FieldTypeInput({
       return (
         <Textarea
           disabled={disabled}
-          className="font-mono text-xs"
-          rows={6}
+          className="font-mono text-xs h-32"
+          placeholder={field.displayName}
+          variant="default"
           value={
             typeof value === 'string'
               ? value
               : JSON.stringify(value ?? {}, null, 2)
           }
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
@@ -135,8 +127,9 @@ export function FieldTypeInput({
         <Input
           placeholder="UUID"
           disabled={disabled}
+          variant="default"
           value={typeof value === 'string' ? value : ''}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
@@ -154,30 +147,34 @@ export function FieldTypeInput({
         return (
           <Input
             disabled={disabled}
+            variant="default"
+            placeholder={field.displayName}
             value={typeof value === 'string' ? value : ''}
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(val: string) => onChange(val)}
             {...rest}
           />
         );
       }
 
       return (
-        <Select
-          value={typeof value === 'string' ? value : undefined}
-          onValueChange={onChange}
-          disabled={disabled}
+        <Dropdown
+          trigger={
+            <button
+              type="button"
+              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={disabled}
+              {...rest}
+            >
+              {typeof value === 'string' ? value : 'Select…'}
+            </button>
+          }
         >
-          <SelectTrigger className="w-full" {...rest}>
-            <SelectValue placeholder="Select…" />
-          </SelectTrigger>
-          <SelectContent>
-            {stringOptions.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {stringOptions.map((option) => (
+            <DropdownItem key={option} onSelect={() => onChange(option)}>
+              {option}
+            </DropdownItem>
+          ))}
+        </Dropdown>
       );
     }
 
@@ -186,8 +183,10 @@ export function FieldTypeInput({
         <Input
           type="email"
           disabled={disabled}
+          variant="default"
+          placeholder={field.displayName}
           value={typeof value === 'string' ? value : ''}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
@@ -197,8 +196,10 @@ export function FieldTypeInput({
         <Input
           type="url"
           disabled={disabled}
+          variant="default"
+          placeholder={field.displayName}
           value={typeof value === 'string' ? value : ''}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
@@ -208,8 +209,10 @@ export function FieldTypeInput({
       return (
         <Input
           disabled={disabled}
+          variant="default"
+          placeholder={field.displayName}
           value={typeof value === 'string' ? value : ''}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );

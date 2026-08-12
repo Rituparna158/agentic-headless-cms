@@ -114,8 +114,8 @@ describe('UsersTab', () => {
     await user2.type(screen.getByLabelText(/First Name/), 'New');
     await user2.type(screen.getByLabelText(/Last Name/), 'User');
 
-    await user2.click(screen.getByRole('combobox', { name: /Role/ }));
-    await user2.click(await screen.findByRole('option', { name: 'Admin' }));
+    await user2.click(screen.getByRole('button', { name: 'Select a role' }));
+    await user2.click(await screen.findByRole('menuitem', { name: 'Admin' }));
 
     const sendButton = screen.getByRole('button', { name: 'Send Invite' });
     expect(sendButton).not.toBeDisabled();
@@ -145,8 +145,8 @@ describe('UsersTab', () => {
     );
     await user2.type(screen.getByLabelText(/Email/), 'fail@example.com');
 
-    await user2.click(screen.getByRole('combobox', { name: /Role/ }));
-    await user2.click(await screen.findByRole('option', { name: 'Admin' }));
+    await user2.click(screen.getByRole('button', { name: 'Select a role' }));
+    await user2.click(await screen.findByRole('menuitem', { name: 'Admin' }));
 
     await user2.click(screen.getByRole('button', { name: 'Send Invite' }));
 
@@ -179,8 +179,8 @@ describe('UsersTab', () => {
       await screen.findByRole('button', { name: '+ Invite User' }),
     );
     await user2.type(screen.getByLabelText(/Email/), 'dev@example.com');
-    await user2.click(screen.getByRole('combobox', { name: /Role/ }));
-    await user2.click(await screen.findByRole('option', { name: 'Admin' }));
+    await user2.click(screen.getByRole('button', { name: 'Select a role' }));
+    await user2.click(await screen.findByRole('menuitem', { name: 'Admin' }));
 
     await user2.click(screen.getByRole('button', { name: 'Send Invite' }));
 
@@ -190,9 +190,7 @@ describe('UsersTab', () => {
       ).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByDisplayValue('http://localhost/invite'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('http://localhost/invite')).toBeInTheDocument();
 
     await user2.click(screen.getByRole('button', { name: 'Copy Link' }));
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(

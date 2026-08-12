@@ -4,15 +4,14 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { ShieldAlert, ShieldCheck, QrCode, Key, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button, Input } from '@repo/shared-ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@repo/shared-ui';
 import { useAuthStore } from '@/stores/auth-store';
 import { enrollMfa, verifyMfa, disableMfa } from '@/lib/api/auth';
 
@@ -119,7 +118,7 @@ export function SecurityTab() {
 
             <div className="pt-2">
               <Button
-                variant="destructive"
+                variant="danger"
                 onClick={handleDisableMfa}
                 disabled={disabling}
               >
@@ -200,17 +199,13 @@ export function SecurityTab() {
                   <form onSubmit={handleVerify} className="space-y-4">
                     <div className="space-y-2">
                       <Input
-                        type="text"
-                        pattern="[0-9]*"
-                        inputMode="numeric"
-                        maxLength={6}
                         placeholder="000000"
                         value={code}
-                        onChange={(e) =>
-                          setCode(e.target.value.replace(/\D/g, ''))
+                        onChange={(val: string) =>
+                          setCode(val.replace(/\D/g, ''))
                         }
                         className="text-center font-mono text-lg tracking-widest"
-                        required
+                        variant="default"
                       />
                     </div>
 

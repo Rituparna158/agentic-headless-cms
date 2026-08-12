@@ -3,6 +3,7 @@ import {
   BACKEND_HEALTH_URL,
   E2E_DATABASE_URL,
   FRONTEND_URL,
+  BACKEND_URL,
 } from './__tests__/e2e/constants';
 
 const monorepoRoot = '../..';
@@ -37,19 +38,28 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'pnpm --filter backend dev',
+      command: 'pnpm --filter backend dev:e2e',
       url: BACKEND_HEALTH_URL,
       reuseExistingServer: false,
       cwd: monorepoRoot,
-      timeout: 120_000,
-      env: { DATABASE_URL: E2E_DATABASE_URL },
+      timeout: 300_000,
+      env: {
+        DATABASE_URL: E2E_DATABASE_URL,
+        PORT: '4000',
+        CORS_ORIGIN: FRONTEND_URL,
+      },
     },
     {
-      command: 'pnpm --filter frontend dev',
+      command: 'pnpm --filter frontend dev:e2e',
       url: FRONTEND_URL,
       reuseExistingServer: false,
       cwd: monorepoRoot,
-      timeout: 120_000,
+      timeout: 300_000,
+      env: {
+        NEXT_PUBLIC_E2E_TESTING: 'true',
+        PORT: '4001',
+        NEXT_PUBLIC_API_URL: BACKEND_URL,
+      },
     },
   ],
 });

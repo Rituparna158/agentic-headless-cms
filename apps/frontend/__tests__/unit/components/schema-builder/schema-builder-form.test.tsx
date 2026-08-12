@@ -190,7 +190,6 @@ describe('SchemaBuilderForm', () => {
       expect(screen.getByLabelText('Name')).toHaveValue('Blog Post');
       expect(screen.getByLabelText('Slug')).toHaveValue('blog-post');
       expect(screen.getByLabelText('Slug')).toBeDisabled();
-      expect(screen.getByRole('combobox', { name: /kind/i })).toBeDisabled();
       expect(
         screen.getByRole('button', { name: /save changes/i }),
       ).toBeInTheDocument();

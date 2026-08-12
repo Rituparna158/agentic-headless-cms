@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { listSchemas } from '@/lib/api/schemas';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
 
 /** Landing page for /content — pick which content type's entries to browse. */
 export function ContentTypeList() {
@@ -42,7 +42,9 @@ export function ContentTypeList() {
         <Link key={schema.id} href={`/content/${schema.slug}`}>
           <Card className="hover:border-primary/50 transition-colors">
             <CardHeader>
-              <CardTitle>{schema.name}</CardTitle>
+              <CardTitle size="sm" className="truncate" title={schema.name}>
+                {schema.name}
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground text-sm">
               {schema.definition.fields.length} field

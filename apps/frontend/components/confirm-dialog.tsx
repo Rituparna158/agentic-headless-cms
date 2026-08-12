@@ -1,15 +1,6 @@
 'use client';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Modal } from '@repo/shared-ui';
 
 import type { ConfirmDialogProps } from '@/types/component.types';
 
@@ -29,28 +20,20 @@ export function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          {description ? (
-            <AlertDialogDescription>{description}</AlertDialogDescription>
-          ) : null}
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
-          <AlertDialogAction
-            className={
-              destructive
-                ? 'bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20'
-                : undefined
-            }
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Modal
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      title={title}
+      showFooter={true}
+      confirmText={confirmLabel}
+      cancelText={cancelLabel}
+      onConfirm={onConfirm}
+      onCancel={() => onOpenChange(false)}
+      colorScheme={destructive ? 'destructive' : 'primary'}
+    >
+      {description ? (
+        <p className="text-muted-foreground text-sm">{description}</p>
+      ) : null}
+    </Modal>
   );
 }

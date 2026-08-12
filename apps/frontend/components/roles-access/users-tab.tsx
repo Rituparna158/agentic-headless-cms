@@ -5,31 +5,15 @@ import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Button,
+  Modal,
+  Input,
+  Typography,
+  Dropdown,
+  DropdownItem,
+  DataTable,
+} from '@repo/shared-ui';
 import {
   deleteUser,
   inviteUser,
@@ -134,230 +118,220 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
     <div className="space-y-4">
       {isAdmin && (
         <div className="flex justify-end">
-          <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-            <DialogTrigger asChild>
-              <Button>+ Invite User</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite User</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleInvite} className="space-y-4 pt-4">
+          <Button onClick={() => setIsInviteOpen(true)}>+ Invite User</Button>
+          <Modal
+            isOpen={isInviteOpen}
+            onClose={() => setIsInviteOpen(false)}
+            title="Invite User"
+            showFooter={false}
+          >
+            <form onSubmit={handleInvite} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <label htmlFor="email">
+                  <Typography as="span" variant="label">
+                    Email *
+                  </Typography>
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(val: string) => setEmail(val)}
+                  placeholder="user@example.com"
+                  variant="default"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <label htmlFor="firstName">
+                    <Typography as="span" variant="label">
+                      First Name
+                    </Typography>
+                  </label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="user@example.com"
-                    required
+                    id="firstName"
+                    value={firstName}
+                    onChange={(val: string) => setFirstName(val)}
+                    placeholder="John"
+                    variant="default"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="John"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Doe"
-                    />
-                  </div>
-                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role *</Label>
-                  <Select value={roleId} onValueChange={setRoleId}>
-                    <SelectTrigger id="role">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map((r) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          {r.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsInviteOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={inviteMutation.isPending || !email || !roleId}
-                  >
-                    {inviteMutation.isPending ? 'Sending...' : 'Send Invite'}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          {/* Dev Mode Notification Modal */}
-          <Dialog
-            open={!!devInviteUrl}
-            onOpenChange={(open) => !open && setDevInviteUrl(null)}
-          >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Development Mode: Invite Link</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Since SMTP is not configured in development, you can use this
-                  link to accept the invitation:
-                </p>
-                <Input readOnly value={devInviteUrl || ''} />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(devInviteUrl || '');
-                      toast.success('Copied to clipboard');
-                    }}
-                  >
-                    Copy Link
-                  </Button>
-                  <Button onClick={() => setDevInviteUrl(null)}>Close</Button>
+                  <label htmlFor="lastName">
+                    <Typography as="span" variant="label">
+                      Last Name
+                    </Typography>
+                  </label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(val: string) => setLastName(val)}
+                    placeholder="Doe"
+                    variant="default"
+                  />
                 </div>
               </div>
-            </DialogContent>
-          </Dialog>
+              <div className="space-y-2">
+                <Typography variant="label">Role *</Typography>
+                <div>
+                  <Dropdown
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        {roles.find((r) => r.id === roleId)?.name ||
+                          'Select a role'}
+                      </Button>
+                    }
+                  >
+                    {roles.map((r) => (
+                      <DropdownItem key={r.id} onSelect={() => setRoleId(r.id)}>
+                        {r.name}
+                      </DropdownItem>
+                    ))}
+                  </Dropdown>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsInviteOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={inviteMutation.isPending || !email || !roleId}
+                >
+                  {inviteMutation.isPending ? 'Sending...' : 'Send Invite'}
+                </Button>
+              </div>
+            </form>
+          </Modal>
+
+          <Modal
+            isOpen={!!devInviteUrl}
+            onClose={() => setDevInviteUrl(null)}
+            title="Development Mode: Invite Link"
+            showFooter={true}
+            confirmText="Copy Link"
+            cancelText="Close"
+            onConfirm={() => {
+              navigator.clipboard.writeText(devInviteUrl || '');
+              toast.success('Copied to clipboard');
+            }}
+            onCancel={() => setDevInviteUrl(null)}
+          >
+            <div className="space-y-4 pt-4">
+              <p className="text-sm text-muted-foreground">
+                Since SMTP is not configured in development, you can use this
+                link to accept the invitation:
+              </p>
+              <div className="p-2 border rounded-md bg-muted/20 font-mono text-sm break-all">
+                {devInviteUrl || ''}
+              </div>
+            </div>
+          </Modal>
         </div>
       )}
 
       {/* Confirm Delete Dialog */}
-      <Dialog
-        open={!!userToDelete}
-        onOpenChange={(open) => !open && setUserToDelete(null)}
+      <Modal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        title="Delete User"
+        showFooter={true}
+        confirmText={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+        cancelText="Cancel"
+        onConfirm={() => userToDelete && deleteMutation.mutate(userToDelete.id)}
+        onCancel={() => setUserToDelete(null)}
+        colorScheme="destructive"
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <p className="text-sm text-muted-foreground">
-              Are you sure you want to permanently delete{' '}
-              <span className="font-medium text-foreground">
-                {userToDelete?.email}
-              </span>
-              ? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setUserToDelete(null)}
-                disabled={deleteMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                disabled={deleteMutation.isPending}
-                onClick={() =>
-                  userToDelete && deleteMutation.mutate(userToDelete.id)
-                }
-              >
-                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+        <div className="space-y-4 pt-2">
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to permanently delete{' '}
+            <span className="font-medium text-foreground">
+              {userToDelete?.email}
+            </span>
+            ? This action cannot be undone.
+          </p>
+        </div>
+      </Modal>
 
       <div className="border rounded-md overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Created At</TableHead>
-              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  {user.firstName} {user.lastName}
-                </TableCell>
-                <TableCell className="capitalize">{user.status}</TableCell>
-                <TableCell>
-                  {isAdmin ? (
-                    <Select
-                      value={user.roleId ?? ''}
-                      onValueChange={(newRoleId) =>
-                        updateRoleMutation.mutate({
-                          userId: user.id,
-                          newRoleId,
-                        })
-                      }
-                    >
-                      <SelectTrigger className="h-8 w-36 text-xs">
-                        <SelectValue placeholder="No role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {roles.map((r) => (
-                          <SelectItem key={r.id} value={r.id}>
-                            {r.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">
-                      {roles.find((r) => r.id === user.roleId)?.name ?? '—'}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </TableCell>
-                {isAdmin && (
-                  <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      aria-label={`Delete ${user.email}`}
-                      onClick={() => setUserToDelete(user)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
-            {users.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={isAdmin ? 6 : 5}
-                  className="h-24 text-center"
-                >
-                  No users found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={[
+            { label: 'Email', key: 'email', sortable: true },
+            { label: 'Name', key: 'name', sortable: true },
+            { label: 'Status', key: 'status', sortable: true },
+            { label: 'Role', key: 'role', sortable: true },
+            { label: 'Created At', key: 'createdAt', sortable: true },
+            ...(isAdmin
+              ? [{ label: 'Actions', key: 'actions', sortable: false }]
+              : []),
+          ]}
+          rows={users.map((user) => ({
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`,
+            status: <span className="capitalize">{user.status}</span>,
+            role: isAdmin ? (
+              <Dropdown
+                trigger={
+                  <Button
+                    variant="outline"
+                    className="h-8 w-36 text-xs justify-start text-left font-normal"
+                  >
+                    {roles.find((r) => r.id === user.roleId)?.name || 'No role'}
+                  </Button>
+                }
+              >
+                {roles.map((r) => (
+                  <DropdownItem
+                    key={r.id}
+                    onSelect={() =>
+                      updateRoleMutation.mutate({
+                        userId: user.id,
+                        newRoleId: r.id,
+                      })
+                    }
+                  >
+                    {r.name}
+                  </DropdownItem>
+                ))}
+              </Dropdown>
+            ) : (
+              <span className="text-muted-foreground text-sm">
+                {roles.find((r) => r.id === user.roleId)?.name ?? '—'}
+              </span>
+            ),
+            createdAt: new Date(user.createdAt).toLocaleDateString(),
+            ...(isAdmin
+              ? {
+                  actions: (
+                    <div className="text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        aria-label={`Delete ${user.email}`}
+                        onClick={() => setUserToDelete(user)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ),
+                }
+              : {}),
+          }))}
+        />
+        {users.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground border-t">
+            No users found.
+          </div>
+        )}
       </div>
     </div>
   );

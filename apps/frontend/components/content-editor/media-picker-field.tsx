@@ -6,14 +6,7 @@ import { ImageIcon, Trash2Icon, PencilIcon } from 'lucide-react';
 
 import { getMediaAsset, mediaFileUrl } from '@/lib/api/media';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Button, Modal } from '@repo/shared-ui';
 import Image from 'next/image';
 import type { MediaPickerFieldProps } from '@/types/component.types';
 import type { MediaAsset } from '@repo/types';
@@ -50,7 +43,7 @@ export function MediaPickerField({
   }
 
   return (
-    <Dialog open={open} onOpenChange={disabled ? undefined : setOpen}>
+    <>
       <div
         id={id}
         aria-describedby={ariaDescribedBy}
@@ -91,18 +84,17 @@ export function MediaPickerField({
             {/* Actions */}
             {!disabled && (
               <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2"
-                    title="Change asset"
-                  >
-                    <PencilIcon className="size-3.5" />
-                    <span className="sr-only">Change</span>
-                  </Button>
-                </DialogTrigger>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  title="Change asset"
+                  onClick={() => setOpen(true)}
+                >
+                  <PencilIcon className="size-3.5" />
+                  <span className="sr-only">Change</span>
+                </Button>
                 <Button
                   type="button"
                   variant="ghost"
@@ -119,32 +111,34 @@ export function MediaPickerField({
           </div>
         ) : (
           /*Empty state: dashed Add button */
-          <DialogTrigger asChild>
-            <button
-              type="button"
-              disabled={disabled}
-              className={cn(
-                'flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-8 text-muted-foreground transition-colors',
-                'hover:border-primary/50 hover:bg-muted/30 hover:text-foreground',
-                'disabled:cursor-not-allowed disabled:opacity-50',
-                ariaInvalid && 'border-destructive',
-              )}
-            >
-              <ImageIcon className="size-8" />
-              <span className="text-sm font-medium">Add asset</span>
-              <span className="text-xs">Click to browse the media library</span>
-            </button>
-          </DialogTrigger>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => setOpen(true)}
+            className={cn(
+              'flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-8 text-muted-foreground transition-colors',
+              'hover:border-primary/50 hover:bg-muted/30 hover:text-foreground',
+              'disabled:cursor-not-allowed disabled:opacity-50',
+              ariaInvalid && 'border-destructive',
+            )}
+          >
+            <ImageIcon className="size-8" />
+            <span className="text-sm font-medium">Add asset</span>
+            <span className="text-xs">Click to browse the media library</span>
+          </button>
         )}
       </div>
 
-      {/* Media Library Modal */}
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Media Library</DialogTitle>
-        </DialogHeader>
-        <MediaLibrary selectedId={value} onSelect={handleSelect} />
-      </DialogContent>
-    </Dialog>
+      <Modal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        title="Select Media"
+        showFooter={false}
+      >
+        <div className="py-4">
+          <MediaLibrary selectedId={value} onSelect={handleSelect} />
+        </div>
+      </Modal>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useDashboardOverview } from '@/lib/hooks/use-dashboard-overview';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@repo/shared-ui';
 
 export function StatsCards() {
   const { data, isLoading, isError } = useDashboardOverview();

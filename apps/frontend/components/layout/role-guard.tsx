@@ -9,7 +9,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@repo/shared-ui';
 
 export function RoleGuard({ children }: { children: ReactNode }) {
   const user = useAuthStore((state) => state.user);

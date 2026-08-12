@@ -3,14 +3,8 @@
 import { PlusIcon, Trash2 } from 'lucide-react';
 import { type Control, useFieldArray, useFormContext } from 'react-hook-form';
 
-import { Button } from '@/components/ui/button';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Button, Typography } from '@repo/shared-ui';
+import { Controller } from 'react-hook-form';
 import type { DynamicFieldProps } from '@/types/component.types';
 import { FieldTypeInput } from './field-type-input';
 
@@ -21,24 +15,29 @@ export function DynamicField({ field, control }: DynamicFieldProps) {
   }
 
   return (
-    <FormField
+    <Controller
       control={control}
       name={field.apiId}
-      render={({ field: rhfField }) => (
-        <FormItem>
-          <FormLabel>
-            {field.displayName}
-            {field.isRequired ? ' *' : ''}
-          </FormLabel>
-          <FormControl>
-            <FieldTypeInput
-              field={field}
-              value={rhfField.value}
-              onChange={rhfField.onChange}
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
+      render={({ field: rhfField, fieldState }) => (
+        <div className="grid gap-2">
+          <label htmlFor={field.apiId}>
+            <Typography variant="label">
+              {field.displayName}
+              {field.isRequired ? ' *' : ''}
+            </Typography>
+          </label>
+          <FieldTypeInput
+            id={field.apiId}
+            field={field}
+            value={rhfField.value}
+            onChange={rhfField.onChange}
+          />
+          {fieldState.error?.message ? (
+            <p className="text-sm font-medium text-destructive">
+              {fieldState.error.message}
+            </p>
+          ) : null}
+        </div>
       )}
     />
   );
@@ -64,29 +63,37 @@ function RepeatableDynamicField({ field, control }: DynamicFieldProps) {
 
       <div className="grid gap-2">
         {fieldArray.fields.map((item, index) => (
-          <FormField
+          <Controller
             key={item.id}
             control={control}
             name={`${field.apiId}.${index}`}
-            render={({ field: rhfField }) => (
-              <FormItem className="flex flex-row items-start gap-2 space-y-0">
-                <FormControl>
-                  <FieldTypeInput
-                    field={field}
-                    value={rhfField.value}
-                    onChange={rhfField.onChange}
-                  />
-                </FormControl>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Remove ${field.displayName} item ${index + 1}`}
-                  onClick={() => fieldArray.remove(index)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </FormItem>
+            render={({ field: rhfField, fieldState }) => (
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-row items-start gap-2">
+                  <div className="flex-1">
+                    <FieldTypeInput
+                      id={`${field.apiId}-${index}`}
+                      field={field}
+                      value={rhfField.value}
+                      onChange={rhfField.onChange}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Remove ${field.displayName} item ${index + 1}`}
+                    onClick={() => fieldArray.remove(index)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+                {fieldState.error?.message ? (
+                  <p className="text-sm font-medium text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                ) : null}
+              </div>
             )}
           />
         ))}

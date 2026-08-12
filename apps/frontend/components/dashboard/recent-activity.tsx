@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useDashboardOverview } from '@/lib/hooks/use-dashboard-overview';
 import { formatRelativeTime } from '@/lib/utils';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@repo/shared-ui';
 
 export function RecentActivity() {
   const { data, isLoading, isError } = useDashboardOverview();

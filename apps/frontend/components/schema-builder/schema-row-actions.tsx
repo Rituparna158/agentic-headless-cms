@@ -4,23 +4,7 @@ import { useState } from 'react';
 import { MoreHorizontal, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Button, Modal, Dropdown, DropdownItem } from '@repo/shared-ui';
 import { deleteSchema } from '@/lib/api/schemas';
 import type { SchemaRecord } from '@repo/types';
 import { useHasPermission } from '@/hooks/use-permissions';
@@ -60,87 +44,62 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <Dropdown
+        trigger={
           <Button variant="ghost" className="h-8 w-8 p-0">
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            onClick={(e) => {
-              if (canDelete) setShowDeleteDialog(true);
-              else e.preventDefault();
-            }}
-            disabled={!canDelete}
-            title={!canDelete ? 'You do not have permission to delete.' : ''}
-          >
+        }
+      >
+        <DropdownItem
+          className="text-destructive focus:text-destructive"
+          onSelect={(e: Event) => {
+            if (canDelete) setShowDeleteDialog(true);
+            else e.preventDefault();
+          }}
+          disabled={!canDelete}
+          title={!canDelete ? 'You do not have permission to delete.' : ''}
+        >
+          <div className="flex items-center">
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </div>
+        </DropdownItem>
+      </Dropdown>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the <strong>{schema.name}</strong>{' '}
-              content type.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={(e) => {
-                e.preventDefault();
-                deleteMutation.mutate({ id: schema.id, force: false });
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={showForceDeleteDialog}
-        onOpenChange={setShowForceDeleteDialog}
+      <Modal
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        title="Are you absolutely sure?"
+        confirmText={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+        cancelText="Cancel"
+        onConfirm={() => deleteMutation.mutate({ id: schema.id, force: false })}
+        onCancel={() => setShowDeleteDialog(false)}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Schema has existing content</AlertDialogTitle>
-            <AlertDialogDescription>
-              The <strong>{schema.name}</strong> content type has existing
-              content entries. Are you sure you want to delete this content type{' '}
-              <strong>AND all of its content</strong>? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={(e) => {
-                e.preventDefault();
-                deleteMutation.mutate({ id: schema.id, force: true });
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Force Delete All'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <div className="text-sm text-muted-foreground py-4 wrap-break-word">
+          This will permanently delete the <strong>{schema.name}</strong>{' '}
+          content type.
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showForceDeleteDialog}
+        onClose={() => setShowForceDeleteDialog(false)}
+        title="Schema has existing content"
+        confirmText={
+          deleteMutation.isPending ? 'Deleting...' : 'Force Delete All'
+        }
+        cancelText="Cancel"
+        onConfirm={() => deleteMutation.mutate({ id: schema.id, force: true })}
+        onCancel={() => setShowForceDeleteDialog(false)}
+      >
+        <div className="text-sm text-muted-foreground py-4">
+          The <strong>{schema.name}</strong> content type has existing content
+          entries. Are you sure you want to delete this content type{' '}
+          <strong>AND all of its content</strong>? This action cannot be undone.
+        </div>
+      </Modal>
     </>
   );
 }

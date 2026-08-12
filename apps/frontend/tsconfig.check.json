@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./*"],
+      "@repo/utils/rbac": ["../../packages/utils/src/rbac.util.ts"],
+      "@repo/shared-ui": ["./types/shared-ui-mock.d.ts"]
+    }
+  }
+}

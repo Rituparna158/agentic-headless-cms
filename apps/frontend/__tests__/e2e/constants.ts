@@ -3,10 +3,10 @@
  * at
  */
 export const FRONTEND_URL =
-  process.env.E2E_FRONTEND_URL ?? 'http://localhost:3001';
+  process.env.E2E_FRONTEND_URL ?? 'http://localhost:4001';
 
 export const BACKEND_URL =
-  process.env.E2E_BACKEND_URL ?? 'http://localhost:3000';
+  process.env.E2E_BACKEND_URL ?? 'http://localhost:4000';
 
 export const BACKEND_HEALTH_URL = `${BACKEND_URL}/health/live`;
 

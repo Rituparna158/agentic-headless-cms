@@ -36,14 +36,17 @@ test('admin can create a role with a content-type permission', async ({
   expect(schemaRes.ok()).toBeTruthy();
 
   await page.goto('/roles-access');
-  await page.getByRole('tab', { name: 'Roles' }).click();
+  await page.getByRole('button', { name: 'Roles', exact: true }).click();
 
   await page.getByRole('button', { name: '+ Create New Role' }).click();
 
   await page.getByPlaceholder('e.g. Content Editor').fill(roleName);
 
   const schemaRow = page.getByRole('row', { name: schemaName });
-  await schemaRow.getByRole('checkbox').nth(0).check();
+  await schemaRow
+    .locator('input[type="checkbox"]')
+    .nth(0)
+    .check({ force: true });
 
   await page.getByRole('button', { name: 'Save Role', exact: true }).click();
 

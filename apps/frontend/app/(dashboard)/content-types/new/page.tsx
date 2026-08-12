@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
 import { SchemaBuilderForm } from '@/components/schema-builder/schema-builder-form';
 
 export const metadata: Metadata = {

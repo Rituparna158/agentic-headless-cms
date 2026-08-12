@@ -25,5 +25,5 @@ test('admin can upload a file and delete it from the media library', async ({
   ).toBeVisible();
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
 
-  await expect(page.getByText(filename)).not.toBeVisible();
+  await expect(page.getByText(filename)).toHaveCount(0);
 });

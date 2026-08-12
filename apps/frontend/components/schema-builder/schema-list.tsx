@@ -4,16 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { PencilIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Button, Card, CardContent, DataTable } from '@repo/shared-ui';
 import { SchemaRowActions } from './schema-row-actions';
 
 export function SchemaList() {
@@ -47,56 +38,49 @@ export function SchemaList() {
   }
 
   return (
-    <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>API ID</TableHead>
-            <TableHead>Kind</TableHead>
-            <TableHead>Fields</TableHead>
-            <TableHead>Localized</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((schema) => {
-            const isLocalized = schema.definition.fields.some(
-              (field) => field.isLocalized,
-            );
-            return (
-              <TableRow key={schema.id}>
-                <TableCell className="font-medium">{schema.name}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {schema.slug}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {schema.type}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {schema.definition.fields.length}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {isLocalized ? 'Yes' : 'No'}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="icon" asChild>
-                      <Link
-                        href={`/content-types/${schema.slug}/edit`}
-                        title="Edit content type"
-                      >
-                        <PencilIcon className="size-4" />
-                      </Link>
-                    </Button>
-                    <SchemaRowActions schema={schema} />
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </Card>
+    <DataTable
+      columns={[
+        { label: 'Name', key: 'name', sortable: true },
+        { label: 'API ID', key: 'slug', sortable: true },
+        { label: 'Kind', key: 'kind', sortable: true },
+        { label: 'Fields', key: 'fields', sortable: true },
+        { label: 'Localized', key: 'localized', sortable: true },
+        { label: 'Actions', key: 'actions', sortable: false },
+      ]}
+      rows={data.map((schema) => {
+        const isLocalized = schema.definition.fields.some(
+          (field) => field.isLocalized,
+        );
+        return {
+          name: <span className="font-medium">{schema.name}</span>,
+          slug: <span className="text-muted-foreground">{schema.slug}</span>,
+          kind: <span className="text-muted-foreground">{schema.type}</span>,
+          fields: (
+            <span className="text-muted-foreground">
+              {schema.definition.fields.length}
+            </span>
+          ),
+          localized: (
+            <span className="text-muted-foreground">
+              {isLocalized ? 'Yes' : 'No'}
+            </span>
+          ),
+          actions: (
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="ghost" size="icon" asChild>
+                <Link
+                  href={`/content-types/${schema.slug}/edit`}
+                  title="Edit content type"
+                >
+                  <PencilIcon className="size-4" />
+                </Link>
+              </Button>
+              <SchemaRowActions schema={schema} />
+            </div>
+          ),
+        };
+      })}
+      enablePagination={false}
+    />
   );
 }

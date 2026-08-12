@@ -12,7 +12,7 @@ import { Bold, Italic, Underline } from 'lucide-react';
 import type * as React from 'react';
 import type { LexicalRichTextFieldProps } from '@/types/component.types';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/shared-ui';
 import { cn } from '@/lib/utils';
 
 function Toolbar({ disabled }: { disabled?: boolean }) {

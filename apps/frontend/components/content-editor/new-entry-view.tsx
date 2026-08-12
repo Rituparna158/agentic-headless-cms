@@ -1,7 +1,7 @@
 'use client';
 
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
 import { ContentEntryForm } from './content-entry-form';
 
 export function NewEntryView({ schemaSlug }: { schemaSlug: string }) {

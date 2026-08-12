@@ -22,11 +22,13 @@ test('a non-admin role cannot see or perform admin-only actions', async ({
   expect(roleRes.ok()).toBeTruthy();
 
   await page.goto('/roles-access');
-  await page.getByRole('tab', { name: 'Users' }).click();
+  await page.getByRole('button', { name: 'Users', exact: true }).click();
   await page.getByRole('button', { name: '+ Invite User' }).click();
   await page.locator('#email').fill(email);
-  await page.locator('#role').click();
-  await page.getByRole('option', { name: roleName }).click();
+  await page.getByRole('button', { name: 'Select a role' }).click();
+  await page
+    .getByRole('menuitem', { name: roleName })
+    .evaluate((node) => (node as HTMLElement).click());
 
   const [inviteResponse] = await Promise.all([
     page.waitForResponse(
@@ -69,11 +71,15 @@ test('a non-admin role cannot see or perform admin-only actions', async ({
   /* Roles & Access page hides the Roles/API Tokens tabs and the invite
    button entirely for non-admins - not just disables them.*/
   await memberPage.goto('/roles-access');
-  await expect(memberPage.getByRole('tab', { name: 'Users' })).toBeVisible();
-  await expect(memberPage.getByRole('tab', { name: 'Roles' })).toHaveCount(0);
-  await expect(memberPage.getByRole('tab', { name: 'API Tokens' })).toHaveCount(
-    0,
-  );
+  await expect(
+    memberPage.getByRole('button', { name: 'Users', exact: true }),
+  ).toBeVisible();
+  await expect(
+    memberPage.getByRole('button', { name: 'Roles', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    memberPage.getByRole('button', { name: 'API Tokens', exact: true }),
+  ).toHaveCount(0);
   await expect(
     memberPage.getByRole('button', { name: '+ Invite User' }),
   ).toHaveCount(0);

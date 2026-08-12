@@ -13,8 +13,8 @@ import { useState } from 'react';
 
 import { useHasPermission } from '@/hooks/use-permissions';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@repo/shared-ui';
+import { Card, CardContent } from '@repo/shared-ui';
 import { deleteMedia, listMedia, mediaFileUrl } from '@/lib/api/media';
 
 const PAGE_SIZE = 24;
@@ -107,7 +107,7 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
               >
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="danger"
                   size="icon"
                   className="size-full"
                   aria-label={`Delete ${asset.filename}`}
