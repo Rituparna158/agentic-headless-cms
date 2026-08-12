@@ -42,7 +42,7 @@ test('content list search filters entries by title', async ({ page }) => {
   await expect(page.getByText('Findable Apple Pie')).toBeVisible();
   await expect(page.getByText('Unrelated Banana Bread')).toBeVisible();
 
-  await page.getByRole('textbox').fill('Apple');
+  await page.locator('main').getByRole('textbox').fill('Apple');
 
   await expect(page.getByText('Findable Apple Pie')).toBeVisible();
   await expect(page.getByText('Unrelated Banana Bread')).not.toBeVisible();

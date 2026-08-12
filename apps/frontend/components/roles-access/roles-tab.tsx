@@ -267,6 +267,7 @@ function RoleDetails({
         <h3 className="font-medium">Permissions per content-type</h3>
         <div className="border rounded-md overflow-x-auto">
           <DataTable
+            enablePagination={false}
             columns={[
               { label: 'Type', key: 'type', sortable: true },
               { label: 'Read', key: 'read', sortable: false },
