@@ -764,6 +764,9 @@ importers:
         specifier: ^8.13.1
         version: 8.22.0
     devDependencies:
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../types
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -793,7 +796,7 @@ importers:
     dependencies:
       '@mindfiredigital/ignix-cli':
         specifier: ^3.3.0
-        version: 3.3.0(zod@4.4.3)
+        version: 3.4.0(zod@4.4.3)
       '@mindfiredigital/ignix-ui':
         specifier: ^1.4.3
         version: 1.4.3(framer-motion@12.43.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -839,7 +842,7 @@ importers:
     devDependencies:
       tailwindcss:
         specifier: ^4.3.2
-        version: 4.3.2
+        version: 4.3.3
 
   packages/storage:
     dependencies:
@@ -3372,8 +3375,8 @@ packages:
       typescript:
         optional: true
 
-  '@mindfiredigital/ignix-cli@3.3.0':
-    resolution: {integrity: sha512-JxWQ1KoweoEkjSCC6YuPagwf1J3owwBcMI1zbcoXgBo5JnADVBPLPiXGhGjeDTDDafvFe2bUVMfCmmXO/8q0DA==}
+  '@mindfiredigital/ignix-cli@3.4.0':
+    resolution: {integrity: sha512-hXrHjlZyPtNlzjBg48q+/m96NCL7v8r3rwQJX4Y2bM0QlYG1ZPvX/s0XWu7eZXxqE91FTN1B1KbWEVnSp1Bk+w==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -8972,6 +8975,9 @@ packages:
   tailwindcss@4.3.2:
     resolution: {integrity: sha512-WtctNNSH8A9jlMIqxzuYumOHU5uGZyRv0Q5svQl+oEPy5w84YpBxdb7MdqyiSPQge5jTJ6zFQLq0PFygdccSBA==}
 
+  tailwindcss@4.3.3:
+    resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
+
   tapable@2.3.3:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
@@ -12059,7 +12065,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.2
 
-  '@mindfiredigital/ignix-cli@3.3.0(zod@4.4.3)':
+  '@mindfiredigital/ignix-cli@3.4.0(zod@4.4.3)':
     dependencies:
       '@antfu/ni': 0.21.12
       '@modelcontextprotocol/sdk': 1.30.0(zod@4.4.3)
@@ -18313,6 +18319,8 @@ snapshots:
       - yaml
 
   tailwindcss@4.3.2: {}
+
+  tailwindcss@4.3.3: {}
 
   tapable@2.3.3: {}
 

@@ -61,8 +61,11 @@ function renderTab() {
 describe('RolesTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListRoles.mockResolvedValue([editorRole]);
-    mockListSchemas.mockResolvedValue([blogSchema]);
+    mockListRoles.mockResolvedValue({ data: [editorRole], meta: { total: 1 } });
+    mockListSchemas.mockResolvedValue({
+      data: [blogSchema],
+      meta: { total: 1 },
+    });
   });
 
   it('defaults to the "New Role" form', async () => {

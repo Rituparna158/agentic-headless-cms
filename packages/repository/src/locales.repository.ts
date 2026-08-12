@@ -1,7 +1,12 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import type { BaseQueryOptions } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
-import { locales, RecordNotFoundError } from '@repo/shared-db';
+import {
+  locales,
+  RecordNotFoundError,
+  buildPaginationOptions,
+} from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
 
@@ -10,15 +15,40 @@ export class LocalesRepository {
     return getDatabaseAdapter().getDb();
   }
 
-  async list() {
+  async list(options: BaseQueryOptions = {}) {
     try {
       logger.info('LocalesRepository: listing locales');
-      const result = await this.db.select().from(locales);
+
+      const { limit, offset, orderBy, where } = buildPaginationOptions(
+        options,
+        {
+          id: locales.id,
+          code: locales.code,
+          name: locales.name,
+          createdAt: locales.createdAt,
+        },
+        [locales.code, locales.name],
+      );
+
+      const result = await this.db
+        .select()
+        .from(locales)
+        .where(where)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(...orderBy);
+
+      const countResult = await this.db
+        .select({ count: sql<number>`cast(count(${locales.id}) as integer)` })
+        .from(locales)
+        .where(where);
+      const total = countResult[0]?.count ?? 0;
+
       logger.debug(
-        { count: result.length },
+        { count: result.length, total },
         'LocalesRepository: list complete',
       );
-      return result;
+      return [result, total] as const;
     } catch (error) {
       logger.error({ err: error }, 'LocalesRepository Error in list:');
       throw new ApiError(500, REPO_ERRORS.LIST_LOCALES_FAILED);

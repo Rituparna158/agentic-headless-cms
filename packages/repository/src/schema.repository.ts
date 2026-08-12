@@ -6,7 +6,11 @@ import {
   deleteSchema as deleteSchemaRecord,
   type Database,
 } from '@repo/shared-db';
-import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/types';
+import type {
+  CreateSchemaInput,
+  UpdateSchemaInput,
+  BaseQueryOptions,
+} from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import { ApiError } from '@repo/utils';
@@ -40,12 +44,15 @@ export class SchemaRepository {
     }
   }
 
-  async list() {
+  async list(options: BaseQueryOptions = {}) {
     try {
       logger.info('SchemaRepository: listing schemas');
       const db = this.getDb();
-      const result = await listSchemaRecords(db);
-      logger.debug({ count: result.length }, 'SchemaRepository: list complete');
+      const result = await listSchemaRecords(db, options);
+      logger.debug(
+        { count: result[0].length },
+        'SchemaRepository: list complete',
+      );
       return result;
     } catch (error) {
       logger.error({ err: error }, 'SchemaRepository Error in list:');

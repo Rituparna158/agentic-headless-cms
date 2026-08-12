@@ -17,8 +17,7 @@ import { Button } from '@repo/shared-ui';
 import { Card, CardContent } from '@repo/shared-ui';
 import { deleteMedia, listMedia, mediaFileUrl } from '@/lib/api/media';
 
-const PAGE_SIZE = 24;
-
+// Page size is now managed via state
 function AssetThumbnail({
   asset,
   priority = false,
@@ -49,11 +48,12 @@ function AssetThumbnail({
 export function MediaGrid({ folderId }: { folderId?: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(24);
   const [pendingDelete, setPendingDelete] = useState<MediaAsset | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['media', page, folderId],
-    queryFn: () => listMedia({ page, pageSize: PAGE_SIZE, folderId }),
+    queryFn: () => listMedia({ page, pageSize, folderId }),
     placeholderData: keepPreviousData,
   });
 
@@ -125,30 +125,51 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
         ))}
       </div>
 
-      {pagination && pagination.pageCount > 1 ? (
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm">
-            Page {pagination.page} of {pagination.pageCount} ({pagination.total}{' '}
-            files)
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= pagination.pageCount}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
+      {pagination ? (
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t">
+          <div className="flex items-center gap-4 text-muted-foreground text-sm">
+            <p>
+              Page {pagination.page} of {pagination.pageCount} (
+              {pagination.total} files)
+            </p>
+            <div className="flex items-center gap-2">
+              <span>Per page:</span>
+              <select
+                className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+              >
+                {[12, 24, 48, 96].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
+          {pagination.pageCount > 1 && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= pagination.pageCount}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </div>
       ) : null}
 

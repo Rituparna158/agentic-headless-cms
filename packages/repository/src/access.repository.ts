@@ -1,4 +1,5 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
+import type { BaseQueryOptions } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import {
@@ -10,6 +11,7 @@ import {
   userApplications,
   withTransaction,
   RecordNotFoundError,
+  buildPaginationOptions,
 } from '@repo/shared-db';
 import type { PermissionData } from '@repo/types';
 import { ApiError } from '@repo/utils';
@@ -20,20 +22,48 @@ export class AccessRepository {
     return getDatabaseAdapter().getDb();
   }
 
-  async listRoles() {
+  async listRoles(options: BaseQueryOptions = {}) {
     try {
       logger.info('AccessRepository: listing roles');
-      const allRoles = await this.db.select().from(roles);
+
+      const { limit, offset, orderBy, where } = buildPaginationOptions(
+        options,
+        {
+          id: roles.id,
+          name: roles.name,
+          createdAt: roles.createdAt,
+          updatedAt: roles.updatedAt,
+        },
+        [roles.name, roles.description],
+      );
+
+      const allRoles = await this.db
+        .select()
+        .from(roles)
+        .where(where)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(...orderBy);
+
+      const countResult = await this.db
+        .select({ count: sql<number>`cast(count(${roles.id}) as integer)` })
+        .from(roles)
+        .where(where);
+      const total = countResult[0]?.count ?? 0;
+
       const allPermissions = await this.db.select().from(permissions);
 
       logger.debug(
-        { roleCount: allRoles.length },
+        { roleCount: allRoles.length, total },
         'AccessRepository: listRoles complete',
       );
-      return allRoles.map((role) => ({
+
+      const data = allRoles.map((role) => ({
         ...role,
         permissions: allPermissions.filter((p) => p.roleId === role.id),
       }));
+
+      return [data, total] as const;
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in listRoles:');
       throw new ApiError(500, REPO_ERRORS.FETCH_ROLES_FAILED);
@@ -196,17 +226,46 @@ export class AccessRepository {
     }
   }
 
-  async listUsers() {
+  async listUsers(options: BaseQueryOptions = {}) {
     try {
       logger.info('AccessRepository: listing users');
-      const allUsers = await this.db.select().from(users);
+
+      const { limit, offset, orderBy, where } = buildPaginationOptions(
+        options,
+        {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          createdAt: users.createdAt,
+          status: users.status,
+        },
+        [users.email, users.firstName, users.lastName],
+      );
+
+      const allUsers = await this.db
+        .select()
+        .from(users)
+        .where(where)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(...orderBy);
+
+      const countResult = await this.db
+        .select({ count: sql<number>`cast(count(${users.id}) as integer)` })
+        .from(users)
+        .where(where);
+      const total = countResult[0]?.count ?? 0;
+
       const allUserApps = await this.db.select().from(userApplications);
       const allUserRoles = await this.db.select().from(userRoles);
+
       logger.debug(
-        { userCount: allUsers.length },
+        { userCount: allUsers.length, total },
         'AccessRepository: listUsers complete',
       );
-      return allUsers.map((u) => {
+
+      const data = allUsers.map((u) => {
         const userAppIds = allUserApps
           .filter((ua) => ua.userId === u.id)
           .map((ua) => ua.id);
@@ -217,6 +276,8 @@ export class AccessRepository {
               ?.roleId ?? null,
         };
       });
+
+      return [data, total] as const;
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in listUsers:');
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
@@ -429,15 +490,39 @@ export class AccessRepository {
     }
   }
 
-  async listTokens() {
+  async listTokens(options: BaseQueryOptions = {}) {
     try {
-      logger.info('AccessRepository: listing API tokens');
-      const tokens = await this.db.select().from(apiTokens);
+      logger.info('AccessRepository: listing tokens');
+
+      const { limit, offset, orderBy, where } = buildPaginationOptions(
+        options,
+        {
+          id: apiTokens.id,
+          name: apiTokens.name,
+          createdAt: apiTokens.createdAt,
+        },
+        [apiTokens.name],
+      );
+
+      const allTokens = await this.db
+        .select()
+        .from(apiTokens)
+        .where(where)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(...orderBy);
+
+      const countResult = await this.db
+        .select({ count: sql<number>`cast(count(${apiTokens.id}) as integer)` })
+        .from(apiTokens)
+        .where(where);
+      const total = countResult[0]?.count ?? 0;
+
       logger.debug(
-        { tokenCount: tokens.length },
+        { tokenCount: allTokens.length, total },
         'AccessRepository: listTokens complete',
       );
-      return tokens;
+      return [allTokens, total] as const;
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in listTokens:');
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);

@@ -22,7 +22,7 @@ import {
   updateUserRole,
 } from '@/lib/api/access';
 import { UsersTabProps } from '@/types/component.types';
-import type { RoleRecord, UserRecord } from '@repo/types';
+import type { UserRecord } from '@repo/types';
 
 export function UsersTab({ isAdmin = false }: UsersTabProps) {
   const queryClient = useQueryClient();
@@ -34,16 +34,24 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
   const [devInviteUrl, setDevInviteUrl] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserRecord | null>(null);
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['access', 'users'],
-    queryFn: listUsers,
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sort, setSort] = useState('createdAt:desc');
+  const [search, setSearch] = useState('');
+
+  const { data: usersData, isLoading } = useQuery({
+    queryKey: ['access', 'users', page, pageSize, sort, search],
+    queryFn: () => listUsers({ page, pageSize, sort, search }),
   });
 
-  const { data: roles = [] } = useQuery<RoleRecord[]>({
+  const { data: rolesData } = useQuery({
     queryKey: ['access', 'roles'],
-    queryFn: listRoles,
+    queryFn: () => listRoles({ page: 1, pageSize: 100 }), // Fetch all roles for dropdown
     enabled: isAdmin,
   });
+
+  const users = usersData?.data || [];
+  const roles = rolesData?.data || [];
 
   const inviteMutation = useMutation({
     mutationFn: inviteUser,
@@ -326,6 +334,31 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                 }
               : {}),
           }))}
+          enableFiltering={true}
+          manualFiltering={true}
+          filterPlaceholder="Search users..."
+          onSearchChange={(val: string) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          enableSorting={true}
+          manualSorting={true}
+          defaultSortKey={sort.split(':')[0]}
+          defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
+          onSortChange={(
+            key: string | number | symbol,
+            direction: 'asc' | 'desc',
+          ) => {
+            setSort(`${String(key)}:${direction}`);
+            setPage(1);
+          }}
+          enablePagination={true}
+          manualPagination={true}
+          page={page}
+          pageCount={usersData?.meta?.pagination?.pageCount ?? 1}
+          pageSize={pageSize}
+          onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+          onPageChange={(newPage: number) => setPage(newPage)}
         />
         {users.length === 0 && (
           <div className="p-8 text-center text-muted-foreground border-t">

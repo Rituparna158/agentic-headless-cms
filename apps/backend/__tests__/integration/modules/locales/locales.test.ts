@@ -11,7 +11,8 @@ vi.mock('../../../../src/modules/locales/locales.service.js', () => {
   LocalesService.prototype.list = vi
     .fn()
     .mockResolvedValue([
-      { id: 'l1', code: 'en', name: 'English', isDefault: true },
+      [{ id: 'l1', code: 'en', name: 'English', isDefault: true }],
+      1,
     ]);
   LocalesService.prototype.create = vi.fn().mockResolvedValue({
     id: 'l2',
@@ -57,7 +58,7 @@ describe('Locales Module', () => {
         .get('/api/v1/locales')
         .set('Cookie', [`token=${adminToken}`]);
       expect(res.status).toBe(200);
-      expect(res.body.data[0].code).toBe('en');
+      expect(res.body.data.data[0].code).toBe('en');
     });
   });
 

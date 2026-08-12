@@ -7,10 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
 
 /** Landing page for /content — pick which content type's entries to browse. */
 export function ContentTypeList() {
-  const { data, isLoading, isError } = useQuery({
+  const {
+    data: result,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['schemas'],
-    queryFn: listSchemas,
+    queryFn: () => listSchemas(),
   });
+
+  const data = result?.data;
 
   if (isLoading) {
     return (

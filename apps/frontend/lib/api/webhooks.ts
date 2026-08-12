@@ -1,9 +1,17 @@
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, buildQueryString } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';
-import { WebhookRecord } from '@repo/types';
+import type {
+  WebhookRecord,
+  BaseQueryOptions,
+  PaginatedResult,
+} from '@repo/types';
 
-export function listWebhooks(): Promise<WebhookRecord[]> {
-  return apiFetch<WebhookRecord[]>(API_PATHS.WEBHOOKS.BASE);
+export function listWebhooks(
+  options?: BaseQueryOptions,
+): Promise<PaginatedResult<WebhookRecord>> {
+  return apiFetch<PaginatedResult<WebhookRecord>>(
+    `${API_PATHS.WEBHOOKS.BASE}${buildQueryString(options)}`,
+  );
 }
 
 export function createWebhook(data: {

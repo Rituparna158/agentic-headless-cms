@@ -56,8 +56,8 @@ function renderTab() {
 describe('TokensTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListTokens.mockResolvedValue([]);
-    mockListRoles.mockResolvedValue([adminRole]);
+    mockListTokens.mockResolvedValue({ data: [], meta: { total: 0 } });
+    mockListRoles.mockResolvedValue({ data: [adminRole], meta: { total: 1 } });
   });
 
   it('shows an empty state when there are no tokens', async () => {
@@ -68,7 +68,10 @@ describe('TokensTab', () => {
   });
 
   it('lists a token with its resolved role name and Active status', async () => {
-    mockListTokens.mockResolvedValue([activeToken]);
+    mockListTokens.mockResolvedValue({
+      data: [activeToken],
+      meta: { total: 1 },
+    });
     renderTab();
 
     expect(await screen.findByText('CI Token')).toBeInTheDocument();
@@ -80,9 +83,10 @@ describe('TokensTab', () => {
   });
 
   it('hides the revoke button for an already-revoked token', async () => {
-    mockListTokens.mockResolvedValue([
-      { ...activeToken, revokedAt: new Date().toISOString() },
-    ]);
+    mockListTokens.mockResolvedValue({
+      data: [{ ...activeToken, revokedAt: new Date().toISOString() }],
+      meta: { total: 1 },
+    });
     renderTab();
 
     expect(await screen.findByText('Revoked')).toBeInTheDocument();
@@ -123,7 +127,10 @@ describe('TokensTab', () => {
   });
 
   it('revokes a token when the revoke button is clicked', async () => {
-    mockListTokens.mockResolvedValue([activeToken]);
+    mockListTokens.mockResolvedValue({
+      data: [activeToken],
+      meta: { total: 1 },
+    });
     mockRevokeToken.mockResolvedValue(undefined);
     const user = userEvent.setup();
     renderTab();

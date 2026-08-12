@@ -3,20 +3,37 @@ import { WebhooksService } from './webhooks.service.js';
 import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/constants';
 import { asyncHandler, BadRequestError, ApiResponse } from '@repo/utils';
 import { logger } from '@repo/logger';
-
+import {
+  parseQueryOptions,
+  formatPaginatedResponse,
+} from '../../utils/pagination.util.js';
 const webhooksService = new WebhooksService();
 
 export const listWebhooks: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('WebhooksController: listWebhooks start');
-    const webhooks = await webhooksService.list();
+
+    const options = parseQueryOptions(req.query);
+    const [webhooks, total] = await webhooksService.list(options);
+
     logger.debug(
-      { count: webhooks.length },
+      { count: webhooks.length, total },
       'WebhooksController: listWebhooks success',
     );
     res
       .status(200)
-      .json(new ApiResponse(200, webhooks, 'Webhooks listed successfully'));
+      .json(
+        new ApiResponse(
+          200,
+          formatPaginatedResponse(
+            webhooks,
+            total,
+            options.page!,
+            options.pageSize!,
+          ),
+          'Webhooks listed successfully',
+        ),
+      );
   },
 );
 

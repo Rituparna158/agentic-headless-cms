@@ -40,7 +40,7 @@ function renderTab() {
 describe('LocalesTab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockList.mockResolvedValue([]);
+    mockList.mockResolvedValue({ data: [], meta: { total: 0 } });
   });
 
   it('shows an empty state when there are no locales', async () => {
@@ -51,7 +51,7 @@ describe('LocalesTab', () => {
   });
 
   it('lists an existing locale and marks the default', async () => {
-    mockList.mockResolvedValue([enLocale]);
+    mockList.mockResolvedValue({ data: [enLocale], meta: { total: 1 } });
     renderTab();
 
     expect(await screen.findByText('en')).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('LocalesTab', () => {
   });
 
   it('deletes a locale after confirming', async () => {
-    mockList.mockResolvedValue([enLocale]);
+    mockList.mockResolvedValue({ data: [enLocale], meta: { total: 1 } });
     mockDelete.mockResolvedValue(undefined);
     const user = userEvent.setup();
     renderTab();

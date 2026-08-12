@@ -439,6 +439,16 @@ export interface DataTableProps {
   onPageChange?: (page: number) => void;
 
   /**
+   * Current rows per page. Use with manualPagination.
+   */
+  pageSize?: number;
+
+  /**
+   * Callback when rows per page changes.
+   */
+  onPageSizeChange?: (pageSize: number) => void;
+
+  /**
    * Callback when sort changes.
    */
   onSortChange?: (
@@ -513,7 +523,9 @@ export const DataTable: React.FC<DataTableProps> = ({
   pageCount,
   totalCount: manualTotalCount,
   page: manualPage,
+  pageSize,
   onPageChange: manualOnPageChange,
+  onPageSizeChange,
   onSortChange: manualOnSortChange,
   onSearchChange: manualOnSearchChange,
 }) => {
@@ -530,7 +542,10 @@ export const DataTable: React.FC<DataTableProps> = ({
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(initialPage);
-  const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
+  const [internalRowsPerPage, setInternalRowsPerPage] =
+    useState(initialRowsPerPage);
+
+  const rowsPerPage = pageSize !== undefined ? pageSize : internalRowsPerPage;
 
   // Filter state
   const [filterQuery, setFilterQuery] = useState('');
@@ -756,12 +771,17 @@ export const DataTable: React.FC<DataTableProps> = ({
   const handleRowsPerPageChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       const value = Number(event.target.value) || 5;
-      setRowsPerPage(value);
+      if (pageSize === undefined) {
+        setInternalRowsPerPage(value);
+      }
+      if (onPageSizeChange) {
+        onPageSizeChange(value);
+      }
       if (!manualPagination) {
         setCurrentPage(1);
       }
     },
-    [manualPagination],
+    [manualPagination, pageSize, onPageSizeChange],
   );
 
   /**

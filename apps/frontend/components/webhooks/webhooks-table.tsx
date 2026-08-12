@@ -25,10 +25,17 @@ export function WebhooksTable() {
     null,
   );
 
-  const { data: webhooks = [], isLoading } = useQuery({
-    queryKey: ['webhooks'],
-    queryFn: listWebhooks,
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sort, setSort] = useState('createdAt:desc');
+  const [search, setSearch] = useState('');
+
+  const { data: webhooksData, isLoading } = useQuery({
+    queryKey: ['webhooks', page, pageSize, sort, search],
+    queryFn: () => listWebhooks({ page, pageSize, sort, search }),
   });
+
+  const webhooks = webhooksData?.data || [];
 
   const createMutation = useMutation({
     mutationFn: (variables: { name: string; url: string; events: string[] }) =>
@@ -240,6 +247,31 @@ export function WebhooksTable() {
               </div>
             ),
           }))}
+          enableFiltering={true}
+          manualFiltering={true}
+          filterPlaceholder="Search webhooks..."
+          onSearchChange={(val: string) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          enableSorting={true}
+          manualSorting={true}
+          defaultSortKey={sort.split(':')[0]}
+          defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
+          onSortChange={(
+            key: string | number | symbol,
+            direction: 'asc' | 'desc',
+          ) => {
+            setSort(`${String(key)}:${direction}`);
+            setPage(1);
+          }}
+          enablePagination={true}
+          manualPagination={true}
+          page={page}
+          pageCount={webhooksData?.meta?.pagination?.pageCount ?? 1}
+          pageSize={pageSize}
+          onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+          onPageChange={(newPage: number) => setPage(newPage)}
         />
       </div>
 
