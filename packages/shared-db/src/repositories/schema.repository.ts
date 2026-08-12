@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { Database } from '../client.js';
 import { RecordNotFoundError } from '../errors.js';
 import {
@@ -9,6 +9,8 @@ import {
 } from '../schema/index.js';
 import type { actorTypeEnum, schemaTypeEnum } from '../schema/enums.js';
 import { withTransaction } from '../transaction.js';
+import { buildPaginationOptions } from '../queries/pagination.js';
+import type { BaseQueryOptions } from '@repo/types';
 
 export interface SchemaFieldInput {
   apiId: string;
@@ -110,8 +112,35 @@ export async function createSchema(
   });
 }
 
-export async function listSchemas(db: Database): Promise<SchemaRecord[]> {
-  return db.select().from(schemas).orderBy(schemas.createdAt);
+export async function listSchemas(
+  db: Database,
+  options: BaseQueryOptions = {},
+): Promise<readonly [SchemaRecord[], number]> {
+  const { limit, offset, orderBy, where } = buildPaginationOptions(
+    options,
+    {
+      id: schemas.id,
+      name: schemas.name,
+      slug: schemas.slug,
+      createdAt: schemas.createdAt,
+    },
+    [schemas.name, schemas.slug],
+  );
+
+  const result = await db
+    .select()
+    .from(schemas)
+    .where(where)
+    .limit(limit)
+    .offset(offset)
+    .orderBy(...orderBy);
+
+  const countResult = await db
+    .select({ count: sql<number>`cast(count(${schemas.id}) as integer)` })
+    .from(schemas)
+    .where(where);
+
+  return [result, countResult[0]?.count ?? 0] as const;
 }
 
 export async function getSchemaById(

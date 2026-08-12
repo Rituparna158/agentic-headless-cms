@@ -26,7 +26,7 @@ ALTER TABLE "user_roles" DROP CONSTRAINT "user_roles_user_id_users_id_fk";
 --> statement-breakpoint
 DROP INDEX IF EXISTS "entry_localizations_search_idx";--> statement-breakpoint
 ALTER TABLE "user_roles" DROP CONSTRAINT "user_roles_user_id_role_id_pk";--> statement-breakpoint
-ALTER TABLE "roles" ADD COLUMN "application" "application_type" NOT NULL;--> statement-breakpoint
+ALTER TABLE "roles" ADD COLUMN "application" "application_type" DEFAULT 'CMS_UI' NOT NULL;--> statement-breakpoint
 ALTER TABLE "user_roles" ADD COLUMN "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL;--> statement-breakpoint
 ALTER TABLE "user_roles" ADD COLUMN "user_application_id" uuid NOT NULL;--> statement-breakpoint
 ALTER TABLE "user_roles" ADD COLUMN "created_by" uuid;--> statement-breakpoint
