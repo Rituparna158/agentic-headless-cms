@@ -20,3 +20,11 @@ export const contentKeys = {
   detail: (schemaSlug: string, entryId: string) =>
     [...contentKeys.details(schemaSlug), entryId] as const,
 };
+
+export const mediaKeys = {
+  all: ['cms', 'media'] as const,
+  lists: () => [...mediaKeys.all, 'list'] as const,
+  list: (options?: unknown) => [...mediaKeys.lists(), options] as const,
+  details: () => [...mediaKeys.all, 'detail'] as const,
+  detail: (id: string) => [...mediaKeys.details(), id] as const,
+};

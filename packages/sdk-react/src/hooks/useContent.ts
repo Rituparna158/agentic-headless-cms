@@ -95,3 +95,34 @@ export function usePublishEntry(schemaSlug: string) {
     },
   });
 }
+
+export function useUpdateEntryPartial(schemaSlug: string, entryId: string) {
+  const client = useCmsClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      client.content.updatePartial(schemaSlug, entryId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: contentKeys.lists(schemaSlug),
+      });
+      queryClient.invalidateQueries({
+        queryKey: contentKeys.detail(schemaSlug, entryId),
+      });
+    },
+  });
+}
+
+export function useContentVersions(
+  schemaSlug: string,
+  entryId: string,
+  options?: { locale?: string },
+) {
+  const client = useCmsClient();
+  return useQuery({
+    queryKey: ['content', schemaSlug, entryId, 'versions', options],
+    queryFn: () => client.content.versions(schemaSlug, entryId, options),
+    enabled: !!entryId,
+  });
+}

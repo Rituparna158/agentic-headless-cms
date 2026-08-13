@@ -13,7 +13,7 @@ export function useAuth() {
     queryFn: async () => {
       const token = client.auth.getToken();
       if (!token) return null;
-      return { token };
+      return client.auth.me();
     },
   });
 
@@ -32,13 +32,25 @@ export function useAuth() {
     },
   });
 
+  const forgotPasswordMutation = useMutation({
+    mutationFn: (email: string) => client.auth.forgotPassword(email),
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (data: { token: string; newPassword: string }) =>
+      client.auth.resetPassword(data.token, data.newPassword),
+  });
+
   return {
     user,
     status,
     login: loginMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
+    forgotPassword: forgotPasswordMutation.mutateAsync,
+    resetPassword: resetPasswordMutation.mutateAsync,
     isLoggingIn: loginMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
+    isResettingPassword: resetPasswordMutation.isPending,
     loginError: loginMutation.error,
   };
 }
