@@ -101,22 +101,28 @@ describe('Auth Module', () => {
     it('should return 401 for invalid email', async () => {
       vi.mocked(authRepository.getUserByEmail).mockResolvedValue(null);
 
-      const res = await request(app).post('/api/v1/auth/login').send({
-        email: 'wrong@example.com',
-        password: 'password123',
-        rememberMe: false,
-      });
+      const res = await request(app)
+        .post('/api/v1/auth/login')
+        .set('x-app-id', 'CMS_UI')
+        .send({
+          email: 'wrong@example.com',
+          password: 'password123',
+          rememberMe: false,
+        });
 
       expect(res.status).toBe(401);
       expect(res.body.error.message).toBe('Invalid email or password');
     });
 
     it('should return 400 for a malformed payload', async () => {
-      const res = await request(app).post('/api/v1/auth/login').send({
-        email: 'not-an-email',
-        password: '',
-        rememberMe: false,
-      });
+      const res = await request(app)
+        .post('/api/v1/auth/login')
+        .set('x-app-id', 'CMS_UI')
+        .send({
+          email: 'not-an-email',
+          password: '',
+          rememberMe: false,
+        });
 
       expect(res.status).toBe(400);
       expect(authRepository.getUserByEmail).not.toHaveBeenCalled();
@@ -142,11 +148,14 @@ describe('Auth Module', () => {
       ]);
       vi.mocked(authRepository.getUserRoles).mockResolvedValue(['admin']);
 
-      const res = await request(app).post('/api/v1/auth/login').send({
-        email: 'admin@example.com',
-        password: 'password123',
-        rememberMe: false,
-      });
+      const res = await request(app)
+        .post('/api/v1/auth/login')
+        .set('x-app-id', 'CMS_UI')
+        .send({
+          email: 'admin@example.com',
+          password: 'password123',
+          rememberMe: false,
+        });
 
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe('user-id-123');
@@ -155,14 +164,16 @@ describe('Auth Module', () => {
       // Check for set-cookie header
       const cookies = res.headers['set-cookie'];
       expect(cookies).toBeDefined();
-      expect(cookies![0]).toContain('token_default=');
+      expect(cookies![0]).toContain('token_cms_ui=');
       expect(cookies![0]).toContain('HttpOnly');
     });
   });
 
   describe('GET /api/v1/auth/me', () => {
     it('should return 401 if no token is provided', async () => {
-      const res = await request(app).get('/api/v1/auth/me');
+      const res = await request(app)
+        .get('/api/v1/auth/me')
+        .set('x-app-id', 'CMS_UI');
       expect(res.status).toBe(401);
     });
 
@@ -178,7 +189,8 @@ describe('Auth Module', () => {
 
       const res = await request(app)
         .get('/api/v1/auth/me')
-        .set('Cookie', [`token_default=${token}`]);
+        .set('x-app-id', 'CMS_UI')
+        .set('Cookie', [`token_cms_ui=${token}`]);
 
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe('user-1');
@@ -188,7 +200,8 @@ describe('Auth Module', () => {
     it('should return 401 for a malformed token', async () => {
       const res = await request(app)
         .get('/api/v1/auth/me')
-        .set('Cookie', ['token=not-a-real-jwt']);
+        .set('x-app-id', 'CMS_UI')
+        .set('Cookie', ['token_cms_ui=not-a-real-jwt']);
 
       expect(res.status).toBe(401);
     });
@@ -196,12 +209,14 @@ describe('Auth Module', () => {
 
   describe('POST /api/v1/auth/logout', () => {
     it('should clear the cookie and return 204', async () => {
-      const res = await request(app).post('/api/v1/auth/logout');
+      const res = await request(app)
+        .post('/api/v1/auth/logout')
+        .set('x-app-id', 'CMS_UI');
       expect(res.status).toBe(204);
 
       const cookies = res.headers['set-cookie'];
       expect(cookies).toBeDefined();
-      expect(cookies![0]).toContain('token_default=;');
+      expect(cookies![0]).toContain('token_cms_ui=;');
       expect(cookies![0]).toContain('Expires=');
     });
   });
@@ -298,7 +313,9 @@ describe('Auth Module', () => {
 
     describe('POST /api/v1/auth/mfa/enroll', () => {
       it('should return 401 if unauthenticated', async () => {
-        const res = await request(app).post('/api/v1/auth/mfa/enroll');
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/enroll')
+          .set('x-app-id', 'CMS_UI');
         expect(res.status).toBe(401);
       });
 
@@ -310,7 +327,8 @@ describe('Auth Module', () => {
 
         const res = await request(app)
           .post('/api/v1/auth/mfa/enroll')
-          .set('Cookie', [`token_default=${validToken}`]);
+          .set('x-app-id', 'CMS_UI')
+          .set('Cookie', [`token_cms_ui=${validToken}`]);
 
         expect(res.status).toBe(200);
         expect(res.body.data.secret).toBeDefined();
@@ -326,7 +344,8 @@ describe('Auth Module', () => {
       it('should return 400 for malformed payload', async () => {
         const res = await request(app)
           .post('/api/v1/auth/mfa/verify')
-          .set('Cookie', [`token_default=${validToken}`])
+          .set('x-app-id', 'CMS_UI')
+          .set('Cookie', [`token_cms_ui=${validToken}`])
           .send({ code: '12' });
 
         expect(res.status).toBe(400);
@@ -340,7 +359,8 @@ describe('Auth Module', () => {
 
         const res = await request(app)
           .post('/api/v1/auth/mfa/verify')
-          .set('Cookie', [`token_default=${validToken}`])
+          .set('x-app-id', 'CMS_UI')
+          .set('Cookie', [`token_cms_ui=${validToken}`])
           .send({ code: '000000' });
 
         expect(res.status).toBe(400);
@@ -366,11 +386,14 @@ describe('Auth Module', () => {
           { id: 'role-1', name: 'admin', mfaRequired: false },
         ]);
 
-        const res = await request(app).post('/api/v1/auth/login').send({
-          email: 'admin@example.com',
-          password: 'password123',
-          rememberMe: false,
-        });
+        const res = await request(app)
+          .post('/api/v1/auth/login')
+          .set('x-app-id', 'CMS_UI')
+          .send({
+            email: 'admin@example.com',
+            password: 'password123',
+            rememberMe: false,
+          });
 
         expect(res.status).toBe(200);
         expect(res.body.data.mfaRequired).toBe(true);
@@ -396,11 +419,14 @@ describe('Auth Module', () => {
           { id: 'role-1', name: 'admin', mfaRequired: true },
         ]);
 
-        const res = await request(app).post('/api/v1/auth/login').send({
-          email: 'admin@example.com',
-          password: 'password123',
-          rememberMe: false,
-        });
+        const res = await request(app)
+          .post('/api/v1/auth/login')
+          .set('x-app-id', 'CMS_UI')
+          .send({
+            email: 'admin@example.com',
+            password: 'password123',
+            rememberMe: false,
+          });
 
         expect(res.status).toBe(401);
         expect(res.body.error.message).toContain(
@@ -423,10 +449,13 @@ describe('Auth Module', () => {
           mfaEnabled: true,
         } as never);
 
-        const res = await request(app).post('/api/v1/auth/mfa/challenge').send({
-          mfaToken: challengeToken,
-          code: '000000',
-        });
+        const res = await request(app)
+          .post('/api/v1/auth/mfa/challenge')
+          .set('x-app-id', 'CMS_UI')
+          .send({
+            mfaToken: challengeToken,
+            code: '000000',
+          });
 
         expect(res.status).toBe(401);
         expect(res.body.error.message).toBe('Invalid or expired MFA session');
