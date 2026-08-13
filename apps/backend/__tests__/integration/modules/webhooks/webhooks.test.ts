@@ -50,14 +50,14 @@ describe('Webhooks Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .get('/api/v1/webhooks')
-        .set('Cookie', [`token=${nonAdminToken}`]);
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
 
     it('should return the webhooks list for admins', async () => {
       const res = await request(app)
         .get('/api/v1/webhooks')
-        .set('Cookie', [`token=${adminToken}`]);
+        .set('Cookie', [`token_default=${adminToken}`]);
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(1);
       expect(res.body.data[0].name).toBe('ISR Rebuild');
@@ -68,7 +68,7 @@ describe('Webhooks Module', () => {
     it('should reject a request missing required fields', async () => {
       const res = await request(app)
         .post('/api/v1/webhooks')
-        .set('Cookie', [`token=${adminToken}`])
+        .set('Cookie', [`token_default=${adminToken}`])
         .send({ name: 'Incomplete' });
       expect(res.status).toBe(400);
     });
@@ -76,7 +76,7 @@ describe('Webhooks Module', () => {
     it('should create a webhook and return a generated secret', async () => {
       const res = await request(app)
         .post('/api/v1/webhooks')
-        .set('Cookie', [`token=${adminToken}`])
+        .set('Cookie', [`token_default=${adminToken}`])
         .send({
           name: 'New Hook',
           url: 'https://example.com/new',
@@ -91,7 +91,7 @@ describe('Webhooks Module', () => {
     it('should delete a webhook', async () => {
       const res = await request(app)
         .delete('/api/v1/webhooks/w1')
-        .set('Cookie', [`token=${adminToken}`]);
+        .set('Cookie', [`token_default=${adminToken}`]);
       expect(res.status).toBe(204);
     });
   });

@@ -73,14 +73,14 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .get('/api/v1/access/roles')
-        .set('Cookie', [`token=${nonAdminToken}`]);
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
 
     it('should return roles list', async () => {
       const res = await request(app)
         .get('/api/v1/access/roles')
-        .set('Cookie', [`token=${validToken}`]);
+        .set('Cookie', [`token_default=${validToken}`]);
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(1);
       expect(res.body.data[0].name).toBe('Admin');
@@ -91,7 +91,7 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .post('/api/v1/access/roles')
-        .set('Cookie', [`token=${nonAdminToken}`])
+        .set('Cookie', [`token_default=${nonAdminToken}`])
         .send({ name: 'Editor', permissions: [] });
       expect(res.status).toBe(403);
     });
@@ -99,7 +99,7 @@ describe('Access Module', () => {
     it('should create a role for an admin', async () => {
       const res = await request(app)
         .post('/api/v1/access/roles')
-        .set('Cookie', [`token=${validToken}`])
+        .set('Cookie', [`token_default=${validToken}`])
         .send({ name: 'Editor', permissions: [] });
       expect(res.status).toBe(201);
       expect(res.body.data.name).toBe('Editor');
@@ -110,7 +110,7 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .post('/api/v1/access/users/invite')
-        .set('Cookie', [`token=${nonAdminToken}`])
+        .set('Cookie', [`token_default=${nonAdminToken}`])
         .send({ email: 'invitee@example.com', roleId: 'role-1' });
       expect(res.status).toBe(403);
     });
@@ -118,7 +118,7 @@ describe('Access Module', () => {
     it('should reject a request missing email or roleId', async () => {
       const res = await request(app)
         .post('/api/v1/access/users/invite')
-        .set('Cookie', [`token=${validToken}`])
+        .set('Cookie', [`token_default=${validToken}`])
         .send({ email: 'invitee@example.com' });
       expect(res.status).toBe(400);
     });
@@ -126,7 +126,7 @@ describe('Access Module', () => {
     it('should invite a user and return the invite URL', async () => {
       const res = await request(app)
         .post('/api/v1/access/users/invite')
-        .set('Cookie', [`token=${validToken}`])
+        .set('Cookie', [`token_default=${validToken}`])
         .send({ email: 'invitee@example.com', roleId: 'role-1' });
 
       expect(res.status).toBe(201);
@@ -139,7 +139,7 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .post('/api/v1/access/tokens')
-        .set('Cookie', [`token=${nonAdminToken}`])
+        .set('Cookie', [`token_default=${nonAdminToken}`])
         .send({ name: 'My Token' });
       expect(res.status).toBe(403);
     });
@@ -147,7 +147,7 @@ describe('Access Module', () => {
     it('should return the raw token upon creation', async () => {
       const res = await request(app)
         .post('/api/v1/access/tokens')
-        .set('Cookie', [`token=${validToken}`])
+        .set('Cookie', [`token_default=${validToken}`])
         .send({ name: 'My Token' });
 
       expect(res.status).toBe(201);
@@ -160,14 +160,14 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .delete('/api/v1/access/tokens/t1')
-        .set('Cookie', [`token=${nonAdminToken}`]);
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
 
     it('should revoke the token for an admin', async () => {
       const res = await request(app)
         .delete('/api/v1/access/tokens/t1')
-        .set('Cookie', [`token=${validToken}`]);
+        .set('Cookie', [`token_default=${validToken}`]);
       expect(res.status).toBe(200);
       expect(res.body.data.success).toBe(true);
     });
@@ -182,14 +182,14 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .get('/api/v1/access/mfa-requests')
-        .set('Cookie', [`token=${nonAdminToken}`]);
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
 
     it('should return pending MFA reset requests for an admin', async () => {
       const res = await request(app)
         .get('/api/v1/access/mfa-requests')
-        .set('Cookie', [`token=${validToken}`]);
+        .set('Cookie', [`token_default=${validToken}`]);
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(1);
       expect(res.body.data[0].id).toBe('req-1');
@@ -200,14 +200,14 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .post('/api/v1/access/mfa-requests/req-1/approve')
-        .set('Cookie', [`token=${nonAdminToken}`]);
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
 
     it('should successfully approve the request for an admin', async () => {
       const res = await request(app)
         .post('/api/v1/access/mfa-requests/req-1/approve')
-        .set('Cookie', [`token=${validToken}`]);
+        .set('Cookie', [`token_default=${validToken}`]);
       expect(res.status).toBe(200);
       expect(res.body.data.success).toBe(true);
     });
@@ -217,14 +217,14 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .post('/api/v1/access/mfa-requests/req-1/reject')
-        .set('Cookie', [`token=${nonAdminToken}`]);
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
 
     it('should successfully reject the request for an admin', async () => {
       const res = await request(app)
         .post('/api/v1/access/mfa-requests/req-1/reject')
-        .set('Cookie', [`token=${validToken}`]);
+        .set('Cookie', [`token_default=${validToken}`]);
       expect(res.status).toBe(200);
       expect(res.body.data.success).toBe(true);
     });

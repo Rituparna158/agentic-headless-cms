@@ -34,6 +34,7 @@ vi.mock('nodemailer', () => ({
 }));
 vi.mock('@repo/config', () => ({
   env: {
+    CORS_ORIGIN: 'http://localhost:3001',
     APP_URL: 'http://localhost:3000',
     SMTP_HOST: 'smtp.example.com',
     SMTP_PORT: 587,

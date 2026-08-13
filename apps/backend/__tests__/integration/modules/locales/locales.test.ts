@@ -48,14 +48,14 @@ describe('Locales Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .get('/api/v1/locales')
-        .set('Cookie', [`token=${nonAdminToken}`]);
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
 
     it('should return the locales list', async () => {
       const res = await request(app)
         .get('/api/v1/locales')
-        .set('Cookie', [`token=${adminToken}`]);
+        .set('Cookie', [`token_default=${adminToken}`]);
       expect(res.status).toBe(200);
       expect(res.body.data[0].code).toBe('en');
     });
@@ -65,7 +65,7 @@ describe('Locales Module', () => {
     it('should reject a request missing required fields', async () => {
       const res = await request(app)
         .post('/api/v1/locales')
-        .set('Cookie', [`token=${adminToken}`])
+        .set('Cookie', [`token_default=${adminToken}`])
         .send({ code: 'fr-FR' });
       expect(res.status).toBe(400);
       expect(res.body.error.message).toBe(
@@ -76,7 +76,7 @@ describe('Locales Module', () => {
     it('should create a locale', async () => {
       const res = await request(app)
         .post('/api/v1/locales')
-        .set('Cookie', [`token=${adminToken}`])
+        .set('Cookie', [`token_default=${adminToken}`])
         .send({ code: 'fr-FR', name: 'French' });
       expect(res.status).toBe(201);
       expect(res.body.data.code).toBe('fr-FR');
@@ -89,7 +89,7 @@ describe('Locales Module', () => {
 
       const res = await request(app)
         .post('/api/v1/locales')
-        .set('Cookie', [`token=${adminToken}`])
+        .set('Cookie', [`token_default=${adminToken}`])
         .send({ code: 'en', name: 'English (again)' });
 
       expect(res.status).toBe(409);
@@ -101,7 +101,7 @@ describe('Locales Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .post('/api/v1/locales')
-        .set('Cookie', [`token=${nonAdminToken}`])
+        .set('Cookie', [`token_default=${nonAdminToken}`])
         .send({ code: 'fr-FR', name: 'French' });
       expect(res.status).toBe(403);
     });
@@ -111,14 +111,14 @@ describe('Locales Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .delete('/api/v1/locales/l1')
-        .set('Cookie', [`token=${nonAdminToken}`]);
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
 
     it('should delete a locale', async () => {
       const res = await request(app)
         .delete('/api/v1/locales/l1')
-        .set('Cookie', [`token=${adminToken}`]);
+        .set('Cookie', [`token_default=${adminToken}`]);
       expect(res.status).toBe(204);
     });
   });
