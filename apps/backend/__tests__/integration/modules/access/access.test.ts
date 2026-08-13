@@ -75,7 +75,7 @@ describe('Access Module', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .get('/api/v1/access/roles')
-        .set('Cookie', [`token_headless_cmws=${nonAdminToken}`])
+        .set('Cookie', [`token_headless_cms=${nonAdminToken}`])
         .set('x-app-id', 'HEADLESS_CMS');
       expect(res.status).toBe(403);
     });
