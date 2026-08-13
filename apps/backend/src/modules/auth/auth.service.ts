@@ -84,6 +84,7 @@ export class AuthService {
     state: string,
     nonce: string,
     codeVerifier: string,
+    appId: string,
   ) {
     try {
       const client = await this.getOidcClient();
@@ -157,7 +158,17 @@ export class AuthService {
         await authRepository.linkUserIdentity(user.id, 'oidc', userInfo.sub);
       }
 
-      const roles = await authRepository.getUserRoles(user.id);
+      const roles = await authRepository.getUserRoles(user.id, appId);
+
+      if (roles.length === 0) {
+        logger.warn(
+          { userId: user.id, appId },
+          'AuthService: user has no roles for this app in SSO',
+        );
+        throw new UnauthorizedError(
+          'You do not have access to this application',
+        );
+      }
 
       const payload = {
         id: user.id,
@@ -194,9 +205,9 @@ export class AuthService {
       throw new ApiError(500, 'SSO Callback failed');
     }
   }
-  async login(input: LoginInput) {
+  async login(input: LoginInput, appId: string) {
     try {
-      logger.info({ email: input.email }, 'AuthService: login start');
+      logger.info({ email: input.email, appId }, 'AuthService: login start');
       const user = await authRepository.getUserByEmail(input.email);
       if (!user || !user.passwordHash) {
         logger.warn(
@@ -218,7 +229,20 @@ export class AuthService {
       );
       const userRolesWithMfa = await authRepository.getUserRolesWithMfaInfo(
         user.id,
+        appId,
       );
+
+      // Enforce access by checking if they actually have a valid application role
+      if (userRolesWithMfa.length === 0) {
+        logger.warn(
+          { userId: user.id, appId },
+          'AuthService: user has no roles for this app',
+        );
+        throw new UnauthorizedError(
+          'You do not have access to this application',
+        );
+      }
+
       const roles = userRolesWithMfa.map((r) => r.name);
 
       // 1. If user has MFA enabled, return challenge state instead of session token
@@ -291,10 +315,10 @@ export class AuthService {
     }
   }
 
-  async getUserPermissions(userId: string) {
+  async getUserPermissions(userId: string, appId: string) {
     try {
-      logger.info({ userId }, 'AuthService: getUserPermissions start');
-      const result = await authRepository.getUserPermissions(userId);
+      logger.info({ userId, appId }, 'AuthService: getUserPermissions start');
+      const result = await authRepository.getUserPermissions(userId, appId);
       logger.debug({ userId }, 'AuthService: getUserPermissions end');
       return result;
     } catch (error) {
@@ -390,9 +414,9 @@ export class AuthService {
     }
   }
 
-  async verifyMfa(userId: string, code: string) {
+  async verifyMfa(userId: string, code: string, appId: string) {
     try {
-      logger.info({ userId }, 'AuthService: verifyMfa start');
+      logger.info({ userId, appId }, 'AuthService: verifyMfa start');
       const user = await authRepository.getUserById(userId);
       if (!user || !user.mfaSecret) {
         throw new BadRequestError('MFA enrollment has not been started');
@@ -412,7 +436,7 @@ export class AuthService {
         'AuthService: verifyMfa successfully verified and enabled',
       );
 
-      const roles = await authRepository.getUserRoles(userId);
+      const roles = await authRepository.getUserRoles(userId, appId);
       const payload = {
         id: user.id,
         email: user.email,
@@ -434,9 +458,9 @@ export class AuthService {
     }
   }
 
-  async disableMfa(userId: string) {
+  async disableMfa(userId: string, appId: string) {
     try {
-      logger.info({ userId }, 'AuthService: disableMfa start');
+      logger.info({ userId, appId }, 'AuthService: disableMfa start');
       const user = await authRepository.getUserById(userId);
       if (!user) {
         throw new BadRequestError('User not found');
@@ -445,7 +469,7 @@ export class AuthService {
       await authRepository.disableMfa(userId);
       logger.info({ userId }, 'AuthService: disableMfa successfully disabled');
 
-      const roles = await authRepository.getUserRoles(userId);
+      const roles = await authRepository.getUserRoles(userId, appId);
       const payload = {
         id: user.id,
         email: user.email,
@@ -467,9 +491,9 @@ export class AuthService {
     }
   }
 
-  async verifyMfaChallenge(mfaToken: string, code: string) {
+  async verifyMfaChallenge(mfaToken: string, code: string, appId: string) {
     try {
-      logger.info('AuthService: verifyMfaChallenge start');
+      logger.info({ appId }, 'AuthService: verifyMfaChallenge start');
       let decoded: { userId: string; isMfaChallenge?: boolean };
       try {
         decoded = jwt.verify(mfaToken, env.JWT_SECRET) as {
@@ -507,8 +531,11 @@ export class AuthService {
         throw new UnauthorizedError('Invalid or expired MFA session');
       }
 
-      logger.debug({ userId: user.id }, 'AuthService: fetching user roles');
-      const roles = await authRepository.getUserRoles(user.id);
+      logger.debug(
+        { userId: user.id, appId },
+        'AuthService: fetching user roles',
+      );
+      const roles = await authRepository.getUserRoles(user.id, appId);
 
       const payload = {
         id: user.id,
