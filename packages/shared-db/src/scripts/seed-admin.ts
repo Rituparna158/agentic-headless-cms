@@ -20,22 +20,20 @@ async function seedAdmin() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
   const db = drizzle(pool);
 
-  // Use environment variables for provisioning
+  const isDevOrTest =
+    process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
   const adminEmail =
     process.env.SEED_ADMIN_EMAIL ||
-    (process.env.NODE_ENV === 'development' ? 'admin@agentic-cms.com' : null);
+    (isDevOrTest ? 'admin@agentic-cms.com' : null);
   const adminPassword =
-    process.env.SEED_ADMIN_PASSWORD ||
-    (process.env.NODE_ENV === 'development' ? 'admin' : null);
+    process.env.SEED_ADMIN_PASSWORD || (isDevOrTest ? 'admin' : null);
 
   const cmsAdminEmail =
     process.env.SEED_CMS_ADMIN_EMAIL ||
-    (process.env.NODE_ENV === 'development'
-      ? 'cms-admin@agentic-cms.com'
-      : null);
+    (isDevOrTest ? 'cms-admin@agentic-cms.com' : null);
   const cmsAdminPassword =
-    process.env.SEED_CMS_ADMIN_PASSWORD ||
-    (process.env.NODE_ENV === 'development' ? 'admin' : null);
+    process.env.SEED_CMS_ADMIN_PASSWORD || (isDevOrTest ? 'admin' : null);
 
   if (!adminEmail || !adminPassword || !cmsAdminEmail || !cmsAdminPassword) {
     logger.error(
