@@ -172,4 +172,40 @@ export class MediaService {
       throw new ApiError(500, SERVICE_ERRORS.DELETE_MEDIA_FAILED);
     }
   }
+
+  async deleteBulk(ids: string[]): Promise<void> {
+    try {
+      logger.info({ ids }, 'MediaService: deleteBulk start');
+      const assets = await Promise.all(ids.map((id) => this.getById(id)));
+      logger.debug({ ids }, 'MediaService: soft deleting records in bulk');
+      await this.repository.softDeleteBulk(ids);
+      const storage = getStorageAdapter();
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+
+      await Promise.all(
+        assets.map(async (asset) => {
+          const key = extractStorageKey(asset);
+          logger.debug(
+            { id: asset.id },
+            'MediaService: deleting file from storage',
+          );
+          await storage.delete(key);
+
+          eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+            action: AUDIT_ACTIONS.DELETE,
+            resourceType: 'media',
+            resourceId: asset.id,
+            actorUserId,
+            actorAgentId,
+            beforeState: asset,
+            afterState: null,
+            context,
+          });
+        }),
+      );
+    } catch (error) {
+      logger.error({ err: error }, 'MediaService Error in deleteBulk:');
+      throw new ApiError(500, 'Failed to bulk delete media');
+    }
+  }
 }

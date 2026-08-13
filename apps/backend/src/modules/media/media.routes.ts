@@ -24,6 +24,12 @@ mediaRoutes.get(
   mediaController.serveMediaFile,
 );
 
+mediaRoutes.post(
+  '/bulk-delete',
+  requirePermission('delete'),
+  mediaController.deleteBulkMedia,
+);
+
 mediaRoutes.get('/:id', requirePermission('read'), mediaController.getMedia);
 
 mediaRoutes.delete(
