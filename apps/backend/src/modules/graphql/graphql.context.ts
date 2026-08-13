@@ -14,7 +14,10 @@ export async function assertPermission(
     throw new UnauthorizedError(ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
   }
 
-  const permissions = await authService.getUserPermissions(context.user.id);
+  const permissions = await authService.getUserPermissions(
+    context.user.id,
+    context.appId,
+  );
   if (!hasPermission(permissions, action, schemaId)) {
     throw new ForbiddenError(ERROR_MESSAGES.RBAC.FORBIDDEN);
   }

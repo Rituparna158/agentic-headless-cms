@@ -25,6 +25,9 @@ describe('RBAC Middleware', () => {
         lastName: 'User',
         mfaEnabled: false,
       },
+      headers: {
+        'x-app-id': 'CMS_UI',
+      },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),

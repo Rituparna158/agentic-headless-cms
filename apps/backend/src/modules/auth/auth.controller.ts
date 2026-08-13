@@ -22,8 +22,10 @@ import { authService } from './auth.service.js';
 export const login: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: login start');
+    const appId = req.headers['x-app-id'] as string;
+    if (!appId) throw new BadRequestError('x-app-id header is required');
     const input = loginSchema.parse(req.body);
-    const result = await authService.login(input);
+    const result = await authService.login(input, appId);
 
     if ('mfaRequired' in result && result.mfaRequired) {
       logger.info('AuthController: login MFA challenge required');
@@ -44,7 +46,6 @@ export const login: RequestHandler = asyncHandler(
       token: string;
     };
 
-    const appId = (req.headers['x-app-id'] as string) || 'default';
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
 
     logger.debug({ email: input.email }, 'AuthController: setting auth cookie');
@@ -56,7 +57,7 @@ export const login: RequestHandler = asyncHandler(
     });
 
     logger.info({ userId: user.id }, 'AuthController: login success');
-    const permissions = await authService.getUserPermissions(user.id);
+    const permissions = await authService.getUserPermissions(user.id, appId);
     const userWithPermissions = { ...user, permissions };
     res
       .status(200)
@@ -67,7 +68,8 @@ export const login: RequestHandler = asyncHandler(
 export const logout: RequestHandler = asyncHandler(
   (req: Request, res: Response) => {
     logger.info('AuthController: logout start');
-    const appId = (req.headers['x-app-id'] as string) || 'default';
+    const appId = req.headers['x-app-id'] as string;
+    if (!appId) throw new BadRequestError('x-app-id header is required');
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
 
     res.clearCookie(cookieName, {
@@ -83,6 +85,9 @@ export const logout: RequestHandler = asyncHandler(
 export const getCurrentUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: getCurrentUser start');
+    const appId = req.headers['x-app-id'] as string;
+    if (!appId) throw new BadRequestError('x-app-id header is required');
+
     if (!req.user) {
       logger.warn('AuthController: getCurrentUser user not authenticated');
       throw new UnauthorizedError(ERROR_MESSAGES.AUTH.UNAUTHORIZED);
@@ -91,7 +96,10 @@ export const getCurrentUser: RequestHandler = asyncHandler(
       { userId: req.user.id },
       'AuthController: getCurrentUser success',
     );
-    const permissions = await authService.getUserPermissions(req.user.id);
+    const permissions = await authService.getUserPermissions(
+      req.user.id,
+      appId,
+    );
     const userWithPermissions = { ...req.user, permissions };
     res
       .status(200)
@@ -163,7 +171,9 @@ export const ssoLogin: RequestHandler = asyncHandler(
       }
     }
 
-    const requestedAppId = (req.query.appId as string) || 'default';
+    const requestedAppId = req.query.appId as string;
+    if (!requestedAppId)
+      throw new BadRequestError('appId query parameter is required');
 
     res.cookie('sso_redirect_url', redirectUrl, {
       httpOnly: true,
@@ -205,7 +215,9 @@ export const ssoCallback: RequestHandler = asyncHandler(
     const nonce = cookies?.sso_nonce;
     const codeVerifier = cookies?.sso_code_verifier;
     const redirectUrl = cookies?.sso_redirect_url as string | undefined;
-    const appId = (cookies?.sso_app_id as string) || 'default';
+    const appId = cookies?.sso_app_id as string;
+
+    if (!appId) throw new BadRequestError('Missing appId in SSO cookies');
 
     if (
       typeof state !== 'string' ||
@@ -224,6 +236,7 @@ export const ssoCallback: RequestHandler = asyncHandler(
       state,
       nonce,
       codeVerifier,
+      appId,
     );
 
     res.clearCookie('sso_state');
@@ -260,15 +273,20 @@ export const enrollMfa: RequestHandler = asyncHandler(
 export const verifyMfa: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: verifyMfa start');
+    const appId = req.headers['x-app-id'] as string;
+    if (!appId) throw new BadRequestError('x-app-id header is required');
     const userId = req.user!.id;
     const input = mfaVerifySchema.parse(req.body);
-    const { user, token } = await authService.verifyMfa(userId, input.code);
+    const { user, token } = await authService.verifyMfa(
+      userId,
+      input.code,
+      appId,
+    );
 
     logger.debug(
       { userId },
       'AuthController: setting updated auth cookie from MFA verification',
     );
-    const appId = (req.headers['x-app-id'] as string) || 'default';
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
 
     res.cookie(cookieName, token, {
@@ -289,14 +307,15 @@ export const verifyMfa: RequestHandler = asyncHandler(
 export const disableMfa: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: disableMfa start');
+    const appId = req.headers['x-app-id'] as string;
+    if (!appId) throw new BadRequestError('x-app-id header is required');
     const userId = req.user!.id;
-    const { user, token } = await authService.disableMfa(userId);
+    const { user, token } = await authService.disableMfa(userId, appId);
 
     logger.debug(
       { userId },
       'AuthController: setting updated auth cookie from MFA disablement',
     );
-    const appId = (req.headers['x-app-id'] as string) || 'default';
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
 
     res.cookie(cookieName, token, {
@@ -315,17 +334,19 @@ export const disableMfa: RequestHandler = asyncHandler(
 export const verifyMfaChallenge: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: verifyMfaChallenge start');
+    const appId = req.headers['x-app-id'] as string;
+    if (!appId) throw new BadRequestError('x-app-id header is required');
     const input = mfaChallengeSchema.parse(req.body);
     const { user, token } = await authService.verifyMfaChallenge(
       input.mfaToken,
       input.code,
+      appId,
     );
 
     logger.debug(
       { userId: user.id },
       'AuthController: setting auth cookie from MFA challenge',
     );
-    const appId = (req.headers['x-app-id'] as string) || 'default';
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
 
     res.cookie(cookieName, token, {

@@ -145,7 +145,8 @@ describe('GraphQL API', () => {
   it('generates a query field for each schema and returns matching entries', async () => {
     const res = await request(app)
       .post('/graphql')
-      .set('Cookie', [`token_default=${token}`])
+      .set('x-app-id', 'CMS_UI')
+      .set('Cookie', [`token_cms_ui=${token}`])
       .send({
         query: '{ blogPosts { data { id title views } meta { total } } }',
       });
@@ -161,7 +162,8 @@ describe('GraphQL API', () => {
   it('fetches a single entry by id', async () => {
     const res = await request(app)
       .post('/graphql')
-      .set('Cookie', [`token_default=${token}`])
+      .set('x-app-id', 'CMS_UI')
+      .set('Cookie', [`token_cms_ui=${token}`])
       .send({
         query: '{ blogPost(id: "entry-1") { id status title } }',
       });
@@ -177,7 +179,8 @@ describe('GraphQL API', () => {
   it('creates an entry via mutation', async () => {
     const res = await request(app)
       .post('/graphql')
-      .set('Cookie', [`token_default=${token}`])
+      .set('x-app-id', 'CMS_UI')
+      .set('Cookie', [`token_cms_ui=${token}`])
       .send({
         query:
           'mutation($data: JSON!) { createBlogPost(data: $data) { id status title views } }',
@@ -206,7 +209,8 @@ describe('GraphQL API', () => {
 
     const res = await request(app)
       .post('/graphql')
-      .set('Cookie', [`token_default=${token}`])
+      .set('x-app-id', 'CMS_UI')
+      .set('Cookie', [`token_cms_ui=${token}`])
       .send({
         query: 'mutation($data: JSON!) { createBlogPost(data: $data) { id } }',
         variables: { data: { title: 'x', views: 1 } },
@@ -219,7 +223,8 @@ describe('GraphQL API', () => {
   it('returns a BAD_USER_INPUT error code for an unknown filter field', async () => {
     const res = await request(app)
       .post('/graphql')
-      .set('Cookie', [`token_default=${token}`])
+      .set('x-app-id', 'CMS_UI')
+      .set('Cookie', [`token_cms_ui=${token}`])
       .send({
         query:
           'query($filters: JSON) { blogPosts(filters: $filters) { data { id } } }',

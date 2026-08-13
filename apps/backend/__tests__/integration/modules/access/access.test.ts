@@ -66,21 +66,25 @@ describe('Access Module', () => {
 
   describe('GET /api/v1/access/roles', () => {
     it('should require authentication', async () => {
-      const res = await request(app).get('/api/v1/access/roles');
+      const res = await request(app)
+        .get('/api/v1/access/roles')
+        .set('x-app-id', 'HEADLESS_CMS');
       expect(res.status).toBe(401);
     });
 
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .get('/api/v1/access/roles')
-        .set('Cookie', [`token_default=${nonAdminToken}`]);
+        .set('Cookie', [`token_headless_cms=${nonAdminToken}`])
+        .set('x-app-id', 'HEADLESS_CMS');
       expect(res.status).toBe(403);
     });
 
     it('should return roles list', async () => {
       const res = await request(app)
         .get('/api/v1/access/roles')
-        .set('Cookie', [`token_default=${validToken}`]);
+        .set('Cookie', [`token_headless_cms=${validToken}`])
+        .set('x-app-id', 'HEADLESS_CMS');
       expect(res.status).toBe(200);
       expect(res.body.data.data).toHaveLength(1);
       expect(res.body.data.data[0].name).toBe('Admin');

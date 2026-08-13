@@ -78,9 +78,9 @@ export class AuthRepository {
     }
   }
 
-  async getUserRoles(userId: string) {
+  async getUserRoles(userId: string, appId: string) {
     try {
-      logger.info({ userId }, 'AuthRepository: fetching user roles');
+      logger.info({ userId, appId }, 'AuthRepository: fetching user roles');
       const db = getDatabaseAdapter().getDb();
       const rows = await db
         .select({ roleName: roles.name })
@@ -94,6 +94,10 @@ export class AuthRepository {
           and(
             eq(userApplications.userId, userId),
             eq(userApplications.status, 'active'),
+            eq(
+              userApplications.application,
+              appId as 'HEADLESS_CMS' | 'CMS_UI',
+            ),
           ),
         );
 
@@ -109,9 +113,12 @@ export class AuthRepository {
     }
   }
 
-  async getUserPermissions(userId: string) {
+  async getUserPermissions(userId: string, appId: string) {
     try {
-      logger.info({ userId }, 'AuthRepository: fetching user permissions');
+      logger.info(
+        { userId, appId },
+        'AuthRepository: fetching user permissions',
+      );
       const db = getDatabaseAdapter().getDb();
       const rows = await db
         .select({
@@ -131,6 +138,10 @@ export class AuthRepository {
           and(
             eq(userApplications.userId, userId),
             eq(userApplications.status, 'active'),
+            eq(
+              userApplications.application,
+              appId as 'HEADLESS_CMS' | 'CMS_UI',
+            ),
           ),
         );
 
@@ -148,10 +159,10 @@ export class AuthRepository {
     }
   }
 
-  async getUserRolesWithMfaInfo(userId: string) {
+  async getUserRolesWithMfaInfo(userId: string, appId: string) {
     try {
       logger.info(
-        { userId },
+        { userId, appId },
         'AuthRepository: fetching user roles with mfa info',
       );
       const db = getDatabaseAdapter().getDb();
@@ -171,6 +182,10 @@ export class AuthRepository {
           and(
             eq(userApplications.userId, userId),
             eq(userApplications.status, 'active'),
+            eq(
+              userApplications.application,
+              appId as 'HEADLESS_CMS' | 'CMS_UI',
+            ),
           ),
         );
 
