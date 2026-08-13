@@ -89,6 +89,11 @@ const baseEnvSchema = z.object({
   OIDC_CLIENT_ID: z.string().optional(),
   OIDC_CLIENT_SECRET: z.string().optional(),
   OIDC_REDIRECT_URI: z.string().url().optional(),
+
+  SEED_ADMIN_EMAIL: z.string().email().optional(),
+  SEED_ADMIN_PASSWORD: z.string().optional(),
+  SEED_CMS_ADMIN_EMAIL: z.string().email().optional(),
+  SEED_CMS_ADMIN_PASSWORD: z.string().optional(),
 });
 
 const envSchema = baseEnvSchema.superRefine((data, ctx) => {

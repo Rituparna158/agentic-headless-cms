@@ -117,7 +117,7 @@ describe('Media API', () => {
     it('returns 400 when no file is attached', async () => {
       const res = await request(app)
         .post('/api/v1/media')
-        .set('Cookie', [`token=${token}`]);
+        .set('Cookie', [`token_default=${token}`]);
 
       expect(res.status).toBe(400);
     });
@@ -125,7 +125,7 @@ describe('Media API', () => {
     it('uploads a file and returns 201 with the created asset', async () => {
       const res = await request(app)
         .post('/api/v1/media')
-        .set('Cookie', [`token=${token}`])
+        .set('Cookie', [`token_default=${token}`])
         .attach('file', Buffer.from('fake-png-bytes'), 'photo.png');
 
       expect(res.status).toBe(201);
@@ -135,7 +135,7 @@ describe('Media API', () => {
     it('enqueues a thumbnail-generation job for the uploaded asset', async () => {
       await request(app)
         .post('/api/v1/media')
-        .set('Cookie', [`token=${token}`])
+        .set('Cookie', [`token_default=${token}`])
         .attach('file', Buffer.from('fake-png-bytes'), 'photo.png');
 
       await vi.waitFor(() => {
@@ -160,7 +160,7 @@ describe('Media API', () => {
 
       const res = await request(app)
         .post('/api/v1/media')
-        .set('Cookie', [`token=${token}`])
+        .set('Cookie', [`token_default=${token}`])
         .attach('file', Buffer.from('x'), 'photo.png');
 
       expect(res.status).toBe(403);
@@ -171,7 +171,7 @@ describe('Media API', () => {
     it('lists assets with pagination metadata', async () => {
       const res = await request(app)
         .get('/api/v1/media')
-        .set('Cookie', [`token=${token}`]);
+        .set('Cookie', [`token_default=${token}`]);
 
       expect(res.status).toBe(200);
       expect(res.body.data.data).toHaveLength(1);
@@ -183,7 +183,7 @@ describe('Media API', () => {
     it('returns the asset metadata', async () => {
       const res = await request(app)
         .get('/api/v1/media/asset-1')
-        .set('Cookie', [`token=${token}`]);
+        .set('Cookie', [`token_default=${token}`]);
 
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe('asset-1');
@@ -194,7 +194,7 @@ describe('Media API', () => {
     it('streams the file bytes with the correct Content-Type', async () => {
       const res = await request(app)
         .get('/api/v1/media/file/abc-photo.png')
-        .set('Cookie', [`token=${token}`]);
+        .set('Cookie', [`token_default=${token}`]);
 
       expect(res.status).toBe(200);
       expect(res.headers['content-type']).toBe('image/png');
@@ -203,7 +203,7 @@ describe('Media API', () => {
     it('rejects an invalid resize query param', async () => {
       const res = await request(app)
         .get('/api/v1/media/file/abc-photo.png?w=notanumber')
-        .set('Cookie', [`token=${token}`]);
+        .set('Cookie', [`token_default=${token}`]);
 
       expect(res.status).toBe(400);
     });
@@ -213,7 +213,7 @@ describe('Media API', () => {
     it('deletes the asset and returns 204', async () => {
       const res = await request(app)
         .delete('/api/v1/media/asset-1')
-        .set('Cookie', [`token=${token}`]);
+        .set('Cookie', [`token_default=${token}`]);
 
       expect(res.status).toBe(204);
     });
@@ -231,7 +231,7 @@ describe('Media API', () => {
 
       const res = await request(app)
         .delete('/api/v1/media/asset-1')
-        .set('Cookie', [`token=${token}`]);
+        .set('Cookie', [`token_default=${token}`]);
 
       expect(res.status).toBe(403);
     });

@@ -56,7 +56,7 @@ export const HTTP_STATUS = {
 } as const;
 
 export const AUTH_COOKIES = {
-  NAME: 'token',
+  PREFIX: 'token_',
   MAX_AGE_MS: 24 * 60 * 60 * 1000, // 1 day
 } as const;
 

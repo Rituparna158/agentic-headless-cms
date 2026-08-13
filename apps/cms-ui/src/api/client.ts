@@ -6,25 +6,14 @@ export const apiClient = axios.create({
   withCredentials: true, // Secure cookie handling
   headers: {
     'Content-Type': 'application/json',
+    'X-App-Id': 'CMS_UI',
   },
 });
 
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-    // Token refresh logic (Mocked implementation)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        // Await token refresh call here e.g. await axios.post('/api/refresh')
-        // Return original request with new token (if using Authorization header instead of cookies)
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        // Dispatch logout action here
-        return Promise.reject(refreshError);
-      }
-    }
+    // If we implement refresh tokens later, we can add interceptor logic here.
     return Promise.reject(error);
   },
 );

@@ -21,6 +21,9 @@ export default defineConfig({
   use: {
     baseURL: FRONTEND_URL,
     trace: 'on-first-retry',
+    extraHTTPHeaders: {
+      'X-App-Id': 'HEADLESS_CMS',
+    },
   },
   projects: [
     {

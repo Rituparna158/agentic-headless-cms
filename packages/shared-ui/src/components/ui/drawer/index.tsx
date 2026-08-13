@@ -171,7 +171,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           )}
           <motion.div
             className={cn('bg-background text-foreground shadow-xl', className)}
-            style={getDrawerDynamicStyles()}
+            style={getDrawerDynamicStyles() as any}
             variants={getAnimationVariantsForType()}
             initial="hidden"
             animate="visible"

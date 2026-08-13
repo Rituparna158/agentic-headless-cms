@@ -170,7 +170,7 @@ describe('Content API', () => {
   it('should list content entries (empty)', async () => {
     const res = await request(app)
       .get(`/api/v1/content/${testSchemaSlug}`)
-      .set('Cookie', [`token=${adminToken}`]);
+      .set('Cookie', [`token_default=${adminToken}`]);
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data.data)).toBe(true);
@@ -185,7 +185,7 @@ describe('Content API', () => {
 
     const res = await request(app)
       .post(`/api/v1/content/${testSchemaSlug}`)
-      .set('Cookie', [`token=${adminToken}`])
+      .set('Cookie', [`token_default=${adminToken}`])
       .send(payload);
 
     expect(res.status).toBe(201);
@@ -196,7 +196,7 @@ describe('Content API', () => {
   it('should get the created entry', async () => {
     const res = await request(app)
       .get(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
-      .set('Cookie', [`token=${adminToken}`]);
+      .set('Cookie', [`token_default=${adminToken}`]);
 
     expect(res.status).toBe(200);
     expect(res.body.data.id).toBe(createdEntryId);
@@ -211,7 +211,7 @@ describe('Content API', () => {
 
     const res = await request(app)
       .put(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
-      .set('Cookie', [`token=${adminToken}`])
+      .set('Cookie', [`token_default=${adminToken}`])
       .send(payload);
 
     expect(res.status).toBe(200);
@@ -222,7 +222,7 @@ describe('Content API', () => {
   it('should publish the entry', async () => {
     const res = await request(app)
       .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/publish`)
-      .set('Cookie', [`token=${adminToken}`]);
+      .set('Cookie', [`token_default=${adminToken}`]);
 
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('published');
@@ -232,7 +232,7 @@ describe('Content API', () => {
   it('should revert the entry to a previous version', async () => {
     const res = await request(app)
       .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/revert`)
-      .set('Cookie', [`token=${adminToken}`])
+      .set('Cookie', [`token_default=${adminToken}`])
       .send({ versionNo: 1 });
 
     expect(res.status).toBe(200);
@@ -243,7 +243,7 @@ describe('Content API', () => {
   it('should list the entry versions', async () => {
     const res = await request(app)
       .get(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/versions`)
-      .set('Cookie', [`token=${adminToken}`]);
+      .set('Cookie', [`token_default=${adminToken}`]);
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
@@ -255,7 +255,7 @@ describe('Content API', () => {
   it('should delete the entry', async () => {
     const res = await request(app)
       .delete(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
-      .set('Cookie', [`token=${adminToken}`]);
+      .set('Cookie', [`token_default=${adminToken}`]);
 
     expect(res.status).toBe(204);
   });
@@ -271,7 +271,7 @@ describe('Content API', () => {
 
       const res = await request(app)
         .get('/api/v1/content/does-not-exist')
-        .set('Cookie', [`token=${adminToken}`]);
+        .set('Cookie', [`token_default=${adminToken}`]);
 
       expect(res.status).toBe(404);
     });
@@ -289,7 +289,7 @@ describe('Content API', () => {
 
       const res = await request(app)
         .get(`/api/v1/content/${testSchemaSlug}`)
-        .set('Cookie', [`token=${adminToken}`]);
+        .set('Cookie', [`token_default=${adminToken}`]);
 
       expect(res.status).toBe(403);
     });
@@ -307,7 +307,7 @@ describe('Content API', () => {
 
       const res = await request(app)
         .post(`/api/v1/content/${testSchemaSlug}`)
-        .set('Cookie', [`token=${adminToken}`])
+        .set('Cookie', [`token_default=${adminToken}`])
         .send({ title: 'Test Post', body: 'x', author: 'Tester' });
 
       expect(res.status).toBe(403);
@@ -316,7 +316,7 @@ describe('Content API', () => {
     it('returns 400 when a required field is missing from the payload', async () => {
       const res = await request(app)
         .post(`/api/v1/content/${testSchemaSlug}`)
-        .set('Cookie', [`token=${adminToken}`])
+        .set('Cookie', [`token_default=${adminToken}`])
         .send({ body: 'Missing the required title field', author: 'Tester' });
 
       expect(res.status).toBe(400);
@@ -328,7 +328,7 @@ describe('Content API', () => {
 
       const res = await request(app)
         .get(`/api/v1/content/${testSchemaSlug}/does-not-exist`)
-        .set('Cookie', [`token=${adminToken}`]);
+        .set('Cookie', [`token_default=${adminToken}`]);
 
       expect(res.status).toBe(404);
       expect(res.body.error.message).toBe('Entry not found');
@@ -337,7 +337,7 @@ describe('Content API', () => {
     it('returns 400 for an invalid versionNo on revert', async () => {
       const res = await request(app)
         .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/revert`)
-        .set('Cookie', [`token=${adminToken}`])
+        .set('Cookie', [`token_default=${adminToken}`])
         .send({ versionNo: 'not-a-number' });
 
       expect(res.status).toBe(400);
@@ -357,7 +357,7 @@ describe('Content API', () => {
 
       const res = await request(app)
         .delete(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
-        .set('Cookie', [`token=${adminToken}`]);
+        .set('Cookie', [`token_default=${adminToken}`]);
 
       expect(res.status).toBe(403);
       expect(repoMocks.deleteEntry).not.toHaveBeenCalled();

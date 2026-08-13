@@ -14,6 +14,7 @@ const { mockGetAdminUsers } = vi.hoisted(() => ({
 
 vi.mock('@repo/config', () => ({
   env: {
+    CORS_ORIGIN: 'http://localhost:3001',
     NODE_ENV: 'test',
     DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
     JWT_SECRET: 'super_secret_jwt_key_that_is_at_least_32_chars_long',
@@ -154,7 +155,7 @@ describe('Auth Module', () => {
       // Check for set-cookie header
       const cookies = res.headers['set-cookie'];
       expect(cookies).toBeDefined();
-      expect(cookies![0]).toContain('token=');
+      expect(cookies![0]).toContain('token_default=');
       expect(cookies![0]).toContain('HttpOnly');
     });
   });
@@ -177,7 +178,7 @@ describe('Auth Module', () => {
 
       const res = await request(app)
         .get('/api/v1/auth/me')
-        .set('Cookie', [`token=${token}`]);
+        .set('Cookie', [`token_default=${token}`]);
 
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe('user-1');
@@ -200,7 +201,7 @@ describe('Auth Module', () => {
 
       const cookies = res.headers['set-cookie'];
       expect(cookies).toBeDefined();
-      expect(cookies![0]).toContain('token=;');
+      expect(cookies![0]).toContain('token_default=;');
       expect(cookies![0]).toContain('Expires=');
     });
   });
@@ -309,7 +310,7 @@ describe('Auth Module', () => {
 
         const res = await request(app)
           .post('/api/v1/auth/mfa/enroll')
-          .set('Cookie', [`token=${validToken}`]);
+          .set('Cookie', [`token_default=${validToken}`]);
 
         expect(res.status).toBe(200);
         expect(res.body.data.secret).toBeDefined();
@@ -325,7 +326,7 @@ describe('Auth Module', () => {
       it('should return 400 for malformed payload', async () => {
         const res = await request(app)
           .post('/api/v1/auth/mfa/verify')
-          .set('Cookie', [`token=${validToken}`])
+          .set('Cookie', [`token_default=${validToken}`])
           .send({ code: '12' });
 
         expect(res.status).toBe(400);
@@ -339,7 +340,7 @@ describe('Auth Module', () => {
 
         const res = await request(app)
           .post('/api/v1/auth/mfa/verify')
-          .set('Cookie', [`token=${validToken}`])
+          .set('Cookie', [`token_default=${validToken}`])
           .send({ code: '000000' });
 
         expect(res.status).toBe(400);

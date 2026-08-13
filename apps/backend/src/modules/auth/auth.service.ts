@@ -122,14 +122,21 @@ export class AuthService {
 
         logger.info(
           { userId: newUser.id },
-          'AuthService: Granting default HEADLESS_CMS app access to new SSO user',
+          'AuthService: Granting default HEADLESS_CMS and CMS_UI app access to new SSO user',
         );
         const db = getDatabaseAdapter().getDb();
-        await db.insert(userApplications).values({
-          userId: newUser.id,
-          application: 'HEADLESS_CMS',
-          status: 'active',
-        });
+        await db.insert(userApplications).values([
+          {
+            userId: newUser.id,
+            application: 'HEADLESS_CMS',
+            status: 'active',
+          },
+          {
+            userId: newUser.id,
+            application: 'CMS_UI',
+            status: 'active',
+          },
+        ]);
 
         user = newUser;
         isNewUser = true;

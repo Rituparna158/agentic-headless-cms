@@ -15,8 +15,6 @@ export default defineConfig({
     strictPort: true,
     headers: {
       // Content Security Policy (CSP) headers for security
-      'Content-Security-Policy':
-        "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
     },

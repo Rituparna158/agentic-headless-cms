@@ -186,7 +186,7 @@ export function LoginForm() {
     // FR-AC-4 scopes SSO separately from #12's JWT-only auth) is planned
     // to add: GET /api/v1/auth/sso, which redirects to the configured
     // identity provider.
-    window.location.href = `${API_BASE_URL}${API_PATHS.AUTH.SSO}`;
+    window.location.href = `${API_BASE_URL}${API_PATHS.AUTH.SSO}?redirectUrl=${encodeURIComponent(window.location.origin)}&appId=HEADLESS_CMS`;
   }
 
   return (

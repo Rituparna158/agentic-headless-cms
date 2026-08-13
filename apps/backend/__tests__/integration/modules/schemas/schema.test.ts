@@ -33,7 +33,7 @@ const userPayload = {
 
 function authCookie() {
   const token = jwt.sign(userPayload, env.JWT_SECRET);
-  return [`token=${token}`];
+  return [`token_default=${token}`];
 }
 
 const validFields = [

@@ -12,7 +12,10 @@ const AUTH_ROUTES = [
 //it only confirms a session cookie exists.
 
 export function proxy(request: NextRequest) {
-  const hasSession = request.cookies.has(AUTH_COOKIES.NAME);
+  const hasSession = request.cookies.has(`${AUTH_COOKIES.PREFIX}headless_cms`);
+  console.log(
+    `[Next.js Middleware] Checking session for route ${request.nextUrl.pathname}. hasSession=${hasSession}, cookieName=${AUTH_COOKIES.PREFIX}headless_cms`,
+  );
   const { pathname } = request.nextUrl;
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
