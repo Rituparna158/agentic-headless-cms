@@ -142,6 +142,47 @@ export class ContentService {
     }
   }
 
+  async updatePartial(
+    entryId: string,
+    data: Record<string, unknown>,
+    userId: string,
+    locale: string = DEFAULT_LOCALE,
+  ) {
+    try {
+      logger.info({ entryId, userId }, 'ContentService: updatePartial start');
+
+      const beforeState = await this.repository.getEntryById(entryId, locale);
+      if (!beforeState) {
+        throw new ApiError(404, 'Entry not found');
+      }
+      const mergedData = { ...(beforeState.data as object), ...data };
+
+      const result = await this.repository.updateEntryDraft(
+        entryId,
+        mergedData,
+        userId,
+        locale,
+      );
+
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.UPDATE,
+        resourceType: 'content',
+        resourceId: entryId,
+        actorUserId: actorUserId || userId,
+        actorAgentId,
+        beforeState: beforeState,
+        afterState: result,
+        context,
+      });
+
+      return result;
+    } catch (error) {
+      logger.error({ err: error }, 'ContentService Error in updatePartial:');
+      throw new ApiError(500, 'Failed to partially update entry.');
+    }
+  }
+
   async publishEntry(
     entryId: string,
     userId: string,
