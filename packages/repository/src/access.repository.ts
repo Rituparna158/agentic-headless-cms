@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import type { BaseQueryOptions } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
@@ -226,9 +226,23 @@ export class AccessRepository {
     }
   }
 
-  async listUsers(options: BaseQueryOptions = {}) {
+  async listUsers(options: BaseQueryOptions = {}, appId: string) {
     try {
-      logger.info('AccessRepository: listing users');
+      logger.info({ appId }, 'AccessRepository: listing users');
+
+      // 1. Get user IDs that have access to this application
+      const appUsers = await this.db
+        .select({ userId: userApplications.userId })
+        .from(userApplications)
+        .where(
+          eq(userApplications.application, appId as 'HEADLESS_CMS' | 'CMS_UI'),
+        );
+
+      const userIds = appUsers.map((au) => au.userId);
+
+      if (userIds.length === 0) {
+        return [[], 0] as [unknown[], number];
+      }
 
       const { limit, offset, orderBy, where } = buildPaginationOptions(
         options,
@@ -243,10 +257,14 @@ export class AccessRepository {
         [users.email, users.firstName, users.lastName],
       );
 
+      const finalWhere = where
+        ? and(where, inArray(users.id, userIds))
+        : inArray(users.id, userIds);
+
       const allUsers = await this.db
         .select()
         .from(users)
-        .where(where)
+        .where(finalWhere)
         .limit(limit)
         .offset(offset)
         .orderBy(...orderBy);
@@ -254,10 +272,16 @@ export class AccessRepository {
       const countResult = await this.db
         .select({ count: sql<number>`cast(count(${users.id}) as integer)` })
         .from(users)
-        .where(where);
+        .where(finalWhere);
       const total = countResult[0]?.count ?? 0;
 
-      const allUserApps = await this.db.select().from(userApplications);
+      const allUserApps = await this.db
+        .select()
+        .from(userApplications)
+        .where(
+          eq(userApplications.application, appId as 'HEADLESS_CMS' | 'CMS_UI'),
+        );
+
       const allUserRoles = await this.db.select().from(userRoles);
 
       logger.debug(
