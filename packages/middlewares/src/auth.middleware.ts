@@ -15,9 +15,10 @@ export const authenticateToken = (
   res: Response,
   next: NextFunction,
 ) => {
-  let token = (req.cookies as Record<string, string> | undefined)?.[
-    AUTH_COOKIES.NAME
-  ];
+  const appId = (req.headers['x-app-id'] as string) || 'default';
+  const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+
+  let token = (req.cookies as Record<string, string> | undefined)?.[cookieName];
 
   if (!token && req.headers.authorization?.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
