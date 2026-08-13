@@ -116,7 +116,7 @@ importers:
         version: 2.8.6
       drizzle-orm:
         specifier: ^0.36.4
-        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.2)(pg@8.22.0)(react@19.2.0)
+        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.18)(pg@8.22.0)(react@19.2.0)
       eventemitter2:
         specifier: ^6.4.9
         version: 6.4.9
@@ -305,8 +305,8 @@ importers:
         specifier: ^7.1.5
         version: 7.18.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: ^4.4.3
+        version: 4.4.3
       zustand:
         specifier: ^5.0.3
         version: 5.0.14(@types/react@19.2.2)(react@19.2.0)
@@ -733,7 +733,7 @@ importers:
         version: link:../utils
       drizzle-orm:
         specifier: ^0.36.4
-        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.2)(pg@8.22.0)(react@19.2.0)
+        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.18)(pg@8.22.0)(react@19.2.0)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -774,7 +774,7 @@ importers:
         version: 6.0.0
       drizzle-orm:
         specifier: ^0.36.4
-        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.2)(pg@8.22.0)(react@19.2.0)
+        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.18)(pg@8.22.0)(react@19.2.0)
       pg:
         specifier: ^8.13.1
         version: 8.22.0
@@ -894,7 +894,7 @@ importers:
         version: link:../constants
       drizzle-orm:
         specifier: ^0.36.4
-        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.2)(pg@8.22.0)(react@19.2.0)
+        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.18)(pg@8.22.0)(react@19.2.0)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -9794,9 +9794,6 @@ packages:
     peerDependencies:
       zod: ^3.25.28 || ^4
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
@@ -15396,11 +15393,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.2)(pg@8.22.0)(react@19.2.0):
+  drizzle-orm@0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.18)(pg@8.22.0)(react@19.2.0):
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       '@types/pg': 8.20.0
-      '@types/react': 19.2.2
+      '@types/react': 19.2.18
       pg: 8.22.0
       react: 19.2.0
 
@@ -19281,8 +19278,6 @@ snapshots:
   zod-to-json-schema@3.25.2(zod@4.4.3):
     dependencies:
       zod: 4.4.3
-
-  zod@3.25.76: {}
 
   zod@4.4.3: {}
 
