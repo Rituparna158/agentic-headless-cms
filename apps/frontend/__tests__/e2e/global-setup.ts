@@ -36,9 +36,9 @@ export default async function globalSetup() {
 
   const testDbEnv = {
     ...process.env,
-    NODE_ENV: 'test',
+    NODE_ENV: 'test' as const,
     DATABASE_URL: E2E_DATABASE_URL,
-  };
+  } as NodeJS.ProcessEnv;
 
   // drizzle-kit directly, not the `db:migrate` package script - that script
   // rebuilds @repo/shared-db first, and this runs concurrently with the
