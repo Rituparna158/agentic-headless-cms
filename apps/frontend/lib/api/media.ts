@@ -35,6 +35,13 @@ export function deleteMedia(id: string): Promise<void> {
   return apiFetch<void>(API_PATHS.MEDIA.BY_ID(id), { method: 'DELETE' });
 }
 
+export function bulkDeleteMedia(ids: string[]): Promise<void> {
+  return apiFetch<void>(API_PATHS.MEDIA.BULK_DELETE, {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+  });
+}
+
 export async function uploadMedia(
   file: File,
   options?: { altText?: string; folderId?: string },
