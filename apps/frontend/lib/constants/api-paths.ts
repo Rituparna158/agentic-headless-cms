@@ -37,6 +37,7 @@ export const API_PATHS = {
   MEDIA: {
     BASE: (qs?: string) => `/api/v1/media${qs ? `?${qs}` : ''}`,
     BY_ID: (id: string) => `/api/v1/media/${id}`,
+    BULK_DELETE: '/api/v1/media/bulk-delete',
   },
   WEBHOOKS: {
     BASE: '/api/v1/webhooks',

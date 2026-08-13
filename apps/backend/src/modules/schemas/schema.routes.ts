@@ -8,6 +8,7 @@ import {
   listSchemas,
   updateSchema,
   deleteSchema,
+  getSchemaBySlug,
 } from './schema.controller.js';
 
 export const schemaRouter = Router();
@@ -24,6 +25,12 @@ schemaRouter.get(
   authenticateToken,
   requirePermission('read'),
   listSchemas,
+);
+schemaRouter.get(
+  '/slug/:slug',
+  authenticateToken,
+  requirePermission('read'),
+  getSchemaBySlug,
 );
 schemaRouter.put(
   '/:id',

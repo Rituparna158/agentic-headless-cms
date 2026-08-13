@@ -7,17 +7,21 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { FileIcon, Trash2 } from 'lucide-react';
+import { FileIcon, Trash2, CheckSquare, Square, XCircle } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { useHasPermission } from '@/hooks/use-permissions';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Button } from '@repo/shared-ui';
 import { Card, CardContent } from '@repo/shared-ui';
-import { deleteMedia, listMedia, mediaFileUrl } from '@/lib/api/media';
+import {
+  bulkDeleteMedia,
+  deleteMedia,
+  listMedia,
+  mediaFileUrl,
+} from '@/lib/api/media';
 
-// Page size is now managed via state
 function AssetThumbnail({
   asset,
   priority = false,
@@ -50,6 +54,8 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
   const [pendingDelete, setPendingDelete] = useState<MediaAsset | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['media', page, folderId],
@@ -65,7 +71,41 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => bulkDeleteMedia(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media'] });
+      setSelectedIds(new Set());
+      setConfirmBulkDelete(false);
+    },
+  });
+
   const canDelete = useHasPermission('delete');
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(
+    (assets: MediaAsset[]) => {
+      if (selectedIds.size === assets.length) {
+        setSelectedIds(new Set());
+      } else {
+        setSelectedIds(new Set(assets.map((a) => a.id)));
+      }
+    },
+    [selectedIds.size],
+  );
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">Loading media…</p>;
@@ -81,6 +121,8 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
 
   const assets = data?.data ?? [];
   const pagination = data?.meta.pagination;
+  const allSelected = assets.length > 0 && selectedIds.size === assets.length;
+  const someSelected = selectedIds.size > 0;
 
   if (assets.length === 0) {
     return (
@@ -94,35 +136,116 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
 
   return (
     <div className="grid gap-3">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {assets.map((asset, index) => (
-          <div key={asset.id} className="grid gap-1">
-            <div className="bg-muted relative aspect-square overflow-hidden rounded-md border">
-              <AssetThumbnail asset={asset} priority={index < 8} />
-              <span
-                className="absolute top-1 right-1 size-7"
-                title={
-                  !canDelete ? 'You do not have permission to delete.' : ''
-                }
-              >
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="icon"
-                  className="size-full"
-                  aria-label={`Delete ${asset.filename}`}
-                  disabled={!canDelete || deleteMutation.isPending}
-                  onClick={() => setPendingDelete(asset)}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
+      {/* Bulk action toolbar */}
+      {canDelete && (
+        <div className="flex items-center gap-3 py-2 border-b">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => toggleSelectAll(assets)}
+            aria-label={allSelected ? 'Deselect all' : 'Select all'}
+          >
+            {allSelected ? (
+              <CheckSquare className="size-4 text-primary" />
+            ) : (
+              <Square className="size-4" />
+            )}
+            <span>{allSelected ? 'Deselect all' : 'Select all'}</span>
+          </button>
+
+          {someSelected && (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {selectedIds.size} selected
               </span>
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                disabled={bulkDeleteMutation.isPending}
+                onClick={() => setConfirmBulkDelete(true)}
+                className="flex items-center gap-1.5"
+              >
+                <Trash2 className="size-3.5" />
+                {bulkDeleteMutation.isPending
+                  ? 'Deleting…'
+                  : `Delete ${selectedIds.size} file${selectedIds.size > 1 ? 's' : ''}`}
+              </Button>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={clearSelection}
+                aria-label="Clear selection"
+              >
+                <XCircle className="size-4" />
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        {assets.map((asset, index) => {
+          const isSelected = selectedIds.has(asset.id);
+          return (
+            <div key={asset.id} className="grid gap-1">
+              <div
+                className={`bg-muted relative aspect-square overflow-hidden rounded-md border transition-all ${
+                  isSelected
+                    ? 'ring-2 ring-primary ring-offset-1'
+                    : 'hover:ring-1 hover:ring-muted-foreground/30'
+                }`}
+              >
+                <AssetThumbnail asset={asset} priority={index < 8} />
+
+                {/* Checkbox overlay (always visible for canDelete users) */}
+                {canDelete && (
+                  <button
+                    type="button"
+                    className="absolute top-1 left-1 z-10 rounded bg-background/70 p-0.5 hover:bg-background transition-colors"
+                    aria-label={
+                      isSelected
+                        ? `Deselect ${asset.filename}`
+                        : `Select ${asset.filename}`
+                    }
+                    onClick={() => toggleSelect(asset.id)}
+                  >
+                    {isSelected ? (
+                      <CheckSquare className="size-4 text-primary" />
+                    ) : (
+                      <Square className="size-4 text-muted-foreground" />
+                    )}
+                  </button>
+                )}
+
+                {/* Single delete button (only visible when nothing is selected) */}
+                {canDelete && !someSelected && (
+                  <span
+                    className="absolute top-1 right-1 size-7"
+                    title={
+                      !canDelete ? 'You do not have permission to delete.' : ''
+                    }
+                  >
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="icon"
+                      className="size-full"
+                      aria-label={`Delete ${asset.filename}`}
+                      disabled={!canDelete || deleteMutation.isPending}
+                      onClick={() => setPendingDelete(asset)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </span>
+                )}
+              </div>
+              <p className="truncate text-xs" title={asset.filename}>
+                {asset.filename}
+              </p>
             </div>
-            <p className="truncate text-xs" title={asset.filename}>
-              {asset.filename}
-            </p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {pagination ? (
@@ -173,6 +296,7 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
         </div>
       ) : null}
 
+      {/* Single-delete confirmation */}
       <ConfirmDialog
         open={pendingDelete !== null}
         onOpenChange={(open) => {
@@ -188,6 +312,21 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
         destructive
         onConfirm={() => {
           if (pendingDelete) deleteMutation.mutate(pendingDelete.id);
+        }}
+      />
+
+      {/* Bulk-delete confirmation */}
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        onOpenChange={(open) => {
+          if (!open) setConfirmBulkDelete(false);
+        }}
+        title={`Delete ${selectedIds.size} file${selectedIds.size > 1 ? 's' : ''}?`}
+        description={`${selectedIds.size} file${selectedIds.size > 1 ? 's' : ''} will be permanently deleted. This can't be undone.`}
+        confirmLabel={`Delete ${selectedIds.size} file${selectedIds.size > 1 ? 's' : ''}`}
+        destructive
+        onConfirm={() => {
+          bulkDeleteMutation.mutate([...selectedIds]);
         }}
       />
     </div>

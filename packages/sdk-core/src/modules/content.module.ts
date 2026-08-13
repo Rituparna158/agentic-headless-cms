@@ -80,6 +80,26 @@ export class ContentModule {
     return res.data;
   }
 
+  public async updatePartial(
+    schemaSlug: string,
+    entryId: string,
+    data: Record<string, unknown>,
+    options?: { locale?: string },
+  ): Promise<ContentEntryRecord> {
+    const res = await this.transport.request<ApiResponse<ContentEntryRecord>>(
+      `/content/${schemaSlug}/${entryId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        params: options as Record<
+          string,
+          string | number | boolean | undefined
+        >,
+      },
+    );
+    return res.data;
+  }
+
   public async delete(schemaSlug: string, entryId: string): Promise<void> {
     await this.transport.request<void>(`/content/${schemaSlug}/${entryId}`, {
       method: 'DELETE',

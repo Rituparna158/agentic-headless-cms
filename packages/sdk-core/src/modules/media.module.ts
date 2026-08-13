@@ -36,6 +36,13 @@ export class MediaModule {
     });
   }
 
+  public async deleteBulk(ids: string[]): Promise<void> {
+    await this.transport.request<void>(`/media/bulk-delete`, {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  }
+
   public async upload(
     file: Blob | File,
     options?: UploadMediaOptions,
