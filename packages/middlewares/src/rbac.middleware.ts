@@ -9,7 +9,12 @@ function errorJson(res: Response, status: number, message: string) {
 }
 
 export const requirePermission =
-  (getUserPermissions: (userId: string) => Promise<Permission[]>) =>
+  (
+    getUserPermissions: (
+      userId: string,
+      appId: string,
+    ) => Promise<Permission[]>,
+  ) =>
   (action: string, schemaId?: string) => {
     return async (req: Request, res: Response, next: NextFunction) => {
       if (!req.user) {
@@ -22,7 +27,8 @@ export const requirePermission =
       }
 
       try {
-        const permissions = await getUserPermissions(req.user.id);
+        const appId = (req.headers['x-app-id'] as string) || 'default';
+        const permissions = await getUserPermissions(req.user.id, appId);
 
         if (!hasPermission(permissions, action, schemaId)) {
           errorJson(res, HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.RBAC.FORBIDDEN);
