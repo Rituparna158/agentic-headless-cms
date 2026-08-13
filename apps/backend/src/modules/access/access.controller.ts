@@ -113,9 +113,11 @@ export const deleteRole: RequestHandler = asyncHandler(
 export const listUsers: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listUsers start');
+    const appId = req.headers['x-app-id'] as string;
+    if (!appId) throw new BadRequestError('x-app-id header is required');
 
     const options = parseQueryOptions(req.query);
-    const [users, total] = await accessService.listUsers(options);
+    const [users, total] = await accessService.listUsers(options, appId);
 
     logger.debug(
       { count: users.length, total },
