@@ -52,11 +52,14 @@ export function createApp(): Express {
     helmet({
       // Configure cross-origin policy
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false,
     }),
   );
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: env.CORS_ORIGIN.includes(',')
+        ? env.CORS_ORIGIN.split(',').map((o) => o.trim())
+        : env.CORS_ORIGIN,
       credentials: true,
     }),
   );

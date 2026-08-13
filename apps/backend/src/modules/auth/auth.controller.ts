@@ -44,8 +44,11 @@ export const login: RequestHandler = asyncHandler(
       token: string;
     };
 
+    const appId = (req.headers['x-app-id'] as string) || 'default';
+    const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+
     logger.debug({ email: input.email }, 'AuthController: setting auth cookie');
-    res.cookie(AUTH_COOKIES.NAME, token, {
+    res.cookie(cookieName, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -64,7 +67,10 @@ export const login: RequestHandler = asyncHandler(
 export const logout: RequestHandler = asyncHandler(
   (req: Request, res: Response) => {
     logger.info('AuthController: logout start');
-    res.clearCookie(AUTH_COOKIES.NAME, {
+    const appId = (req.headers['x-app-id'] as string) || 'default';
+    const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+
+    res.clearCookie(cookieName, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -145,6 +151,31 @@ export const ssoLogin: RequestHandler = asyncHandler(
     const { url, state, nonce, codeVerifier } =
       await authService.getOidcAuthorizationUrl();
 
+    let redirectUrl = env.APP_URL;
+    const requestedRedirectUrl = req.query.redirectUrl as string;
+
+    if (requestedRedirectUrl) {
+      const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
+      if (
+        allowedOrigins.some((origin) => requestedRedirectUrl.startsWith(origin))
+      ) {
+        redirectUrl = requestedRedirectUrl;
+      }
+    }
+
+    const requestedAppId = (req.query.appId as string) || 'default';
+
+    res.cookie('sso_redirect_url', redirectUrl, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      maxAge: 5 * 60 * 1000,
+    });
+    res.cookie('sso_app_id', requestedAppId, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      maxAge: 5 * 60 * 1000,
+    });
+
     res.cookie('sso_state', state, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
@@ -173,6 +204,8 @@ export const ssoCallback: RequestHandler = asyncHandler(
     const state = cookies?.sso_state;
     const nonce = cookies?.sso_nonce;
     const codeVerifier = cookies?.sso_code_verifier;
+    const redirectUrl = cookies?.sso_redirect_url as string | undefined;
+    const appId = (cookies?.sso_app_id as string) || 'default';
 
     if (
       typeof state !== 'string' ||
@@ -196,8 +229,11 @@ export const ssoCallback: RequestHandler = asyncHandler(
     res.clearCookie('sso_state');
     res.clearCookie('sso_nonce');
     res.clearCookie('sso_code_verifier');
+    res.clearCookie('sso_redirect_url');
+    res.clearCookie('sso_app_id');
 
-    res.cookie(AUTH_COOKIES.NAME, token, {
+    const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+    res.cookie(cookieName, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -205,7 +241,8 @@ export const ssoCallback: RequestHandler = asyncHandler(
     });
 
     logger.info({ userId: user.id }, 'AuthController: ssoCallback success');
-    res.redirect(`${env.APP_URL}/`);
+    const finalRedirectUrl = redirectUrl || env.APP_URL;
+    res.redirect(`${finalRedirectUrl}`);
   },
 );
 
@@ -231,7 +268,10 @@ export const verifyMfa: RequestHandler = asyncHandler(
       { userId },
       'AuthController: setting updated auth cookie from MFA verification',
     );
-    res.cookie(AUTH_COOKIES.NAME, token, {
+    const appId = (req.headers['x-app-id'] as string) || 'default';
+    const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+
+    res.cookie(cookieName, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -256,7 +296,10 @@ export const disableMfa: RequestHandler = asyncHandler(
       { userId },
       'AuthController: setting updated auth cookie from MFA disablement',
     );
-    res.cookie(AUTH_COOKIES.NAME, token, {
+    const appId = (req.headers['x-app-id'] as string) || 'default';
+    const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+
+    res.cookie(cookieName, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -282,7 +325,10 @@ export const verifyMfaChallenge: RequestHandler = asyncHandler(
       { userId: user.id },
       'AuthController: setting auth cookie from MFA challenge',
     );
-    res.cookie(AUTH_COOKIES.NAME, token, {
+    const appId = (req.headers['x-app-id'] as string) || 'default';
+    const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+
+    res.cookie(cookieName, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
