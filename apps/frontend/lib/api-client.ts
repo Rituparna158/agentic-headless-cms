@@ -45,6 +45,7 @@ export async function apiFetch<T>(
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        'X-App-Id': 'HEADLESS_CMS',
         ...init?.headers,
       },
     });
