@@ -41,7 +41,9 @@ export class MediaModule {
     options?: UploadMediaOptions,
   ): Promise<MediaAsset> {
     const formData = new FormData();
-    formData.append('file', file);
+    const filename =
+      options?.filename || (file instanceof File ? file.name : 'blob');
+    formData.append('file', file, filename);
     if (options?.altText) {
       formData.append('altText', options.altText);
     }
