@@ -57,6 +57,25 @@ export const listSchemas: RequestHandler = asyncHandler(
   },
 );
 
+export const getSchemaBySlug: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { slug } = req.params;
+    logger.info({ slug }, 'SchemaController: getSchemaBySlug start');
+    if (!req.user) {
+      logger.error('SchemaController: unauthorized request');
+      throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
+    }
+
+    logger.debug({ slug }, 'SchemaController: fetching schema by slug');
+    const schema = await schemaService.getBySlug(slug as string);
+
+    logger.info({ slug }, 'SchemaController: getSchemaBySlug end');
+    res
+      .status(200)
+      .json(new ApiResponse(200, schema, 'Schema retrieved successfully'));
+  },
+);
+
 export const updateSchema: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;

@@ -156,6 +156,22 @@ export async function getSchemaById(
   if (!schema) {
     throw new RecordNotFoundError(`Schema ${id} does not exist.`);
   }
+  return schema;
+}
+
+export async function getSchemaBySlug(
+  db: Database,
+  slug: string,
+): Promise<SchemaRecord> {
+  const [schema] = await db
+    .select()
+    .from(schemas)
+    .where(eq(schemas.slug, slug))
+    .limit(1);
+
+  if (!schema) {
+    throw new RecordNotFoundError(`Schema with slug "${slug}" does not exist.`);
+  }
 
   return schema;
 }
