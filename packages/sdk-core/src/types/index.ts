@@ -19,6 +19,7 @@ export interface ApiResponse<T> {
 export interface UploadMediaOptions {
   altText?: string;
   folderId?: string;
+  filename?: string;
 }
 
 export type LoginResult =
