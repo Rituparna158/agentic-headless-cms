@@ -37,8 +37,11 @@ graphqlRouter.use(async (req, res, next) => {
   try {
     const server = await getApolloServer();
     return expressMiddleware(server, {
-      context: ({ req: expressReq }) =>
-        Promise.resolve({ user: expressReq.user }),
+      context: ({ req: expressReq }) => {
+        const appId = expressReq.headers['x-app-id'] as string;
+        if (!appId) throw new Error('x-app-id header is required');
+        return Promise.resolve({ user: expressReq.user, appId });
+      },
     })(req, res, next);
   } catch (error) {
     next(error);
