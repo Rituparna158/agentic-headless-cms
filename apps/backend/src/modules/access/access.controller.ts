@@ -21,8 +21,11 @@ export const listRoles: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listRoles start');
 
+    const appId = req.headers['x-app-id'] as string;
+    if (!appId) throw new BadRequestError('x-app-id header is required');
+
     const options = parseQueryOptions(req.query);
-    const [roles, total] = await accessService.listRoles(options);
+    const [roles, total] = await accessService.listRoles(options, appId);
 
     logger.debug(
       { count: roles.length, total },

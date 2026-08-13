@@ -33,10 +33,10 @@ export class AccessService {
     private readonly repository: AccessRepository = new AccessRepository(),
   ) {}
 
-  async listRoles(options: BaseQueryOptions = {}) {
+  async listRoles(options: BaseQueryOptions = {}, appId: string) {
     try {
       logger.info('AccessService: listRoles start');
-      const result = await this.repository.listRoles(options);
+      const result = await this.repository.listRoles(options, appId);
       logger.debug('AccessService: listRoles end');
       return result;
     } catch (error) {

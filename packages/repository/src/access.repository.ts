@@ -22,7 +22,7 @@ export class AccessRepository {
     return getDatabaseAdapter().getDb();
   }
 
-  async listRoles(options: BaseQueryOptions = {}) {
+  async listRoles(options: BaseQueryOptions = {}, appId: string) {
     try {
       logger.info('AccessRepository: listing roles');
 
@@ -37,10 +37,14 @@ export class AccessRepository {
         [roles.name, roles.description],
       );
 
+      const finalWhere = where
+        ? and(where, eq(roles.application, appId as 'HEADLESS_CMS' | 'CMS_UI'))
+        : eq(roles.application, appId as 'HEADLESS_CMS' | 'CMS_UI');
+
       const allRoles = await this.db
         .select()
         .from(roles)
-        .where(where)
+        .where(finalWhere)
         .limit(limit)
         .offset(offset)
         .orderBy(...orderBy);
@@ -48,7 +52,7 @@ export class AccessRepository {
       const countResult = await this.db
         .select({ count: sql<number>`cast(count(${roles.id}) as integer)` })
         .from(roles)
-        .where(where);
+        .where(finalWhere);
       const total = countResult[0]?.count ?? 0;
 
       const allPermissions = await this.db.select().from(permissions);
