@@ -37,9 +37,7 @@ export function MfaChallengeForm() {
           <Input
             placeholder="000000"
             value={code}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setCode(e.target.value.replace(/\D/g, ''))
-            }
+            onChange={(value) => setCode(value.replace(/\D/g, ''))}
             className="text-center text-lg tracking-widest font-mono"
             variant="default"
           />
