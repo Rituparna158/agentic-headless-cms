@@ -156,10 +156,10 @@ export class AccessService {
     }
   }
 
-  async listUsers(options: BaseQueryOptions = {}) {
+  async listUsers(options: BaseQueryOptions = {}, appId: string) {
     try {
-      logger.info('AccessService: listUsers start');
-      const result = await this.repository.listUsers(options);
+      logger.info({ appId }, 'AccessService: listUsers start');
+      const result = await this.repository.listUsers(options, appId);
       logger.debug('AccessService: listUsers end');
       return result;
     } catch (error) {
