@@ -28,6 +28,7 @@ const MAX_PAGE_SIZE = 100;
 const SORTABLE_BASE_COLUMNS = {
   createdAt: contentEntries.createdAt,
   updatedAt: contentEntries.updatedAt,
+  status: entryLocalizations.status,
 } as const;
 
 function findField(fields: SchemaField[], apiId: string): SchemaField {

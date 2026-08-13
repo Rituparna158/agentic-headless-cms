@@ -17,11 +17,11 @@ import { pickTitleField } from '@/utils/schema';
 import { MediaThumbnailCell } from './media-thumbnail-cell';
 import { DataTable } from '@repo/shared-ui';
 
-const PAGE_SIZE = 25;
-
+// Page size is now managed via state
 export function ContentEntryList({ schema }: ContentEntryListProps) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('updatedAt:desc');
 
@@ -32,7 +32,7 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
     queryFn: () =>
       listContentEntries(schema.slug, {
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         sort,
         filters:
           search && titleField
@@ -147,6 +147,8 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
           enablePagination={true}
           manualPagination={true}
           page={page}
+          pageSize={pageSize}
+          onPageSizeChange={(newSize: number) => setPageSize(newSize)}
           pageCount={data?.meta?.pagination?.pageCount ?? 1}
           totalCount={data?.meta?.pagination?.total ?? 0}
           onPageChange={(newPage: number) => setPage(newPage)}

@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { BaseQueryOptions } from '@repo/types';
 
 import {
   EMAIL_TEMPLATES,
@@ -32,10 +33,10 @@ export class AccessService {
     private readonly repository: AccessRepository = new AccessRepository(),
   ) {}
 
-  async listRoles() {
+  async listRoles(options: BaseQueryOptions = {}) {
     try {
       logger.info('AccessService: listRoles start');
-      const result = await this.repository.listRoles();
+      const result = await this.repository.listRoles(options);
       logger.debug('AccessService: listRoles end');
       return result;
     } catch (error) {
@@ -155,10 +156,10 @@ export class AccessService {
     }
   }
 
-  async listUsers() {
+  async listUsers(options: BaseQueryOptions = {}) {
     try {
       logger.info('AccessService: listUsers start');
-      const result = await this.repository.listUsers();
+      const result = await this.repository.listUsers(options);
       logger.debug('AccessService: listUsers end');
       return result;
     } catch (error) {
@@ -352,10 +353,10 @@ export class AccessService {
     }
   }
 
-  async listTokens() {
+  async listTokens(options: BaseQueryOptions = {}) {
     try {
       logger.info('AccessService: listTokens start');
-      const result = await this.repository.listTokens();
+      const result = await this.repository.listTokens(options);
       logger.debug('AccessService: listTokens end');
       return result;
     } catch (error) {

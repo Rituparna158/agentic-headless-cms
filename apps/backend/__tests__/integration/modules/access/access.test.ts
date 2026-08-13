@@ -8,7 +8,7 @@ vi.mock('../../../../src/modules/access/access.service.js', () => {
   const AccessService = vi.fn();
   AccessService.prototype.listRoles = vi
     .fn()
-    .mockResolvedValue([{ id: '1', name: 'Admin', permissions: [] }]);
+    .mockResolvedValue([[{ id: '1', name: 'Admin', permissions: [] }], 1]);
   AccessService.prototype.getRole = vi
     .fn()
     .mockResolvedValue({ id: '1', name: 'Admin', permissions: [] });
@@ -21,10 +21,10 @@ vi.mock('../../../../src/modules/access/access.service.js', () => {
   AccessService.prototype.deleteRole = vi.fn().mockResolvedValue({ id: '1' });
   AccessService.prototype.listUsers = vi
     .fn()
-    .mockResolvedValue([{ id: 'u1', email: 'test@example.com' }]);
+    .mockResolvedValue([[{ id: 'u1', email: 'test@example.com' }], 1]);
   AccessService.prototype.listTokens = vi
     .fn()
-    .mockResolvedValue([{ id: 't1', name: 'Test Token' }]);
+    .mockResolvedValue([[{ id: 't1', name: 'Test Token' }], 1]);
   AccessService.prototype.createToken = vi
     .fn()
     .mockResolvedValue({ id: 't2', name: 'New Token', rawToken: 'abc' });
@@ -82,8 +82,8 @@ describe('Access Module', () => {
         .get('/api/v1/access/roles')
         .set('Cookie', [`token_default=${validToken}`]);
       expect(res.status).toBe(200);
-      expect(res.body.data).toHaveLength(1);
-      expect(res.body.data[0].name).toBe('Admin');
+      expect(res.body.data.data).toHaveLength(1);
+      expect(res.body.data.data[0].name).toBe('Admin');
     });
   });
 

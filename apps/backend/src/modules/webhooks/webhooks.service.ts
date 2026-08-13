@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { WebhooksRepository } from '@repo/repository';
-import { CreateWebhookInput } from '@repo/types';
+import type { CreateWebhookInput, BaseQueryOptions } from '@repo/types';
 import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
 import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
@@ -13,10 +13,10 @@ export class WebhooksService {
     private readonly repository: WebhooksRepository = new WebhooksRepository(),
   ) {}
 
-  async list() {
+  async list(options: BaseQueryOptions = {}) {
     try {
       logger.info('WebhooksService: list start');
-      const result = await this.repository.list();
+      const result = await this.repository.list(options);
       logger.debug('WebhooksService: list end');
       return result;
     } catch (error) {

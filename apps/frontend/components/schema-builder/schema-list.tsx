@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { PencilIcon } from 'lucide-react';
@@ -8,10 +9,21 @@ import { Button, Card, CardContent, DataTable } from '@repo/shared-ui';
 import { SchemaRowActions } from './schema-row-actions';
 
 export function SchemaList() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['schemas'],
-    queryFn: listSchemas,
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sort, setSort] = useState('createdAt:desc');
+  const [search, setSearch] = useState('');
+
+  const {
+    data: schemasData,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['schemas', page, pageSize, sort, search],
+    queryFn: () => listSchemas({ page, pageSize, sort, search }),
   });
+
+  const data = schemasData?.data || [];
 
   if (isLoading) {
     return (
@@ -80,7 +92,31 @@ export function SchemaList() {
           ),
         };
       })}
-      enablePagination={false}
+      enableFiltering={true}
+      manualFiltering={true}
+      filterPlaceholder="Search content types..."
+      onSearchChange={(val: string) => {
+        setSearch(val);
+        setPage(1);
+      }}
+      enableSorting={true}
+      manualSorting={true}
+      defaultSortKey={sort.split(':')[0]}
+      defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
+      onSortChange={(
+        key: string | number | symbol,
+        direction: 'asc' | 'desc',
+      ) => {
+        setSort(`${String(key)}:${direction}`);
+        setPage(1);
+      }}
+      enablePagination={true}
+      manualPagination={true}
+      page={page}
+      pageCount={schemasData?.meta?.pagination?.pageCount ?? 1}
+      pageSize={pageSize}
+      onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+      onPageChange={(newPage: number) => setPage(newPage)}
     />
   );
 }

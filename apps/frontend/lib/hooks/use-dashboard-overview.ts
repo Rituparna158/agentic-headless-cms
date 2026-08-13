@@ -22,9 +22,9 @@ const ENTRIES_PER_SCHEMA = 100; // the backend's MAX_PAGE_SIZE (content-query.ut
 export function useDashboardOverview() {
   const schemasQuery = useQuery({
     queryKey: ['schemas'],
-    queryFn: listSchemas,
+    queryFn: () => listSchemas(),
   });
-  const schemas = schemasQuery.isSuccess ? schemasQuery.data : [];
+  const schemas = schemasQuery.isSuccess ? schemasQuery.data.data : [];
 
   const entriesQuery = useQuery({
     queryKey: ['dashboard-overview', schemas.map((s) => s.slug)],

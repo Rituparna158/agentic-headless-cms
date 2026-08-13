@@ -46,7 +46,7 @@ describe('RecentActivity', () => {
   });
 
   it('shows an empty state when there are no schemas/entries', async () => {
-    mockListSchemas.mockResolvedValue([]);
+    mockListSchemas.mockResolvedValue({ data: [], meta: { total: 0 } });
     renderActivity();
 
     await waitFor(() => {
@@ -55,19 +55,22 @@ describe('RecentActivity', () => {
   });
 
   it('lists the most recently updated entries across schemas, newest first', async () => {
-    mockListSchemas.mockResolvedValue([
-      {
-        id: 's1',
-        name: 'Article',
-        slug: 'article',
-        type: 'collection',
-        definition,
-        status: 'published',
-        version: 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ]);
+    mockListSchemas.mockResolvedValue({
+      data: [
+        {
+          id: 's1',
+          name: 'Article',
+          slug: 'article',
+          type: 'collection',
+          definition,
+          status: 'published',
+          version: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      meta: { total: 1 },
+    });
     mockListContentEntries.mockResolvedValue({
       data: [
         {

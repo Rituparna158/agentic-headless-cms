@@ -10,8 +10,11 @@ import { listSchemas } from '@/lib/api/schemas';
  * content-types list and a content editor doesn't refetch.
  */
 export function useSchemaBySlug(slug: string) {
-  const query = useQuery({ queryKey: ['schemas'], queryFn: listSchemas });
-  const schema = query.data?.find((s) => s.slug === slug);
+  const query = useQuery({
+    queryKey: ['schemas'],
+    queryFn: () => listSchemas(),
+  });
+  const schema = query.data?.data?.find((s) => s.slug === slug);
 
   return { ...query, schema };
 }

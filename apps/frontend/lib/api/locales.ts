@@ -1,9 +1,17 @@
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, buildQueryString } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';
-import { LocaleRecord } from '@repo/types';
+import type {
+  LocaleRecord,
+  BaseQueryOptions,
+  PaginatedResult,
+} from '@repo/types';
 
-export function listLocales(): Promise<LocaleRecord[]> {
-  return apiFetch<LocaleRecord[]>(API_PATHS.LOCALES.BASE);
+export function listLocales(
+  options?: BaseQueryOptions,
+): Promise<PaginatedResult<LocaleRecord>> {
+  return apiFetch<PaginatedResult<LocaleRecord>>(
+    `${API_PATHS.LOCALES.BASE}${buildQueryString(options)}`,
+  );
 }
 
 export function createLocale(data: {

@@ -175,7 +175,8 @@ describe('Schemas Module', () => {
         },
       ]);
       vi.mocked(listSchemas).mockResolvedValue([
-        { id: 'schema-1', name: 'Article' } as never,
+        [{ id: 'schema-1', name: 'Article' } as never],
+        1,
       ]);
 
       const res = await request(app)
@@ -183,8 +184,8 @@ describe('Schemas Module', () => {
         .set('Cookie', authCookie());
 
       expect(res.status).toBe(200);
-      expect(res.body.data).toHaveLength(1);
-      expect(res.body.data[0].id).toBe('schema-1');
+      expect(res.body.data.data).toHaveLength(1);
+      expect(res.body.data.data[0].id).toBe('schema-1');
     });
   });
 

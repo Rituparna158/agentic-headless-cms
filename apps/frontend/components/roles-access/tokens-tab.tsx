@@ -28,15 +28,23 @@ export function TokensTab() {
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { data: tokens = [], isLoading } = useQuery({
-    queryKey: ['access', 'tokens'],
-    queryFn: listTokens,
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sort, setSort] = useState('createdAt:desc');
+  const [search, setSearch] = useState('');
+
+  const { data: tokensData, isLoading } = useQuery({
+    queryKey: ['access', 'tokens', page, pageSize, sort, search],
+    queryFn: () => listTokens({ page, pageSize, sort, search }),
   });
 
-  const { data: roles = [] } = useQuery({
+  const { data: rolesData } = useQuery({
     queryKey: ['access', 'roles'],
-    queryFn: listRoles,
+    queryFn: () => listRoles({ page: 1, pageSize: 100 }),
   });
+
+  const tokens = tokensData?.data || [];
+  const roles = rolesData?.data || [];
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -197,6 +205,31 @@ export function TokensTab() {
               </div>
             ),
           }))}
+          enableFiltering={true}
+          manualFiltering={true}
+          filterPlaceholder="Search tokens..."
+          onSearchChange={(val: string) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          enableSorting={true}
+          manualSorting={true}
+          defaultSortKey={sort.split(':')[0]}
+          defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
+          onSortChange={(
+            key: string | number | symbol,
+            direction: 'asc' | 'desc',
+          ) => {
+            setSort(`${String(key)}:${direction}`);
+            setPage(1);
+          }}
+          enablePagination={true}
+          manualPagination={true}
+          page={page}
+          pageCount={tokensData?.meta?.pagination?.pageCount ?? 1}
+          pageSize={pageSize}
+          onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+          onPageChange={(newPage: number) => setPage(newPage)}
         />
         {tokens.length === 0 && (
           <div className="p-8 text-center text-muted-foreground border-t">

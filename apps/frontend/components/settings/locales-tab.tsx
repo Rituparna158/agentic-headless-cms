@@ -15,10 +15,17 @@ export function LocalesTab() {
   const [name, setName] = useState('');
   const [pendingDelete, setPendingDelete] = useState<LocaleRecord | null>(null);
 
-  const { data: locales = [], isLoading } = useQuery({
-    queryKey: ['locales'],
-    queryFn: listLocales,
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sort, setSort] = useState('createdAt:desc');
+  const [search, setSearch] = useState('');
+
+  const { data: localesData, isLoading } = useQuery({
+    queryKey: ['locales', page, pageSize, sort, search],
+    queryFn: () => listLocales({ page, pageSize, sort, search }),
   });
+
+  const locales = localesData?.data || [];
 
   const createMutation = useMutation({
     mutationFn: () => createLocale({ code, name }),
@@ -119,6 +126,31 @@ export function LocalesTab() {
               </div>
             ),
           }))}
+          enableFiltering={true}
+          manualFiltering={true}
+          filterPlaceholder="Search locales..."
+          onSearchChange={(val: string) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          enableSorting={true}
+          manualSorting={true}
+          defaultSortKey={sort.split(':')[0]}
+          defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
+          onSortChange={(
+            key: string | number | symbol,
+            direction: 'asc' | 'desc',
+          ) => {
+            setSort(`${String(key)}:${direction}`);
+            setPage(1);
+          }}
+          enablePagination={true}
+          manualPagination={true}
+          page={page}
+          pageCount={localesData?.meta?.pagination?.pageCount ?? 1}
+          pageSize={pageSize}
+          onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+          onPageChange={(newPage: number) => setPage(newPage)}
         />
         {locales.length === 0 && (
           <div className="p-8 text-center text-muted-foreground border-t">

@@ -7,12 +7,15 @@ import { env } from '@repo/config';
 vi.mock('../../../../src/modules/webhooks/webhooks.service.js', () => {
   const WebhooksService = vi.fn();
   WebhooksService.prototype.list = vi.fn().mockResolvedValue([
-    {
-      id: 'w1',
-      name: 'ISR Rebuild',
-      url: 'https://example.com/hook',
-      events: ['content.published'],
-    },
+    [
+      {
+        id: 'w1',
+        name: 'ISR Rebuild',
+        url: 'https://example.com/hook',
+        events: ['content.published'],
+      },
+    ],
+    1,
   ]);
   WebhooksService.prototype.create = vi.fn().mockResolvedValue({
     id: 'w2',
@@ -59,8 +62,8 @@ describe('Webhooks Module', () => {
         .get('/api/v1/webhooks')
         .set('Cookie', [`token_default=${adminToken}`]);
       expect(res.status).toBe(200);
-      expect(res.body.data).toHaveLength(1);
-      expect(res.body.data[0].name).toBe('ISR Rebuild');
+      expect(res.body.data.data).toHaveLength(1);
+      expect(res.body.data.data[0].name).toBe('ISR Rebuild');
     });
   });
 

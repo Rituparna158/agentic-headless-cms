@@ -1,10 +1,20 @@
-import type { RoleRecord, TokenRecord, UserRecord } from '@repo/types';
+import type {
+  RoleRecord,
+  TokenRecord,
+  UserRecord,
+  BaseQueryOptions,
+  PaginatedResult,
+} from '@repo/types';
 import { API_PATHS } from '@/lib/constants/api-paths';
 
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, buildQueryString } from '@/lib/api-client';
 
-export function listRoles(): Promise<RoleRecord[]> {
-  return apiFetch<RoleRecord[]>(API_PATHS.ACCESS.ROLES);
+export function listRoles(
+  options?: BaseQueryOptions,
+): Promise<PaginatedResult<RoleRecord>> {
+  return apiFetch<PaginatedResult<RoleRecord>>(
+    `${API_PATHS.ACCESS.ROLES}${buildQueryString(options)}`,
+  );
 }
 
 export function createRole(data: Partial<RoleRecord>): Promise<RoleRecord> {
@@ -28,8 +38,12 @@ export function deleteRole(id: string): Promise<void> {
   return apiFetch<void>(API_PATHS.ACCESS.ROLE(id), { method: 'DELETE' });
 }
 
-export function listUsers(): Promise<UserRecord[]> {
-  return apiFetch<UserRecord[]>(API_PATHS.ACCESS.USERS);
+export function listUsers(
+  options?: BaseQueryOptions,
+): Promise<PaginatedResult<UserRecord>> {
+  return apiFetch<PaginatedResult<UserRecord>>(
+    `${API_PATHS.ACCESS.USERS}${buildQueryString(options)}`,
+  );
 }
 
 export function deleteUser(id: string): Promise<void> {
@@ -55,8 +69,12 @@ export function inviteUser(data: {
   });
 }
 
-export function listTokens(): Promise<TokenRecord[]> {
-  return apiFetch<TokenRecord[]>(API_PATHS.ACCESS.TOKENS);
+export function listTokens(
+  options?: BaseQueryOptions,
+): Promise<PaginatedResult<TokenRecord>> {
+  return apiFetch<PaginatedResult<TokenRecord>>(
+    `${API_PATHS.ACCESS.TOKENS}${buildQueryString(options)}`,
+  );
 }
 
 export function createToken(data: Partial<TokenRecord>): Promise<TokenRecord> {

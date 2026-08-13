@@ -2,12 +2,18 @@ import type {
   CreateSchemaInput,
   SchemaRecord,
   UpdateSchemaInput,
+  BaseQueryOptions,
+  PaginatedResult,
 } from '@repo/types';
 import { API_PATHS } from '@/lib/constants/api-paths';
-import { apiFetch } from '@/lib/api-client';
+import { apiFetch, buildQueryString } from '@/lib/api-client';
 
-export function listSchemas(): Promise<SchemaRecord[]> {
-  return apiFetch<SchemaRecord[]>(API_PATHS.SCHEMAS.BASE);
+export function listSchemas(
+  options?: BaseQueryOptions,
+): Promise<PaginatedResult<SchemaRecord>> {
+  return apiFetch<PaginatedResult<SchemaRecord>>(
+    `${API_PATHS.SCHEMAS.BASE}${buildQueryString(options)}`,
+  );
 }
 
 export function createSchema(input: CreateSchemaInput): Promise<SchemaRecord> {

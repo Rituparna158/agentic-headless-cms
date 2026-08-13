@@ -17,15 +17,18 @@ export function RolesTab() {
     null,
   );
 
-  const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
+  const { data: rolesData, isLoading: isLoadingRoles } = useQuery({
     queryKey: ['access', 'roles'],
-    queryFn: listRoles,
+    queryFn: () => listRoles({ page: 1, pageSize: 100 }),
   });
 
-  const { data: schemas = [], isLoading: isLoadingSchemas } = useQuery({
+  const { data: schemasData, isLoading: isLoadingSchemas } = useQuery({
     queryKey: ['schemas'],
-    queryFn: listSchemas,
+    queryFn: () => listSchemas({ page: 1, pageSize: 100 }),
   });
+
+  const roles = rolesData?.data || [];
+  const schemas = schemasData?.data || [];
 
   const saveMutation = useMutation({
     mutationFn: async (role: Partial<RoleRecord>) => {

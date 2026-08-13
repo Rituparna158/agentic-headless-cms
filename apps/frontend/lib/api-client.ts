@@ -88,3 +88,16 @@ export async function apiFetch<T>(
   const body = (await response.json()) as ApiSuccessResponseBody<T>;
   return body.data;
 }
+
+export function buildQueryString(
+  options?: import('@repo/types').BaseQueryOptions,
+) {
+  if (!options) return '';
+  const params = new URLSearchParams();
+  if (options.page) params.append('page', options.page.toString());
+  if (options.pageSize) params.append('pageSize', options.pageSize.toString());
+  if (options.sort) params.append('sort', options.sort);
+  if (options.search) params.append('search', options.search);
+  const str = params.toString();
+  return str ? `?${str}` : '';
+}

@@ -54,7 +54,7 @@ vi.mock('@repo/shared-db', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@repo/shared-db')>();
   return {
     ...actual,
-    listSchemas: vi.fn().mockResolvedValue([testSchema]),
+    listSchemas: vi.fn().mockResolvedValue([[testSchema], 1]),
   };
 });
 

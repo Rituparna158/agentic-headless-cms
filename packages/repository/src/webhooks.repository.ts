@@ -1,7 +1,12 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
+import type { BaseQueryOptions } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
-import { webhooks, RecordNotFoundError } from '@repo/shared-db';
+import {
+  webhooks,
+  RecordNotFoundError,
+  buildPaginationOptions,
+} from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
 
@@ -10,15 +15,40 @@ export class WebhooksRepository {
     return getDatabaseAdapter().getDb();
   }
 
-  async list() {
+  async list(options: BaseQueryOptions = {}) {
     try {
       logger.info('WebhooksRepository: listing webhooks');
-      const result = await this.db.select().from(webhooks);
+
+      const { limit, offset, orderBy, where } = buildPaginationOptions(
+        options,
+        {
+          id: webhooks.id,
+          name: webhooks.name,
+          url: webhooks.url,
+          createdAt: webhooks.createdAt,
+        },
+        [webhooks.name, webhooks.url],
+      );
+
+      const result = await this.db
+        .select()
+        .from(webhooks)
+        .where(where)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(...orderBy);
+
+      const countResult = await this.db
+        .select({ count: sql<number>`cast(count(${webhooks.id}) as integer)` })
+        .from(webhooks)
+        .where(where);
+      const total = countResult[0]?.count ?? 0;
+
       logger.debug(
-        { count: result.length },
+        { count: result.length, total },
         'WebhooksRepository: list complete',
       );
-      return result;
+      return [result, total] as const;
     } catch (error) {
       logger.error({ err: error }, 'WebhooksRepository Error in list:');
       throw new ApiError(500, REPO_ERRORS.LIST_WEBHOOKS_FAILED);

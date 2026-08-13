@@ -11,20 +11,37 @@ import {
 } from '@repo/utils';
 import { logger } from '@repo/logger';
 import { AccessService } from './access.service.js';
-
+import {
+  parseQueryOptions,
+  formatPaginatedResponse,
+} from '../../utils/pagination.util.js';
 const accessService = new AccessService();
 
 export const listRoles: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listRoles start');
-    const roles = await accessService.listRoles();
+
+    const options = parseQueryOptions(req.query);
+    const [roles, total] = await accessService.listRoles(options);
+
     logger.debug(
-      { count: roles.length },
+      { count: roles.length, total },
       'AccessController: listRoles success',
     );
     res
       .status(200)
-      .json(new ApiResponse(200, roles, 'Roles listed successfully'));
+      .json(
+        new ApiResponse(
+          200,
+          formatPaginatedResponse(
+            roles,
+            total,
+            options.page!,
+            options.pageSize!,
+          ),
+          'Roles listed successfully',
+        ),
+      );
   },
 );
 
@@ -96,14 +113,28 @@ export const deleteRole: RequestHandler = asyncHandler(
 export const listUsers: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listUsers start');
-    const users = await accessService.listUsers();
+
+    const options = parseQueryOptions(req.query);
+    const [users, total] = await accessService.listUsers(options);
+
     logger.debug(
-      { count: users.length },
+      { count: users.length, total },
       'AccessController: listUsers success',
     );
     res
       .status(200)
-      .json(new ApiResponse(200, users, 'Users listed successfully'));
+      .json(
+        new ApiResponse(
+          200,
+          formatPaginatedResponse(
+            users,
+            total,
+            options.page!,
+            options.pageSize!,
+          ),
+          'Users listed successfully',
+        ),
+      );
   },
 );
 
@@ -184,14 +215,28 @@ export const updateUserRole: RequestHandler = asyncHandler(
 export const listTokens: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listTokens start');
-    const tokens = await accessService.listTokens();
+
+    const options = parseQueryOptions(req.query);
+    const [tokens, total] = await accessService.listTokens(options);
+
     logger.debug(
-      { count: tokens.length },
+      { count: tokens.length, total },
       'AccessController: listTokens success',
     );
     res
       .status(200)
-      .json(new ApiResponse(200, tokens, 'Tokens listed successfully'));
+      .json(
+        new ApiResponse(
+          200,
+          formatPaginatedResponse(
+            tokens,
+            total,
+            options.page!,
+            options.pageSize!,
+          ),
+          'Tokens listed successfully',
+        ),
+      );
   },
 );
 
