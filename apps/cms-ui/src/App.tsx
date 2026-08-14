@@ -9,6 +9,11 @@ import { AuthHydrator } from './components/Guard/AuthHydrator';
 const LoginPage = React.lazy(() =>
   import('./pages/Login/LoginPage').then((m) => ({ default: m.LoginPage })),
 );
+const AccessDeniedPage = React.lazy(() =>
+  import('./pages/AccessDenied/AccessDeniedPage').then((m) => ({
+    default: m.AccessDeniedPage,
+  })),
+);
 const DashboardLayout = React.lazy(() =>
   import('./components/Layout/DashboardLayout').then((m) => ({
     default: m.DashboardLayout,
@@ -46,6 +51,7 @@ export const App = () => {
                 {/* Auth Routes */}
                 <Route element={<AuthLayout />}>
                   <Route path="/login" element={<LoginPage />} />
+                  <Route path="/access-denied" element={<AccessDeniedPage />} />
                 </Route>
 
                 {/* Protected Routes */}
