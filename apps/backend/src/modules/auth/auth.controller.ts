@@ -231,31 +231,47 @@ export const ssoCallback: RequestHandler = asyncHandler(
     const host = req.get('host') || 'localhost:3000';
     const reqUrl = `${protocol}://${host}${req.originalUrl}`;
 
-    const { user, token } = await authService.ssoCallback(
-      reqUrl,
-      state,
-      nonce,
-      codeVerifier,
-      appId,
-    );
-
-    res.clearCookie('sso_state');
-    res.clearCookie('sso_nonce');
-    res.clearCookie('sso_code_verifier');
-    res.clearCookie('sso_redirect_url');
-    res.clearCookie('sso_app_id');
-
-    const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
-    res.cookie(cookieName, token, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: AUTH_COOKIES.MAX_AGE_MS,
-    });
-
-    logger.info({ userId: user.id }, 'AuthController: ssoCallback success');
     const finalRedirectUrl = redirectUrl || env.APP_URL;
-    res.redirect(`${finalRedirectUrl}`);
+
+    try {
+      const { user, token } = await authService.ssoCallback(
+        reqUrl,
+        state,
+        nonce,
+        codeVerifier,
+        appId,
+      );
+
+      res.clearCookie('sso_state');
+      res.clearCookie('sso_nonce');
+      res.clearCookie('sso_code_verifier');
+      res.clearCookie('sso_redirect_url');
+      res.clearCookie('sso_app_id');
+
+      const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+      res.cookie(cookieName, token, {
+        httpOnly: true,
+        secure: env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: AUTH_COOKIES.MAX_AGE_MS,
+      });
+
+      logger.info({ userId: user.id }, 'AuthController: ssoCallback success');
+      res.redirect(`${finalRedirectUrl}`);
+    } catch (error: unknown) {
+      logger.error({ err: error }, 'AuthController: ssoCallback failed');
+      res.clearCookie('sso_state');
+      res.clearCookie('sso_nonce');
+      res.clearCookie('sso_code_verifier');
+      res.clearCookie('sso_redirect_url');
+      res.clearCookie('sso_app_id');
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Authentication failed';
+      res.redirect(
+        `${finalRedirectUrl}/access-denied?message=${encodeURIComponent(errorMessage)}`,
+      );
+    }
   },
 );
 
