@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { loginSchema } from '@repo/validation';
@@ -23,6 +23,8 @@ import { useAuthStore } from '@/stores/auth-store';
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get('error');
   const login = useAuthStore((state) => state.login);
   const status = useAuthStore((state) => state.status);
   const verifyMfaChallenge = useAuthStore((state) => state.verifyMfaChallenge);
@@ -182,15 +184,21 @@ export function LoginForm() {
   }
 
   function handleSsoLogin() {
-    // Route issue #12 (or a later SSO/OIDC-specific issue — the SRS's
-    // FR-AC-4 scopes SSO separately from #12's JWT-only auth) is planned
-    // to add: GET /api/v1/auth/sso, which redirects to the configured
-    // identity provider.
     window.location.href = `${API_BASE_URL}${API_PATHS.AUTH.SSO}?redirectUrl=${encodeURIComponent(window.location.origin)}&appId=HEADLESS_CMS`;
   }
 
   return (
     <Form spacing="comfortable">
+      {urlError && (
+        <div className="mb-4">
+          <p
+            role="alert"
+            className="text-destructive text-sm p-3 bg-destructive/10 rounded-md border border-destructive/20"
+          >
+            {urlError}
+          </p>
+        </div>
+      )}
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="grid gap-4"
