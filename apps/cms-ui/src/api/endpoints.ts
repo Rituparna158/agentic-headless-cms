@@ -20,4 +20,13 @@ export const ENDPOINTS = {
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
   },
+  ACCESS: {
+    ROLES: '/access/roles',
+    USERS: '/access/users',
+    TOKENS: '/access/tokens',
+    MFA_REQUESTS: '/access/mfa-requests',
+  },
+  SCHEMAS: {
+    BASE: '/schemas',
+  },
 } as const;
