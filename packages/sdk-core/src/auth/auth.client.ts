@@ -71,4 +71,33 @@ export class AuthClient {
       await this.transport.request<ApiResponse<AuthenticatedUser>>('/auth/me');
     return res.data;
   }
+
+  /**
+   * Requests a password reset link to be sent to the user's email.
+   */
+  public async forgotPassword(email: string): Promise<void> {
+    if (!this.transport) {
+      throw new Error('Transport not initialized');
+    }
+    await this.transport.request<void>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  /**
+   * Completes a password reset using the token provided via email.
+   */
+  public async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    if (!this.transport) {
+      throw new Error('Transport not initialized');
+    }
+    await this.transport.request<void>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+  }
 }

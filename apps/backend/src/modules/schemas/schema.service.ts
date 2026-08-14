@@ -73,6 +73,17 @@ export class SchemaService {
     }
   }
 
+  async getBySlug(slug: string) {
+    try {
+      logger.info({ slug }, 'SchemaService: getBySlug');
+      return await this.repository.getBySlug(slug);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      logger.error({ err: error }, 'SchemaService Error in getBySlug:');
+      throw new ApiError(500, SERVICE_ERRORS.FETCH_SCHEMA_FAILED);
+    }
+  }
+
   async update(id: string, input: UpdateSchemaInput, actorUserId: string) {
     try {
       logger.info({ id, actorUserId }, 'SchemaService: update start');

@@ -2,6 +2,7 @@ import {
   createSchema as createSchemaRecord,
   listSchemas as listSchemaRecords,
   getSchemaById,
+  getSchemaBySlug,
   updateSchema as updateSchemaRecord,
   deleteSchema as deleteSchemaRecord,
   type Database,
@@ -69,6 +70,22 @@ export class SchemaRepository {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'SchemaRepository Error in getById:');
+      throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
+    }
+  }
+
+  async getBySlug(slug: string) {
+    try {
+      logger.info({ slug }, 'SchemaRepository: fetching schema by slug');
+      const db = this.getDb();
+      const result = await getSchemaBySlug(db, slug);
+      logger.debug({ found: !!result }, 'SchemaRepository: getBySlug complete');
+      return result;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'RecordNotFoundError') {
+        throw new ApiError(404, error.message);
+      }
+      logger.error({ err: error }, 'SchemaRepository Error in getBySlug:');
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }

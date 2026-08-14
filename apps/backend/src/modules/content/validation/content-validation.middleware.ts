@@ -20,3 +20,22 @@ export const validateContentPayload = (
     next(error);
   }
 };
+
+/** Validate request body (partial) */
+export const validatePartialContentPayload = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const zodSchema = compileZodSchema(
+      req.schema!.definition as SchemaDefinition,
+    ).partial();
+    const validatedData = zodSchema.parse(req.body);
+    req.body = validatedData;
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};

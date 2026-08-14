@@ -154,6 +154,35 @@ export const updateDraft: RequestHandler = asyncHandler(
   },
 );
 
+export const updatePartialEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: updatePartialEntry start');
+
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+
+    logger.debug(
+      { entryId, userId },
+      'ContentController: partially updating entry',
+    );
+    const entry = await contentService.updatePartial(
+      entryId as string,
+      req.body as Record<string, unknown>,
+      userId,
+      locale,
+    );
+
+    logger.info({ entryId }, 'ContentController: updatePartialEntry end');
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, entry, 'Entry partially updated successfully'),
+      );
+  },
+);
+
 export const publishEntry: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { entryId } = req.params;

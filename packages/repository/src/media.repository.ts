@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql, inArray } from 'drizzle-orm';
 import { mediaAssets, RecordNotFoundError } from '@repo/shared-db';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
@@ -171,6 +171,29 @@ export class MediaRepository {
       logger.error({ err: error }, 'MediaRepository Error in softDelete:');
       if (error instanceof RecordNotFoundError) throw error;
       throw new ApiError(500, REPO_ERRORS.DELETE_MEDIA_FAILED);
+    }
+  }
+
+  async softDeleteBulk(ids: string[]): Promise<MediaAssetRecord[]> {
+    try {
+      logger.info(
+        { ids },
+        'MediaRepository: soft deleting media assets in bulk',
+      );
+      const deleted = await this.db
+        .update(mediaAssets)
+        .set({ deletedAt: new Date() })
+        .where(and(inArray(mediaAssets.id, ids), isNull(mediaAssets.deletedAt)))
+        .returning();
+
+      logger.info(
+        { count: deleted.length },
+        'MediaRepository: softDeleteBulk complete',
+      );
+      return deleted;
+    } catch (error) {
+      logger.error({ err: error }, 'MediaRepository Error in softDeleteBulk:');
+      throw new ApiError(500, 'Failed to bulk delete media assets.');
     }
   }
 }

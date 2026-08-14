@@ -136,3 +136,18 @@ export const deleteMedia: RequestHandler = asyncHandler(
     res.status(204).end();
   },
 );
+
+export const deleteBulkMedia: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { ids } = req.body as { ids: string[] };
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ApiError(400, 'ids must be a non-empty array of strings');
+    }
+
+    logger.info({ ids }, 'MediaController: deleteBulkMedia start');
+    await mediaService.deleteBulk(ids);
+
+    logger.info({ count: ids.length }, 'MediaController: deleteBulkMedia end');
+    res.status(204).end();
+  },
+);

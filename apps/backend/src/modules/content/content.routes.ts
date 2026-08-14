@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import * as contentController from './content.controller.js';
-import { validateContentPayload } from './validation/content-validation.middleware.js';
+import {
+  validateContentPayload,
+  validatePartialContentPayload,
+} from './validation/content-validation.middleware.js';
 import { resolveSchema } from './validation/resolve-schema.middleware.js';
 import { authenticateToken } from '@repo/middlewares';
 import { requirePermission } from '../auth/rbac.middleware.js';
@@ -42,6 +45,13 @@ contentRoutes.put(
   requirePermission('update'),
   validateContentPayload,
   contentController.updateDraft,
+);
+
+contentRoutes.patch(
+  '/:schemaSlug/:entryId',
+  requirePermission('update'),
+  validatePartialContentPayload,
+  contentController.updatePartialEntry,
 );
 
 contentRoutes.post(
