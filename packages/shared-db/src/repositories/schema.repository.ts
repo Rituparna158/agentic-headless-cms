@@ -127,10 +127,22 @@ export async function listSchemas(
     [schemas.name, schemas.slug],
   );
 
+  const includeSystem =
+    options.filters?.includeSystem === 'true' ||
+    options.filters?.includeSystem === true;
+
+  const systemFilter = includeSystem ? undefined : eq(schemas.isSystem, false);
+
+  const finalWhere = where
+    ? systemFilter
+      ? sql`${where} AND ${systemFilter}`
+      : where
+    : systemFilter;
+
   const result = await db
     .select()
     .from(schemas)
-    .where(where)
+    .where(finalWhere)
     .limit(limit)
     .offset(offset)
     .orderBy(...orderBy);
@@ -138,7 +150,7 @@ export async function listSchemas(
   const countResult = await db
     .select({ count: sql<number>`cast(count(${schemas.id}) as integer)` })
     .from(schemas)
-    .where(where);
+    .where(finalWhere);
 
   return [result, countResult[0]?.count ?? 0] as const;
 }
