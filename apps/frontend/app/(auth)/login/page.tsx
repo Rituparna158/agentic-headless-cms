@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import {
   Card,
   CardContent,
@@ -20,7 +21,9 @@ export default function LoginPage() {
         <CardDescription>Sign in to manage your content</CardDescription>
       </CardHeader>
       <CardContent>
-        <LoginForm />
+        <Suspense fallback={<div className="p-4 text-center">Loading...</div>}>
+          <LoginForm />
+        </Suspense>
       </CardContent>
     </Card>
   );

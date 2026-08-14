@@ -160,16 +160,6 @@ export class AuthService {
 
       const roles = await authRepository.getUserRoles(user.id, appId);
 
-      if (roles.length === 0) {
-        logger.warn(
-          { userId: user.id, appId },
-          'AuthService: user has no roles for this app in SSO',
-        );
-        throw new UnauthorizedError(
-          'You do not have access to this application',
-        );
-      }
-
       const payload = {
         id: user.id,
         email: user.email,
@@ -232,16 +222,7 @@ export class AuthService {
         appId,
       );
 
-      // Enforce access by checking if they actually have a valid application role
-      if (userRolesWithMfa.length === 0) {
-        logger.warn(
-          { userId: user.id, appId },
-          'AuthService: user has no roles for this app',
-        );
-        throw new UnauthorizedError(
-          'You do not have access to this application',
-        );
-      }
+      // Allow login even without roles; frontend will handle "no permission" page
 
       const roles = userRolesWithMfa.map((r) => r.name);
 

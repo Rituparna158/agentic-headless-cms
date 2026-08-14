@@ -3,6 +3,7 @@ import { useAuthStore } from '../../features/auth/store/auth.store';
 
 export const AuthGuard = () => {
   const status = useAuthStore((state) => state.status);
+  const user = useAuthStore((state) => state.user);
 
   if (status === 'idle' || status === 'loading') {
     return (
@@ -20,6 +21,15 @@ export const AuthGuard = () => {
   if (status !== 'authenticated') {
     // Redirect unauthenticated users to the login page
     return <Navigate to="/login" replace />;
+  }
+
+  if (user && user.roles.length === 0) {
+    return (
+      <Navigate
+        to="/access-denied?message=Your account has been created successfully, but you do not have any roles assigned yet."
+        replace
+      />
+    );
   }
 
   // If authenticated, render the child routes (e.g., DashboardLayout)
