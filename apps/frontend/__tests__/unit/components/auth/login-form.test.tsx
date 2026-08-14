@@ -13,6 +13,7 @@ const { mockPush, mockLogin } = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: vi.fn() }),
 }));
 
 vi.mock('@/lib/api/auth', () => ({
