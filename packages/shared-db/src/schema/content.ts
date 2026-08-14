@@ -28,6 +28,7 @@ export const schemas = pgTable('schemas', {
   definition: jsonb('definition').notNull(),
   status: schemaStatusEnum('status').notNull().default('draft'),
   version: integer('version').notNull().default(1),
+  isSystem: boolean('is_system').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),

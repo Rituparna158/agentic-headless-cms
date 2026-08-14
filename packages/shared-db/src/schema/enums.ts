@@ -43,6 +43,7 @@ export const permissionActionEnum = pgEnum('permission_action', [
   'update',
   'delete',
   'publish',
+  'manage',
 ]);
 export const permissionEffectEnum = pgEnum('permission_effect', [
   'allow',
