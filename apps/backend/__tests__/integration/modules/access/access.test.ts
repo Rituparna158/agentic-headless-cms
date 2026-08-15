@@ -3,7 +3,7 @@ import request from 'supertest';
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
 
-vi.mock('../../../../src/modules/schemas/schema.service.js', () => ({
+vi.mock('../../../../src/modules/schemas/schema.service.ts', () => ({
   schemaService: {
     getBySlug: vi
       .fn()
