@@ -30,6 +30,14 @@ export type { CmsMetadata } from './server/metadata.js';
 export { draftModeHandlers } from './preview/draft-mode.js';
 export { revalidationHandler } from './webhooks/revalidation-handler.js';
 
+export {
+  createEntryAction,
+  updateEntryAction,
+  publishEntryAction,
+  deleteEntryAction,
+} from './actions/content-actions.js';
+export type { ActionState } from './types.js';
+
 export type { NextFetchOptions, FetchConfig } from './types.js';
 export type {
   ContentEntryRecord,
