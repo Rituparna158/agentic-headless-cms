@@ -17,3 +17,10 @@ export interface CmsMetadata {
     images?: { url: string }[];
   };
 }
+
+export interface ActionState<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  validationErrors?: Record<string, string[]>;
+}
