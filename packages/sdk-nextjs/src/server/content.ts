@@ -14,9 +14,15 @@ export async function getContentList(
   options?: ListContentEntriesOptions & {
     nextTags?: string[];
     revalidate?: number | false;
+    draft?: boolean;
   },
 ): Promise<ListContentEntriesResult> {
-  const { nextTags, revalidate, ...queryOptions } = options ?? {};
+  const {
+    nextTags,
+    revalidate,
+    draft = false,
+    ...queryOptions
+  } = options ?? {};
 
   const nextOptions: NextFetchOptions = {
     tags: nextTags ?? contentListTags(schemaSlug),
@@ -30,11 +36,29 @@ export async function getContentList(
   if (queryOptions.locale) params['locale'] = queryOptions.locale;
   if (queryOptions.sort) params['sort'] = queryOptions.sort;
 
-  return cmsServerFetch<ListContentEntriesResult>(
+  const result = await cmsServerFetch<ListContentEntriesResult>(
     `/api/v1/content/${schemaSlug}`,
     nextOptions,
     params,
   );
+
+  if (!draft) {
+    // Filter out unpublished items and map data to publishedData
+    const publishedEntries = result.data
+      .filter((entry) => entry.publishedData !== null)
+      .map((entry) => ({
+        ...entry,
+        status: 'published' as const,
+        data: entry.publishedData!,
+      }));
+
+    return {
+      ...result,
+      data: publishedEntries,
+    };
+  }
+
+  return result;
 }
 
 /**
@@ -47,18 +71,34 @@ export async function getContentEntry(
     locale?: string;
     nextTags?: string[];
     revalidate?: number | false;
+    draft?: boolean;
   },
 ): Promise<ContentEntryRecord> {
-  const { nextTags, revalidate, locale } = options ?? {};
+  const { nextTags, revalidate, locale, draft = false } = options ?? {};
 
   const nextOptions: NextFetchOptions = {
     tags: nextTags ?? contentEntryTags(schemaSlug, entryId),
     ...(revalidate !== undefined ? { revalidate } : {}),
   };
 
-  return cmsServerFetch<ContentEntryRecord>(
+  const entry = await cmsServerFetch<ContentEntryRecord>(
     `/api/v1/content/${schemaSlug}/${entryId}`,
     nextOptions,
     locale ? { locale } : undefined,
   );
+
+  if (!draft) {
+    if (!entry.publishedData) {
+      throw new Error(
+        `[sdk-nextjs] 404: Entry not found or not published (${entryId})`,
+      );
+    }
+    return {
+      ...entry,
+      status: 'published',
+      data: entry.publishedData,
+    };
+  }
+
+  return entry;
 }
