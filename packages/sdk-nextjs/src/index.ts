@@ -23,11 +23,13 @@ export {
 
 export { getContentList, getContentEntry } from './server/content.js';
 export { getSchemas, getSchema } from './server/schemas.js';
-export { getMediaAsset, getMediaList } from './server/media.js';
+export { getMediaList, getMediaAsset } from './server/media.js';
 export { generateCmsStaticParams } from './server/static-params.js';
 export { generateMetadataFromEntry } from './server/metadata.js';
-
 export type { CmsMetadata } from './server/metadata.js';
+export { draftModeHandlers } from './preview/draft-mode.js';
+export { revalidationHandler } from './webhooks/revalidation-handler.js';
+
 export type { NextFetchOptions, FetchConfig } from './types.js';
 export type {
   ContentEntryRecord,
