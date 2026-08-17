@@ -20,8 +20,9 @@ export function _resetConfig(): void {
 /** Calls the CMS REST API with Next.js fetch cache tags for ISR. */
 export async function cmsServerFetch<T>(
   path: string,
-  nextOptions: NextFetchOptions,
+  nextOptions?: NextFetchOptions,
   queryParams?: Record<string, string | number | boolean | undefined>,
+  init?: Omit<RequestInit, 'next'>,
 ): Promise<T> {
   const { baseUrl, apiToken } = resolveEnvConfig();
   const url = new URL(`${baseUrl}${path}`);
@@ -32,12 +33,14 @@ export async function cmsServerFetch<T>(
     });
   }
 
-  const fetchOptions: RequestInit & { next: NextFetchOptions } = {
-    method: 'GET',
+  const fetchOptions: RequestInit & { next?: NextFetchOptions } = {
+    ...init,
+    method: init?.method ?? 'GET',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiToken}`,
+      ...init?.headers,
     },
     next: nextOptions,
   };
