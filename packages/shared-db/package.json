@@ -22,6 +22,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed:admin": "tsx --env-file=../../.env src/scripts/seed-admin.ts",
+    "seed:system-schemas": "tsx --env-file=../../.env src/scripts/seed-system-schemas.ts",
     "seed:e2e-expired-invite": "tsx --env-file=../../.env src/scripts/seed-e2e-expired-invite.ts"
   },
   "dependencies": {

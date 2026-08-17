@@ -55,6 +55,11 @@ export default async function globalSetup() {
     stdio: 'inherit',
     env: testDbEnv,
   });
+  execSync('pnpm --filter @repo/shared-db run seed:system-schemas', {
+    cwd: repoRoot,
+    stdio: 'inherit',
+    env: testDbEnv,
+  });
   execSync('pnpm --filter @repo/shared-db run seed:e2e-expired-invite', {
     cwd: repoRoot,
     stdio: 'inherit',

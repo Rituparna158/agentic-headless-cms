@@ -1,6 +1,6 @@
 export type PermissionData = {
   schemaId: string | null;
-  action: 'read' | 'create' | 'update' | 'delete' | 'publish' | '*';
+  action: 'read' | 'create' | 'update' | 'delete' | 'publish' | 'manage' | '*';
   effect?: 'allow' | 'deny';
   fields?: unknown;
   condition?: unknown;
@@ -33,7 +33,7 @@ export interface PermissionRecord {
   id: string;
   roleId: string;
   schemaId: string | null;
-  action: 'read' | 'create' | 'update' | 'delete' | 'publish' | '*';
+  action: 'read' | 'create' | 'update' | 'delete' | 'publish' | 'manage' | '*';
   effect: 'allow' | 'deny';
   fields: string[] | null;
   condition: Record<string, unknown> | null;

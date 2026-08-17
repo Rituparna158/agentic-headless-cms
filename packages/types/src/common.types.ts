@@ -5,6 +5,7 @@ export interface BaseQueryOptions {
   pageSize?: number;
   sort?: string;
   search?: string;
+  filters?: Record<string, unknown>;
 }
 
 export interface PaginatedResult<T> {

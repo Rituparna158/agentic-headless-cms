@@ -24,6 +24,11 @@ const DashboardHome = React.lazy(() =>
     default: m.DashboardHome,
   })),
 );
+const RolesAccessPage = React.lazy(() =>
+  import('./features/access/pages/RolesAccessPage').then((m) => ({
+    default: m.RolesAccessPage,
+  })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +63,7 @@ export const App = () => {
                 <Route element={<AuthGuard />}>
                   <Route path="/" element={<DashboardLayout />}>
                     <Route index element={<DashboardHome />} />
+                    <Route path="users/roles" element={<RolesAccessPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Route>
                 </Route>

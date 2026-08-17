@@ -2,7 +2,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
+
+vi.mock('../../../../src/modules/schemas/schema.service.ts', () => ({
+  schemaService: {
+    getBySlug: vi
+      .fn()
+      .mockResolvedValue({ id: 'schema-id', slug: 'mock-slug' }),
+  },
+}));
 import { env } from '@repo/config';
+
+vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
+  authService: {
+    getUserPermissions: vi.fn().mockImplementation(async (userId) => {
+      if (userId === 'user-1') {
+        return [{ action: '*', schemaId: null, effect: 'allow' }];
+      }
+      return [];
+    }),
+  },
+}));
 
 vi.mock('../../../../src/modules/access/access.service.js', () => {
   const AccessService = vi.fn();
@@ -85,6 +104,7 @@ describe('Access Module', () => {
         .get('/api/v1/access/roles')
         .set('Cookie', [`token_headless_cms=${validToken}`])
         .set('x-app-id', 'HEADLESS_CMS');
+      if (res.status === 500) console.error('ERROR 500 BODY: ', res.body);
       expect(res.status).toBe(200);
       expect(res.body.data.data).toHaveLength(1);
       expect(res.body.data.data[0].name).toBe('Admin');
@@ -172,6 +192,7 @@ describe('Access Module', () => {
       const res = await request(app)
         .delete('/api/v1/access/tokens/t1')
         .set('Cookie', [`token_default=${validToken}`]);
+      if (res.status === 500) console.error('ERROR 500 BODY: ', res.body);
       expect(res.status).toBe(200);
       expect(res.body.data.success).toBe(true);
     });
@@ -194,6 +215,7 @@ describe('Access Module', () => {
       const res = await request(app)
         .get('/api/v1/access/mfa-requests')
         .set('Cookie', [`token_default=${validToken}`]);
+      if (res.status === 500) console.error('ERROR 500 BODY: ', res.body);
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(1);
       expect(res.body.data[0].id).toBe('req-1');
@@ -212,6 +234,7 @@ describe('Access Module', () => {
       const res = await request(app)
         .post('/api/v1/access/mfa-requests/req-1/approve')
         .set('Cookie', [`token_default=${validToken}`]);
+      if (res.status === 500) console.error('ERROR 500 BODY: ', res.body);
       expect(res.status).toBe(200);
       expect(res.body.data.success).toBe(true);
     });
@@ -229,6 +252,7 @@ describe('Access Module', () => {
       const res = await request(app)
         .post('/api/v1/access/mfa-requests/req-1/reject')
         .set('Cookie', [`token_default=${validToken}`]);
+      if (res.status === 500) console.error('ERROR 500 BODY: ', res.body);
       expect(res.status).toBe(200);
       expect(res.body.data.success).toBe(true);
     });

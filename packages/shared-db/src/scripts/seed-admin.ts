@@ -10,6 +10,10 @@ import {
   userApplications,
 } from '../index.js';
 import { logger } from '@repo/logger';
+import * as dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
 
 async function seedAdmin() {
   logger.info('Starting admin seeding process...');
