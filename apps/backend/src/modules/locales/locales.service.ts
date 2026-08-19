@@ -6,16 +6,14 @@ import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
-
 export class LocalesService {
   constructor(
     private readonly repository: LocalesRepository = new LocalesRepository(),
   ) {}
-
-  async list(options: BaseQueryOptions = {}) {
+  async list(options: BaseQueryOptions = {}, applicationId?: string) {
     try {
       logger.info('LocalesService: list start');
-      const result = await this.repository.list(options);
+      const result = await this.repository.list(options, applicationId);
       logger.debug('LocalesService: list end');
       return result;
     } catch (error) {
@@ -23,11 +21,13 @@ export class LocalesService {
       throw new ApiError(500, SERVICE_ERRORS.LIST_LOCALES_FAILED);
     }
   }
-
-  async create(data: CreateLocaleInput) {
+  async create(data: CreateLocaleInput, applicationId?: string) {
     try {
       logger.info({ code: data.code }, 'LocalesService: create start');
-      const existing = await this.repository.getByCode(data.code);
+      const existing = await this.repository.getByCode(
+        data.code,
+        applicationId,
+      );
       if (existing) {
         logger.warn({ code: data.code }, 'LocalesService: code already exists');
         throw new ConflictError(ERROR_MESSAGES.LOCALES.CODE_ALREADY_EXISTS);
@@ -36,8 +36,8 @@ export class LocalesService {
         code: data.code,
         name: data.name,
         isDefault: data.isDefault ?? false,
+        ...(applicationId ? { applicationId } : {}),
       });
-
       logger.debug(
         { id: result!.id },
         'LocalesService: create successful, emitting audit log',
@@ -53,7 +53,6 @@ export class LocalesService {
         afterState: result,
         context,
       });
-
       return result;
     } catch (error) {
       logger.error({ err: error }, 'LocalesService Error in create:');
@@ -61,14 +60,11 @@ export class LocalesService {
       throw new ApiError(500, SERVICE_ERRORS.CREATE_LOCALE_FAILED);
     }
   }
-
   async delete(id: string) {
     try {
       logger.info({ id }, 'LocalesService: delete start');
       const beforeState = await this.repository.getById(id);
-
       const result = await this.repository.delete(id);
-
       logger.debug(
         { id },
         'LocalesService: delete successful, emitting audit log',
@@ -84,7 +80,6 @@ export class LocalesService {
         afterState: null,
         context,
       });
-
       return result;
     } catch (error) {
       logger.error({ err: error }, 'LocalesService Error in delete:');
