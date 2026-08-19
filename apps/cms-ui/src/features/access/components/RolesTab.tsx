@@ -4,20 +4,19 @@ import { accessApi } from '../api/access.api';
 import {
   Role,
   RoleWithPermissions,
+  ApplicationType,
   CreateRolePayload,
+  UpdateRolePayload,
 } from '../types/access.types';
 import { Plus } from 'lucide-react';
-
+import { useEffect } from 'react';
 export const RolesTab = () => {
   const { data: rolesResponse, isLoading: rolesLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: accessApi.getRoles,
   });
-
   const roles = rolesResponse?.data?.data || [];
-
   const [selectedRole, setSelectedRole] = useState<Role | 'new' | null>(null);
-
   return (
     <div className="flex h-full border-t border-border/40">
       {/* Left Master List */}
@@ -30,7 +29,6 @@ export const RolesTab = () => {
             <Plus size={16} />
           </button>
         </div>
-
         <div className="p-3">
           <button
             onClick={() => setSelectedRole('new')}
@@ -43,7 +41,6 @@ export const RolesTab = () => {
             <Plus size={14} /> Create New Role
           </button>
         </div>
-
         <div className="flex-1 overflow-y-auto py-2">
           {rolesLoading ? (
             <div className="px-4 py-2 text-sm text-muted-foreground">
@@ -69,7 +66,6 @@ export const RolesTab = () => {
           )}
         </div>
       </div>
-
       {/* Right Detail Panel */}
       <div className="flex-1 flex flex-col overflow-hidden bg-background">
         {selectedRole ? (
@@ -87,12 +83,10 @@ export const RolesTab = () => {
     </div>
   );
 };
-
 interface RoleDetailPanelProps {
   role: Role | 'new';
   onClose: () => void;
 }
-
 const CMS_CAPABILITIES = [
   {
     id: 'manage_content',
@@ -130,23 +124,46 @@ const CMS_CAPABILITIES = [
     description: 'Access and modify Global Settings',
   },
 ];
-
 const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
   const queryClient = useQueryClient();
   const isNew = role === 'new';
-  const [formData, setFormData] = useState({
+  const { data: roleDetailsResponse, isLoading } = useQuery({
+    queryKey: ['role', !isNew ? role.id : 'new'],
+    queryFn: () => (!isNew ? accessApi.getRole(role.id) : null),
+    enabled: !isNew,
+  });
+  const responseData = roleDetailsResponse as
+    | { data?: { data?: RoleWithPermissions } | RoleWithPermissions }
+    | undefined;
+  const data = responseData?.data;
+  const fullRole = (data && 'data' in data ? data.data : data) as
+    | RoleWithPermissions
+    | undefined;
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    mfaRequired: boolean;
+    application: ApplicationType;
+    capabilities: string[];
+  }>({
     name: isNew ? '' : role.name,
     description: isNew ? '' : role.description || '',
     mfaRequired: isNew ? false : role.mfaRequired,
     application: isNew ? 'CMS_UI' : role.application,
-    capabilities: isNew
-      ? []
-      : ((role as RoleWithPermissions).permissions
-          ?.map((p) => (p.condition as Record<string, string>)?.capability)
-          .filter(Boolean) as string[]) || [],
+    capabilities: [] as string[],
   });
-
-  const mutation = useMutation({
+  useEffect(() => {
+    if (fullRole) {
+      setFormData((prev) => ({
+        ...prev,
+        capabilities:
+          (fullRole.permissions
+            ?.map((p) => (p.condition as Record<string, string>)?.capability)
+            .filter(Boolean) as string[]) || [],
+      }));
+    }
+  }, [fullRole]);
+  const createMutation = useMutation({
     mutationFn: (data: typeof formData) => {
       const payload: CreateRolePayload = {
         name: data.name,
@@ -167,11 +184,46 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
       onClose();
     },
     onError: (error) => {
-      console.error('Failed to save role', error);
-      alert('Failed to save role');
+      console.error('Failed to create role', error);
+      alert('Failed to create role');
     },
   });
-
+  const updateMutation = useMutation({
+    mutationFn: (data: typeof formData) => {
+      if (isNew) throw new Error('Cannot update new role');
+      const payload: UpdateRolePayload = {
+        name: data.name,
+        description: data.description,
+        mfaRequired: data.mfaRequired,
+        permissions: data.capabilities.map((cap) => ({
+          schemaId: null,
+          action: 'manage',
+          effect: 'allow',
+          condition: { capability: cap },
+        })),
+      };
+      return accessApi.updateRole(role.id, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      if (!isNew) {
+        queryClient.invalidateQueries({ queryKey: ['role', role.id] });
+      }
+      onClose();
+    },
+    onError: (error) => {
+      console.error('Failed to update role', error);
+      alert('Failed to update role');
+    },
+  });
+  const mutation = isNew ? createMutation : updateMutation;
+  if (!isNew && isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-muted-foreground">
+        Loading role details...
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col h-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
       {/* Header */}
@@ -187,7 +239,6 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
           {mutation.isPending ? 'Saving...' : 'Save Role'}
         </button>
       </div>
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8">
         {/* Basic Info */}
@@ -206,7 +257,6 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
               placeholder="e.g., Content Editor"
             />
           </div>
-
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               Description
@@ -220,16 +270,13 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
               }
             />
           </div>
-
           <div className="space-y-2">
             <input type="hidden" value={formData.application} />
           </div>
         </div>
-
         {/* Permissions Grid */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Role Capabilities</h3>
-
           <div className="space-y-3">
             {CMS_CAPABILITIES.map((cap) => (
               <label
