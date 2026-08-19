@@ -1,5 +1,4 @@
 import { LoginForm } from '../../features/auth/components/LoginForm';
-
 export const LoginPage = () => {
   return (
     <div className="flex flex-col space-y-6 w-full sm:w-[350px] mx-auto">
