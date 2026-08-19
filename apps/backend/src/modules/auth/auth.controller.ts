@@ -8,7 +8,6 @@ import {
 import { AUTH_COOKIES, ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
 import type { AuthenticatedUser } from '@repo/types';
 import { Request, Response, RequestHandler } from 'express';
-
 import {
   UnauthorizedError,
   BadRequestError,
@@ -18,7 +17,6 @@ import {
 import { env } from '@repo/config';
 import { logger } from '@repo/logger';
 import { authService } from './auth.service.js';
-
 export const login: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: login start');
@@ -26,7 +24,6 @@ export const login: RequestHandler = asyncHandler(
     if (!appId) throw new BadRequestError('x-app-id header is required');
     const input = loginSchema.parse(req.body);
     const result = await authService.login(input, appId);
-
     if ('mfaRequired' in result && result.mfaRequired) {
       logger.info('AuthController: login MFA challenge required');
       res
@@ -40,14 +37,11 @@ export const login: RequestHandler = asyncHandler(
         );
       return;
     }
-
     const { user, token } = result as {
       user: AuthenticatedUser;
       token: string;
     };
-
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
-
     logger.debug({ email: input.email }, 'AuthController: setting auth cookie');
     res.cookie(cookieName, token, {
       httpOnly: true,
@@ -55,7 +49,6 @@ export const login: RequestHandler = asyncHandler(
       sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
-
     logger.info({ userId: user.id }, 'AuthController: login success');
     const permissions = await authService.getUserPermissions(user.id, appId);
     const userWithPermissions = { ...user, permissions };
@@ -64,14 +57,12 @@ export const login: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, userWithPermissions, 'Login successful'));
   },
 );
-
 export const logout: RequestHandler = asyncHandler(
   (req: Request, res: Response) => {
     logger.info('AuthController: logout start');
     const appId = req.headers['x-app-id'] as string;
     if (!appId) throw new BadRequestError('x-app-id header is required');
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
-
     res.clearCookie(cookieName, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
@@ -81,13 +72,11 @@ export const logout: RequestHandler = asyncHandler(
     res.status(HTTP_STATUS.NO_CONTENT).send();
   },
 );
-
 export const getCurrentUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: getCurrentUser start');
     const appId = req.headers['x-app-id'] as string;
     if (!appId) throw new BadRequestError('x-app-id header is required');
-
     if (!req.user) {
       logger.warn('AuthController: getCurrentUser user not authenticated');
       throw new UnauthorizedError(ERROR_MESSAGES.AUTH.UNAUTHORIZED);
@@ -112,7 +101,6 @@ export const getCurrentUser: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const acceptInvite: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const body = req.body as {
@@ -121,19 +109,16 @@ export const acceptInvite: RequestHandler = asyncHandler(
     };
     const { token, newPassword } = body;
     logger.info('AuthController: acceptInvite start');
-
     if (!token || !newPassword) {
       logger.warn('AuthController: acceptInvite missing token or password');
       throw new BadRequestError(
         ERROR_MESSAGES.ACCESS.TOKEN_AND_PASSWORD_REQUIRED,
       );
     }
-
     if (newPassword.length < 8) {
       logger.warn('AuthController: acceptInvite password too short');
       throw new BadRequestError(ERROR_MESSAGES.ACCESS.PASSWORD_TOO_SHORT);
     }
-
     try {
       await authService.acceptInvite(token, newPassword);
       logger.info('AuthController: acceptInvite success');
@@ -152,16 +137,13 @@ export const acceptInvite: RequestHandler = asyncHandler(
     }
   },
 );
-
 export const ssoLogin: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: ssoLogin start');
     const { url, state, nonce, codeVerifier } =
       await authService.getOidcAuthorizationUrl();
-
     let redirectUrl = env.APP_URL;
     const requestedRedirectUrl = req.query.redirectUrl as string;
-
     if (requestedRedirectUrl) {
       const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
       if (
@@ -170,11 +152,9 @@ export const ssoLogin: RequestHandler = asyncHandler(
         redirectUrl = requestedRedirectUrl;
       }
     }
-
     const requestedAppId = req.query.appId as string;
     if (!requestedAppId)
       throw new BadRequestError('appId query parameter is required');
-
     res.cookie('sso_redirect_url', redirectUrl, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
@@ -185,7 +165,6 @@ export const ssoLogin: RequestHandler = asyncHandler(
       secure: env.NODE_ENV === 'production',
       maxAge: 5 * 60 * 1000,
     });
-
     res.cookie('sso_state', state, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
@@ -201,24 +180,19 @@ export const ssoLogin: RequestHandler = asyncHandler(
       secure: env.NODE_ENV === 'production',
       maxAge: 5 * 60 * 1000,
     });
-
     res.redirect(url);
   },
 );
-
 export const ssoCallback: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: ssoCallback start');
-
     const cookies = req.cookies as Record<string, unknown> | undefined;
     const state = cookies?.sso_state;
     const nonce = cookies?.sso_nonce;
     const codeVerifier = cookies?.sso_code_verifier;
     const redirectUrl = cookies?.sso_redirect_url as string | undefined;
     const appId = cookies?.sso_app_id as string;
-
     if (!appId) throw new BadRequestError('Missing appId in SSO cookies');
-
     if (
       typeof state !== 'string' ||
       typeof nonce !== 'string' ||
@@ -226,13 +200,10 @@ export const ssoCallback: RequestHandler = asyncHandler(
     ) {
       throw new BadRequestError('Missing or expired SSO cookies');
     }
-
     const protocol = req.protocol || 'http';
     const host = req.get('host') || 'localhost:3000';
     const reqUrl = `${protocol}://${host}${req.originalUrl}`;
-
     const finalRedirectUrl = redirectUrl || env.APP_URL;
-
     try {
       const { user, token } = await authService.ssoCallback(
         reqUrl,
@@ -241,13 +212,11 @@ export const ssoCallback: RequestHandler = asyncHandler(
         codeVerifier,
         appId,
       );
-
       res.clearCookie('sso_state');
       res.clearCookie('sso_nonce');
       res.clearCookie('sso_code_verifier');
       res.clearCookie('sso_redirect_url');
       res.clearCookie('sso_app_id');
-
       const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
       res.cookie(cookieName, token, {
         httpOnly: true,
@@ -255,7 +224,6 @@ export const ssoCallback: RequestHandler = asyncHandler(
         sameSite: 'lax',
         maxAge: AUTH_COOKIES.MAX_AGE_MS,
       });
-
       logger.info({ userId: user.id }, 'AuthController: ssoCallback success');
       res.redirect(`${finalRedirectUrl}`);
     } catch (error: unknown) {
@@ -265,7 +233,6 @@ export const ssoCallback: RequestHandler = asyncHandler(
       res.clearCookie('sso_code_verifier');
       res.clearCookie('sso_redirect_url');
       res.clearCookie('sso_app_id');
-
       const errorMessage =
         error instanceof Error ? error.message : 'Authentication failed';
       res.redirect(
@@ -274,7 +241,6 @@ export const ssoCallback: RequestHandler = asyncHandler(
     }
   },
 );
-
 export const enrollMfa: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: enrollMfa start');
@@ -285,7 +251,6 @@ export const enrollMfa: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, result, 'MFA enrollment initiated'));
   },
 );
-
 export const verifyMfa: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: verifyMfa start');
@@ -298,20 +263,17 @@ export const verifyMfa: RequestHandler = asyncHandler(
       input.code,
       appId,
     );
-
     logger.debug(
       { userId },
       'AuthController: setting updated auth cookie from MFA verification',
     );
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
-
     res.cookie(cookieName, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
-
     res
       .status(200)
       .json(
@@ -319,7 +281,6 @@ export const verifyMfa: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const disableMfa: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: disableMfa start');
@@ -327,26 +288,22 @@ export const disableMfa: RequestHandler = asyncHandler(
     if (!appId) throw new BadRequestError('x-app-id header is required');
     const userId = req.user!.id;
     const { user, token } = await authService.disableMfa(userId, appId);
-
     logger.debug(
       { userId },
       'AuthController: setting updated auth cookie from MFA disablement',
     );
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
-
     res.cookie(cookieName, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
-
     res
       .status(200)
       .json(new ApiResponse(200, user, 'MFA disabled successfully'));
   },
 );
-
 export const verifyMfaChallenge: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: verifyMfaChallenge start');
@@ -358,20 +315,17 @@ export const verifyMfaChallenge: RequestHandler = asyncHandler(
       input.code,
       appId,
     );
-
     logger.debug(
       { userId: user.id },
       'AuthController: setting auth cookie from MFA challenge',
     );
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
-
     res.cookie(cookieName, token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
-
     res
       .status(200)
       .json(
@@ -379,7 +333,6 @@ export const verifyMfaChallenge: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const requestMfaReset: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: requestMfaReset start');
@@ -393,7 +346,6 @@ export const requestMfaReset: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, result, 'MFA reset request submitted'));
   },
 );
-
 export const completeMfaReset: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: completeMfaReset start');
@@ -407,7 +359,6 @@ export const completeMfaReset: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, result, 'MFA reset completed successfully'));
   },
 );
-
 export const requestPasswordReset: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: requestPasswordReset start');
@@ -418,7 +369,6 @@ export const requestPasswordReset: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, result, 'Password reset request processed'));
   },
 );
-
 export const resetPassword: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: resetPassword start');
