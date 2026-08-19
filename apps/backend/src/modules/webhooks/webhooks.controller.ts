@@ -8,14 +8,14 @@ import {
   formatPaginatedResponse,
 } from '../../utils/pagination.util.js';
 const webhooksService = new WebhooksService();
-
 export const listWebhooks: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('WebhooksController: listWebhooks start');
-
     const options = parseQueryOptions(req.query);
-    const [webhooks, total] = await webhooksService.list(options);
-
+    const [webhooks, total] = await webhooksService.list(
+      options,
+      req.context?.applicationId,
+    );
     logger.debug(
       { count: webhooks.length, total },
       'WebhooksController: listWebhooks success',
@@ -36,7 +36,6 @@ export const listWebhooks: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const createWebhook: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const body = req.body as {
@@ -49,15 +48,16 @@ export const createWebhook: RequestHandler = asyncHandler(
       { name: body.name, url: body.url },
       'WebhooksController: createWebhook start',
     );
-
     if (!body.name || !body.url || !body.events?.length) {
       logger.warn('WebhooksController: createWebhook missing required fields');
       throw new BadRequestError(
         ERROR_MESSAGES.WEBHOOKS.NAME_URL_EVENTS_REQUIRED,
       );
     }
-
-    const webhook = await webhooksService.create(body);
+    const webhook = await webhooksService.create(
+      body,
+      req.context?.applicationId,
+    );
     logger.debug(
       { id: webhook!.id },
       'WebhooksController: createWebhook success',
@@ -67,12 +67,11 @@ export const createWebhook: RequestHandler = asyncHandler(
       .json(new ApiResponse(201, webhook, 'Webhook created successfully'));
   },
 );
-
 export const deleteWebhook: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     logger.info({ id }, 'WebhooksController: deleteWebhook start');
-    await webhooksService.delete(id as string);
+    await webhooksService.delete(id as string, req.context?.applicationId);
     logger.debug({ id }, 'WebhooksController: deleteWebhook success');
     res.status(HTTP_STATUS.NO_CONTENT).send();
   },
