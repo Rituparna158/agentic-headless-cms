@@ -1,4 +1,4 @@
-import { eq, ne, and } from 'drizzle-orm';
+import { eq, ne, and, inArray } from 'drizzle-orm';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import {
@@ -10,20 +10,23 @@ import {
   mfaResetRequests,
   passwordResetRequests,
   userIdentities,
+  applications,
+  withTransaction,
 } from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
-
 export class AuthRepository {
   async getUserByEmail(email: string) {
     try {
       logger.info({ email }, 'AuthRepository: fetching user by email');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+      const result = await withTransaction(db, async (tx) => {
+        return await tx
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+      });
       logger.debug(
         { found: !!result[0] },
         'AuthRepository: getUserByEmail complete',
@@ -34,16 +37,17 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
     }
   }
-
   async getUserByInviteTokenHash(hash: string) {
     try {
       logger.info('AuthRepository: fetching user by invite token hash');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .select()
-        .from(users)
-        .where(eq(users.inviteTokenHash, hash))
-        .limit(1);
+      const result = await withTransaction(db, async (tx) => {
+        return await tx
+          .select()
+          .from(users)
+          .where(eq(users.inviteTokenHash, hash))
+          .limit(1);
+      });
       logger.debug(
         { found: !!result[0] },
         'AuthRepository: getUserByInviteTokenHash complete',
@@ -57,50 +61,52 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
     }
   }
-
   async activateUser(userId: string, passwordHash: string) {
     try {
       logger.info({ userId }, 'AuthRepository: activating user');
       const db = getDatabaseAdapter().getDb();
-      await db
-        .update(users)
-        .set({
-          passwordHash,
-          status: 'active',
-          inviteTokenHash: null,
-          inviteExpiresAt: null,
-        })
-        .where(eq(users.id, userId));
+      await withTransaction(db, async (tx) => {
+        return await tx
+          .update(users)
+          .set({
+            passwordHash,
+            status: 'active',
+            inviteTokenHash: null,
+            inviteExpiresAt: null,
+          })
+          .where(eq(users.id, userId));
+      });
       logger.debug({ userId }, 'AuthRepository: activateUser complete');
     } catch (error) {
       logger.error({ err: error }, 'AuthRepository Error in activateUser:');
       throw new ApiError(500, REPO_ERRORS.ACTIVATE_USER_FAILED);
     }
   }
-
   async getUserRoles(userId: string, appId: string) {
     try {
       logger.info({ userId, appId }, 'AuthRepository: fetching user roles');
       const db = getDatabaseAdapter().getDb();
-      const rows = await db
-        .select({ roleName: roles.name })
-        .from(userRoles)
-        .innerJoin(
-          userApplications,
-          eq(userRoles.userApplicationId, userApplications.id),
-        )
-        .innerJoin(roles, eq(userRoles.roleId, roles.id))
-        .where(
-          and(
-            eq(userApplications.userId, userId),
-            eq(userApplications.status, 'active'),
-            eq(
-              userApplications.application,
-              appId as 'HEADLESS_CMS' | 'CMS_UI',
+      const rows = await withTransaction(db, async (tx) => {
+        return await tx
+          .select({ roleName: roles.name })
+          .from(userRoles)
+          .innerJoin(
+            userApplications,
+            eq(userRoles.userApplicationId, userApplications.id),
+          )
+          .innerJoin(
+            applications,
+            eq(userApplications.applicationId, applications.id),
+          )
+          .innerJoin(roles, eq(userRoles.roleId, roles.id))
+          .where(
+            and(
+              eq(userApplications.userId, userId),
+              eq(userApplications.status, 'active'),
+              eq(applications.name, appId),
             ),
-          ),
-        );
-
+          );
+      });
       const roleNames = rows.map((r: { roleName: string }) => r.roleName);
       logger.debug(
         { userId, roles: roleNames },
@@ -112,7 +118,6 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_ROLES_FAILED);
     }
   }
-
   async getUserPermissions(userId: string, appId: string) {
     try {
       logger.info(
@@ -120,31 +125,33 @@ export class AuthRepository {
         'AuthRepository: fetching user permissions',
       );
       const db = getDatabaseAdapter().getDb();
-      const rows = await db
-        .select({
-          action: permissions.action,
-          effect: permissions.effect,
-          schemaId: permissions.schemaId,
-          fields: permissions.fields,
-          condition: permissions.condition,
-        })
-        .from(userRoles)
-        .innerJoin(
-          userApplications,
-          eq(userRoles.userApplicationId, userApplications.id),
-        )
-        .innerJoin(permissions, eq(userRoles.roleId, permissions.roleId))
-        .where(
-          and(
-            eq(userApplications.userId, userId),
-            eq(userApplications.status, 'active'),
-            eq(
-              userApplications.application,
-              appId as 'HEADLESS_CMS' | 'CMS_UI',
+      const rows = await withTransaction(db, async (tx) => {
+        return await tx
+          .select({
+            action: permissions.action,
+            effect: permissions.effect,
+            schemaId: permissions.schemaId,
+            fields: permissions.fields,
+            condition: permissions.condition,
+          })
+          .from(userRoles)
+          .innerJoin(
+            userApplications,
+            eq(userRoles.userApplicationId, userApplications.id),
+          )
+          .innerJoin(
+            applications,
+            eq(userApplications.applicationId, applications.id),
+          )
+          .innerJoin(permissions, eq(userRoles.roleId, permissions.roleId))
+          .where(
+            and(
+              eq(userApplications.userId, userId),
+              eq(userApplications.status, 'active'),
+              eq(applications.name, appId),
             ),
-          ),
-        );
-
+          );
+      });
       logger.debug(
         { userId, permissionsCount: rows.length },
         'AuthRepository: getUserPermissions complete',
@@ -158,7 +165,6 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_PERMISSIONS_FAILED);
     }
   }
-
   async getUserRolesWithMfaInfo(userId: string, appId: string) {
     try {
       logger.info(
@@ -166,29 +172,31 @@ export class AuthRepository {
         'AuthRepository: fetching user roles with mfa info',
       );
       const db = getDatabaseAdapter().getDb();
-      const rows = await db
-        .select({
-          id: roles.id,
-          name: roles.name,
-          mfaRequired: roles.mfaRequired,
-        })
-        .from(userRoles)
-        .innerJoin(
-          userApplications,
-          eq(userRoles.userApplicationId, userApplications.id),
-        )
-        .innerJoin(roles, eq(userRoles.roleId, roles.id))
-        .where(
-          and(
-            eq(userApplications.userId, userId),
-            eq(userApplications.status, 'active'),
-            eq(
-              userApplications.application,
-              appId as 'HEADLESS_CMS' | 'CMS_UI',
+      const rows = await withTransaction(db, async (tx) => {
+        return await tx
+          .select({
+            id: roles.id,
+            name: roles.name,
+            mfaRequired: roles.mfaRequired,
+          })
+          .from(userRoles)
+          .innerJoin(
+            userApplications,
+            eq(userRoles.userApplicationId, userApplications.id),
+          )
+          .innerJoin(
+            applications,
+            eq(userApplications.applicationId, applications.id),
+          )
+          .innerJoin(roles, eq(userRoles.roleId, roles.id))
+          .where(
+            and(
+              eq(userApplications.userId, userId),
+              eq(userApplications.status, 'active'),
+              eq(applications.name, appId),
             ),
-          ),
-        );
-
+          );
+      });
       logger.debug(
         { userId, roles: rows },
         'AuthRepository: getUserRolesWithMfaInfo complete',
@@ -202,73 +210,71 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_ROLES_FAILED);
     }
   }
-
   async getUserById(id: string) {
     try {
       logger.info({ id }, 'AuthRepository: fetching user by ID');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, id))
-        .limit(1);
+      const result = await withTransaction(db, async (tx) => {
+        return await tx.select().from(users).where(eq(users.id, id)).limit(1);
+      });
       return result[0] || null;
     } catch (error) {
       logger.error({ err: error }, 'AuthRepository Error in getUserById:');
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
     }
   }
-
   async updateMfaSecret(userId: string, secret: string | null) {
     try {
       logger.info({ userId }, 'AuthRepository: updating user MFA secret');
       const db = getDatabaseAdapter().getDb();
-      await db
-        .update(users)
-        .set({ mfaSecret: secret, mfaEnabled: false }) // Disable MFA until verified
-        .where(eq(users.id, userId));
+      await withTransaction(db, async (tx) => {
+        return await tx
+          .update(users)
+          .set({ mfaSecret: secret, mfaEnabled: false }) // Disable MFA until verified
+          .where(eq(users.id, userId));
+      });
     } catch (error) {
       logger.error({ err: error }, 'AuthRepository Error in updateMfaSecret:');
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async enableMfa(userId: string) {
     try {
       logger.info({ userId }, 'AuthRepository: enabling MFA for user');
       const db = getDatabaseAdapter().getDb();
-      await db
-        .update(users)
-        .set({ mfaEnabled: true })
-        .where(eq(users.id, userId));
+      await withTransaction(db, async (tx) => {
+        return await tx
+          .update(users)
+          .set({ mfaEnabled: true })
+          .where(eq(users.id, userId));
+      });
     } catch (error) {
       logger.error({ err: error }, 'AuthRepository Error in enableMfa:');
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async disableMfa(userId: string) {
     try {
       logger.info({ userId }, 'AuthRepository: disabling MFA for user');
       const db = getDatabaseAdapter().getDb();
-      await db
-        .update(users)
-        .set({ mfaEnabled: false, mfaSecret: null })
-        .where(eq(users.id, userId));
+      await withTransaction(db, async (tx) => {
+        return await tx
+          .update(users)
+          .set({ mfaEnabled: false, mfaSecret: null })
+          .where(eq(users.id, userId));
+      });
     } catch (error) {
       logger.error({ err: error }, 'AuthRepository Error in disableMfa:');
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async createMfaResetRequest(userId: string) {
     try {
       logger.info({ userId }, 'AuthRepository: creating MFA reset request');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .insert(mfaResetRequests)
-        .values({ userId })
-        .returning();
+      const result = await withTransaction(db, async (tx) => {
+        return await tx.insert(mfaResetRequests).values({ userId }).returning();
+      });
       return result[0];
     } catch (error) {
       logger.error(
@@ -278,16 +284,17 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async getMfaResetRequestById(id: string) {
     try {
       logger.info({ id }, 'AuthRepository: fetching MFA reset request by ID');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .select()
-        .from(mfaResetRequests)
-        .where(eq(mfaResetRequests.id, id))
-        .limit(1);
+      const result = await withTransaction(db, async (tx) => {
+        return await tx
+          .select()
+          .from(mfaResetRequests)
+          .where(eq(mfaResetRequests.id, id))
+          .limit(1);
+      });
       return result[0] || null;
     } catch (error) {
       logger.error(
@@ -297,29 +304,45 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED); // or custom error
     }
   }
-
-  async getAllMfaResetRequests(statusFilter?: string) {
+  async getAllMfaResetRequests(appId?: string, statusFilter?: string) {
     try {
-      logger.info('AuthRepository: fetching MFA reset requests');
+      logger.info({ appId }, 'AuthRepository: fetching MFA reset requests');
       const db = getDatabaseAdapter().getDb();
-      let whereClause;
+      let whereClause: import('drizzle-orm').SQL | undefined;
       if (statusFilter === 'history') {
         whereClause = ne(mfaResetRequests.status, 'pending');
       } else if (statusFilter) {
         whereClause = eq(mfaResetRequests.status, statusFilter as 'pending');
       }
-
-      const result = await db.query.mfaResetRequests.findMany({
-        where: whereClause,
-        with: {
-          user: true,
-          admin: true,
-        },
-        orderBy: (mfaResetRequests, { desc }) => [
-          desc(mfaResetRequests.createdAt),
-        ],
+      // If an appId is provided, restrict to users who belong to this application
+      if (appId) {
+        const appUserIds = await withTransaction(db, async (tx) => {
+          return await tx
+            .select({ userId: userApplications.userId })
+            .from(userApplications)
+            .innerJoin(
+              applications,
+              eq(userApplications.applicationId, applications.id),
+            )
+            .where(eq(applications.name, appId));
+        });
+        const ids = appUserIds.map((r) => r.userId);
+        if (ids.length === 0) return [];
+        const appFilter = inArray(mfaResetRequests.userId, ids);
+        whereClause = whereClause ? and(whereClause, appFilter) : appFilter;
+      }
+      const result = await withTransaction(db, async (tx) => {
+        return await tx.query.mfaResetRequests.findMany({
+          where: whereClause,
+          with: {
+            user: true,
+            admin: true,
+          },
+          orderBy: (mfaResetRequests, { desc }) => [
+            desc(mfaResetRequests.createdAt),
+          ],
+        });
       });
-
       return result;
     } catch (error) {
       logger.error(
@@ -329,16 +352,17 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
     }
   }
-
   async getMfaResetRequestByTokenHash(hash: string) {
     try {
       logger.info('AuthRepository: fetching MFA reset request by token hash');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .select()
-        .from(mfaResetRequests)
-        .where(eq(mfaResetRequests.tokenHash, hash))
-        .limit(1);
+      const result = await withTransaction(db, async (tx) => {
+        return await tx
+          .select()
+          .from(mfaResetRequests)
+          .where(eq(mfaResetRequests.tokenHash, hash))
+          .limit(1);
+      });
       return result[0] || null;
     } catch (error) {
       logger.error(
@@ -348,7 +372,6 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
     }
   }
-
   async updateMfaResetRequest(
     id: string,
     data: {
@@ -361,11 +384,13 @@ export class AuthRepository {
     try {
       logger.info({ id }, 'AuthRepository: updating MFA reset request');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .update(mfaResetRequests)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(mfaResetRequests.id, id))
-        .returning();
+      const result = await withTransaction(db, async (tx) => {
+        return await tx
+          .update(mfaResetRequests)
+          .set({ ...data, updatedAt: new Date() })
+          .where(eq(mfaResetRequests.id, id))
+          .returning();
+      });
       return result[0] || null;
     } catch (error) {
       logger.error(
@@ -375,7 +400,6 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async createPasswordResetRequest(
     userId: string,
     tokenHash: string,
@@ -387,10 +411,12 @@ export class AuthRepository {
         'AuthRepository: creating password reset request',
       );
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .insert(passwordResetRequests)
-        .values({ userId, tokenHash, expiresAt })
-        .returning();
+      const result = await withTransaction(db, async (tx) => {
+        return await tx
+          .insert(passwordResetRequests)
+          .values({ userId, tokenHash, expiresAt })
+          .returning();
+      });
       return result[0];
     } catch (error) {
       logger.error(
@@ -400,16 +426,17 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async getPasswordResetRequestByTokenHash(hash: string) {
     try {
       logger.info('AuthRepository: fetching password reset request by hash');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .select()
-        .from(passwordResetRequests)
-        .where(eq(passwordResetRequests.tokenHash, hash))
-        .limit(1);
+      const result = await withTransaction(db, async (tx) => {
+        return await tx
+          .select()
+          .from(passwordResetRequests)
+          .where(eq(passwordResetRequests.tokenHash, hash))
+          .limit(1);
+      });
       return result[0] || null;
     } catch (error) {
       logger.error(
@@ -419,16 +446,17 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED);
     }
   }
-
   async updatePasswordResetRequest(id: string, usedAt: Date) {
     try {
       logger.info({ id }, 'AuthRepository: updating password reset request');
       const db = getDatabaseAdapter().getDb();
-      const result = await db
-        .update(passwordResetRequests)
-        .set({ usedAt, updatedAt: new Date() })
-        .where(eq(passwordResetRequests.id, id))
-        .returning();
+      const result = await withTransaction(db, async (tx) => {
+        return await tx
+          .update(passwordResetRequests)
+          .set({ usedAt, updatedAt: new Date() })
+          .where(eq(passwordResetRequests.id, id))
+          .returning();
+      });
       return result[0] || null;
     } catch (error) {
       logger.error(
@@ -438,15 +466,16 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async updateUserPassword(userId: string, passwordHash: string) {
     try {
       logger.info({ userId }, 'AuthRepository: updating user password');
       const db = getDatabaseAdapter().getDb();
-      await db
-        .update(users)
-        .set({ passwordHash, updatedAt: new Date() })
-        .where(eq(users.id, userId));
+      await withTransaction(db, async (tx) => {
+        return await tx
+          .update(users)
+          .set({ passwordHash, updatedAt: new Date() })
+          .where(eq(users.id, userId));
+      });
     } catch (error) {
       logger.error(
         { err: error },
@@ -455,7 +484,6 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async linkUserIdentity(
     userId: string,
     provider: string,
@@ -467,21 +495,22 @@ export class AuthRepository {
         'AuthRepository: linking user identity',
       );
       const db = getDatabaseAdapter().getDb();
-      await db
-        .insert(userIdentities)
-        .values({
-          userId,
-          provider,
-          providerUserId,
-        })
-        .onConflictDoNothing({
-          target: [userIdentities.provider, userIdentities.providerUserId],
-        });
+      await withTransaction(db, async (tx) => {
+        return await tx
+          .insert(userIdentities)
+          .values({
+            userId,
+            provider,
+            providerUserId,
+          })
+          .onConflictDoNothing({
+            target: [userIdentities.provider, userIdentities.providerUserId],
+          });
+      });
     } catch (error) {
       logger.error({ err: error }, 'AuthRepository Error in linkUserIdentity:');
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
 }
-
 export const authRepository = new AuthRepository();
