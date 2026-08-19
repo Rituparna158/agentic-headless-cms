@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and } from 'drizzle-orm';
 import type { BaseQueryOptions } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
@@ -6,19 +6,17 @@ import {
   locales,
   RecordNotFoundError,
   buildPaginationOptions,
+  withTransaction,
 } from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
-
 export class LocalesRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
   }
-
-  async list(options: BaseQueryOptions = {}) {
+  async list(options: BaseQueryOptions = {}, applicationId?: string) {
     try {
       logger.info('LocalesRepository: listing locales');
-
       const { limit, offset, orderBy, where } = buildPaginationOptions(
         options,
         {
@@ -29,21 +27,27 @@ export class LocalesRepository {
         },
         [locales.code, locales.name],
       );
-
-      const result = await this.db
-        .select()
-        .from(locales)
-        .where(where)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(...orderBy);
-
-      const countResult = await this.db
-        .select({ count: sql<number>`cast(count(${locales.id}) as integer)` })
-        .from(locales)
-        .where(where);
+      const finalWhere = applicationId
+        ? where
+          ? and(where, eq(locales.applicationId, applicationId))
+          : eq(locales.applicationId, applicationId)
+        : where;
+      const result = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(locales)
+          .where(finalWhere)
+          .limit(limit)
+          .offset(offset)
+          .orderBy(...orderBy);
+      });
+      const countResult = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({ count: sql<number>`cast(count(${locales.id}) as integer)` })
+          .from(locales)
+          .where(finalWhere);
+      });
       const total = countResult[0]?.count ?? 0;
-
       logger.debug(
         { count: result.length, total },
         'LocalesRepository: list complete',
@@ -54,15 +58,22 @@ export class LocalesRepository {
       throw new ApiError(500, REPO_ERRORS.LIST_LOCALES_FAILED);
     }
   }
-
-  async getByCode(code: string) {
+  async getByCode(code: string, applicationId?: string) {
     try {
-      logger.info({ code }, 'LocalesRepository: fetching locale by code');
-      const [locale] = await this.db
-        .select()
-        .from(locales)
-        .where(eq(locales.code, code))
-        .limit(1);
+      logger.info(
+        { code, applicationId },
+        'LocalesRepository: fetching locale by code',
+      );
+      const conditions = [eq(locales.code, code)];
+      if (applicationId)
+        conditions.push(eq(locales.applicationId, applicationId));
+      const [locale] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(locales)
+          .where(and(...conditions))
+          .limit(1);
+      });
       logger.debug(
         { found: !!locale },
         'LocalesRepository: getByCode complete',
@@ -73,15 +84,16 @@ export class LocalesRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
   async getById(id: string) {
     try {
       logger.info({ id }, 'LocalesRepository: fetching locale by ID');
-      const [locale] = await this.db
-        .select()
-        .from(locales)
-        .where(eq(locales.id, id))
-        .limit(1);
+      const [locale] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(locales)
+          .where(eq(locales.id, id))
+          .limit(1);
+      });
       logger.debug({ found: !!locale }, 'LocalesRepository: getById complete');
       return locale;
     } catch (error) {
@@ -89,14 +101,20 @@ export class LocalesRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
-  async create(data: { code: string; name: string; isDefault?: boolean }) {
+  async create(data: {
+    code: string;
+    name: string;
+    isDefault?: boolean;
+    applicationId?: string;
+  }) {
     try {
       logger.info(
         { code: data.code, name: data.name },
         'LocalesRepository: creating locale',
       );
-      const [locale] = await this.db.insert(locales).values(data).returning();
+      const [locale] = await withTransaction(this.db, async (tx) => {
+        return await tx.insert(locales).values(data).returning();
+      });
       logger.debug(
         { code: locale?.code },
         'LocalesRepository: create complete',
@@ -107,14 +125,15 @@ export class LocalesRepository {
       throw new ApiError(500, REPO_ERRORS.CREATE_LOCALE_FAILED);
     }
   }
-
   async delete(id: string) {
     try {
       logger.info({ id }, 'LocalesRepository: deleting locale');
-      const [deleted] = await this.db
-        .delete(locales)
-        .where(eq(locales.id, id))
-        .returning({ id: locales.id });
+      const [deleted] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .delete(locales)
+          .where(eq(locales.id, id))
+          .returning({ id: locales.id });
+      });
       if (!deleted) {
         logger.error(
           { id },
