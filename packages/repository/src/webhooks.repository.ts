@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and } from 'drizzle-orm';
 import type { BaseQueryOptions } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
@@ -6,19 +6,17 @@ import {
   webhooks,
   RecordNotFoundError,
   buildPaginationOptions,
+  withTransaction,
 } from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
-
 export class WebhooksRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
   }
-
-  async list(options: BaseQueryOptions = {}) {
+  async list(options: BaseQueryOptions = {}, applicationId?: string) {
     try {
       logger.info('WebhooksRepository: listing webhooks');
-
       const { limit, offset, orderBy, where } = buildPaginationOptions(
         options,
         {
@@ -29,21 +27,29 @@ export class WebhooksRepository {
         },
         [webhooks.name, webhooks.url],
       );
-
-      const result = await this.db
-        .select()
-        .from(webhooks)
-        .where(where)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(...orderBy);
-
-      const countResult = await this.db
-        .select({ count: sql<number>`cast(count(${webhooks.id}) as integer)` })
-        .from(webhooks)
-        .where(where);
+      const finalWhere = applicationId
+        ? where
+          ? and(where, eq(webhooks.applicationId, applicationId))
+          : eq(webhooks.applicationId, applicationId)
+        : where;
+      const result = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(webhooks)
+          .where(finalWhere)
+          .limit(limit)
+          .offset(offset)
+          .orderBy(...orderBy);
+      });
+      const countResult = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({
+            count: sql<number>`cast(count(${webhooks.id}) as integer)`,
+          })
+          .from(webhooks)
+          .where(finalWhere);
+      });
       const total = countResult[0]?.count ?? 0;
-
       logger.debug(
         { count: result.length, total },
         'WebhooksRepository: list complete',
@@ -54,15 +60,19 @@ export class WebhooksRepository {
       throw new ApiError(500, REPO_ERRORS.LIST_WEBHOOKS_FAILED);
     }
   }
-
-  async getById(id: string) {
+  async getById(id: string, applicationId?: string) {
     try {
       logger.info({ id }, 'WebhooksRepository: fetching webhook by ID');
-      const [webhook] = await this.db
-        .select()
-        .from(webhooks)
-        .where(eq(webhooks.id, id))
-        .limit(1);
+      const conditions = [eq(webhooks.id, id)];
+      if (applicationId)
+        conditions.push(eq(webhooks.applicationId, applicationId));
+      const [webhook] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(webhooks)
+          .where(and(...conditions))
+          .limit(1);
+      });
       logger.debug(
         { found: !!webhook },
         'WebhooksRepository: getById complete',
@@ -73,20 +83,22 @@ export class WebhooksRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_WEBHOOK_FAILED);
     }
   }
-
   async create(data: {
     name: string;
     url: string;
     events: string[];
     isActive?: boolean;
     secretKey: string;
+    applicationId?: string;
   }) {
     try {
       logger.info(
         { name: data.name, url: data.url },
         'WebhooksRepository: creating webhook',
       );
-      const [webhook] = await this.db.insert(webhooks).values(data).returning();
+      const [webhook] = await withTransaction(this.db, async (tx) => {
+        return await tx.insert(webhooks).values(data).returning();
+      });
       logger.debug(
         { webhookId: webhook?.id },
         'WebhooksRepository: create complete',
@@ -97,14 +109,15 @@ export class WebhooksRepository {
       throw new ApiError(500, REPO_ERRORS.CREATE_WEBHOOK_FAILED);
     }
   }
-
   async delete(id: string) {
     try {
       logger.info({ id }, 'WebhooksRepository: deleting webhook');
-      const [deleted] = await this.db
-        .delete(webhooks)
-        .where(eq(webhooks.id, id))
-        .returning({ id: webhooks.id });
+      const [deleted] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .delete(webhooks)
+          .where(eq(webhooks.id, id))
+          .returning({ id: webhooks.id });
+      });
       if (!deleted) {
         logger.error(
           { id },
