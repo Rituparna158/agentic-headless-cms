@@ -1,5 +1,4 @@
 import { Router } from 'express';
-
 import { accessRouter } from '../modules/access/access.routes.js';
 import { authRouter } from '../modules/auth/auth.routes.js';
 import { contentRoutes } from '../modules/content/content.routes.js';
@@ -8,10 +7,8 @@ import { mediaFoldersRoutes } from '../modules/media/media-folders.routes.js';
 import { webhooksRouter } from '../modules/webhooks/webhooks.routes.js';
 import { localesRouter } from '../modules/locales/locales.routes.js';
 import { schemaRouter } from '../modules/schemas/schema.routes.js';
-
 // Versioned API router
 export const apiRouter = Router();
-
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/schemas', schemaRouter);
 apiRouter.use('/content', contentRoutes);
