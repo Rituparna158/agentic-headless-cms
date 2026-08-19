@@ -15,21 +15,27 @@ import { DEFAULT_LOCALE } from '@repo/constants';
 import type { ContentQueryOptions } from '@repo/types';
 import { isDeepStrictEqual } from 'node:util';
 import { REPO_ERRORS } from './error-constants.js';
-
 export class ContentRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
   }
-
-  async getSchemaBySlug(slug: string) {
+  async getSchemaBySlug(slug: string, applicationId?: string) {
     try {
-      logger.info({ slug }, 'ContentRepository: fetching schema by slug');
-      const [schema] = await this.db
-        .select()
-        .from(schemas)
-        .where(eq(schemas.slug, slug))
-        .limit(1);
-
+      logger.info(
+        { slug, applicationId },
+        'ContentRepository: fetching schema by slug',
+      );
+      const conditions = [eq(schemas.slug, slug)];
+      if (applicationId) {
+        conditions.push(eq(schemas.applicationId, applicationId));
+      }
+      const [schema] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(schemas)
+          .where(and(...conditions))
+          .limit(1);
+      });
       logger.debug(
         { found: !!schema },
         'ContentRepository: fetched schema by slug result',
@@ -43,7 +49,6 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_SCHEMA_FAILED);
     }
   }
-
   async listEntries(
     schemaId: string,
     locale: string = DEFAULT_LOCALE,
@@ -59,7 +64,6 @@ export class ContentRepository {
         isNull(contentEntries.deletedAt),
       );
       const where = query?.where ? and(baseWhere, query.where) : baseWhere;
-
       const rows = this.db
         .select({
           id: contentEntries.id,
@@ -78,7 +82,6 @@ export class ContentRepository {
           ),
         )
         .where(where);
-
       if (query) {
         logger.debug(
           { limit: query.limit, offset: query.offset },
@@ -94,7 +97,6 @@ export class ContentRepository {
         );
         return results;
       }
-
       const results = await rows;
       logger.info(
         { count: results.length },
@@ -106,7 +108,6 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.LIST_ENTRIES_FAILED);
     }
   }
-
   async countEntries(
     schemaId: string,
     locale: string = DEFAULT_LOCALE,
@@ -122,19 +123,19 @@ export class ContentRepository {
         isNull(contentEntries.deletedAt),
       );
       const where = filterWhere ? and(baseWhere, filterWhere) : baseWhere;
-
-      const [result] = await this.db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(contentEntries)
-        .innerJoin(
-          entryLocalizations,
-          and(
-            eq(contentEntries.id, entryLocalizations.entryId),
-            eq(entryLocalizations.locale, locale),
-          ),
-        )
-        .where(where);
-
+      const [result] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({ count: sql<number>`count(*)::int` })
+          .from(contentEntries)
+          .innerJoin(
+            entryLocalizations,
+            and(
+              eq(contentEntries.id, entryLocalizations.entryId),
+              eq(entryLocalizations.locale, locale),
+            ),
+          )
+          .where(where);
+      });
       logger.debug(
         { count: result?.count ?? 0 },
         'ContentRepository: countEntries result',
@@ -145,7 +146,6 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.COUNT_ENTRIES_FAILED);
     }
   }
-
   async getEntryById(
     entryId: string,
     locale: string = DEFAULT_LOCALE,
@@ -163,26 +163,26 @@ export class ContentRepository {
       if (schemaId) {
         conditions.push(eq(contentEntries.schemaId, schemaId));
       }
-
-      const [entry] = await this.db
-        .select({
-          id: contentEntries.id,
-          schemaId: contentEntries.schemaId,
-          status: entryLocalizations.status,
-          data: entryLocalizations.data,
-          publishedData: entryLocalizations.publishedData,
-        })
-        .from(contentEntries)
-        .innerJoin(
-          entryLocalizations,
-          and(
-            eq(contentEntries.id, entryLocalizations.entryId),
-            eq(entryLocalizations.locale, locale),
-          ),
-        )
-        .where(and(...conditions))
-        .limit(1);
-
+      const [entry] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({
+            id: contentEntries.id,
+            schemaId: contentEntries.schemaId,
+            status: entryLocalizations.status,
+            data: entryLocalizations.data,
+            publishedData: entryLocalizations.publishedData,
+          })
+          .from(contentEntries)
+          .innerJoin(
+            entryLocalizations,
+            and(
+              eq(contentEntries.id, entryLocalizations.entryId),
+              eq(entryLocalizations.locale, locale),
+            ),
+          )
+          .where(and(...conditions))
+          .limit(1);
+      });
       logger.debug(
         { found: !!entry },
         'ContentRepository: fetched entry by ID result',
@@ -193,12 +193,12 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_ENTRY_FAILED);
     }
   }
-
   async createEntry(
     schemaId: string,
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    options: { applicationId?: string } = {},
   ) {
     try {
       logger.info(
@@ -213,16 +213,17 @@ export class ContentRepository {
             schemaId,
             actorType: 'user',
             createdByUserId: userId,
+            ...(options.applicationId
+              ? { applicationId: options.applicationId }
+              : {}),
           })
           .returning();
-
         if (!newEntry) {
           logger.error(
             'ContentRepository: failed to insert contentEntries row',
           );
           throw new ApiError(500, REPO_ERRORS.CREATE_ENTRY_FAILED);
         }
-
         logger.debug(
           { entryId: newEntry.id },
           'ContentRepository: creating initial entry version',
@@ -236,7 +237,6 @@ export class ContentRepository {
           createdByUserId: userId,
           comment: 'Initial draft',
         });
-
         logger.info(
           { entryId: newEntry.id },
           'ContentRepository: createEntry complete',
@@ -254,7 +254,6 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.CREATE_ENTRY_FAILED);
     }
   }
-
   async updateEntryDraft(
     entryId: string,
     data: Record<string, unknown>,
@@ -271,7 +270,6 @@ export class ContentRepository {
         logger.debug('ContentRepository: no changes detected, skipping update');
         return currentEntry;
       }
-
       logger.debug('ContentRepository: creating new draft version');
       await createEntryVersion(this.db, {
         entryId,
@@ -282,7 +280,6 @@ export class ContentRepository {
         createdByUserId: userId,
         comment: 'Updated draft',
       });
-
       const updatedEntry = await this.getEntryById(entryId, locale);
       if (!updatedEntry) {
         logger.error(
@@ -301,7 +298,6 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.UPDATE_ENTRY_FAILED);
     }
   }
-
   async publishEntry(
     entryId: string,
     userId: string,
@@ -320,7 +316,6 @@ export class ContentRepository {
         );
         throw new RecordNotFoundError('Entry not found');
       }
-
       logger.debug('ContentRepository: creating published version');
       await createEntryVersion(this.db, {
         entryId,
@@ -331,7 +326,6 @@ export class ContentRepository {
         createdByUserId: userId,
         comment: 'Published entry',
       });
-
       const publishedEntry = await this.getEntryById(entryId, locale);
       if (!publishedEntry) {
         logger.error(
@@ -348,7 +342,6 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.PUBLISH_ENTRY_FAILED);
     }
   }
-
   async revertEntry(
     entryId: string,
     versionNo: number,
@@ -360,18 +353,19 @@ export class ContentRepository {
         { entryId, versionNo, userId, locale },
         'ContentRepository: reverting entry',
       );
-      const [historical] = await this.db
-        .select({ data: contentVersions.data })
-        .from(contentVersions)
-        .where(
-          and(
-            eq(contentVersions.entryId, entryId),
-            eq(contentVersions.locale, locale),
-            eq(contentVersions.versionNo, versionNo),
-          ),
-        )
-        .limit(1);
-
+      const [historical] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({ data: contentVersions.data })
+          .from(contentVersions)
+          .where(
+            and(
+              eq(contentVersions.entryId, entryId),
+              eq(contentVersions.locale, locale),
+              eq(contentVersions.versionNo, versionNo),
+            ),
+          )
+          .limit(1);
+      });
       if (!historical) {
         logger.error(
           { entryId, versionNo },
@@ -379,7 +373,6 @@ export class ContentRepository {
         );
         throw new RecordNotFoundError(`Version ${versionNo} not found`);
       }
-
       logger.debug('ContentRepository: creating reverted version');
       await createEntryVersion(this.db, {
         entryId,
@@ -390,7 +383,6 @@ export class ContentRepository {
         createdByUserId: userId,
         comment: `Reverted to version ${versionNo}`,
       });
-
       const revertedEntry = await this.getEntryById(entryId, locale);
       if (!revertedEntry) {
         logger.error(
@@ -407,24 +399,24 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.REVERT_ENTRY_FAILED);
     }
   }
-
   async listEntryVersions(entryId: string, locale: string = DEFAULT_LOCALE) {
     try {
       logger.info(
         { entryId, locale },
         'ContentRepository: listing entry versions',
       );
-      const versions = await this.db
-        .select()
-        .from(contentVersions)
-        .where(
-          and(
-            eq(contentVersions.entryId, entryId),
-            eq(contentVersions.locale, locale),
-          ),
-        )
-        .orderBy(desc(contentVersions.versionNo));
-
+      const versions = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(contentVersions)
+          .where(
+            and(
+              eq(contentVersions.entryId, entryId),
+              eq(contentVersions.locale, locale),
+            ),
+          )
+          .orderBy(desc(contentVersions.versionNo));
+      });
       logger.debug(
         { count: versions.length },
         'ContentRepository: listEntryVersions complete',
@@ -438,16 +430,16 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.LIST_ENTRY_VERSIONS_FAILED);
     }
   }
-
   async deleteEntry(entryId: string) {
     try {
       logger.info({ entryId }, 'ContentRepository: deleting entry');
-      const [deleted] = await this.db
-        .update(contentEntries)
-        .set({ deletedAt: new Date() })
-        .where(eq(contentEntries.id, entryId))
-        .returning({ id: contentEntries.id });
-
+      const [deleted] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .update(contentEntries)
+          .set({ deletedAt: new Date() })
+          .where(eq(contentEntries.id, entryId))
+          .returning({ id: contentEntries.id });
+      });
       if (!deleted) {
         logger.error(
           { entryId },
@@ -455,7 +447,6 @@ export class ContentRepository {
         );
         throw new RecordNotFoundError('Entry not found or already deleted');
       }
-
       logger.info({ entryId }, 'ContentRepository: deleteEntry complete');
       return deleted;
     } catch (error) {
