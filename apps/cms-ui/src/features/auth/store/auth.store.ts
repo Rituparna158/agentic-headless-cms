@@ -1,13 +1,11 @@
 import { create } from 'zustand';
 import type { AuthenticatedUser } from '@repo/types';
-
 export type AuthStatus =
   | 'idle'
   | 'loading'
   | 'authenticated'
   | 'unauthenticated'
   | 'mfa_challenge_required';
-
 export interface AuthState {
   user: AuthenticatedUser | null;
   status: AuthStatus;
@@ -18,7 +16,6 @@ export interface AuthState {
   setStatus: (status: AuthStatus) => void;
   clearAuth: () => void;
 }
-
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   status: 'idle',
@@ -26,7 +23,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   get isAuthenticated() {
     return get().status === 'authenticated';
   },
-
   setAuthData: (user) => {
     set({
       user,
@@ -34,7 +30,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       mfaToken: null,
     });
   },
-
   setMfaChallenge: (mfaToken) => {
     set({
       user: null,
@@ -42,11 +37,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       mfaToken,
     });
   },
-
   setStatus: (status) => {
     set({ status });
   },
-
   clearAuth: () => {
     set({
       user: null,
