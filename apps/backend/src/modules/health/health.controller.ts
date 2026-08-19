@@ -2,7 +2,6 @@ import type { Request, Response, RequestHandler } from 'express';
 import { checkReadiness } from './health.service.js';
 import { asyncHandler } from '@repo/utils';
 import { logger } from '@repo/logger';
-
 export const liveness: RequestHandler = asyncHandler(
   (_req: Request, res: Response) => {
     logger.info('HealthController: liveness start');
@@ -10,7 +9,6 @@ export const liveness: RequestHandler = asyncHandler(
     return Promise.resolve();
   },
 );
-
 export const readiness: RequestHandler = asyncHandler(
   async (_req: Request, res: Response) => {
     logger.info('HealthController: readiness start');

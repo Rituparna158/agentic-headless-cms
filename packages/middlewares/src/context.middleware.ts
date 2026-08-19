@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { contextStorage, RequestContext } from '@repo/context';
-
 export const contextMiddleware = (
   req: Request,
   res: Response,
@@ -22,7 +21,9 @@ export const contextMiddleware = (
     get promptRef() {
       return req.headers['x-prompt-ref'] as string;
     },
+    get applicationId() {
+      return req.context?.applicationId as string | undefined;
+    },
   };
-
   contextStorage.run(store, () => next());
 };

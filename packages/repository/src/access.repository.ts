@@ -12,20 +12,18 @@ import {
   withTransaction,
   RecordNotFoundError,
   buildPaginationOptions,
+  applications,
 } from '@repo/shared-db';
 import type { PermissionData } from '@repo/types';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
-
 export class AccessRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
   }
-
   async listRoles(options: BaseQueryOptions = {}, appId: string) {
     try {
       logger.info('AccessRepository: listing roles');
-
       const { limit, offset, orderBy, where } = buildPaginationOptions(
         options,
         {
@@ -36,62 +34,69 @@ export class AccessRepository {
         },
         [roles.name, roles.description],
       );
-
       const finalWhere = where
-        ? and(where, eq(roles.application, appId as 'HEADLESS_CMS' | 'CMS_UI'))
-        : eq(roles.application, appId as 'HEADLESS_CMS' | 'CMS_UI');
-
-      const allRoles = await this.db
-        .select()
-        .from(roles)
-        .where(finalWhere)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(...orderBy);
-
-      const countResult = await this.db
-        .select({ count: sql<number>`cast(count(${roles.id}) as integer)` })
-        .from(roles)
-        .where(finalWhere);
+        ? and(where, eq(applications.name, appId))
+        : eq(applications.name, appId);
+      const allRoles = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({
+            id: roles.id,
+            name: roles.name,
+            applicationId: roles.applicationId,
+            description: roles.description,
+            mfaRequired: roles.mfaRequired,
+            isSystem: roles.isSystem,
+            createdAt: roles.createdAt,
+            updatedAt: roles.updatedAt,
+          })
+          .from(roles)
+          .innerJoin(applications, eq(roles.applicationId, applications.id))
+          .where(finalWhere)
+          .limit(limit)
+          .offset(offset)
+          .orderBy(...orderBy);
+      });
+      const countResult = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({ count: sql<number>`cast(count(${roles.id}) as integer)` })
+          .from(roles)
+          .innerJoin(applications, eq(roles.applicationId, applications.id))
+          .where(finalWhere);
+      });
       const total = countResult[0]?.count ?? 0;
-
-      const allPermissions = await this.db.select().from(permissions);
-
+      const allPermissions = await withTransaction(this.db, async (tx) => {
+        return await tx.select().from(permissions);
+      });
       logger.debug(
         { roleCount: allRoles.length, total },
         'AccessRepository: listRoles complete',
       );
-
       const data = allRoles.map((role) => ({
         ...role,
         permissions: allPermissions.filter((p) => p.roleId === role.id),
       }));
-
       return [data, total] as const;
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in listRoles:');
       throw new ApiError(500, REPO_ERRORS.FETCH_ROLES_FAILED);
     }
   }
-
   async getRoleById(id: string) {
     try {
       logger.info({ id }, 'AccessRepository: fetching role by ID');
-      const [role] = await this.db
-        .select()
-        .from(roles)
-        .where(eq(roles.id, id))
-        .limit(1);
+      const [role] = await withTransaction(this.db, async (tx) => {
+        return await tx.select().from(roles).where(eq(roles.id, id)).limit(1);
+      });
       if (!role) {
         logger.debug({ id }, 'AccessRepository: role not found');
         return null;
       }
-
-      const rolePermissions = await this.db
-        .select()
-        .from(permissions)
-        .where(eq(permissions.roleId, id));
-
+      const rolePermissions = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(permissions)
+          .where(eq(permissions.roleId, id));
+      });
       logger.debug(
         { id, permissionsCount: rolePermissions.length },
         'AccessRepository: getRoleById complete',
@@ -102,11 +107,10 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
   async createRole(
     data: {
       name: string;
-      application: 'HEADLESS_CMS' | 'CMS_UI';
+      applicationId: string;
       description?: string | null;
       isSystem?: boolean;
       mfaRequired?: boolean;
@@ -121,7 +125,6 @@ export class AccessRepository {
           logger.error('AccessRepository: failed to create role');
           throw new ApiError(500, REPO_ERRORS.CREATE_ROLE_FAILED);
         }
-
         let rolePermissions: unknown[] = [];
         if (perms && perms.length > 0) {
           logger.debug(
@@ -142,7 +145,6 @@ export class AccessRepository {
             )
             .returning();
         }
-
         logger.info(
           { roleId: role.id },
           'AccessRepository: createRole complete',
@@ -154,7 +156,6 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.CREATE_ROLE_FAILED);
     }
   }
-
   async updateRole(
     id: string,
     data: { name?: string; description?: string | null; mfaRequired?: boolean },
@@ -167,7 +168,6 @@ export class AccessRepository {
           logger.debug('AccessRepository: updating role fields');
           await tx.update(roles).set(data).where(eq(roles.id, id));
         }
-
         let rolePermissions: unknown[] = [];
         if (perms !== undefined) {
           logger.debug('AccessRepository: deleting and recreating permissions');
@@ -194,13 +194,11 @@ export class AccessRepository {
             .from(permissions)
             .where(eq(permissions.roleId, id));
         }
-
         const [updatedRole] = await tx
           .select()
           .from(roles)
           .where(eq(roles.id, id))
           .limit(1);
-
         logger.info({ id }, 'AccessRepository: updateRole complete');
         return { ...updatedRole, permissions: rolePermissions };
       });
@@ -209,14 +207,15 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.UPDATE_ROLE_FAILED);
     }
   }
-
   async deleteRole(id: string) {
     try {
       logger.info({ id }, 'AccessRepository: deleting role');
-      const [deleted] = await this.db
-        .delete(roles)
-        .where(eq(roles.id, id))
-        .returning({ id: roles.id });
+      const [deleted] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .delete(roles)
+          .where(eq(roles.id, id))
+          .returning({ id: roles.id });
+      });
       if (!deleted) {
         logger.error({ id }, 'AccessRepository: role not found for deletion');
         throw new RecordNotFoundError('Role not found');
@@ -229,25 +228,24 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DELETE_ROLE_FAILED);
     }
   }
-
   async listUsers(options: BaseQueryOptions = {}, appId: string) {
     try {
       logger.info({ appId }, 'AccessRepository: listing users');
-
-      // 1. Get user IDs that have access to this application
-      const appUsers = await this.db
-        .select({ userId: userApplications.userId })
-        .from(userApplications)
-        .where(
-          eq(userApplications.application, appId as 'HEADLESS_CMS' | 'CMS_UI'),
-        );
-
+      // Get user IDs that belong to this specific application
+      const appUsers = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({ userId: userApplications.userId })
+          .from(userApplications)
+          .innerJoin(
+            applications,
+            eq(userApplications.applicationId, applications.id),
+          )
+          .where(eq(applications.name, appId));
+      });
       const userIds = appUsers.map((au) => au.userId);
-
       if (userIds.length === 0) {
         return [[], 0] as [unknown[], number];
       }
-
       const { limit, offset, orderBy, where } = buildPaginationOptions(
         options,
         {
@@ -260,39 +258,49 @@ export class AccessRepository {
         },
         [users.email, users.firstName, users.lastName],
       );
-
       const finalWhere = where
         ? and(where, inArray(users.id, userIds))
         : inArray(users.id, userIds);
-
-      const allUsers = await this.db
-        .select()
-        .from(users)
-        .where(finalWhere)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(...orderBy);
-
-      const countResult = await this.db
-        .select({ count: sql<number>`cast(count(${users.id}) as integer)` })
-        .from(users)
-        .where(finalWhere);
+      const allUsers = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(users)
+          .where(finalWhere)
+          .limit(limit)
+          .offset(offset)
+          .orderBy(...orderBy);
+      });
+      const countResult = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({ count: sql<number>`cast(count(${users.id}) as integer)` })
+          .from(users)
+          .where(finalWhere);
+      });
       const total = countResult[0]?.count ?? 0;
-
-      const allUserApps = await this.db
-        .select()
-        .from(userApplications)
-        .where(
-          eq(userApplications.application, appId as 'HEADLESS_CMS' | 'CMS_UI'),
-        );
-
-      const allUserRoles = await this.db.select().from(userRoles);
-
+      const allUserApps = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({
+            id: userApplications.id,
+            userId: userApplications.userId,
+            applicationId: userApplications.applicationId,
+            status: userApplications.status,
+            createdAt: userApplications.createdAt,
+            updatedAt: userApplications.updatedAt,
+          })
+          .from(userApplications)
+          .innerJoin(
+            applications,
+            eq(userApplications.applicationId, applications.id),
+          )
+          .where(eq(applications.name, appId));
+      });
+      const allUserRoles = await withTransaction(this.db, async (tx) => {
+        return await tx.select().from(userRoles);
+      });
       logger.debug(
         { userCount: allUsers.length, total },
         'AccessRepository: listUsers complete',
       );
-
       const data = allUsers.map((u) => {
         const userAppIds = allUserApps
           .filter((ua) => ua.userId === u.id)
@@ -304,24 +312,26 @@ export class AccessRepository {
               ?.roleId ?? null,
         };
       });
-
       return [data, total] as const;
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in listUsers:');
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
   async deleteUser(id: string) {
     try {
       logger.info({ id }, 'AccessRepository: deleting user');
-      await this.db
-        .delete(userApplications)
-        .where(eq(userApplications.userId, id));
-      const [deleted] = await this.db
-        .delete(users)
-        .where(eq(users.id, id))
-        .returning({ id: users.id });
+      await withTransaction(this.db, async (tx) => {
+        return await tx
+          .delete(userApplications)
+          .where(eq(userApplications.userId, id));
+      });
+      const [deleted] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .delete(users)
+          .where(eq(users.id, id))
+          .returning({ id: users.id });
+      });
       if (!deleted) {
         throw new RecordNotFoundError('User not found');
       }
@@ -333,42 +343,52 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_DELETE_FAILED);
     }
   }
-
   async updateUserRole(userId: string, roleId: string) {
     try {
       logger.info({ userId, roleId }, 'AccessRepository: updating user role');
-      const [role] = await this.db
-        .select()
-        .from(roles)
-        .where(eq(roles.id, roleId))
-        .limit(1);
+      const [role] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(roles)
+          .where(eq(roles.id, roleId))
+          .limit(1);
+      });
       if (!role) throw new ApiError(400, 'Role not found');
-
-      let [userApp] = await this.db
-        .select()
-        .from(userApplications)
-        .where(
-          and(
-            eq(userApplications.userId, userId),
-            eq(userApplications.application, role.application),
-          ),
-        )
-        .limit(1);
-
+      let [userApp] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(userApplications)
+          .where(
+            and(
+              eq(userApplications.userId, userId),
+              eq(userApplications.applicationId, role.applicationId),
+            ),
+          )
+          .limit(1);
+      });
       if (!userApp) {
-        const [newApp] = await this.db
-          .insert(userApplications)
-          .values({ userId, application: role.application, status: 'active' })
-          .returning();
+        const [newApp] = await withTransaction(this.db, async (tx) => {
+          return await tx
+            .insert(userApplications)
+            .values({
+              userId,
+              applicationId: role.applicationId,
+              status: 'active',
+            })
+            .returning();
+        });
         userApp = newApp;
       }
-
-      await this.db
-        .delete(userRoles)
-        .where(eq(userRoles.userApplicationId, userApp!.id));
-      await this.db
-        .insert(userRoles)
-        .values({ userApplicationId: userApp!.id, roleId });
+      await withTransaction(this.db, async (tx) => {
+        return await tx
+          .delete(userRoles)
+          .where(eq(userRoles.userApplicationId, userApp!.id));
+      });
+      await withTransaction(this.db, async (tx) => {
+        return await tx
+          .insert(userRoles)
+          .values({ userApplicationId: userApp!.id, roleId });
+      });
       logger.debug(
         { userId, roleId },
         'AccessRepository: updateUserRole complete',
@@ -378,15 +398,16 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-
   async getUserByEmail(email: string) {
     try {
       logger.info({ email }, 'AccessRepository: fetching user by email');
-      const [user] = await this.db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
+      const [user] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+      });
       logger.debug(
         { found: !!user },
         'AccessRepository: getUserByEmail complete',
@@ -397,54 +418,102 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
+  /**
+   * Check if a user with the given email already has access to a specific
+   * application (by application name). Used in inviteUser to enforce
+   * per-platform uniqueness instead of global uniqueness.
+   */
+  async getUserByEmailAndApp(email: string, appName: string) {
+    try {
+      logger.info(
+        { email, appName },
+        'AccessRepository: fetching user by email and app',
+      );
+      const [result] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({
+            id: users.id,
+            email: users.email,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            status: users.status,
+            userApplicationId: userApplications.id,
+            userApplicationStatus: userApplications.status,
+          })
+          .from(users)
+          .innerJoin(userApplications, eq(users.id, userApplications.userId))
+          .innerJoin(
+            applications,
+            eq(userApplications.applicationId, applications.id),
+          )
+          .where(and(eq(users.email, email), eq(applications.name, appName)))
+          .limit(1);
+      });
+      logger.debug(
+        { found: !!result },
+        'AccessRepository: getUserByEmailAndApp complete',
+      );
+      return result ?? null;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AccessRepository Error in getUserByEmailAndApp:',
+      );
+      throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
+    }
+  }
   async getAdminUsers() {
     try {
       logger.info('AccessRepository: fetching admin users');
-      const adminUsers = await this.db
-        .select({
-          id: users.id,
-          email: users.email,
-        })
-        .from(users)
-        .innerJoin(userApplications, eq(users.id, userApplications.userId))
-        .innerJoin(
-          userRoles,
-          eq(userApplications.id, userRoles.userApplicationId),
-        )
-        .innerJoin(roles, eq(userRoles.roleId, roles.id))
-        .where(
-          and(eq(roles.name, 'admin'), eq(userApplications.status, 'active')),
-        );
-
+      const adminUsers = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({
+            id: users.id,
+            email: users.email,
+          })
+          .from(users)
+          .innerJoin(userApplications, eq(users.id, userApplications.userId))
+          .innerJoin(
+            userRoles,
+            eq(userApplications.id, userRoles.userApplicationId),
+          )
+          .innerJoin(roles, eq(userRoles.roleId, roles.id))
+          .where(
+            and(eq(roles.name, 'admin'), eq(userApplications.status, 'active')),
+          );
+      });
       return adminUsers;
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in getAdminUsers:');
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
   async getUsersByRoleName(roleName: string) {
     try {
       logger.info(
         { roleName },
         'AccessRepository: fetching users by role name',
       );
-      return await this.db
-        .select({
-          id: users.id,
-          email: users.email,
-        })
-        .from(users)
-        .innerJoin(userApplications, eq(users.id, userApplications.userId))
-        .innerJoin(
-          userRoles,
-          eq(userApplications.id, userRoles.userApplicationId),
-        )
-        .innerJoin(roles, eq(userRoles.roleId, roles.id))
-        .where(
-          and(eq(roles.name, roleName), eq(userApplications.status, 'active')),
-        );
+      return await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({
+            id: users.id,
+            email: users.email,
+          })
+          .from(users)
+          .innerJoin(userApplications, eq(users.id, userApplications.userId))
+          .innerJoin(
+            userRoles,
+            eq(userApplications.id, userRoles.userApplicationId),
+          )
+          .innerJoin(roles, eq(userRoles.roleId, roles.id))
+          .where(
+            and(
+              eq(roles.name, roleName),
+              eq(userApplications.status, 'active'),
+            ),
+          );
+      });
     } catch (error) {
       logger.error(
         { err: error },
@@ -453,7 +522,28 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
+  async refreshInviteToken(
+    userId: string,
+    inviteTokenHash: string,
+    inviteExpiresAt: Date,
+  ) {
+    try {
+      logger.info({ userId }, 'AccessRepository: refreshing invite token');
+      await withTransaction(this.db, async (tx) => {
+        return await tx
+          .update(users)
+          .set({ inviteTokenHash, inviteExpiresAt })
+          .where(eq(users.id, userId));
+      });
+      logger.debug({ userId }, 'AccessRepository: refreshInviteToken complete');
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'AccessRepository Error in refreshInviteToken:',
+      );
+      throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
+    }
+  }
   async createUser(data: {
     email: string;
     firstName?: string;
@@ -464,7 +554,9 @@ export class AccessRepository {
   }) {
     try {
       logger.info({ email: data.email }, 'AccessRepository: creating user');
-      const [user] = await this.db.insert(users).values(data).returning();
+      const [user] = await withTransaction(this.db, async (tx) => {
+        return await tx.insert(users).values(data).returning();
+      });
       logger.debug(
         { userId: user?.id },
         'AccessRepository: createUser complete',
@@ -475,53 +567,59 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_INSERT_FAILED);
     }
   }
-
   async assignUserRole(userId: string, roleId: string) {
     try {
       logger.info(
         { userId, roleId },
         'AccessRepository: assigning role to user',
       );
-      const [role] = await this.db
-        .select()
-        .from(roles)
-        .where(eq(roles.id, roleId))
-        .limit(1);
+      const [role] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(roles)
+          .where(eq(roles.id, roleId))
+          .limit(1);
+      });
       if (!role) throw new ApiError(400, 'Role not found');
-
-      let [userApp] = await this.db
-        .select()
-        .from(userApplications)
-        .where(
-          and(
-            eq(userApplications.userId, userId),
-            eq(userApplications.application, role.application),
-          ),
-        )
-        .limit(1);
-
+      let [userApp] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(userApplications)
+          .where(
+            and(
+              eq(userApplications.userId, userId),
+              eq(userApplications.applicationId, role.applicationId),
+            ),
+          )
+          .limit(1);
+      });
       if (!userApp) {
-        const [newApp] = await this.db
-          .insert(userApplications)
-          .values({ userId, application: role.application, status: 'active' })
-          .returning();
+        const [newApp] = await withTransaction(this.db, async (tx) => {
+          return await tx
+            .insert(userApplications)
+            .values({
+              userId,
+              applicationId: role.applicationId,
+              status: 'active',
+            })
+            .returning();
+        });
         userApp = newApp;
       }
-
-      await this.db
-        .insert(userRoles)
-        .values({ userApplicationId: userApp!.id, roleId });
+      await withTransaction(this.db, async (tx) => {
+        return await tx
+          .insert(userRoles)
+          .values({ userApplicationId: userApp!.id, roleId });
+      });
       logger.debug('AccessRepository: assignUserRole complete');
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in assignUserRole:');
       throw new ApiError(500, REPO_ERRORS.DB_INSERT_FAILED);
     }
   }
-
   async listTokens(options: BaseQueryOptions = {}) {
     try {
       logger.info('AccessRepository: listing tokens');
-
       const { limit, offset, orderBy, where } = buildPaginationOptions(
         options,
         {
@@ -531,21 +629,24 @@ export class AccessRepository {
         },
         [apiTokens.name],
       );
-
-      const allTokens = await this.db
-        .select()
-        .from(apiTokens)
-        .where(where)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(...orderBy);
-
-      const countResult = await this.db
-        .select({ count: sql<number>`cast(count(${apiTokens.id}) as integer)` })
-        .from(apiTokens)
-        .where(where);
+      const allTokens = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(apiTokens)
+          .where(where)
+          .limit(limit)
+          .offset(offset)
+          .orderBy(...orderBy);
+      });
+      const countResult = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select({
+            count: sql<number>`cast(count(${apiTokens.id}) as integer)`,
+          })
+          .from(apiTokens)
+          .where(where);
+      });
       const total = countResult[0]?.count ?? 0;
-
       logger.debug(
         { tokenCount: allTokens.length, total },
         'AccessRepository: listTokens complete',
@@ -556,7 +657,6 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
   async createToken(data: {
     name: string;
     type?: 'user' | 'agent';
@@ -567,17 +667,19 @@ export class AccessRepository {
   }) {
     try {
       logger.info({ name: data.name }, 'AccessRepository: creating API token');
-      const [token] = await this.db
-        .insert(apiTokens)
-        .values({
-          name: data.name,
-          type: data.type || 'user',
-          tokenHash: data.tokenHash,
-          roleId: data.roleId,
-          createdBy: data.createdBy,
-          scopes: data.scopes,
-        })
-        .returning();
+      const [token] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .insert(apiTokens)
+          .values({
+            name: data.name,
+            type: data.type || 'user',
+            tokenHash: data.tokenHash,
+            roleId: data.roleId,
+            createdBy: data.createdBy,
+            scopes: data.scopes,
+          })
+          .returning();
+      });
       logger.debug(
         { tokenId: token?.id },
         'AccessRepository: createToken complete',
@@ -588,15 +690,16 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_INSERT_FAILED);
     }
   }
-
   async getTokenById(id: string) {
     try {
       logger.info({ id }, 'AccessRepository: fetching API token by ID');
-      const [token] = await this.db
-        .select()
-        .from(apiTokens)
-        .where(eq(apiTokens.id, id))
-        .limit(1);
+      const [token] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(apiTokens)
+          .where(eq(apiTokens.id, id))
+          .limit(1);
+      });
       logger.debug(
         { found: !!token },
         'AccessRepository: getTokenById complete',
@@ -607,15 +710,16 @@ export class AccessRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
   async revokeToken(id: string) {
     try {
       logger.info({ id }, 'AccessRepository: revoking API token');
-      const [revoked] = await this.db
-        .update(apiTokens)
-        .set({ revokedAt: new Date() })
-        .where(eq(apiTokens.id, id))
-        .returning();
+      const [revoked] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .update(apiTokens)
+          .set({ revokedAt: new Date() })
+          .where(eq(apiTokens.id, id))
+          .returning();
+      });
       if (!revoked) {
         logger.error(
           { id },

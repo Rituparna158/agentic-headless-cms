@@ -3,17 +3,30 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Menu, LogOut } from 'lucide-react';
 import { sidebarNavConfig } from './SidebarNavConfig';
 import { useAuthStore } from '../../features/auth/store/auth.store';
-
 export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
     {},
   );
   const location = useLocation();
+  const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.clearAuth);
-
+  // Extract user capabilities from permissions
+  const userCapabilities =
+    user?.permissions
+      ?.filter((p) => p.action === 'manage')
+      ?.map((p) => (p.condition as Record<string, string>)?.capability)
+      ?.filter(Boolean) || [];
+  // Super admins bypass capability checks
+  const isSuperAdmin = user?.roles?.some((roleName: string) =>
+    roleName.toLowerCase().includes('admin'),
+  );
+  // Filter navigation items
+  const filteredNavConfig = sidebarNavConfig.filter((item) => {
+    if (!item.requiredCapability) return true;
+    return isSuperAdmin || userCapabilities.includes(item.requiredCapability);
+  });
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
-
   const toggleExpanded = (title: string) => {
     // If sidebar is collapsed, expand it when clicking a nested menu
     if (isCollapsed) {
@@ -24,13 +37,11 @@ export const Sidebar = () => {
       [title]: !prev[title],
     }));
   };
-
   const isActive = (href: string) => location.pathname === href;
   const hasActiveChild = (item: (typeof sidebarNavConfig)[0]) => {
     if (isActive(item.href)) return true;
     return item.subItems?.some((sub) => isActive(sub.href)) ?? false;
   };
-
   return (
     <aside
       className={`flex flex-col h-full bg-zinc-950 text-zinc-300 transition-all duration-300 ease-in-out border-r border-zinc-800 ${
@@ -57,14 +68,12 @@ export const Sidebar = () => {
           <Menu size={20} className="text-zinc-400 hover:text-zinc-100" />
         </button>
       </div>
-
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto py-4 overflow-x-hidden custom-scrollbar">
         <ul className="space-y-1 px-3">
-          {sidebarNavConfig.map((item) => {
+          {filteredNavConfig.map((item) => {
             const active = hasActiveChild(item);
             const isExpanded = expandedItems[item.title];
-
             return (
               <li key={item.title}>
                 {item.subItems ? (
@@ -147,7 +156,6 @@ export const Sidebar = () => {
           })}
         </ul>
       </nav>
-
       {/* Footer / User Area */}
       <div className="p-4 border-t border-zinc-800">
         <button

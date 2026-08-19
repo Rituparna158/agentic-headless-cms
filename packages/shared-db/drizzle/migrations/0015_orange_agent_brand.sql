@@ -1,0 +1,24 @@
+ALTER TABLE "agents" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "api_tokens" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "roles" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "user_applications" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "content_entries" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "content_versions" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "entry_localizations" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "entry_relations" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "fields" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "relation_defs" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "schema_versions" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "schemas" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "permissions" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "media_asset_tags" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "media_assets" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "media_folders" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "media_tags" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "agent_interactions" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "agent_operations" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "approvals" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "audit_logs" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "locales" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "webhook_deliveries" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;--> statement-breakpoint
+ALTER TABLE "webhooks" ALTER COLUMN "application_id" SET DEFAULT current_setting('app.current_application_id', true)::uuid;

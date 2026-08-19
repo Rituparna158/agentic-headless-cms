@@ -1,15 +1,13 @@
-import { auditLogs } from '@repo/shared-db';
+import { auditLogs, withTransaction } from '@repo/shared-db';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import type { CreateAuditLogInput } from '@repo/types';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
-
 export class AuditRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
   }
-
   async create(input: CreateAuditLogInput): Promise<void> {
     try {
       logger.info(
@@ -20,16 +18,18 @@ export class AuditRepository {
         },
         'AuditRepository: inserting audit log',
       );
-      await this.db.insert(auditLogs).values({
-        actorType: input.actorType,
-        actorUserId: input.actorUserId,
-        actorAgentId: input.actorAgentId,
-        action: input.action,
-        resourceType: input.resourceType,
-        resourceId: input.resourceId,
-        beforeState: input.beforeState,
-        afterState: input.afterState,
-        context: input.context,
+      await withTransaction(this.db, async (tx) => {
+        return await tx.insert(auditLogs).values({
+          actorType: input.actorType,
+          actorUserId: input.actorUserId,
+          actorAgentId: input.actorAgentId,
+          action: input.action,
+          resourceType: input.resourceType,
+          resourceId: input.resourceId,
+          beforeState: input.beforeState,
+          afterState: input.afterState,
+          context: input.context,
+        });
       });
       logger.debug('AuditRepository: audit log insert complete');
     } catch (error) {

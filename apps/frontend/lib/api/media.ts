@@ -1,17 +1,14 @@
 import { API_BASE_URL, ApiError, apiFetch } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';
-
 import type {
   ListMediaOptions,
   ListMediaResult,
   MediaAsset,
   MediaFolder,
 } from '@repo/types';
-
 export function mediaFileUrl(asset: MediaAsset): string {
   return `${API_BASE_URL}${asset.url}`;
 }
-
 function buildQueryString(options: ListMediaOptions): string {
   const params = new URLSearchParams();
   if (options.page) params.set('page', String(options.page));
@@ -19,29 +16,24 @@ function buildQueryString(options: ListMediaOptions): string {
   if (options.folderId) params.set('folderId', options.folderId);
   return params.toString();
 }
-
 export function listMedia(
   options: ListMediaOptions = {},
 ): Promise<ListMediaResult> {
   const qs = buildQueryString(options);
   return apiFetch<ListMediaResult>(API_PATHS.MEDIA.BASE(qs));
 }
-
 export function getMediaAsset(id: string): Promise<MediaAsset> {
   return apiFetch<MediaAsset>(API_PATHS.MEDIA.BY_ID(id));
 }
-
 export function deleteMedia(id: string): Promise<void> {
   return apiFetch<void>(API_PATHS.MEDIA.BY_ID(id), { method: 'DELETE' });
 }
-
 export function bulkDeleteMedia(ids: string[]): Promise<void> {
   return apiFetch<void>(API_PATHS.MEDIA.BULK_DELETE, {
     method: 'POST',
     body: JSON.stringify({ ids }),
   });
 }
-
 export async function uploadMedia(
   file: File,
   options?: { altText?: string; folderId?: string },
@@ -50,12 +42,14 @@ export async function uploadMedia(
   formData.set('file', file);
   if (options?.altText) formData.set('altText', options.altText);
   if (options?.folderId) formData.set('folderId', options.folderId);
-
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${API_PATHS.MEDIA.BASE()}`, {
       method: 'POST',
       credentials: 'include',
+      headers: {
+        'X-App-Id': process.env.NEXT_PUBLIC_APP_ID || 'HEADLESS_CMS',
+      },
       body: formData,
     });
   } catch (cause) {
@@ -65,7 +59,6 @@ export async function uploadMedia(
       cause,
     );
   }
-
   if (!response.ok) {
     let body: { error?: { message?: string; details?: unknown } } = {};
     try {
@@ -79,18 +72,15 @@ export async function uploadMedia(
       body.error?.details,
     );
   }
-
   const { data } = (await response.json()) as { data: MediaAsset };
   return data;
 }
-
 export function listMediaFolders(
   parentFolderId?: string,
 ): Promise<MediaFolder[]> {
   const qs = parentFolderId ? `?parentFolderId=${parentFolderId}` : '';
   return apiFetch<MediaFolder[]>(`/api/v1/media-folders${qs}`);
 }
-
 export function createMediaFolder(
   name: string,
   parentFolderId?: string,
@@ -100,7 +90,6 @@ export function createMediaFolder(
     body: JSON.stringify({ name, parentFolderId }),
   });
 }
-
 export function deleteMediaFolder(id: string): Promise<void> {
   return apiFetch<void>(`/api/v1/media-folders/${id}`, { method: 'DELETE' });
 }

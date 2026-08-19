@@ -7,6 +7,7 @@ import {
   deleteSchema as deleteSchemaRecord,
   type Database,
 } from '@repo/shared-db';
+import { contextStorage } from '@repo/context';
 import type {
   CreateSchemaInput,
   UpdateSchemaInput,
@@ -16,27 +17,35 @@ import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
-
 export class SchemaRepository {
   private getDb(): Database {
     return getDatabaseAdapter().getDb();
   }
-
-  async create(input: CreateSchemaInput & { actorUserId: string }) {
+  async create(
+    input: CreateSchemaInput & { actorUserId: string },
+    options: { applicationId?: string } = {},
+  ) {
     try {
       logger.info(
         { schemaName: input.name, actorUserId: input.actorUserId },
         'SchemaRepository: creating schema',
       );
       const db = this.getDb();
-      const result = await createSchemaRecord(db, {
-        name: input.name,
-        slug: input.slug,
-        type: input.type,
-        fields: input.fields,
-        actorType: 'user',
-        createdByUserId: input.actorUserId,
-      });
+      const store = contextStorage.getStore();
+      const applicationId = options.applicationId || store?.applicationId;
+
+      const result = await createSchemaRecord(
+        db,
+        {
+          name: input.name,
+          slug: input.slug,
+          type: input.type,
+          fields: input.fields,
+          actorType: 'user',
+          createdByUserId: input.actorUserId,
+        },
+        { applicationId },
+      );
       logger.debug({ schemaId: result.id }, 'SchemaRepository: schema created');
       return result;
     } catch (error) {
@@ -44,7 +53,6 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.CREATE_SCHEMA_FAILED);
     }
   }
-
   async list(options: BaseQueryOptions = {}) {
     try {
       logger.info('SchemaRepository: listing schemas');
@@ -60,7 +68,6 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.LIST_SCHEMAS_FAILED);
     }
   }
-
   async getById(id: string) {
     try {
       logger.info({ id }, 'SchemaRepository: fetching schema by ID');
@@ -73,7 +80,6 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
   async getBySlug(slug: string) {
     try {
       logger.info({ slug }, 'SchemaRepository: fetching schema by slug');
@@ -89,7 +95,6 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-
   async update(id: string, input: UpdateSchemaInput & { actorUserId: string }) {
     try {
       logger.info(
@@ -111,7 +116,6 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.UPDATE_SCHEMA_FAILED);
     }
   }
-
   async delete(id: string, force: boolean = false) {
     try {
       logger.info({ id, force }, 'SchemaRepository: deleting schema');

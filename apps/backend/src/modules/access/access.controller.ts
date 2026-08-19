@@ -1,6 +1,5 @@
 import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
 import { Request, Response, RequestHandler } from 'express';
-
 import { env } from '@repo/config';
 import { PermissionData } from '@repo/types';
 import {
@@ -16,17 +15,13 @@ import {
   formatPaginatedResponse,
 } from '../../utils/pagination.util.js';
 const accessService = new AccessService();
-
 export const listRoles: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listRoles start');
-
     const appId = req.headers['x-app-id'] as string;
     if (!appId) throw new BadRequestError('x-app-id header is required');
-
     const options = parseQueryOptions(req.query);
     const [roles, total] = await accessService.listRoles(options, appId);
-
     logger.debug(
       { count: roles.length, total },
       'AccessController: listRoles success',
@@ -47,7 +42,6 @@ export const listRoles: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const getRole: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -63,12 +57,11 @@ export const getRole: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, role, 'Role retrieved successfully'));
   },
 );
-
 export const createRole: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const body = req.body as {
       name: string;
-      application: 'HEADLESS_CMS' | 'CMS_UI';
+      applicationId: string;
       description?: string;
       mfaRequired?: boolean;
       isSystem?: boolean;
@@ -82,7 +75,6 @@ export const createRole: RequestHandler = asyncHandler(
       .json(new ApiResponse(201, role, 'Role created successfully'));
   },
 );
-
 export const updateRole: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -102,7 +94,6 @@ export const updateRole: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, role, 'Role updated successfully'));
   },
 );
-
 export const deleteRole: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -112,16 +103,13 @@ export const deleteRole: RequestHandler = asyncHandler(
     res.status(HTTP_STATUS.NO_CONTENT).send();
   },
 );
-
 export const listUsers: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listUsers start');
     const appId = req.headers['x-app-id'] as string;
     if (!appId) throw new BadRequestError('x-app-id header is required');
-
     const options = parseQueryOptions(req.query);
     const [users, total] = await accessService.listUsers(options, appId);
-
     logger.debug(
       { count: users.length, total },
       'AccessController: listUsers success',
@@ -142,7 +130,6 @@ export const listUsers: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const inviteUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const body = req.body as {
@@ -153,19 +140,20 @@ export const inviteUser: RequestHandler = asyncHandler(
     };
     const { email, firstName, lastName, roleId } = body;
     logger.info({ email, roleId }, 'AccessController: inviteUser start');
-
     if (!email || !roleId) {
       logger.warn('AccessController: inviteUser missing email or roleId');
       throw new BadRequestError(ERROR_MESSAGES.ACCESS.EMAIL_AND_ROLE_REQUIRED);
     }
-
+    const origin = req.get('origin');
+    const appId = req.headers['x-app-id'] as string | undefined;
     const { inviteUrl, user } = await accessService.inviteUser(
       email,
       firstName,
       lastName,
       roleId,
+      origin,
+      appId,
     );
-
     logger.debug({ userId: user.id }, 'AccessController: inviteUser success');
     res.status(HTTP_STATUS.CREATED).json(
       new ApiResponse(
@@ -184,7 +172,6 @@ export const inviteUser: RequestHandler = asyncHandler(
     );
   },
 );
-
 export const deleteUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -194,7 +181,6 @@ export const deleteUser: RequestHandler = asyncHandler(
     res.status(HTTP_STATUS.NO_CONTENT).send();
   },
 );
-
 export const updateUserRole: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -216,14 +202,11 @@ export const updateUserRole: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const listTokens: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listTokens start');
-
     const options = parseQueryOptions(req.query);
     const [tokens, total] = await accessService.listTokens(options);
-
     logger.debug(
       { count: tokens.length, total },
       'AccessController: listTokens success',
@@ -244,7 +227,6 @@ export const listTokens: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const createToken: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const body = req.body as {
@@ -254,6 +236,8 @@ export const createToken: RequestHandler = asyncHandler(
       scopes?: unknown;
     };
     logger.info({ name: body.name }, 'AccessController: createToken start');
+    const mfaCode = req.headers['x-mfa-code'] as string | undefined;
+    await accessService.validateMfa(req.user!.id, mfaCode);
     const token = await accessService.createToken(body, req.user!.id);
     logger.debug(
       { tokenId: token.id },
@@ -264,11 +248,12 @@ export const createToken: RequestHandler = asyncHandler(
       .json(new ApiResponse(201, token, 'Token created successfully'));
   },
 );
-
 export const revokeToken: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     logger.info({ id }, 'AccessController: revokeToken start');
+    const mfaCode = req.headers['x-mfa-code'] as string | undefined;
+    await accessService.validateMfa(req.user!.id, mfaCode);
     await accessService.revokeToken(id as string);
     logger.debug({ id }, 'AccessController: revokeToken success');
     res
@@ -278,18 +263,17 @@ export const revokeToken: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const listMfaRequests: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AccessController: listMfaRequests start');
     const { status } = req.query as { status?: string };
-    const requests = await accessService.listMfaRequests(status);
+    const appId = req.headers['x-app-id'] as string | undefined;
+    const requests = await accessService.listMfaRequests(status, appId);
     res
       .status(200)
       .json(new ApiResponse(200, requests, 'MFA requests listed successfully'));
   },
 );
-
 export const approveMfaResetRequest: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -303,7 +287,6 @@ export const approveMfaResetRequest: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, result, 'MFA reset request approved'));
   },
 );
-
 export const rejectMfaResetRequest: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;

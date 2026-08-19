@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   index,
@@ -10,7 +11,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import {
   actorTypeEnum,
   relationKindEnum,
@@ -18,25 +19,36 @@ import {
   schemaTypeEnum,
   versionStatusEnum,
 } from './enums.js';
-import { agents, users } from './identity.js';
-
-export const schemas = pgTable('schemas', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: varchar('name', { length: 255 }).notNull(),
-  slug: varchar('slug', { length: 255 }).notNull().unique(),
-  type: schemaTypeEnum('type').notNull(),
-  definition: jsonb('definition').notNull(),
-  status: schemaStatusEnum('status').notNull().default('draft'),
-  version: integer('version').notNull().default(1),
-  isSystem: boolean('is_system').notNull().default(false),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
+import { agents, applications, users } from './identity.js';
+export const schemas = pgTable(
+  'schemas',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: varchar('name', { length: 255 }).notNull(),
+    slug: varchar('slug', { length: 255 }).notNull(), // unique per-app, enforced by table constraint below
+    type: schemaTypeEnum('type').notNull(),
+    definition: jsonb('definition').notNull(),
+    status: schemaStatusEnum('status').notNull().default('draft'),
+    version: integer('version').notNull().default(1),
+    isSystem: boolean('is_system').notNull().default(false),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    appSlugUnique: unique('schemas_app_slug_unique').on(
+      table.applicationId,
+      table.slug,
+    ),
+  }),
+);
 export const fields = pgTable(
   'fields',
   {
@@ -44,6 +56,10 @@ export const fields = pgTable(
     schemaId: uuid('schema_id')
       .notNull()
       .references(() => schemas.id, { onDelete: 'cascade' }),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
     apiId: varchar('api_id', { length: 255 }).notNull(),
     displayName: varchar('display_name', { length: 255 }).notNull(),
     dataType: varchar('data_type', { length: 50 }).notNull(),
@@ -68,7 +84,6 @@ export const fields = pgTable(
     ),
   }),
 );
-
 export const relationDefs = pgTable('relation_defs', {
   id: uuid('id').primaryKey().defaultRandom(),
   fieldId: uuid('field_id')
@@ -77,6 +92,10 @@ export const relationDefs = pgTable('relation_defs', {
   sourceSchemaId: uuid('source_schema_id')
     .notNull()
     .references(() => schemas.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   targetSchemaId: uuid('target_schema_id').references(() => schemas.id, {
     onDelete: 'cascade',
   }), // null = polymorphic
@@ -88,12 +107,15 @@ export const relationDefs = pgTable('relation_defs', {
     .notNull()
     .defaultNow(),
 });
-
 export const schemaVersions = pgTable('schema_versions', {
   id: uuid('id').primaryKey().defaultRandom(),
   schemaId: uuid('schema_id')
     .notNull()
     .references(() => schemas.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   version: integer('version').notNull(),
   definition: jsonb('definition').notNull(),
   checksum: varchar('checksum', { length: 64 }),
@@ -109,12 +131,15 @@ export const schemaVersions = pgTable('schema_versions', {
     .notNull()
     .defaultNow(),
 });
-
 export const contentEntries = pgTable('content_entries', {
   id: uuid('id').primaryKey().defaultRandom(),
   schemaId: uuid('schema_id')
     .notNull()
     .references(() => schemas.id, { onDelete: 'restrict' }),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   actorType: actorTypeEnum('created_by_type').notNull(),
   createdByUserId: uuid('created_by_user_id').references(() => users.id, {
     onDelete: 'set null',
@@ -130,7 +155,6 @@ export const contentEntries = pgTable('content_entries', {
     .notNull()
     .defaultNow(),
 });
-
 export const entryLocalizations = pgTable(
   'entry_localizations',
   {
@@ -138,6 +162,10 @@ export const entryLocalizations = pgTable(
     entryId: uuid('entry_id')
       .notNull()
       .references(() => contentEntries.id, { onDelete: 'cascade' }),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
     locale: varchar('locale', { length: 20 }).notNull(),
     status: versionStatusEnum('status').notNull().default('draft'),
     data: jsonb('data').notNull(),
@@ -167,7 +195,6 @@ export const entryLocalizations = pgTable(
     ),
   }),
 );
-
 // Full version history — append-only, used for diff/rollback, not the read path.
 export const contentVersions = pgTable(
   'content_versions',
@@ -176,6 +203,10 @@ export const contentVersions = pgTable(
     entryId: uuid('entry_id')
       .notNull()
       .references(() => contentEntries.id, { onDelete: 'cascade' }),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
     locale: varchar('locale', { length: 20 }).notNull(),
     versionNo: integer('version_no').notNull(),
     status: versionStatusEnum('status').notNull(),
@@ -198,7 +229,6 @@ export const contentVersions = pgTable(
     ).on(table.entryId, table.locale, table.versionNo),
   }),
 );
-
 export const entryRelations = pgTable(
   'entry_relations',
   {
@@ -206,6 +236,10 @@ export const entryRelations = pgTable(
     fieldId: uuid('field_id')
       .notNull()
       .references(() => fields.id, { onDelete: 'cascade' }),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
     sourceEntryId: uuid('source_entry_id')
       .notNull()
       .references(() => contentEntries.id, { onDelete: 'cascade' }),
@@ -225,14 +259,20 @@ export const entryRelations = pgTable(
     ),
   }),
 );
-
-export const schemasRelations = relations(schemas, ({ many }) => ({
+export const schemasRelations = relations(schemas, ({ one, many }) => ({
+  application: one(applications, {
+    fields: [schemas.applicationId],
+    references: [applications.id],
+  }),
   fields: many(fields),
   versions: many(schemaVersions),
   entries: many(contentEntries),
 }));
-
 export const fieldsRelations = relations(fields, ({ one, many }) => ({
+  application: one(applications, {
+    fields: [fields.applicationId],
+    references: [applications.id],
+  }),
   schema: one(schemas, { fields: [fields.schemaId], references: [schemas.id] }),
   relationDefs: many(relationDefs, { relationName: 'relationDefField' }),
   inverseRelationDefs: many(relationDefs, {
@@ -240,8 +280,11 @@ export const fieldsRelations = relations(fields, ({ one, many }) => ({
   }),
   entryRelations: many(entryRelations),
 }));
-
 export const relationDefsRelations = relations(relationDefs, ({ one }) => ({
+  application: one(applications, {
+    fields: [relationDefs.applicationId],
+    references: [applications.id],
+  }),
   field: one(fields, {
     fields: [relationDefs.fieldId],
     references: [fields.id],
@@ -263,8 +306,11 @@ export const relationDefsRelations = relations(relationDefs, ({ one }) => ({
     relationName: 'relationDefInverseField',
   }),
 }));
-
 export const schemaVersionsRelations = relations(schemaVersions, ({ one }) => ({
+  application: one(applications, {
+    fields: [schemaVersions.applicationId],
+    references: [applications.id],
+  }),
   schema: one(schemas, {
     fields: [schemaVersions.schemaId],
     references: [schemas.id],
@@ -278,10 +324,13 @@ export const schemaVersionsRelations = relations(schemaVersions, ({ one }) => ({
     references: [agents.id],
   }),
 }));
-
 export const contentEntriesRelations = relations(
   contentEntries,
   ({ one, many }) => ({
+    application: one(applications, {
+      fields: [contentEntries.applicationId],
+      references: [applications.id],
+    }),
     schema: one(schemas, {
       fields: [contentEntries.schemaId],
       references: [schemas.id],
@@ -298,20 +347,26 @@ export const contentEntriesRelations = relations(
     versions: many(contentVersions),
   }),
 );
-
 export const entryLocalizationsRelations = relations(
   entryLocalizations,
   ({ one }) => ({
+    application: one(applications, {
+      fields: [entryLocalizations.applicationId],
+      references: [applications.id],
+    }),
     entry: one(contentEntries, {
       fields: [entryLocalizations.entryId],
       references: [contentEntries.id],
     }),
   }),
 );
-
 export const contentVersionsRelations = relations(
   contentVersions,
   ({ one }) => ({
+    application: one(applications, {
+      fields: [contentVersions.applicationId],
+      references: [applications.id],
+    }),
     entry: one(contentEntries, {
       fields: [contentVersions.entryId],
       references: [contentEntries.id],
@@ -326,8 +381,11 @@ export const contentVersionsRelations = relations(
     }),
   }),
 );
-
 export const entryRelationsRelations = relations(entryRelations, ({ one }) => ({
+  application: one(applications, {
+    fields: [entryRelations.applicationId],
+    references: [applications.id],
+  }),
   field: one(fields, {
     fields: [entryRelations.fieldId],
     references: [fields.id],

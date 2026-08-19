@@ -10,22 +10,25 @@ import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
 import { ApiError } from '@repo/utils';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
-
 export class SchemaService {
   private repository: SchemaRepository;
-
   constructor() {
     this.repository = new SchemaRepository();
   }
-
-  async create(input: CreateSchemaInput, actorUserId: string) {
+  async create(
+    input: CreateSchemaInput,
+    actorUserId: string,
+    applicationId?: string,
+  ) {
     try {
       logger.info(
-        { schemaName: input.name, actorUserId },
+        { schemaName: input.name, actorUserId, applicationId },
         'SchemaService: create start',
       );
-      const result = await this.repository.create({ ...input, actorUserId });
-
+      const result = await this.repository.create(
+        { ...input, actorUserId },
+        { applicationId },
+      );
       logger.debug(
         { schemaId: result.id },
         'SchemaService: create success, emitting audit log',
@@ -45,14 +48,12 @@ export class SchemaService {
         afterState: result,
         context,
       });
-
       return result;
     } catch (error) {
       logger.error({ err: error }, 'SchemaService Error in create:');
       throw new ApiError(500, SERVICE_ERRORS.CREATE_SCHEMA_FAILED);
     }
   }
-
   async list(options: BaseQueryOptions = {}) {
     try {
       logger.info('SchemaService: list');
@@ -62,7 +63,6 @@ export class SchemaService {
       throw new ApiError(500, SERVICE_ERRORS.LIST_SCHEMAS_FAILED);
     }
   }
-
   async getById(id: string) {
     try {
       logger.info({ id }, 'SchemaService: getById');
@@ -72,7 +72,6 @@ export class SchemaService {
       throw new ApiError(500, SERVICE_ERRORS.FETCH_SCHEMA_FAILED);
     }
   }
-
   async getBySlug(slug: string) {
     try {
       logger.info({ slug }, 'SchemaService: getBySlug');
@@ -83,22 +82,18 @@ export class SchemaService {
       throw new ApiError(500, SERVICE_ERRORS.FETCH_SCHEMA_FAILED);
     }
   }
-
   async update(id: string, input: UpdateSchemaInput, actorUserId: string) {
     try {
       logger.info({ id, actorUserId }, 'SchemaService: update start');
-
       // Fetch beforeState
       logger.debug({ id }, 'SchemaService: fetching beforeState');
       const beforeState = await this.repository.getById(id);
-
       // Perform mutation
       logger.debug({ id }, 'SchemaService: mutating schema');
       const result = await this.repository.update(id, {
         ...input,
         actorUserId,
       });
-
       // Emit audit event
       logger.debug({ id }, 'SchemaService: emitting audit log');
       const {
@@ -116,26 +111,21 @@ export class SchemaService {
         afterState: result,
         context,
       });
-
       return result;
     } catch (error) {
       logger.error({ err: error }, 'SchemaService Error in update:');
       throw new ApiError(500, SERVICE_ERRORS.UPDATE_SCHEMA_FAILED);
     }
   }
-
   async delete(id: string, force: boolean = false) {
     try {
       logger.info({ id, force }, 'SchemaService: delete start');
-
       // Fetch beforeState
       logger.debug({ id }, 'SchemaService: fetching beforeState');
       const beforeState = await this.repository.getById(id);
-
       // Perform mutation
       logger.debug({ id }, 'SchemaService: mutating data');
       const result = await this.repository.delete(id, force);
-
       // Emit audit event
       logger.debug({ id }, 'SchemaService: emitting audit log');
       const { actorUserId, actorAgentId, context } = getAuditContext();
@@ -149,7 +139,6 @@ export class SchemaService {
         afterState: null,
         context,
       });
-
       return result;
     } catch (error) {
       logger.error({ err: error }, 'SchemaService Error in delete:');
@@ -160,5 +149,4 @@ export class SchemaService {
     }
   }
 }
-
 export const schemaService = new SchemaService();

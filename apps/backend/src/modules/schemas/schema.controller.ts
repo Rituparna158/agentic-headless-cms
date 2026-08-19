@@ -8,7 +8,6 @@ import {
   parseQueryOptions,
   formatPaginatedResponse,
 } from '../../utils/pagination.util.js';
-
 export const createSchema: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('SchemaController: createSchema start');
@@ -16,29 +15,29 @@ export const createSchema: RequestHandler = asyncHandler(
       logger.error('SchemaController: unauthorized request');
       throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
-
     const input = req.body as CreateSchemaInput;
+    const applicationId = req.context?.applicationId;
     logger.debug(
-      { schemaName: input.name },
+      { schemaName: input.name, applicationId },
       'SchemaController: creating schema',
     );
-    const schema = await schemaService.create(input, req.user.id);
-
+    const schema = await schemaService.create(
+      input,
+      req.user.id,
+      applicationId,
+    );
     logger.info({ schemaId: schema.id }, 'SchemaController: createSchema end');
     res
       .status(201)
       .json(new ApiResponse(201, schema, 'Schema created successfully'));
   },
 );
-
 export const listSchemas: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('SchemaController: listSchemas start');
     logger.debug('SchemaController: fetching schemas');
-
     const options = parseQueryOptions(req.query);
     const [schemas, total] = await schemaService.list(options);
-
     logger.info('SchemaController: listSchemas end');
     res
       .status(200)
@@ -56,7 +55,6 @@ export const listSchemas: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const getSchemaBySlug: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { slug } = req.params;
@@ -65,17 +63,14 @@ export const getSchemaBySlug: RequestHandler = asyncHandler(
       logger.error('SchemaController: unauthorized request');
       throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
-
     logger.debug({ slug }, 'SchemaController: fetching schema by slug');
     const schema = await schemaService.getBySlug(slug as string);
-
     logger.info({ slug }, 'SchemaController: getSchemaBySlug end');
     res
       .status(200)
       .json(new ApiResponse(200, schema, 'Schema retrieved successfully'));
   },
 );
-
 export const updateSchema: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -84,18 +79,15 @@ export const updateSchema: RequestHandler = asyncHandler(
       logger.error('SchemaController: unauthorized request');
       throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
-
     const input = req.body as UpdateSchemaInput;
     logger.debug({ id }, 'SchemaController: updating schema');
     const schema = await schemaService.update(id as string, input, req.user.id);
-
     logger.info({ id }, 'SchemaController: updateSchema end');
     res
       .status(200)
       .json(new ApiResponse(200, schema, 'Schema updated successfully'));
   },
 );
-
 export const deleteSchema: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -104,11 +96,9 @@ export const deleteSchema: RequestHandler = asyncHandler(
       logger.error('SchemaController: unauthorized request');
       throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
-
     const force = req.query.force === 'true';
     logger.debug({ id, force }, 'SchemaController: deleting schema');
     await schemaService.delete(id as string, force);
-
     logger.info({ id }, 'SchemaController: deleteSchema end');
     res
       .status(200)

@@ -2,17 +2,26 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
+  globalAuthMiddleware: (
+    req: import('express').Request,
+    res: import('express').Response,
+    next: import('express').NextFunction,
+  ) => {
+    req.headers['x-app-id'] = req.headers['x-app-id'] || 'default';
+    req.context = { ...req.context, applicationId: 'app-1' };
+    next();
+  },
+}));
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
 import { env } from '@repo/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
-
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   authService: {
     getUserPermissions: vi.fn(),
   },
 }));
-
 const testSchema = {
   id: 'schema-1',
   slug: 'blog-post',
@@ -34,7 +43,6 @@ const testSchema = {
     ],
   },
 };
-
 const { repoMocks } = vi.hoisted(() => ({
   repoMocks: {
     getSchemaBySlug: vi.fn(),
@@ -49,7 +57,6 @@ const { repoMocks } = vi.hoisted(() => ({
     deleteEntry: vi.fn(),
   },
 }));
-
 vi.mock('@repo/repository', () => {
   return {
     ContentRepository: vi.fn().mockImplementation(function () {
@@ -65,16 +72,13 @@ vi.mock('@repo/repository', () => {
     authRepository: {},
   };
 });
-
 describe('Content API', () => {
   const app = createApp();
   let adminToken: string;
   const testSchemaSlug = 'blog-post';
   const createdEntryId = 'entry-1';
-
   beforeEach(() => {
     vi.clearAllMocks();
-
     // Generate admin token
     adminToken = jwt.sign(
       {
@@ -86,7 +90,6 @@ describe('Content API', () => {
       },
       env.JWT_SECRET,
     );
-
     vi.mocked(authService.getUserPermissions).mockResolvedValue([
       {
         action: '*',
@@ -96,7 +99,6 @@ describe('Content API', () => {
         condition: null,
       },
     ]);
-
     repoMocks.getSchemaBySlug.mockResolvedValue(testSchema);
     repoMocks.listEntries.mockResolvedValue([]);
     repoMocks.countEntries.mockResolvedValue(0);
@@ -166,116 +168,93 @@ describe('Content API', () => {
     ]);
     repoMocks.deleteEntry.mockResolvedValue({ id: 'entry-1' });
   });
-
   it('should list content entries (empty)', async () => {
     const res = await request(app)
       .get(`/api/v1/content/${testSchemaSlug}`)
       .set('Cookie', [`token_default=${adminToken}`]);
-
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data.data)).toBe(true);
   });
-
   it('should create a new content draft', async () => {
     const payload = {
       title: 'Test Post',
       body: 'This is a test post body',
       author: 'Tester',
     };
-
     const res = await request(app)
       .post(`/api/v1/content/${testSchemaSlug}`)
       .set('Cookie', [`token_default=${adminToken}`])
       .send(payload);
-
     expect(res.status).toBe(201);
     expect(res.body.data.status).toBe('draft');
     expect(res.body.data.data.title).toBe(payload.title);
   });
-
   it('should get the created entry', async () => {
     const res = await request(app)
       .get(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
       .set('Cookie', [`token_default=${adminToken}`]);
-
     expect(res.status).toBe(200);
     expect(res.body.data.id).toBe(createdEntryId);
   });
-
   it('should update the draft', async () => {
     const payload = {
       title: 'Updated Post',
       body: 'This is an updated body',
       author: 'Tester',
     };
-
     const res = await request(app)
       .put(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
       .set('Cookie', [`token_default=${adminToken}`])
       .send(payload);
-
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('draft');
     expect(res.body.data.data.title).toBe(payload.title);
   });
-
   it('should publish the entry', async () => {
     const res = await request(app)
       .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/publish`)
       .set('Cookie', [`token_default=${adminToken}`]);
-
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('published');
     expect(res.body.data.publishedData.title).toBe('Updated Post');
   });
-
   it('should revert the entry to a previous version', async () => {
     const res = await request(app)
       .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/revert`)
       .set('Cookie', [`token_default=${adminToken}`])
       .send({ versionNo: 1 });
-
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('draft');
     expect(res.body.data.data.title).toBe('Test Post'); // Version 1 had "Test Post"
   });
-
   it('should list the entry versions', async () => {
     const res = await request(app)
       .get(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/versions`)
       .set('Cookie', [`token_default=${adminToken}`]);
-
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.data.length).toBe(2);
     expect(res.body.data[0].versionNo).toBe(2);
     expect(res.body.data[1].versionNo).toBe(1);
   });
-
   it('should delete the entry', async () => {
     const res = await request(app)
       .delete(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
       .set('Cookie', [`token_default=${adminToken}`]);
-
     expect(res.status).toBe(204);
   });
-
   describe('negative paths', () => {
     it('returns 401 with no auth token', async () => {
       const res = await request(app).get(`/api/v1/content/${testSchemaSlug}`);
       expect(res.status).toBe(401);
     });
-
     it('returns 404 for an unknown schema slug', async () => {
       repoMocks.getSchemaBySlug.mockResolvedValueOnce(null);
-
       const res = await request(app)
         .get('/api/v1/content/does-not-exist')
         .set('Cookie', [`token_default=${adminToken}`]);
-
       expect(res.status).toBe(404);
     });
-
     it('returns 403 when the user lacks the read permission', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -286,14 +265,11 @@ describe('Content API', () => {
           condition: null,
         },
       ]);
-
       const res = await request(app)
         .get(`/api/v1/content/${testSchemaSlug}`)
         .set('Cookie', [`token_default=${adminToken}`]);
-
       expect(res.status).toBe(403);
     });
-
     it('returns 403 when the user lacks the create permission', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -304,46 +280,36 @@ describe('Content API', () => {
           condition: null,
         },
       ]);
-
       const res = await request(app)
         .post(`/api/v1/content/${testSchemaSlug}`)
         .set('Cookie', [`token_default=${adminToken}`])
         .send({ title: 'Test Post', body: 'x', author: 'Tester' });
-
       expect(res.status).toBe(403);
     });
-
     it('returns 400 when a required field is missing from the payload', async () => {
       const res = await request(app)
         .post(`/api/v1/content/${testSchemaSlug}`)
         .set('Cookie', [`token_default=${adminToken}`])
         .send({ body: 'Missing the required title field', author: 'Tester' });
-
       expect(res.status).toBe(400);
       expect(repoMocks.createEntry).not.toHaveBeenCalled();
     });
-
     it('returns 404 when getting a nonexistent entry', async () => {
       repoMocks.getEntryById.mockResolvedValueOnce(null);
-
       const res = await request(app)
         .get(`/api/v1/content/${testSchemaSlug}/does-not-exist`)
         .set('Cookie', [`token_default=${adminToken}`]);
-
       expect(res.status).toBe(404);
       expect(res.body.error.message).toBe('Entry not found');
     });
-
     it('returns 400 for an invalid versionNo on revert', async () => {
       const res = await request(app)
         .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/revert`)
         .set('Cookie', [`token_default=${adminToken}`])
         .send({ versionNo: 'not-a-number' });
-
       expect(res.status).toBe(400);
       expect(repoMocks.revertEntry).not.toHaveBeenCalled();
     });
-
     it('returns 403 when the user lacks the delete permission', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -354,11 +320,9 @@ describe('Content API', () => {
           condition: null,
         },
       ]);
-
       const res = await request(app)
         .delete(`/api/v1/content/${testSchemaSlug}/${createdEntryId}`)
         .set('Cookie', [`token_default=${adminToken}`]);
-
       expect(res.status).toBe(403);
       expect(repoMocks.deleteEntry).not.toHaveBeenCalled();
     });

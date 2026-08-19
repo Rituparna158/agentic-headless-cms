@@ -6,7 +6,6 @@ import {
 } from 'graphql';
 import type { SchemaField } from '@repo/types';
 import { jsonScalarConfig } from './json-scalar.js';
-
 // Map schema field to GraphQL type
 function baseTypeName(field: SchemaField): string {
   switch (field.dataType) {
@@ -30,7 +29,6 @@ function baseTypeName(field: SchemaField): string {
       return GraphQLString.name;
   }
 }
-
 // Format field type spec
 export function fieldTypeSpec(field: SchemaField): string {
   const base = baseTypeName(field);

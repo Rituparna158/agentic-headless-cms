@@ -1,5 +1,4 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
-
 export const actorTypeEnum = pgEnum('actor_type', ['user', 'agent', 'system']);
 export const tokenTypeEnum = pgEnum('token_type', ['user', 'agent']);
 export const userStatusEnum = pgEnum('user_status', [
@@ -59,12 +58,6 @@ export const auditActionEnum = pgEnum('audit_action', [
   'login',
   'schema_change',
 ]);
-
-export const applicationTypeEnum = pgEnum('application_type', [
-  'HEADLESS_CMS',
-  'CMS_UI',
-]);
-
 export const appAccessStatusEnum = pgEnum('app_access_status', [
   'invited',
   'active',

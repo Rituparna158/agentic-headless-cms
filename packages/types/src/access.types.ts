@@ -5,30 +5,26 @@ export type PermissionData = {
   fields?: unknown;
   condition?: unknown;
 };
-
 export interface CreateRoleInput {
   name: string;
-  application: 'HEADLESS_CMS' | 'CMS_UI';
+  applicationId: string;
   description?: string;
   mfaRequired?: boolean;
   isSystem?: boolean;
   permissions?: PermissionData[];
 }
-
 export interface UpdateRoleInput {
   name?: string;
   description?: string;
   mfaRequired?: boolean;
   permissions?: PermissionData[];
 }
-
 export interface CreateTokenInput {
   name: string;
   type?: 'user' | 'agent';
   roleId?: string;
   scopes?: unknown;
 }
-
 export interface PermissionRecord {
   id: string;
   roleId: string;
@@ -39,11 +35,10 @@ export interface PermissionRecord {
   condition: Record<string, unknown> | null;
   createdAt: string;
 }
-
 export interface RoleRecord {
   id: string;
   name: string;
-  application: 'HEADLESS_CMS' | 'CMS_UI';
+  applicationId: string;
   description?: string | null;
   mfaRequired: boolean;
   isSystem: boolean;
@@ -51,7 +46,6 @@ export interface RoleRecord {
   updatedAt: string;
   permissions: PermissionRecord[];
 }
-
 export interface UserRecord {
   id: string;
   email: string;
@@ -61,7 +55,6 @@ export interface UserRecord {
   roleId?: string | null;
   createdAt: string;
 }
-
 export interface TokenRecord {
   id: string;
   name: string;
@@ -73,13 +66,11 @@ export interface TokenRecord {
   createdAt: string;
   rawToken?: string; // only present on creation
 }
-
 export interface LoginInput {
   email: string;
   password: string;
   rememberMe: boolean;
 }
-
 export interface AuthenticatedUser {
   id: string;
   email: string;
@@ -87,5 +78,26 @@ export interface AuthenticatedUser {
   lastName: string | null;
   roles: string[];
   mfaEnabled: boolean;
-  permissions?: { action: string; schemaId: string | null; effect: string }[];
+  permissions?: {
+    action: string;
+    schemaId: string | null;
+    effect: string;
+    condition?: Record<string, string>;
+  }[];
+}
+export interface User {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  status: string;
+  roles: RoleRecord[];
+  mfaEnabled: boolean;
+  createdAt: string;
+}
+export interface InviteUserPayload {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  roleId: string;
 }

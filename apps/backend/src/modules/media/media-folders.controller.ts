@@ -1,9 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { HTTP_STATUS } from '@repo/constants';
 import { MediaFoldersService } from './media-folders.service.js';
-
 const mediaFoldersService = new MediaFoldersService();
-
 export const createFolder = async (
   req: Request,
   res: Response,
@@ -14,13 +12,16 @@ export const createFolder = async (
       name: string;
       parentFolderId?: string;
     };
-    const folder = await mediaFoldersService.create(name, parentFolderId);
+    const folder = await mediaFoldersService.create(
+      name,
+      parentFolderId,
+      req.context?.applicationId,
+    );
     res.status(HTTP_STATUS.CREATED).json({ data: folder });
   } catch (error) {
     next(error);
   }
 };
-
 export const listFolders = async (
   req: Request,
   res: Response,
@@ -31,13 +32,15 @@ export const listFolders = async (
       typeof req.query.parentFolderId === 'string'
         ? req.query.parentFolderId
         : undefined;
-    const folders = await mediaFoldersService.list(parentFolderId);
+    const folders = await mediaFoldersService.list(
+      parentFolderId,
+      req.context?.applicationId,
+    );
     res.status(HTTP_STATUS.OK).json({ data: folders });
   } catch (error) {
     next(error);
   }
 };
-
 export const deleteFolder = async (
   req: Request,
   res: Response,

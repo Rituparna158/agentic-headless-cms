@@ -13,13 +13,12 @@ export interface CreateMediaAssetInput {
   uploadedByUserId?: string | null;
   uploadedByAgentId?: string | null;
 }
-
 export interface ListMediaOptions {
   page?: number;
   pageSize?: number;
   folderId?: string;
+  applicationId?: string;
 }
-
 export interface UploadMediaInput {
   buffer: Buffer;
   originalFilename: string;
@@ -28,13 +27,11 @@ export interface UploadMediaInput {
   folderId?: string;
   actorUserId: string;
 }
-
 export interface ServedFile {
   buffer: Buffer;
   mimeType: string;
   filename: string;
 }
-
 export interface MediaAsset {
   id: string;
   filename: string;
@@ -48,7 +45,6 @@ export interface MediaAsset {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface ListMediaResult {
   data: MediaAsset[];
   meta: {
@@ -60,7 +56,6 @@ export interface ListMediaResult {
     };
   };
 }
-
 export interface MediaFolder {
   id: string;
   name: string;
@@ -68,7 +63,6 @@ export interface MediaFolder {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface CreateMediaFolderInput {
   name: string;
   parentFolderId?: string | null;

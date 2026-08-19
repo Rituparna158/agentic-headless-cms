@@ -1,30 +1,4 @@
-/**
- * DataTable Component
- *
- * A configurable data-table component with sorting, filtering, and pagination.
- * Data and columns are required props; behavior is controlled via flags.
- *
- * Features:
- * - Headers, rows, and columns driven entirely by props
- * - Striped and alternating row colors
- * - Clickable, sortable column headers with visual sort indicators (↑ / ↓)
- * - Client-side sorting with direction toggle (numeric columns sorted numerically)
- * - Pagination controls (first, previous, numbered pages, next, last)
- * - Rows-per-page selector with live updates
- * - Total count and page range display
- * - Filter input above the table with real-time filtering
- * - Clear filter button
- * - Highlighting of matching content in filtered rows
- *
- * The component is optimized with `useMemo`, `useCallback`, and small memoized
- * subcomponents to reduce unnecessary re-renders.
- *
- * @file index.tsx
- * @component DataTable
- */
-
 'use client';
-
 import type React from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -35,17 +9,14 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import { cn } from '../../../utils/cn';
 import { Button } from '../button';
-import { AnimatedInput } from '../input';
-
+import { cn } from '../../../utils/cn';
 /**
  * Sort direction supported by the table.
  *
  * @public
  */
 export type DataTableSortDirection = 'asc' | 'desc';
-
 /**
  * Generic table row type.
  *
@@ -55,14 +26,12 @@ export type DataTableSortDirection = 'asc' | 'desc';
  * @public
  */
 export type DataTableRow = Record<string, React.ReactNode>;
-
 /**
  * Column configuration key type.
  *
  * @public
  */
 export type DataTableColumnKey = string;
-
 /**
  * Utility to check if a value includes the query (case-insensitive).
  *
@@ -76,7 +45,6 @@ const includesQuery = (value: string, query: string): boolean => {
   if (!query) return false;
   return value.toLowerCase().includes(query.toLowerCase());
 };
-
 /**
  * Renders a string with all instances of the query wrapped in `<mark>` tags.
  *
@@ -94,19 +62,15 @@ const HighlightedText: React.FC<{ value: string; query: string }> = memo(
     if (!query || !includesQuery(value, query)) {
       return <span>{value}</span>;
     }
-
     const lowerValue = value.toLowerCase();
     const lowerQuery = query.toLowerCase();
-
     const nodes: React.ReactNode[] = [];
     let startIndex = 0;
     let matchIndex = lowerValue.indexOf(lowerQuery, startIndex);
-
     while (matchIndex !== -1) {
       if (matchIndex > startIndex) {
         nodes.push(value.slice(startIndex, matchIndex));
       }
-
       const matchText = value.slice(matchIndex, matchIndex + query.length);
       nodes.push(
         <mark
@@ -116,21 +80,16 @@ const HighlightedText: React.FC<{ value: string; query: string }> = memo(
           {matchText}
         </mark>,
       );
-
       startIndex = matchIndex + query.length;
       matchIndex = lowerValue.indexOf(lowerQuery, startIndex);
     }
-
     if (startIndex < value.length) {
       nodes.push(value.slice(startIndex));
     }
-
     return <span>{nodes}</span>;
   },
 );
-
 HighlightedText.displayName = 'HighlightedText';
-
 /**
  * Props for a table cell component.
  *
@@ -150,7 +109,6 @@ interface TableCellProps {
    */
   filterQuery: string;
 }
-
 /**
  * Table cell component that handles highlighting for string values.
  * Memoized to prevent re-rendering when props haven't changed.
@@ -170,9 +128,7 @@ const TableCell: React.FC<TableCellProps> = memo(
     );
   },
 );
-
 TableCell.displayName = 'TableCell';
-
 /**
  * Props for a table row component.
  *
@@ -200,7 +156,6 @@ interface TableRowProps {
    */
   filterQuery: string;
 }
-
 /**
  * Table row component that renders a single row with all its cells.
  * Memoized to prevent re-rendering when props haven't changed.
@@ -233,9 +188,7 @@ const TableRow: React.FC<TableRowProps> = memo(
     );
   },
 );
-
 TableRow.displayName = 'TableRow';
-
 /**
  * Props for a table header cell component.
  *
@@ -263,7 +216,6 @@ interface TableHeaderCellProps {
    */
   onHeaderClick: (key: DataTableColumnKey) => void;
 }
-
 /**
  * Table header cell component that renders a sortable/non-sortable header.
  * Memoized to prevent re-rendering when props haven't changed.
@@ -300,9 +252,7 @@ const TableHeaderCell: React.FC<TableHeaderCellProps> = memo(
     );
   },
 );
-
 TableHeaderCell.displayName = 'TableHeaderCell';
-
 /**
  * Props for the DataTable component.
  *
@@ -313,7 +263,6 @@ export interface DataTableProps {
    * Optional class name for the outer container.
    */
   className?: string;
-
   /**
    * Data rows to render in the table.
    *
@@ -321,7 +270,6 @@ export interface DataTableProps {
    * ReactNode; string values participate in client-side filtering/highlighting.
    */
   rows: DataTableRow[];
-
   /**
    * Columns definition describing which keys to display and their labels.
    *
@@ -333,7 +281,6 @@ export interface DataTableProps {
     label: string;
     sortable?: boolean;
   }>;
-
   /**
    * Enable sorting via clickable column headers.
    *
@@ -342,21 +289,18 @@ export interface DataTableProps {
    * - Default: `true`.
    */
   enableSorting?: boolean;
-
   /**
    * Initial sort key when sorting is enabled.
    *
    * Defaults to the first column key if not provided.
    */
   defaultSortKey?: DataTableColumnKey;
-
   /**
    * Initial sort direction when sorting is enabled.
    *
    * Default: `"asc"`.
    */
   defaultSortDirection?: DataTableSortDirection;
-
   /**
    * Enable the filter input above the table.
    *
@@ -365,14 +309,12 @@ export interface DataTableProps {
    * - Default: `true`.
    */
   enableFiltering?: boolean;
-
   /**
    * Custom placeholder for the filter input.
    *
    * Default: `"Filter rows..."`.
    */
   filterPlaceholder?: string;
-
   /**
    * Enable pagination controls (page buttons and rows-per-page selector).
    *
@@ -381,73 +323,60 @@ export interface DataTableProps {
    * - Default: `true`.
    */
   enablePagination?: boolean;
-
   /**
    * Initial page index (1-based) when pagination is enabled.
    *
    * Default: `1`.
    */
   initialPage?: number;
-
   /**
    * Initial rows per page when pagination is enabled.
    *
    * Default: `5`.
    */
   initialRowsPerPage?: number;
-
   /**
    * Available options for the rows-per-page selector.
    *
    * Default: `[5, 10, 20]`.
    */
   rowsPerPageOptions?: number[];
-
   /**
    * Use backend pagination instead of client-side slicing.
    */
   manualPagination?: boolean;
-
   /**
    * Use backend sorting instead of client-side sorting.
    */
   manualSorting?: boolean;
-
   /**
    * Use backend filtering instead of client-side filtering.
    */
   manualFiltering?: boolean;
-
   /**
    * Total number of pages from the backend (used with manualPagination).
    */
   pageCount?: number;
-
   /**
    * Total number of rows across all pages (optional, used for display).
    */
   totalCount?: number;
-
   /**
    * Current active page (1-indexed). Use with manualPagination.
    */
   page?: number;
-
   /**
    * Callback when the page changes.
    */
   onPageChange?: (page: number) => void;
-
   /**
    * Current rows per page. Use with manualPagination.
    */
   pageSize?: number;
-
   /**
    * Callback when rows per page changes.
    */
   onPageSizeChange?: (pageSize: number) => void;
-
   /**
    * Callback when sort changes.
    */
@@ -455,13 +384,11 @@ export interface DataTableProps {
     key: DataTableColumnKey,
     direction: DataTableSortDirection,
   ) => void;
-
   /**
    * Callback when the search filter changes.
    */
   onSearchChange?: (query: string) => void;
 }
-
 /**
  * DataTable: self-contained table with sorting, pagination, and filtering.
  *
@@ -531,25 +458,19 @@ export const DataTable: React.FC<DataTableProps> = ({
 }) => {
   const effectiveRows = rows;
   const effectiveColumns = columns;
-
   const initialSortKey: DataTableColumnKey =
     defaultSortKey ?? (effectiveColumns[0]?.key as DataTableColumnKey);
-
   // Sorting state
   const [sortKey, setSortKey] = useState<DataTableColumnKey>(initialSortKey);
   const [sortDirection, setSortDirection] =
     useState<DataTableSortDirection>(defaultSortDirection);
-
   // Pagination state
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [internalRowsPerPage, setInternalRowsPerPage] =
     useState(initialRowsPerPage);
-
   const rowsPerPage = pageSize !== undefined ? pageSize : internalRowsPerPage;
-
   // Filter state
   const [filterQuery, setFilterQuery] = useState('');
-
   const totalCount =
     manualPagination && manualTotalCount !== undefined
       ? manualTotalCount
@@ -557,7 +478,6 @@ export const DataTable: React.FC<DataTableProps> = ({
   const normalizedFilter = enableFiltering
     ? filterQuery.trim().toLowerCase()
     : '';
-
   /**
    * Filtered rows based on the current filter query.
    * Memoized to avoid recalculating on every render.
@@ -565,7 +485,6 @@ export const DataTable: React.FC<DataTableProps> = ({
   const filteredRows = useMemo<DataTableRow[]>(() => {
     if (manualFiltering || !enableFiltering || !normalizedFilter)
       return effectiveRows;
-
     return effectiveRows.filter((row) =>
       effectiveColumns.some((column) => {
         const cell = row[column.key];
@@ -585,12 +504,10 @@ export const DataTable: React.FC<DataTableProps> = ({
     effectiveColumns,
     normalizedFilter,
   ]);
-
   const totalFilteredCount =
     manualPagination && manualTotalCount !== undefined
       ? manualTotalCount
       : filteredRows.length;
-
   /**
    * Total number of pages based on filtered rows and rows per page.
    * Memoized to avoid recalculating on every render.
@@ -607,10 +524,8 @@ export const DataTable: React.FC<DataTableProps> = ({
     manualPagination,
     pageCount,
   ]);
-
   const activePage =
     manualPagination && manualPage !== undefined ? manualPage : currentPage;
-
   /**
    * Clamp current page when filter or rowsPerPage changes.
    */
@@ -619,14 +534,12 @@ export const DataTable: React.FC<DataTableProps> = ({
       if (!enablePagination) setCurrentPage(1);
       return;
     }
-
     setCurrentPage((prev) => {
       if (prev > totalPages) return totalPages;
       if (prev < 1) return 1;
       return prev;
     });
   }, [enablePagination, totalPages, manualPagination]);
-
   /**
    * Paginated rows based on current page and rows per page.
    * This happens BEFORE sorting so that sorting only affects the current page.
@@ -645,7 +558,6 @@ export const DataTable: React.FC<DataTableProps> = ({
     activePage,
     rowsPerPage,
   ]);
-
   /**
    * Sorted rows based on the current sort key and direction.
    * Sorts only the paginated rows (current page) when pagination is enabled.
@@ -654,21 +566,17 @@ export const DataTable: React.FC<DataTableProps> = ({
    */
   const sortedRows = useMemo<DataTableRow[]>(() => {
     if (manualSorting || !enableSorting || !sortKey) return paginatedRows;
-
     const columnForSort = effectiveColumns.find(
       (column) => column.key === sortKey,
     );
     if (!columnForSort || columnForSort.sortable === false) {
       return paginatedRows;
     }
-
     const copy = [...paginatedRows];
-
     // Determine whether the current column should be treated as numeric.
     const columnValues = paginatedRows
       .map((row) => row[sortKey])
       .filter((value) => value !== null && value !== undefined);
-
     const isNumericColumn =
       columnValues.length > 0 &&
       columnValues.every((value) => {
@@ -680,11 +588,9 @@ export const DataTable: React.FC<DataTableProps> = ({
         }
         return false;
       });
-
     copy.sort((a, b) => {
       const aCell = a[sortKey];
       const bCell = b[sortKey];
-
       if (isNumericColumn) {
         const aNum =
           typeof aCell === 'number'
@@ -701,7 +607,6 @@ export const DataTable: React.FC<DataTableProps> = ({
         const diff = aNum - bNum;
         return sortDirection === 'asc' ? diff : -diff;
       }
-
       const aValue = String(aCell ?? '');
       const bValue = String(bCell ?? '');
       const compare = aValue.localeCompare(bValue, undefined, {
@@ -709,7 +614,6 @@ export const DataTable: React.FC<DataTableProps> = ({
       });
       return sortDirection === 'asc' ? compare : -compare;
     });
-
     return copy;
   }, [
     manualSorting,
@@ -719,7 +623,6 @@ export const DataTable: React.FC<DataTableProps> = ({
     sortDirection,
     effectiveColumns,
   ]);
-
   /**
    * Handle column header click to toggle sorting.
    * When pagination is enabled, sorting only affects the current page's data.
@@ -730,7 +633,6 @@ export const DataTable: React.FC<DataTableProps> = ({
       if (!enableSorting) return;
       const column = columns.find((col) => col.key === columnKey);
       if (!column || column.sortable === false) return;
-
       let newDirection: DataTableSortDirection = 'asc';
       if (sortKey !== columnKey) {
         setSortKey(columnKey);
@@ -738,14 +640,12 @@ export const DataTable: React.FC<DataTableProps> = ({
         newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
         setSortDirection(newDirection);
       }
-
       if (manualOnSortChange) {
         manualOnSortChange(columnKey, newDirection);
       }
     },
     [enableSorting, columns, sortKey, sortDirection, manualOnSortChange],
   );
-
   /**
    * Handle page change.
    * Memoized with useCallback to prevent unnecessary re-renders.
@@ -763,7 +663,6 @@ export const DataTable: React.FC<DataTableProps> = ({
     },
     [enablePagination, totalPages, manualPagination, manualOnPageChange],
   );
-
   /**
    * Handle rows per page change.
    * Memoized with useCallback to prevent unnecessary re-renders.
@@ -783,7 +682,6 @@ export const DataTable: React.FC<DataTableProps> = ({
     },
     [manualPagination, pageSize, onPageSizeChange],
   );
-
   /**
    * Handle filter input change.
    * Memoized with useCallback to prevent unnecessary re-renders.
@@ -801,7 +699,6 @@ export const DataTable: React.FC<DataTableProps> = ({
     },
     [enableFiltering, manualPagination, manualOnSearchChange],
   );
-
   /**
    * Handle clear filter button click.
    * Memoized with useCallback to prevent unnecessary re-renders.
@@ -816,7 +713,6 @@ export const DataTable: React.FC<DataTableProps> = ({
       manualOnSearchChange('');
     }
   }, [enableFiltering, manualPagination, manualOnSearchChange]);
-
   const startRowIndex =
     totalFilteredCount === 0
       ? 0
@@ -825,7 +721,6 @@ export const DataTable: React.FC<DataTableProps> = ({
         : manualPagination
           ? (activePage - 1) * rowsPerPage + 1
           : 1;
-
   const endRowIndex =
     totalFilteredCount === 0
       ? 0
@@ -834,7 +729,6 @@ export const DataTable: React.FC<DataTableProps> = ({
         : enablePagination
           ? Math.min(activePage * rowsPerPage, totalFilteredCount)
           : totalFilteredCount;
-
   /**
    * Array of page numbers for pagination controls.
    * Memoized to avoid recalculating on every render.
@@ -847,7 +741,6 @@ export const DataTable: React.FC<DataTableProps> = ({
     }
     return pages;
   }, [enablePagination, totalPages]);
-
   return (
     <div
       className={cn(
@@ -862,17 +755,14 @@ export const DataTable: React.FC<DataTableProps> = ({
           {enableFiltering && (
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
               <div className="relative flex-1 w-full sm:max-w-md">
-                <div className="relative [&>div.group]:mb-4 mt-4">
-                  <AnimatedInput
-                    placeholder={filterPlaceholder}
-                    variant="clean"
-                    value={filterQuery}
-                    onChange={handleFilterChange}
-                    size="md"
-                    icon={Search}
-                    labelClassName="ms-5"
-                  />
-                </div>
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={filterPlaceholder}
+                  value={filterQuery}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                  className="w-full h-10 pl-9 pr-4 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
               </div>
               {filterQuery && (
                 <Button
@@ -887,7 +777,6 @@ export const DataTable: React.FC<DataTableProps> = ({
               )}
             </div>
           )}
-
           {/* Pagination Controls */}
           {enablePagination && (
             <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
@@ -912,7 +801,6 @@ export const DataTable: React.FC<DataTableProps> = ({
           )}
         </div>
       )}
-
       {/* Summary and responsive table container */}
       <div className="flex flex-col">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-xs text-muted-foreground bg-muted/5 border-b border-border">
@@ -926,7 +814,6 @@ export const DataTable: React.FC<DataTableProps> = ({
             </span>
           )}
         </div>
-
         <div className="w-full max-w-full overflow-x-auto">
           <table
             className="min-w-[640px] w-full border-collapse text-sm [&_td]:border-none [&_th]:border-x-0 [&_th]:border-t-0"
@@ -976,7 +863,6 @@ export const DataTable: React.FC<DataTableProps> = ({
             </tbody>
           </table>
         </div>
-
         {/* Pagination controls */}
         {enablePagination && totalPages > 1 && (
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-t border-border bg-muted/10">
@@ -999,7 +885,6 @@ export const DataTable: React.FC<DataTableProps> = ({
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-
               <div className="flex flex-wrap items-center gap-1">
                 {pageNumbers.map((page) => (
                   <Button
@@ -1013,7 +898,6 @@ export const DataTable: React.FC<DataTableProps> = ({
                   </Button>
                 ))}
               </div>
-
               <Button
                 variant="outline"
                 size="icon"
@@ -1039,7 +923,5 @@ export const DataTable: React.FC<DataTableProps> = ({
     </div>
   );
 };
-
 DataTable.displayName = 'DataTable';
-
 export default DataTable;

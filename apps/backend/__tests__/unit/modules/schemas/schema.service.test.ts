@@ -63,10 +63,15 @@ describe('SchemaService', () => {
 
     const result = await schemaService.create(input, 'user-1');
 
-    expect(mockRepository.create).toHaveBeenCalledWith({
-      ...input,
-      actorUserId: 'user-1',
-    });
+    expect(mockRepository.create).toHaveBeenCalledWith(
+      {
+        ...input,
+        actorUserId: 'user-1',
+      },
+      {
+        applicationId: undefined,
+      },
+    );
     expect(result).toEqual(mockCreated);
     expect(eventBus.emit).toHaveBeenCalledWith(
       EVENT_NAMES.AUDIT_LOG,

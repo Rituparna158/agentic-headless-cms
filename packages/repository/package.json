@@ -21,6 +21,7 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
+    "@repo/context": "workspace:*",
     "@repo/shared-db": "workspace:*",
     "@repo/logger": "workspace:*",
     "@repo/config": "workspace:*",

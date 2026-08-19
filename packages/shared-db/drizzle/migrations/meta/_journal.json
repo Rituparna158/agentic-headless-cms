@@ -71,6 +71,55 @@
       "when": 1786703404966,
       "tag": "0009_lyrical_jimmy_woo",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786964223632,
+      "tag": "0010_confused_stryfe",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786964269049,
+      "tag": "0011_dashing_pandemic",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786964281642,
+      "tag": "0012_rls_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786969577181,
+      "tag": "0013_public_vertigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1786969577182,
+      "tag": "0014_deep_rls_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1786990248461,
+      "tag": "0015_orange_agent_brand",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1787111143398,
+      "tag": "0016_fix_schema_slug_per_app_unique",
+      "breakpoints": true
     }
   ]
 }

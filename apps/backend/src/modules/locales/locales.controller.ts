@@ -8,14 +8,14 @@ import {
   formatPaginatedResponse,
 } from '../../utils/pagination.util.js';
 const localesService = new LocalesService();
-
 export const listLocales: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('LocalesController: listLocales start');
-
     const options = parseQueryOptions(req.query);
-    const [locales, total] = await localesService.list(options);
-
+    const [locales, total] = await localesService.list(
+      options,
+      req.context?.applicationId,
+    );
     logger.debug(
       { count: locales.length, total },
       'LocalesController: listLocales success',
@@ -36,7 +36,6 @@ export const listLocales: RequestHandler = asyncHandler(
       );
   },
 );
-
 export const createLocale: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const body = req.body as {
@@ -45,7 +44,6 @@ export const createLocale: RequestHandler = asyncHandler(
       isDefault?: boolean;
     };
     logger.info({ code: body.code }, 'LocalesController: createLocale start');
-
     if (!body.code || !body.name) {
       logger.warn('LocalesController: createLocale missing code or name');
       res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -53,9 +51,11 @@ export const createLocale: RequestHandler = asyncHandler(
       });
       return;
     }
-
     try {
-      const locale = await localesService.create(body);
+      const locale = await localesService.create(
+        body,
+        req.context?.applicationId,
+      );
       logger.debug(
         { id: locale!.id },
         'LocalesController: createLocale success',
@@ -77,7 +77,6 @@ export const createLocale: RequestHandler = asyncHandler(
     }
   },
 );
-
 export const deleteLocale: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;

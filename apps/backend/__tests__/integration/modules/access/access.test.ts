@@ -1,8 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
+  globalAuthMiddleware: (
+    req: import('express').Request,
+    res: import('express').Response,
+    next: import('express').NextFunction,
+  ) => {
+    req.headers['x-app-id'] = req.headers['x-app-id'] || 'default';
+    req.context = { ...req.context, applicationId: 'app-1' };
+    next();
+  },
+}));
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
-
 vi.mock('../../../../src/modules/schemas/schema.service.ts', () => ({
   schemaService: {
     getBySlug: vi
@@ -11,7 +21,6 @@ vi.mock('../../../../src/modules/schemas/schema.service.ts', () => ({
   },
 }));
 import { env } from '@repo/config';
-
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   authService: {
     getUserPermissions: vi.fn().mockImplementation(async (userId) => {
@@ -22,7 +31,6 @@ vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
     }),
   },
 }));
-
 vi.mock('../../../../src/modules/access/access.service.js', () => {
   const AccessService = vi.fn();
   AccessService.prototype.listRoles = vi
@@ -50,6 +58,7 @@ vi.mock('../../../../src/modules/access/access.service.js', () => {
   AccessService.prototype.revokeToken = vi
     .fn()
     .mockResolvedValue({ success: true });
+  AccessService.prototype.validateMfa = vi.fn().mockResolvedValue(undefined);
   AccessService.prototype.inviteUser = vi.fn().mockResolvedValue({
     inviteUrl: 'http://localhost:3001/accept-invite?token=abc123',
     user: { id: 'u2', email: 'invitee@example.com', status: 'invited' },
@@ -65,10 +74,8 @@ vi.mock('../../../../src/modules/access/access.service.js', () => {
     .mockResolvedValue({ success: true });
   return { AccessService };
 });
-
 describe('Access Module', () => {
   const app = createApp();
-
   // Create a dummy token to pass auth middleware
   const validToken = jwt.sign(
     { id: 'user-1', email: 'admin@example.com', roles: ['admin'] },
@@ -78,11 +85,9 @@ describe('Access Module', () => {
     { id: 'user-2', email: 'editor@example.com', roles: ['editor'] },
     env.JWT_SECRET,
   );
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
-
   describe('GET /api/v1/access/roles', () => {
     it('should require authentication', async () => {
       const res = await request(app)
@@ -90,7 +95,6 @@ describe('Access Module', () => {
         .set('x-app-id', 'HEADLESS_CMS');
       expect(res.status).toBe(401);
     });
-
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .get('/api/v1/access/roles')
@@ -98,7 +102,6 @@ describe('Access Module', () => {
         .set('x-app-id', 'HEADLESS_CMS');
       expect(res.status).toBe(403);
     });
-
     it('should return roles list', async () => {
       const res = await request(app)
         .get('/api/v1/access/roles')
@@ -110,7 +113,6 @@ describe('Access Module', () => {
       expect(res.body.data.data[0].name).toBe('Admin');
     });
   });
-
   describe('POST /api/v1/access/roles', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
@@ -119,7 +121,6 @@ describe('Access Module', () => {
         .send({ name: 'Editor', permissions: [] });
       expect(res.status).toBe(403);
     });
-
     it('should create a role for an admin', async () => {
       const res = await request(app)
         .post('/api/v1/access/roles')
@@ -129,7 +130,6 @@ describe('Access Module', () => {
       expect(res.body.data.name).toBe('Editor');
     });
   });
-
   describe('POST /api/v1/access/users/invite', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
@@ -138,7 +138,6 @@ describe('Access Module', () => {
         .send({ email: 'invitee@example.com', roleId: 'role-1' });
       expect(res.status).toBe(403);
     });
-
     it('should reject a request missing email or roleId', async () => {
       const res = await request(app)
         .post('/api/v1/access/users/invite')
@@ -146,19 +145,16 @@ describe('Access Module', () => {
         .send({ email: 'invitee@example.com' });
       expect(res.status).toBe(400);
     });
-
     it('should invite a user and return the invite URL', async () => {
       const res = await request(app)
         .post('/api/v1/access/users/invite')
         .set('Cookie', [`token_default=${validToken}`])
         .send({ email: 'invitee@example.com', roleId: 'role-1' });
-
       expect(res.status).toBe(201);
       expect(res.body.data.inviteUrl).toContain('token=abc123');
       expect(res.body.data.user.email).toBe('invitee@example.com');
     });
   });
-
   describe('POST /api/v1/access/tokens', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
@@ -167,19 +163,16 @@ describe('Access Module', () => {
         .send({ name: 'My Token' });
       expect(res.status).toBe(403);
     });
-
     it('should return the raw token upon creation', async () => {
       const res = await request(app)
         .post('/api/v1/access/tokens')
         .set('Cookie', [`token_default=${validToken}`])
         .send({ name: 'My Token' });
-
       expect(res.status).toBe(201);
       expect(res.body.data.name).toBe('New Token');
       expect(res.body.data.rawToken).toBe('abc');
     });
   });
-
   describe('DELETE /api/v1/access/tokens/:id', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
@@ -187,7 +180,6 @@ describe('Access Module', () => {
         .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
-
     it('should revoke the token for an admin', async () => {
       const res = await request(app)
         .delete('/api/v1/access/tokens/t1')
@@ -197,20 +189,17 @@ describe('Access Module', () => {
       expect(res.body.data.success).toBe(true);
     });
   });
-
   describe('GET /api/v1/access/mfa-requests', () => {
     it('should require authentication', async () => {
       const res = await request(app).get('/api/v1/access/mfa-requests');
       expect(res.status).toBe(401);
     });
-
     it('should reject non-admin users', async () => {
       const res = await request(app)
         .get('/api/v1/access/mfa-requests')
         .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
-
     it('should return pending MFA reset requests for an admin', async () => {
       const res = await request(app)
         .get('/api/v1/access/mfa-requests')
@@ -221,7 +210,6 @@ describe('Access Module', () => {
       expect(res.body.data[0].id).toBe('req-1');
     });
   });
-
   describe('POST /api/v1/access/mfa-requests/:id/approve', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
@@ -229,7 +217,6 @@ describe('Access Module', () => {
         .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
-
     it('should successfully approve the request for an admin', async () => {
       const res = await request(app)
         .post('/api/v1/access/mfa-requests/req-1/approve')
@@ -239,7 +226,6 @@ describe('Access Module', () => {
       expect(res.body.data.success).toBe(true);
     });
   });
-
   describe('POST /api/v1/access/mfa-requests/:id/reject', () => {
     it('should reject non-admin users', async () => {
       const res = await request(app)
@@ -247,7 +233,6 @@ describe('Access Module', () => {
         .set('Cookie', [`token_default=${nonAdminToken}`]);
       expect(res.status).toBe(403);
     });
-
     it('should successfully reject the request for an admin', async () => {
       const res = await request(app)
         .post('/api/v1/access/mfa-requests/req-1/reject')

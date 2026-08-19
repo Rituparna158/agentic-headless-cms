@@ -1,6 +1,5 @@
 import { createSchemaSchema, updateSchemaSchema } from '@repo/validation';
 import { Router } from 'express';
-
 import { authenticateToken, validateBody } from '@repo/middlewares';
 import { requirePermission } from '../auth/rbac.middleware.js';
 import {
@@ -10,9 +9,7 @@ import {
   deleteSchema,
   getSchemaBySlug,
 } from './schema.controller.js';
-
 export const schemaRouter = Router();
-
 schemaRouter.post(
   '/',
   authenticateToken,

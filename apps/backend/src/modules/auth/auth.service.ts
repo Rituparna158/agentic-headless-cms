@@ -5,19 +5,20 @@ import { env, getDatabaseAdapter } from '@repo/config';
 import { authRepository, AccessRepository } from '@repo/repository';
 import type { LoginInput } from '@repo/types';
 import { userApplications } from '@repo/shared-db';
-import { Issuer, Client, generators } from 'openid-client';
+import { Issuer, Client, generators, custom } from 'openid-client';
+// Increase the default timeout for OIDC requests to Google (default is 3500ms)
+custom.setHttpOptionsDefaults({
+  timeout: 15000,
+});
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import nodemailer from 'nodemailer';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 authenticator.options = { window: 1 };
-
 const accessRepository = new AccessRepository();
 import {
   UnauthorizedError,
@@ -30,10 +31,8 @@ import { eventBus } from '@repo/events';
 import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
-
 export class AuthService {
   private oidcClient: Client | null = null;
-
   private async getOidcClient(): Promise<Client> {
     if (this.oidcClient) return this.oidcClient;
     if (
@@ -52,7 +51,6 @@ export class AuthService {
     });
     return this.oidcClient;
   }
-
   async getOidcAuthorizationUrl() {
     try {
       const client = await this.getOidcClient();
@@ -60,7 +58,6 @@ export class AuthService {
       const nonce = generators.nonce();
       const code_verifier = generators.codeVerifier();
       const code_challenge = generators.codeChallenge(code_verifier);
-
       const url = client.authorizationUrl({
         scope: 'openid email profile',
         state,
@@ -68,7 +65,6 @@ export class AuthService {
         code_challenge,
         code_challenge_method: 'S256',
       });
-
       return { url, state, nonce, codeVerifier: code_verifier };
     } catch (error) {
       logger.error(
@@ -78,7 +74,6 @@ export class AuthService {
       throw new ApiError(500, 'Failed to initialize OIDC login');
     }
   }
-
   async ssoCallback(
     reqUrl: string,
     state: string,
@@ -94,18 +89,15 @@ export class AuthService {
         nonce,
         code_verifier: codeVerifier,
       });
-
       if (!tokenSet.access_token) {
         throw new UnauthorizedError(
           'OIDC provider did not return an access token',
         );
       }
-
       const userInfo = await client.userinfo(tokenSet.access_token);
       if (!userInfo.email) {
         throw new UnauthorizedError('OIDC provider did not return an email');
       }
-
       let user = await authRepository.getUserByEmail(userInfo.email);
       let isNewUser = false;
       if (!user) {
@@ -120,25 +112,21 @@ export class AuthService {
           status: 'active',
         });
         if (!newUser) throw new ApiError(500, 'Failed to create user from SSO');
-
         logger.info(
           { userId: newUser.id },
-          'AuthService: Granting default HEADLESS_CMS and CMS_UI app access to new SSO user',
+          'AuthService: Granting access to all applications for new SSO user',
         );
         const db = getDatabaseAdapter().getDb();
-        await db.insert(userApplications).values([
-          {
-            userId: newUser.id,
-            application: 'HEADLESS_CMS',
-            status: 'active',
-          },
-          {
-            userId: newUser.id,
-            application: 'CMS_UI',
-            status: 'active',
-          },
-        ]);
-
+        const allApps = await db.query.applications.findMany();
+        if (allApps.length > 0) {
+          await db.insert(userApplications).values(
+            allApps.map((app) => ({
+              userId: newUser.id,
+              applicationId: app.id,
+              status: 'active' as const,
+            })),
+          );
+        }
         user = newUser;
         isNewUser = true;
       } else if (user.status !== 'active') {
@@ -153,26 +141,25 @@ export class AuthService {
           throw new UnauthorizedError('User account is suspended');
         }
       }
-
       if (userInfo.sub) {
         await authRepository.linkUserIdentity(user.id, 'oidc', userInfo.sub);
       }
-
-      const roles = await authRepository.getUserRoles(user.id, appId);
-
+      const [roles, permissions] = await Promise.all([
+        authRepository.getUserRoles(user.id, appId),
+        authRepository.getUserPermissions(user.id, appId),
+      ]);
       const payload = {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         roles,
+        permissions,
         mfaEnabled: user.mfaEnabled,
       };
-
       const token = jwt.sign(payload, env.JWT_SECRET, {
         expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
       });
-
       const { context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.LOGIN,
@@ -184,7 +171,6 @@ export class AuthService {
         afterState: { email: user.email, sso: true, isNewUser },
         context,
       });
-
       return {
         user: payload,
         token,
@@ -206,13 +192,11 @@ export class AuthService {
         );
         throw new UnauthorizedError('Invalid email or password');
       }
-
       const isValid = await bcrypt.compare(input.password, user.passwordHash);
       if (!isValid) {
         logger.warn({ email: input.email }, 'AuthService: password mismatch');
         throw new UnauthorizedError('Invalid email or password');
       }
-
       logger.debug(
         { userId: user.id },
         'AuthService: fetching user roles with MFA info',
@@ -221,11 +205,8 @@ export class AuthService {
         user.id,
         appId,
       );
-
       // Allow login even without roles; frontend will handle "no permission" page
-
       const roles = userRolesWithMfa.map((r) => r.name);
-
       // 1. If user has MFA enabled, return challenge state instead of session token
       if (user.mfaEnabled) {
         logger.info(
@@ -242,7 +223,6 @@ export class AuthService {
           mfaToken,
         };
       }
-
       // 2. If user does NOT have MFA enabled, but has a role requiring MFA, block login
       const requiresMfa = userRolesWithMfa.some((r) => r.mfaRequired);
       if (requiresMfa) {
@@ -254,21 +234,23 @@ export class AuthService {
           'Multi-factor authentication is required for your role but has not been set up. Please contact your administrator.',
         );
       }
-
+      const permissions = await authRepository.getUserPermissions(
+        user.id,
+        appId,
+      );
       const payload = {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         roles,
+        permissions,
         mfaEnabled: user.mfaEnabled,
       };
-
       logger.debug({ userId: user.id }, 'AuthService: signing JWT token');
       const token = jwt.sign(payload, env.JWT_SECRET, {
         expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
       });
-
       logger.debug(
         { userId: user.id },
         'AuthService: login successful, emitting audit log',
@@ -284,7 +266,6 @@ export class AuthService {
         afterState: { email: user.email },
         context,
       });
-
       return {
         user: payload,
         token,
@@ -295,7 +276,6 @@ export class AuthService {
       throw new ApiError(500, SERVICE_ERRORS.LOGIN_FAILED);
     }
   }
-
   async getUserPermissions(userId: string, appId: string) {
     try {
       logger.info({ userId, appId }, 'AuthService: getUserPermissions start');
@@ -307,7 +287,6 @@ export class AuthService {
       throw new ApiError(500, SERVICE_ERRORS.FETCH_USER_PROFILE_FAILED);
     }
   }
-
   async acceptInvite(rawToken: string, newPassword: string) {
     try {
       logger.info('AuthService: acceptInvite start');
@@ -315,21 +294,17 @@ export class AuthService {
         .createHash('sha256')
         .update(rawToken)
         .digest('hex');
-
       logger.debug('AuthService: fetching user by invite token hash');
       const user =
         await authRepository.getUserByInviteTokenHash(inviteTokenHash);
-
       if (!user) {
         logger.warn('AuthService: user not found by token hash');
         throw new UnauthorizedError('Invalid or expired invitation token');
       }
-
       if (user.status !== 'invited') {
         logger.warn({ userId: user.id }, 'AuthService: user already active');
         throw new UnauthorizedError('User is already active');
       }
-
       if (user.inviteExpiresAt && new Date() > user.inviteExpiresAt) {
         logger.warn(
           { userId: user.id },
@@ -337,13 +312,10 @@ export class AuthService {
         );
         throw new UnauthorizedError('Invitation token has expired');
       }
-
       logger.debug({ userId: user.id }, 'AuthService: hashing new password');
       const passwordHash = await bcrypt.hash(newPassword, 10);
-
       logger.debug({ userId: user.id }, 'AuthService: activating user');
       await authRepository.activateUser(user.id, passwordHash);
-
       logger.debug(
         { userId: user.id },
         'AuthService: acceptInvite successful, emitting audit log',
@@ -365,7 +337,6 @@ export class AuthService {
       throw new ApiError(500, SERVICE_ERRORS.ACTIVATE_ACCOUNT_FAILED);
     }
   }
-
   async enrollMfa(userId: string) {
     try {
       logger.info({ userId }, 'AuthService: enrollMfa start');
@@ -373,17 +344,14 @@ export class AuthService {
       if (!user) {
         throw new BadRequestError('User not found');
       }
-
       const secret = authenticator.generateSecret();
       const keyuri = authenticator.keyuri(user.email, 'Agentic CMS', secret);
       const qrCode = await QRCode.toDataURL(keyuri);
-
       await authRepository.updateMfaSecret(userId, secret);
       logger.info(
         { userId },
         'AuthService: enrollMfa secret generated successfully',
       );
-
       return {
         secret,
         qrCode,
@@ -394,7 +362,6 @@ export class AuthService {
       throw new ApiError(500, 'Failed to enroll in MFA');
     }
   }
-
   async verifyMfa(userId: string, code: string, appId: string) {
     try {
       logger.info({ userId, appId }, 'AuthService: verifyMfa start');
@@ -402,7 +369,6 @@ export class AuthService {
       if (!user || !user.mfaSecret) {
         throw new BadRequestError('MFA enrollment has not been started');
       }
-
       const isValid = authenticator.verify({
         token: code,
         secret: user.mfaSecret,
@@ -410,27 +376,27 @@ export class AuthService {
       if (!isValid) {
         throw new BadRequestError('Invalid verification code');
       }
-
       await authRepository.enableMfa(userId);
       logger.info(
         { userId },
         'AuthService: verifyMfa successfully verified and enabled',
       );
-
-      const roles = await authRepository.getUserRoles(userId, appId);
+      const [roles, permissions] = await Promise.all([
+        authRepository.getUserRoles(userId, appId),
+        authRepository.getUserPermissions(userId, appId),
+      ]);
       const payload = {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         roles,
+        permissions,
         mfaEnabled: true,
       };
-
       const token = jwt.sign(payload, env.JWT_SECRET, {
         expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
       });
-
       return { user: payload, token };
     } catch (error) {
       logger.error({ err: error }, 'AuthService Error in verifyMfa:');
@@ -438,7 +404,6 @@ export class AuthService {
       throw new ApiError(500, 'Failed to verify MFA');
     }
   }
-
   async disableMfa(userId: string, appId: string) {
     try {
       logger.info({ userId, appId }, 'AuthService: disableMfa start');
@@ -446,24 +411,24 @@ export class AuthService {
       if (!user) {
         throw new BadRequestError('User not found');
       }
-
       await authRepository.disableMfa(userId);
       logger.info({ userId }, 'AuthService: disableMfa successfully disabled');
-
-      const roles = await authRepository.getUserRoles(userId, appId);
+      const [roles, permissions] = await Promise.all([
+        authRepository.getUserRoles(userId, appId),
+        authRepository.getUserPermissions(userId, appId),
+      ]);
       const payload = {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         roles,
+        permissions,
         mfaEnabled: false,
       };
-
       const token = jwt.sign(payload, env.JWT_SECRET, {
         expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
       });
-
       return { user: payload, token };
     } catch (error) {
       logger.error({ err: error }, 'AuthService Error in disableMfa:');
@@ -471,7 +436,6 @@ export class AuthService {
       throw new ApiError(500, 'Failed to disable MFA');
     }
   }
-
   async verifyMfaChallenge(mfaToken: string, code: string, appId: string) {
     try {
       logger.info({ appId }, 'AuthService: verifyMfaChallenge start');
@@ -485,12 +449,10 @@ export class AuthService {
         logger.warn('AuthService: verifyMfaChallenge invalid token');
         throw new UnauthorizedError('Invalid or expired MFA session');
       }
-
       if (!decoded.isMfaChallenge || !decoded.userId) {
         logger.warn('AuthService: verifyMfaChallenge missing challenge claims');
         throw new UnauthorizedError('Invalid or expired MFA session');
       }
-
       const user = await authRepository.getUserById(decoded.userId);
       if (!user || !user.mfaSecret || !user.mfaEnabled) {
         logger.warn(
@@ -499,7 +461,6 @@ export class AuthService {
         );
         throw new UnauthorizedError('Invalid or expired MFA session');
       }
-
       const isValid = authenticator.verify({
         token: code,
         secret: user.mfaSecret,
@@ -511,27 +472,27 @@ export class AuthService {
         );
         throw new UnauthorizedError('Invalid or expired MFA session');
       }
-
       logger.debug(
         { userId: user.id, appId },
         'AuthService: fetching user roles',
       );
-      const roles = await authRepository.getUserRoles(user.id, appId);
-
+      const [roles, permissions] = await Promise.all([
+        authRepository.getUserRoles(user.id, appId),
+        authRepository.getUserPermissions(user.id, appId),
+      ]);
       const payload = {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         roles,
+        permissions,
         mfaEnabled: true,
       };
-
       logger.debug({ userId: user.id }, 'AuthService: signing session JWT');
       const token = jwt.sign(payload, env.JWT_SECRET, {
         expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
       });
-
       // Emit login event since the challenge is now complete
       const { context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
@@ -544,7 +505,6 @@ export class AuthService {
         afterState: { email: user.email, mfaCompleted: true },
         context,
       });
-
       return {
         user: payload,
         token,
@@ -555,7 +515,6 @@ export class AuthService {
       throw new ApiError(500, 'Failed to complete MFA challenge');
     }
   }
-
   async requestMfaReset(email: string) {
     try {
       logger.info({ email }, 'AuthService: requestMfaReset start');
@@ -568,17 +527,13 @@ export class AuthService {
             'If the email exists, a request has been sent to the administrators.',
         };
       }
-
       if (!user.mfaEnabled) {
         throw new BadRequestError('MFA is not enabled for this user.');
       }
-
       const request = await authRepository.createMfaResetRequest(user.id);
-
       if (!request) {
         throw new InternalServerError('Failed to create MFA reset request');
       }
-
       if (env.SMTP_HOST) {
         const transporter = nodemailer.createTransport({
           host: env.SMTP_HOST,
@@ -589,16 +544,13 @@ export class AuthService {
             pass: env.SMTP_PASS,
           },
         });
-
         // Resolve support email logic
         const supportUsers =
           await accessRepository.getUsersByRoleName('support');
         const targetEmails = supportUsers.map((u) => u.email);
-
         if (targetEmails.length === 0 && env.SUPPORT_EMAIL) {
           targetEmails.push(env.SUPPORT_EMAIL);
         }
-
         if (targetEmails.length > 0) {
           const htmlTemplatePath = path.join(
             __dirname,
@@ -613,7 +565,6 @@ export class AuthService {
           } catch {
             htmlContent = `<p>User ${user.email} has requested an MFA reset. Please review request ID: ${request.id}</p>`;
           }
-
           await transporter.sendMail({
             from: env.EMAIL_FROM,
             to: targetEmails.join(','),
@@ -626,7 +577,6 @@ export class AuthService {
           );
         }
       }
-
       return {
         message:
           'If the email exists, a request has been sent to the administrators.',
@@ -637,7 +587,6 @@ export class AuthService {
       throw new ApiError(500, 'Failed to request MFA reset');
     }
   }
-
   async completeMfaReset(rawToken: string) {
     try {
       logger.info('AuthService: completeMfaReset start');
@@ -647,23 +596,19 @@ export class AuthService {
         .digest('hex');
       const request =
         await authRepository.getMfaResetRequestByTokenHash(tokenHash);
-
       if (!request || request.status !== 'approved') {
         throw new BadRequestError('Invalid or unapproved reset token');
       }
-
       if (request.expiresAt && new Date() > request.expiresAt) {
         await authRepository.updateMfaResetRequest(request.id, {
           status: 'expired',
         });
         throw new BadRequestError('Reset token has expired');
       }
-
       await authRepository.disableMfa(request.userId);
       await authRepository.updateMfaResetRequest(request.id, {
         status: 'completed',
       });
-
       logger.info(
         { userId: request.userId },
         'AuthService: completeMfaReset successfully disabled MFA',
@@ -675,7 +620,6 @@ export class AuthService {
       throw new ApiError(500, 'Failed to complete MFA reset');
     }
   }
-
   async requestPasswordReset(email: string) {
     try {
       logger.info({ email }, 'AuthService: requestPasswordReset start');
@@ -690,20 +634,17 @@ export class AuthService {
           message: 'If the email exists, a password reset link has been sent.',
         };
       }
-
       const rawToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = crypto
         .createHash('sha256')
         .update(rawToken)
         .digest('hex');
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
       await authRepository.createPasswordResetRequest(
         user.id,
         tokenHash,
         expiresAt,
       );
-
       if (env.SMTP_HOST) {
         const transporter = nodemailer.createTransport({
           host: env.SMTP_HOST,
@@ -714,11 +655,9 @@ export class AuthService {
             pass: env.SMTP_PASS,
           },
         });
-
         // Use frontend URL from env or fallback to localhost
         const frontendUrl = env.APP_URL || 'http://localhost:3001';
         const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
-
         const htmlTemplatePath = path.join(
           __dirname,
           '../access/templates/password-reset.liquid',
@@ -732,14 +671,12 @@ export class AuthService {
         } catch {
           htmlContent = `<p>Hello,</p><p>Please reset your password using this link: <a href="${resetUrl}">Reset Password</a></p>`;
         }
-
         await transporter.sendMail({
           from: env.EMAIL_FROM,
           to: user.email,
           subject: 'Password Reset Request',
           html: htmlContent,
         });
-
         logger.info(
           { userId: user.id },
           'AuthService: password reset email sent',
@@ -749,7 +686,6 @@ export class AuthService {
           'Password Reset requested, but SMTP is not configured. Token generated but email not sent.',
         );
       }
-
       return {
         message: 'If the email exists, a password reset link has been sent.',
       };
@@ -761,7 +697,6 @@ export class AuthService {
       throw new ApiError(500, 'Failed to request password reset');
     }
   }
-
   async resetPassword(rawToken: string, newPassword: string) {
     try {
       logger.info('AuthService: resetPassword start');
@@ -769,28 +704,21 @@ export class AuthService {
         .createHash('sha256')
         .update(rawToken)
         .digest('hex');
-
       const request =
         await authRepository.getPasswordResetRequestByTokenHash(tokenHash);
-
       if (!request || request.usedAt) {
         throw new BadRequestError('Invalid or already used reset token');
       }
-
       if (request.expiresAt && new Date() > request.expiresAt) {
         throw new BadRequestError('Reset token has expired');
       }
-
       const passwordHash = await bcrypt.hash(newPassword, 10);
-
       await authRepository.updateUserPassword(request.userId, passwordHash);
       await authRepository.updatePasswordResetRequest(request.id, new Date());
-
       logger.info(
         { userId: request.userId },
         'AuthService: password reset completed successfully',
       );
-
       const { context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.UPDATE,
@@ -802,7 +730,6 @@ export class AuthService {
         afterState: { passwordReset: true },
         context,
       });
-
       return { success: true };
     } catch (error) {
       logger.error({ err: error }, 'AuthService Error in resetPassword:');
@@ -811,5 +738,4 @@ export class AuthService {
     }
   }
 }
-
 export const authService = new AuthService();

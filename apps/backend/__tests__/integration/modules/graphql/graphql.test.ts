@@ -2,11 +2,21 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
+  globalAuthMiddleware: (
+    req: import('express').Request,
+    res: import('express').Response,
+    next: import('express').NextFunction,
+  ) => {
+    req.headers['x-app-id'] = req.headers['x-app-id'] || 'default';
+    req.context = { ...req.context, applicationId: 'app-1' };
+    next();
+  },
+}));
 import jwt from 'jsonwebtoken';
 import { createApp } from '../../../../src/app.js';
 import { env } from '@repo/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
-
 const { testSchema } = vi.hoisted(() => ({
   testSchema: {
     id: 'schema-1',
@@ -43,13 +53,11 @@ const { testSchema } = vi.hoisted(() => ({
     updatedAt: new Date().toISOString(),
   },
 }));
-
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   authService: {
     getUserPermissions: vi.fn(),
   },
 }));
-
 vi.mock('@repo/shared-db', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@repo/shared-db')>();
   return {
@@ -57,7 +65,6 @@ vi.mock('@repo/shared-db', async (importOriginal) => {
     listSchemas: vi.fn().mockResolvedValue([[testSchema], 1]),
   };
 });
-
 vi.mock('@repo/repository', () => {
   return {
     ContentRepository: vi.fn().mockImplementation(function () {
@@ -99,7 +106,6 @@ vi.mock('@repo/repository', () => {
     authRepository: {},
   };
 });
-
 function makeToken(): string {
   return jwt.sign(
     {
@@ -112,14 +118,12 @@ function makeToken(): string {
     env.JWT_SECRET,
   );
 }
-
 describe('GraphQL API', () => {
   // Fresh app per test — the Apollo server is cached at module scope inside
   // graphql.router.ts, keyed by that module's first call, so tests share
   // whichever schema was built by the first request across the whole file.
   const app = createApp();
   let token: string;
-
   beforeEach(() => {
     vi.clearAllMocks();
     token = makeToken();
@@ -133,15 +137,12 @@ describe('GraphQL API', () => {
       },
     ]);
   });
-
   it('returns 401 with no auth token', async () => {
     const res = await request(app)
       .post('/graphql')
       .send({ query: '{ _ping }' });
-
     expect(res.status).toBe(401);
   });
-
   it('generates a query field for each schema and returns matching entries', async () => {
     const res = await request(app)
       .post('/graphql')
@@ -150,7 +151,6 @@ describe('GraphQL API', () => {
       .send({
         query: '{ blogPosts { data { id title views } meta { total } } }',
       });
-
     expect(res.status).toBe(200);
     expect(res.body.errors).toBeUndefined();
     expect(res.body.data.blogPosts.data).toEqual([
@@ -158,7 +158,6 @@ describe('GraphQL API', () => {
     ]);
     expect(res.body.data.blogPosts.meta.total).toBe(1);
   }, 10000);
-
   it('fetches a single entry by id', async () => {
     const res = await request(app)
       .post('/graphql')
@@ -167,7 +166,6 @@ describe('GraphQL API', () => {
       .send({
         query: '{ blogPost(id: "entry-1") { id status title } }',
       });
-
     expect(res.status).toBe(200);
     expect(res.body.data.blogPost).toEqual({
       id: 'entry-1',
@@ -175,7 +173,6 @@ describe('GraphQL API', () => {
       title: 'Post 1',
     });
   });
-
   it('creates an entry via mutation', async () => {
     const res = await request(app)
       .post('/graphql')
@@ -186,7 +183,6 @@ describe('GraphQL API', () => {
           'mutation($data: JSON!) { createBlogPost(data: $data) { id status title views } }',
         variables: { data: { title: 'Post 1', views: 10 } },
       });
-
     expect(res.status).toBe(200);
     expect(res.body.data.createBlogPost).toEqual({
       id: 'entry-1',
@@ -195,7 +191,6 @@ describe('GraphQL API', () => {
       views: 10,
     });
   });
-
   it('returns a FORBIDDEN error code when the user lacks permission', async () => {
     vi.mocked(authService.getUserPermissions).mockResolvedValue([
       {
@@ -206,7 +201,6 @@ describe('GraphQL API', () => {
         condition: null,
       },
     ]);
-
     const res = await request(app)
       .post('/graphql')
       .set('x-app-id', 'CMS_UI')
@@ -215,11 +209,9 @@ describe('GraphQL API', () => {
         query: 'mutation($data: JSON!) { createBlogPost(data: $data) { id } }',
         variables: { data: { title: 'x', views: 1 } },
       });
-
     expect(res.status).toBe(200);
     expect(res.body.errors[0].extensions.code).toBe('FORBIDDEN');
   });
-
   it('returns a BAD_USER_INPUT error code for an unknown filter field', async () => {
     const res = await request(app)
       .post('/graphql')
@@ -230,7 +222,6 @@ describe('GraphQL API', () => {
           'query($filters: JSON) { blogPosts(filters: $filters) { data { id } } }',
         variables: { filters: { bogus: { $eq: 'x' } } },
       });
-
     expect(res.status).toBe(200);
     expect(res.body.errors[0].extensions.code).toBe('BAD_USER_INPUT');
   });

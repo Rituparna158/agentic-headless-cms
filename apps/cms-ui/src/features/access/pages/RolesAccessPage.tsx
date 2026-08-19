@@ -1,15 +1,16 @@
 import { RolesTab } from '../components/RolesTab';
-
+import { Typography } from '@repo/shared-ui';
 export const RolesAccessPage = () => {
   return (
     <div className="flex flex-col h-full bg-background animate-in fade-in duration-500">
-      <div className="px-8 pt-8 pb-4 border-b border-border/40">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-1">
+      <div className="px-6 py-6 border-b border-border/40">
+        <Typography variant="h2" className="tracking-tight mb-1">
           Roles & Access
-        </h1>
-        <p className="text-muted-foreground">Manage roles and permissions.</p>
+        </Typography>
+        <Typography variant="body" className="text-muted-foreground mt-1">
+          Manage roles and system permissions.
+        </Typography>
       </div>
-
       <div className="flex-1 overflow-hidden">
         <RolesTab />
       </div>

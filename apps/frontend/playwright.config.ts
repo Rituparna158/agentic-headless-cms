@@ -5,9 +5,7 @@ import {
   FRONTEND_URL,
   BACKEND_URL,
 } from './__tests__/e2e/constants';
-
 const monorepoRoot = '../..';
-
 export default defineConfig({
   testDir: './__tests__/e2e',
   fullyParallel: true,
@@ -22,7 +20,7 @@ export default defineConfig({
     baseURL: FRONTEND_URL,
     trace: 'on-first-retry',
     extraHTTPHeaders: {
-      'X-App-Id': 'HEADLESS_CMS',
+      'X-App-Id': process.env.NEXT_PUBLIC_APP_ID || 'HEADLESS_CMS',
     },
   },
   projects: [
@@ -50,6 +48,7 @@ export default defineConfig({
         DATABASE_URL: E2E_DATABASE_URL,
         PORT: '4000',
         CORS_ORIGIN: FRONTEND_URL,
+        NODE_ENV: 'test',
       },
     },
     {

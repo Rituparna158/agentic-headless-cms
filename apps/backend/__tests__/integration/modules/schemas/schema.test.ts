@@ -1,17 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
+  globalAuthMiddleware: (
+    req: import('express').Request,
+    res: import('express').Response,
+    next: import('express').NextFunction,
+  ) => {
+    req.headers['x-app-id'] = 'default';
+    req.context = { ...req.context, applicationId: 'app-1' };
+    next();
+  },
+}));
 import jwt from 'jsonwebtoken';
 import { createApp } from '../../../../src/app.js';
 import { env } from '@repo/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
 import { createSchema, listSchemas, updateSchema } from '@repo/shared-db';
-
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   authService: {
     getUserPermissions: vi.fn(),
   },
 }));
-
 vi.mock('@repo/shared-db', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@repo/shared-db')>();
   return {
@@ -22,7 +31,6 @@ vi.mock('@repo/shared-db', async (importOriginal) => {
     getSchemaById: vi.fn(),
   };
 });
-
 const userPayload = {
   id: 'user-1',
   email: 'admin@example.com',
@@ -30,12 +38,10 @@ const userPayload = {
   lastName: 'User',
   roles: ['admin'],
 };
-
 function authCookie() {
   const token = jwt.sign(userPayload, env.JWT_SECRET);
   return [`token_default=${token}`];
 }
-
 const validFields = [
   {
     apiId: 'title',
@@ -48,14 +54,11 @@ const validFields = [
     sortOrder: 0,
   },
 ];
-
 describe('Schemas Module', () => {
   const app = createApp();
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
-
   describe('POST /api/v1/schemas', () => {
     it('returns 401 with no auth token', async () => {
       const res = await request(app).post('/api/v1/schemas').send({
@@ -64,10 +67,8 @@ describe('Schemas Module', () => {
         type: 'collection',
         fields: validFields,
       });
-
       expect(res.status).toBe(401);
     });
-
     it('returns 403 when the user lacks the create permission', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -78,7 +79,6 @@ describe('Schemas Module', () => {
           condition: null,
         },
       ]);
-
       const res = await request(app)
         .post('/api/v1/schemas')
         .set('Cookie', authCookie())
@@ -88,10 +88,8 @@ describe('Schemas Module', () => {
           type: 'collection',
           fields: validFields,
         });
-
       expect(res.status).toBe(403);
     });
-
     it('returns 400 for an invalid payload without reaching the service', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -102,16 +100,13 @@ describe('Schemas Module', () => {
           condition: null,
         },
       ]);
-
       const res = await request(app)
         .post('/api/v1/schemas')
         .set('Cookie', authCookie())
         .send({ name: '', slug: 'Bad Slug', type: 'collection', fields: [] });
-
       expect(res.status).toBe(400);
       expect(createSchema).not.toHaveBeenCalled();
     });
-
     it('creates a schema and returns 201 for a valid, authorized request', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -134,7 +129,6 @@ describe('Schemas Module', () => {
         updatedAt: new Date().toISOString(),
       };
       vi.mocked(createSchema).mockResolvedValue(created as never);
-
       const res = await request(app)
         .post('/api/v1/schemas')
         .set('Cookie', authCookie())
@@ -144,7 +138,6 @@ describe('Schemas Module', () => {
           type: 'collection',
           fields: validFields,
         });
-
       expect(res.status).toBe(201);
       expect(res.body.data.id).toBe('schema-1');
       expect(createSchema).toHaveBeenCalledTimes(1);
@@ -157,13 +150,11 @@ describe('Schemas Module', () => {
       });
     });
   });
-
   describe('GET /api/v1/schemas', () => {
     it('returns 401 with no auth token', async () => {
       const res = await request(app).get('/api/v1/schemas');
       expect(res.status).toBe(401);
     });
-
     it('returns the list of schemas for an authorized request', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -178,17 +169,14 @@ describe('Schemas Module', () => {
         [{ id: 'schema-1', name: 'Article' } as never],
         1,
       ]);
-
       const res = await request(app)
         .get('/api/v1/schemas')
         .set('Cookie', authCookie());
-
       expect(res.status).toBe(200);
       expect(res.body.data.data).toHaveLength(1);
       expect(res.body.data.data[0].id).toBe('schema-1');
     });
   });
-
   describe('PUT /api/v1/schemas/:id', () => {
     it('returns 403 when the user lacks the update permission', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
@@ -200,15 +188,12 @@ describe('Schemas Module', () => {
           condition: null,
         },
       ]);
-
       const res = await request(app)
         .put('/api/v1/schemas/schema-1')
         .set('Cookie', authCookie())
         .send({ name: 'Updated Article' });
-
       expect(res.status).toBe(403);
     });
-
     it('returns 400 when neither name nor fields are provided', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -219,16 +204,13 @@ describe('Schemas Module', () => {
           condition: null,
         },
       ]);
-
       const res = await request(app)
         .put('/api/v1/schemas/schema-1')
         .set('Cookie', authCookie())
         .send({});
-
       expect(res.status).toBe(400);
       expect(updateSchema).not.toHaveBeenCalled();
     });
-
     it('updates a schema and returns 200 for a valid, authorized request', async () => {
       vi.mocked(authService.getUserPermissions).mockResolvedValue([
         {
@@ -248,10 +230,8 @@ describe('Schemas Module', () => {
         status: 'draft',
         version: 1,
       };
-
       const { getSchemaById } = await import('@repo/shared-db');
       vi.mocked(getSchemaById).mockResolvedValue(beforeState as never);
-
       const updated = {
         id: 'schema-1',
         name: 'Updated Article',
@@ -262,12 +242,10 @@ describe('Schemas Module', () => {
         version: 2,
       };
       vi.mocked(updateSchema).mockResolvedValue(updated as never);
-
       const res = await request(app)
         .put('/api/v1/schemas/schema-1')
         .set('Cookie', authCookie())
         .send({ name: 'Updated Article' });
-
       expect(res.status).toBe(200);
       expect(res.body.data.version).toBe(2);
       expect(updateSchema).toHaveBeenCalledWith(
