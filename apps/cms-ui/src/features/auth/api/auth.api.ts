@@ -2,7 +2,6 @@ import { requestHandler } from '../../../api/requestHandler';
 import { ENDPOINTS } from '../../../api/endpoints';
 import type { AuthenticatedUser, LoginInput } from '@repo/types';
 import { env } from '../../../config/env';
-
 export const authApi = {
   /**
    * Logs a user in with credentials.
@@ -13,7 +12,6 @@ export const authApi = {
     >(ENDPOINTS.AUTH.LOGIN, payload);
     return res.data;
   },
-
   /**
    * Fetches the currently authenticated user.
    */
@@ -21,14 +19,12 @@ export const authApi = {
     const res = await requestHandler.get<AuthenticatedUser>(ENDPOINTS.AUTH.ME);
     return res.data;
   },
-
   /**
    * Logs out the user.
    */
   logout: async () => {
     await requestHandler.post<void>(ENDPOINTS.AUTH.LOGOUT);
   },
-
   /**
    * Verifies an MFA challenge.
    */
@@ -42,12 +38,49 @@ export const authApi = {
     );
     return res.data;
   },
-
   /**
    * Retrieves the URL for OIDC/SSO Login flow.
    * This handles the redirect flow.
    */
   getOidcLoginUrl: () => {
     return `${env.VITE_API_URL}${ENDPOINTS.AUTH.SSO}?redirectUrl=${encodeURIComponent(window.location.origin)}&appId=CMS_UI`;
+  },
+  /**
+   * Requests a password reset link.
+   */
+  forgotPassword: async (email: string) => {
+    const res = await requestHandler.post<{ message: string }>(
+      ENDPOINTS.AUTH.FORGOT_PASSWORD,
+      { email },
+    );
+    return res.data;
+  },
+  /**
+   * Resets the password using a token.
+   */
+  resetPassword: async (payload: { token: string; password: string }) => {
+    const res = await requestHandler.post<{ success: boolean }>(
+      ENDPOINTS.AUTH.RESET_PASSWORD,
+      payload,
+    );
+    return res.data;
+  },
+  /**
+   * Accepts an invitation and sets the initial password.
+   */
+  acceptInvite: async (payload: {
+    token: string;
+    password: string;
+    name: string;
+  }) => {
+    const res = await requestHandler.post<{ success: boolean }>(
+      ENDPOINTS.AUTH.ACCEPT_INVITE,
+      {
+        token: payload.token,
+        newPassword: payload.password,
+        name: payload.name,
+      },
+    );
+    return res.data;
   },
 };
