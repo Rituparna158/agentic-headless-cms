@@ -9,10 +9,9 @@ import {
   varchar,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { actorTypeEnum } from './enums.js';
-import { agents, users } from './identity.js';
-
+import { agents, applications, users } from './identity.js';
 export const mediaFolders = pgTable('media_folders', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
@@ -22,16 +21,22 @@ export const mediaFolders = pgTable('media_folders', {
       onDelete: 'set null',
     },
   ),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
 });
-
 export const mediaTags = pgTable('media_tags', {
   id: uuid('id').primaryKey().defaultRandom(),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 100 }).notNull().unique(),
 });
-
 export const mediaAssets = pgTable('media_assets', {
   id: uuid('id').primaryKey().defaultRandom(),
   filename: varchar('filename', { length: 500 }).notNull(),
@@ -50,6 +55,10 @@ export const mediaAssets = pgTable('media_assets', {
   folderId: uuid('folder_id').references(() => mediaFolders.id, {
     onDelete: 'set null',
   }),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   actorType: actorTypeEnum('uploaded_by_type').notNull(),
   uploadedByUserId: uuid('uploaded_by_user_id').references(() => users.id, {
     onDelete: 'set null',
@@ -65,7 +74,6 @@ export const mediaAssets = pgTable('media_assets', {
     .notNull()
     .defaultNow(),
 });
-
 export const mediaAssetTags = pgTable(
   'media_asset_tags',
   {
@@ -75,15 +83,22 @@ export const mediaAssetTags = pgTable(
     tagId: uuid('tag_id')
       .notNull()
       .references(() => mediaTags.id, { onDelete: 'cascade' }),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.mediaAssetId, table.tagId] }),
   }),
 );
-
 export const mediaFoldersRelations = relations(
   mediaFolders,
   ({ one, many }) => ({
+    application: one(applications, {
+      fields: [mediaFolders.applicationId],
+      references: [applications.id],
+    }),
     parent: one(mediaFolders, {
       fields: [mediaFolders.parentFolderId],
       references: [mediaFolders.id],
@@ -91,8 +106,11 @@ export const mediaFoldersRelations = relations(
     assets: many(mediaAssets),
   }),
 );
-
 export const mediaAssetsRelations = relations(mediaAssets, ({ one, many }) => ({
+  application: one(applications, {
+    fields: [mediaAssets.applicationId],
+    references: [applications.id],
+  }),
   folder: one(mediaFolders, {
     fields: [mediaAssets.folderId],
     references: [mediaFolders.id],
@@ -107,12 +125,18 @@ export const mediaAssetsRelations = relations(mediaAssets, ({ one, many }) => ({
   }),
   tags: many(mediaAssetTags),
 }));
-
-export const mediaTagsRelations = relations(mediaTags, ({ many }) => ({
+export const mediaTagsRelations = relations(mediaTags, ({ one, many }) => ({
+  application: one(applications, {
+    fields: [mediaTags.applicationId],
+    references: [applications.id],
+  }),
   assets: many(mediaAssetTags),
 }));
-
 export const mediaAssetTagsRelations = relations(mediaAssetTags, ({ one }) => ({
+  application: one(applications, {
+    fields: [mediaAssetTags.applicationId],
+    references: [applications.id],
+  }),
   asset: one(mediaAssets, {
     fields: [mediaAssetTags.mediaAssetId],
     references: [mediaAssets.id],

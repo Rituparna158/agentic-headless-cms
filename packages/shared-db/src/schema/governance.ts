@@ -6,15 +6,15 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { actorTypeEnum, approvalStatusEnum, auditActionEnum } from './enums.js';
 import { contentEntries, contentVersions } from './content.js';
-import { agents, apiTokens, users } from './identity.js';
-
+import { agents, apiTokens, applications, users } from './identity.js';
 export const approvals = pgTable('approvals', {
   id: uuid('id').primaryKey().defaultRandom(),
   entryId: uuid('entry_id')
@@ -23,6 +23,10 @@ export const approvals = pgTable('approvals', {
   proposedVersionId: uuid('proposed_version_id')
     .notNull()
     .references(() => contentVersions.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   actorType: actorTypeEnum('proposed_by_type').notNull(),
   proposedByUserId: uuid('proposed_by_user_id').references(() => users.id, {
     onDelete: 'set null',
@@ -40,12 +44,15 @@ export const approvals = pgTable('approvals', {
     .notNull()
     .defaultNow(),
 });
-
 // The differentiator's foundation (FR-AG-6/7): immutable, attributable log of every
 // human or agent write. Enforce immutability at the DB grant level (revoke UPDATE/DELETE
 // on this table for the application role) — this schema alone doesn't guarantee it.
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   actorType: actorTypeEnum('actor_type').notNull(),
   actorUserId: uuid('actor_user_id').references(() => users.id, {
     onDelete: 'set null',
@@ -72,7 +79,6 @@ export const auditLogs = pgTable('audit_logs', {
     .notNull()
     .defaultNow(),
 });
-
 // The underlying LLM call: what was asked, what came back, which
 // provider/model, what it cost. One agent turn may span zero or more of
 // these (a rule-based automation might invoke tools with no LLM call at all).
@@ -81,6 +87,10 @@ export const agentInteractions = pgTable('agent_interactions', {
   agentTokenId: uuid('agent_token_id')
     .notNull()
     .references(() => apiTokens.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   auditLogId: uuid('audit_log_id').references(() => auditLogs.id, {
     onDelete: 'set null',
   }),
@@ -94,7 +104,6 @@ export const agentInteractions = pgTable('agent_interactions', {
     .notNull()
     .defaultNow(),
 });
-
 // The resulting tool/MCP invocation — distinct from agent_interactions
 // because one LLM call can trigger multiple tool calls, and this is the
 // table that records FR-AG-4's "invalid writes are rejected with structured
@@ -105,6 +114,10 @@ export const agentOperations = pgTable('agent_operations', {
   agentId: uuid('agent_id').references(() => agents.id, {
     onDelete: 'set null',
   }),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   tokenId: uuid('token_id').references(() => apiTokens.id, {
     onDelete: 'set null',
   }),
@@ -121,9 +134,12 @@ export const agentOperations = pgTable('agent_operations', {
     .notNull()
     .defaultNow(),
 });
-
 export const webhooks = pgTable('webhooks', {
   id: uuid('id').primaryKey().defaultRandom(),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   url: varchar('url', { length: 1000 }).notNull(),
   events: jsonb('events').notNull(),
@@ -136,13 +152,16 @@ export const webhooks = pgTable('webhooks', {
     .notNull()
     .defaultNow(),
 });
-
 // Fixes the missing delivery/retry visibility gap.
 export const webhookDeliveries = pgTable('webhook_deliveries', {
   id: uuid('id').primaryKey().defaultRandom(),
   webhookId: uuid('webhook_id')
     .notNull()
     .references(() => webhooks.id, { onDelete: 'cascade' }),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   eventType: varchar('event_type', { length: 100 }).notNull(),
   payload: jsonb('payload').notNull(),
   responseStatus: integer('response_status'),
@@ -152,8 +171,11 @@ export const webhookDeliveries = pgTable('webhook_deliveries', {
     .notNull()
     .defaultNow(),
 });
-
 export const approvalsRelations = relations(approvals, ({ one }) => ({
+  application: one(applications, {
+    fields: [approvals.applicationId],
+    references: [applications.id],
+  }),
   entry: one(contentEntries, {
     fields: [approvals.entryId],
     references: [contentEntries.id],
@@ -175,8 +197,11 @@ export const approvalsRelations = relations(approvals, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  application: one(applications, {
+    fields: [auditLogs.applicationId],
+    references: [applications.id],
+  }),
   actorUser: one(users, {
     fields: [auditLogs.actorUserId],
     references: [users.id],
@@ -190,10 +215,13 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
     references: [auditLogs.id],
   }),
 }));
-
 export const agentInteractionsRelations = relations(
   agentInteractions,
   ({ one }) => ({
+    application: one(applications, {
+      fields: [agentInteractions.applicationId],
+      references: [applications.id],
+    }),
     agentToken: one(apiTokens, {
       fields: [agentInteractions.agentTokenId],
       references: [apiTokens.id],
@@ -204,10 +232,13 @@ export const agentInteractionsRelations = relations(
     }),
   }),
 );
-
 export const agentOperationsRelations = relations(
   agentOperations,
   ({ one }) => ({
+    application: one(applications, {
+      fields: [agentOperations.applicationId],
+      references: [applications.id],
+    }),
     agent: one(agents, {
       fields: [agentOperations.agentId],
       references: [agents.id],
@@ -222,27 +253,45 @@ export const agentOperationsRelations = relations(
     }),
   }),
 );
-
 // Managed list of enabled content locales — distinct from the free-text
 // `locale` column on content_entries/content_versions, which just tags a
 // row's language; this table is what the Settings UI lets admins edit.
-export const locales = pgTable('locales', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  code: varchar('code', { length: 20 }).notNull().unique(),
-  name: varchar('name', { length: 255 }).notNull(),
-  isDefault: boolean('is_default').notNull().default(false),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
-export const webhooksRelations = relations(webhooks, ({ many }) => ({
+export const locales = pgTable(
+  'locales',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    code: varchar('code', { length: 20 }).notNull(),
+    name: varchar('name', { length: 255 }).notNull(),
+    isDefault: boolean('is_default').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    appCodeUnique: unique('locales_app_code_unique').on(
+      table.applicationId,
+      table.code,
+    ),
+  }),
+);
+export const webhooksRelations = relations(webhooks, ({ one, many }) => ({
+  application: one(applications, {
+    fields: [webhooks.applicationId],
+    references: [applications.id],
+  }),
   deliveries: many(webhookDeliveries),
 }));
-
 export const webhookDeliveriesRelations = relations(
   webhookDeliveries,
   ({ one }) => ({
+    application: one(applications, {
+      fields: [webhookDeliveries.applicationId],
+      references: [applications.id],
+    }),
     webhook: one(webhooks, {
       fields: [webhookDeliveries.webhookId],
       references: [webhooks.id],

@@ -9,21 +9,34 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   appAccessStatusEnum,
-  applicationTypeEnum,
   mfaResetRequestStatusEnum,
   tokenTypeEnum,
   userStatusEnum,
 } from './enums.js';
-
+export const applications = pgTable('applications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  apiKeyHash: varchar('api_key_hash', { length: 255 }).notNull().unique(),
+  type: varchar('type', { length: 50 }).notNull().default('CLIENT_APP'), // SYSTEM_DASHBOARD or CLIENT_APP
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 export const roles = pgTable(
   'roles',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     name: varchar('name', { length: 255 }).notNull(),
-    application: applicationTypeEnum('application').notNull(),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
     description: text('description'),
     mfaRequired: boolean('mfa_required').notNull().default(false),
     isSystem: boolean('is_system').notNull().default(false),
@@ -37,11 +50,10 @@ export const roles = pgTable(
   (table) => ({
     nameAppUnique: unique('roles_name_application_unique').on(
       table.name,
-      table.application,
+      table.applicationId,
     ),
   }),
 );
-
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 320 }).notNull().unique(),
@@ -61,7 +73,6 @@ export const users = pgTable('users', {
     .notNull()
     .defaultNow(),
 });
-
 export const mfaResetRequests = pgTable('mfa_reset_requests', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
@@ -80,7 +91,6 @@ export const mfaResetRequests = pgTable('mfa_reset_requests', {
     .notNull()
     .defaultNow(),
 });
-
 export const passwordResetRequests = pgTable('password_reset_requests', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
@@ -96,7 +106,6 @@ export const passwordResetRequests = pgTable('password_reset_requests', {
     .notNull()
     .defaultNow(),
 });
-
 export const userApplications = pgTable(
   'user_applications',
   {
@@ -104,7 +113,10 @@ export const userApplications = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    application: applicationTypeEnum('application').notNull(),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
     status: appAccessStatusEnum('status').notNull().default('invited'),
     grantedBy: uuid('granted_by').references(() => users.id, {
       onDelete: 'set null',
@@ -119,11 +131,10 @@ export const userApplications = pgTable(
   (table) => ({
     userAppUnique: unique('user_applications_user_application_unique').on(
       table.userId,
-      table.application,
+      table.applicationId,
     ),
   }),
 );
-
 // Multi-role support — a user can be Editor via one role and Reviewer via
 // another, rather than being pinned to a single role.
 export const userRoles = pgTable(
@@ -150,7 +161,6 @@ export const userRoles = pgTable(
     ),
   }),
 );
-
 export const userIdentities = pgTable(
   'user_identities',
   {
@@ -171,9 +181,12 @@ export const userIdentities = pgTable(
     ),
   }),
 );
-
 export const apiTokens = pgTable('api_tokens', {
   id: uuid('id').primaryKey().defaultRandom(),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   type: tokenTypeEnum('type').notNull().default('user'),
   tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
@@ -190,9 +203,12 @@ export const apiTokens = pgTable('api_tokens', {
     .notNull()
     .defaultNow(),
 });
-
 export const agents = pgTable('agents', {
   id: uuid('id').primaryKey().defaultRandom(),
+  applicationId: uuid('application_id')
+    .notNull()
+    .default(sql`current_setting('app.current_application_id', true)::uuid`)
+    .references(() => applications.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   modelProvider: varchar('model_provider', { length: 100 }),
@@ -207,12 +223,20 @@ export const agents = pgTable('agents', {
     .notNull()
     .defaultNow(),
 });
-
-export const rolesRelations = relations(roles, ({ many }) => ({
+export const applicationsRelations = relations(applications, ({ many }) => ({
+  roles: many(roles),
+  userApplications: many(userApplications),
+  apiTokens: many(apiTokens),
+  agents: many(agents),
+}));
+export const rolesRelations = relations(roles, ({ one, many }) => ({
+  application: one(applications, {
+    fields: [roles.applicationId],
+    references: [applications.id],
+  }),
   userRoles: many(userRoles),
   apiTokens: many(apiTokens),
 }));
-
 export const usersRelations = relations(users, ({ many }) => ({
   userApplications: many(userApplications, {
     relationName: 'userApplications',
@@ -224,7 +248,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   }),
   passwordResetRequests: many(passwordResetRequests),
 }));
-
 export const passwordResetRequestsRelations = relations(
   passwordResetRequests,
   ({ one }) => ({
@@ -234,7 +257,6 @@ export const passwordResetRequestsRelations = relations(
     }),
   }),
 );
-
 export const mfaResetRequestsRelations = relations(
   mfaResetRequests,
   ({ one }) => ({
@@ -250,10 +272,13 @@ export const mfaResetRequestsRelations = relations(
     }),
   }),
 );
-
 export const userApplicationsRelations = relations(
   userApplications,
   ({ one, many }) => ({
+    application: one(applications, {
+      fields: [userApplications.applicationId],
+      references: [applications.id],
+    }),
     user: one(users, {
       fields: [userApplications.userId],
       references: [users.id],
@@ -267,7 +292,6 @@ export const userApplicationsRelations = relations(
     userRoles: many(userRoles),
   }),
 );
-
 export const userRolesRelations = relations(userRoles, ({ one }) => ({
   userApplication: one(userApplications, {
     fields: [userRoles.userApplicationId],
@@ -279,12 +303,14 @@ export const userRolesRelations = relations(userRoles, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
 export const userIdentitiesRelations = relations(userIdentities, ({ one }) => ({
   user: one(users, { fields: [userIdentities.userId], references: [users.id] }),
 }));
-
 export const apiTokensRelations = relations(apiTokens, ({ one, many }) => ({
+  application: one(applications, {
+    fields: [apiTokens.applicationId],
+    references: [applications.id],
+  }),
   role: one(roles, { fields: [apiTokens.roleId], references: [roles.id] }),
   creator: one(users, {
     fields: [apiTokens.createdBy],
@@ -292,8 +318,11 @@ export const apiTokensRelations = relations(apiTokens, ({ one, many }) => ({
   }),
   agentsDefaultingToThisToken: many(agents),
 }));
-
 export const agentsRelations = relations(agents, ({ one }) => ({
+  application: one(applications, {
+    fields: [agents.applicationId],
+    references: [applications.id],
+  }),
   defaultToken: one(apiTokens, {
     fields: [agents.defaultTokenId],
     references: [apiTokens.id],

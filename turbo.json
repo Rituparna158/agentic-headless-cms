@@ -19,7 +19,9 @@
     "E2E_DATABASE_URL",
     "API_INTERNAL_URL",
     "NEXT_PUBLIC_API_URL",
-    "SUPPORT_EMAIL"
+    "SUPPORT_EMAIL",
+    "MODE",
+    "DATABASE_URL"
   ],
   "tasks": {
     "build": {
