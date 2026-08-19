@@ -1,9 +1,7 @@
 'use client';
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-
 import {
   Button,
   Modal,
@@ -19,49 +17,56 @@ import {
   listTokens,
   revokeToken,
 } from '@/lib/api/access';
-
 export function TokensTab() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isRevokeOpen, setIsRevokeOpen] = useState(false);
+  const [tokenToRevoke, setTokenToRevoke] = useState<string | null>(null);
   const [newTokenName, setNewTokenName] = useState('');
   const [newTokenRoleId, setNewTokenRoleId] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort] = useState('createdAt:desc');
   const [search, setSearch] = useState('');
-
   const { data: tokensData, isLoading } = useQuery({
     queryKey: ['access', 'tokens', page, pageSize, sort, search],
     queryFn: () => listTokens({ page, pageSize, sort, search }),
   });
-
   const { data: rolesData } = useQuery({
     queryKey: ['access', 'roles'],
     queryFn: () => listRoles({ page: 1, pageSize: 100 }),
   });
-
   const tokens = tokensData?.data || [];
   const roles = rolesData?.data || [];
-
   const createMutation = useMutation({
     mutationFn: () =>
-      createToken({ name: newTokenName, roleId: newTokenRoleId, type: 'user' }),
+      createToken(
+        { name: newTokenName, roleId: newTokenRoleId, type: 'user' },
+        mfaCode,
+      ),
     onSuccess: (data) => {
       setGeneratedToken(data.rawToken || null);
       queryClient.invalidateQueries({ queryKey: ['access', 'tokens'] });
     },
-  });
-
-  const revokeMutation = useMutation({
-    mutationFn: (id: string) => revokeToken(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['access', 'tokens'] });
+    onError: (err) => {
+      const error = err as { message?: string };
+      alert(error?.message || 'Failed to generate token');
     },
   });
-
+  const revokeMutation = useMutation({
+    mutationFn: (id: string) => revokeToken(id, mfaCode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['access', 'tokens'] });
+      closeRevokeDialog();
+    },
+    onError: (err) => {
+      const error = err as { message?: string };
+      alert(error?.message || 'Failed to revoke token');
+    },
+  });
   const handleCopy = () => {
     if (generatedToken) {
       navigator.clipboard.writeText(generatedToken);
@@ -69,20 +74,23 @@ export function TokensTab() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
   const closeDialog = () => {
     setIsCreateOpen(false);
     setGeneratedToken(null);
     setNewTokenName('');
     setNewTokenRoleId('');
+    setMfaCode('');
   };
-
+  const closeRevokeDialog = () => {
+    setIsRevokeOpen(false);
+    setTokenToRevoke(null);
+    setMfaCode('');
+  };
   if (isLoading) {
     return (
       <div className="text-center text-muted-foreground py-8">Loading...</div>
     );
   }
-
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -157,7 +165,15 @@ export function TokensTab() {
                   </Dropdown>
                 </div>
               </div>
-
+              <div className="space-y-2">
+                <Typography variant="label">MFA Code</Typography>
+                <Input
+                  placeholder="6-digit authenticator code"
+                  value={mfaCode}
+                  onChange={(val: string) => setMfaCode(val)}
+                  variant="default"
+                />
+              </div>
               <div className="flex justify-end gap-3 pt-6 border-t mt-6">
                 <Button type="button" variant="outline" onClick={closeDialog}>
                   Cancel
@@ -169,8 +185,49 @@ export function TokensTab() {
             </div>
           )}
         </Modal>
+        <Modal
+          isOpen={isRevokeOpen}
+          onClose={closeRevokeDialog}
+          title="Revoke Token"
+          showFooter={false}
+        >
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to revoke this token? This action cannot be
+              undone. Please provide your MFA code to confirm.
+            </p>
+            <div className="space-y-2">
+              <Typography variant="label">MFA Code</Typography>
+              <Input
+                placeholder="6-digit authenticator code"
+                value={mfaCode}
+                onChange={(val: string) => setMfaCode(val)}
+                variant="default"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeRevokeDialog}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  if (tokenToRevoke) {
+                    revokeMutation.mutate(tokenToRevoke);
+                  }
+                }}
+              >
+                {revokeMutation.isPending ? 'Revoking...' : 'Revoke'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
-
       <div className="border rounded-md overflow-x-auto">
         <DataTable
           columns={[
@@ -196,7 +253,10 @@ export function TokensTab() {
                     variant="ghost"
                     size="icon"
                     className="text-red-500 hover:text-red-600"
-                    onClick={() => revokeMutation.mutate(token.id)}
+                    onClick={() => {
+                      setTokenToRevoke(token.id);
+                      setIsRevokeOpen(true);
+                    }}
                     title="Revoke Token"
                   >
                     <Trash2 className="size-4" />
