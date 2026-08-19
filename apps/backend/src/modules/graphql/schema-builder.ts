@@ -9,9 +9,7 @@ import { toCamelCase, toPascalCase, toPluralCamelCase } from './naming.js';
 import { jsonScalarConfig } from './json-scalar.js';
 import { GraphQLContext } from '../../types/graphql.types.js';
 import { assertPermission } from './graphql.context.js';
-
 const contentService = new ContentService();
-
 interface EntryPayload {
   id: string;
   status: string;
@@ -20,7 +18,6 @@ interface EntryPayload {
   createdAt: string | Date | null;
   updatedAt: string | Date | null;
 }
-
 // Normalize backend entry
 function toEntryPayload(raw: {
   entryId?: string;
@@ -40,12 +37,10 @@ function toEntryPayload(raw: {
     updatedAt: raw.updatedAt ?? null,
   };
 }
-
 // Build GraphQL schema
 export function buildGraphQLSchema(schemas: SchemaRecord[]): GraphQLSchema {
   const composer = new SchemaComposer<GraphQLContext>();
   composer.createScalarTC(jsonScalarConfig);
-
   const paginationMetaTC = composer.createObjectTC({
     name: 'PaginationMeta',
     fields: {
@@ -55,7 +50,6 @@ export function buildGraphQLSchema(schemas: SchemaRecord[]): GraphQLSchema {
       pageCount: 'Int!',
     },
   });
-
   // Add default root query
   composer.Query.addFields({
     _ping: {
@@ -63,14 +57,11 @@ export function buildGraphQLSchema(schemas: SchemaRecord[]): GraphQLSchema {
       resolve: () => 'pong',
     },
   });
-
   for (const schema of schemas) {
     registerSchemaTypes(composer, paginationMetaTC, schema);
   }
-
   return composer.buildSchema();
 }
-
 function registerSchemaTypes(
   composer: SchemaComposer<GraphQLContext>,
   paginationMetaTC: ReturnType<SchemaComposer['createObjectTC']>,
@@ -80,7 +71,6 @@ function registerSchemaTypes(
   const typeName = toPascalCase(schema.slug);
   const singularField = toCamelCase(schema.slug);
   const pluralField = toPluralCamelCase(schema.slug);
-
   const entryTC = composer.createObjectTC({
     name: typeName,
     fields: {
@@ -91,7 +81,6 @@ function registerSchemaTypes(
       publishedData: 'JSON',
     },
   });
-
   for (const field of fields) {
     entryTC.addFields({
       [field.apiId]: {
@@ -101,7 +90,6 @@ function registerSchemaTypes(
       },
     });
   }
-
   const connectionTC = composer.createObjectTC({
     name: `${typeName}Connection`,
     fields: {
@@ -109,7 +97,6 @@ function registerSchemaTypes(
       meta: paginationMetaTC.NonNull,
     },
   });
-
   composer.Query.addFields({
     [singularField]: {
       type: entryTC,
@@ -156,12 +143,10 @@ function registerSchemaTypes(
           },
           fields,
         );
-
         const [entries, total] = await Promise.all([
           contentService.listEntries(schema.id, args.locale, contentQuery),
           contentService.countEntries(schema.id, args.locale, contentQuery),
         ]);
-
         return {
           data: entries,
           meta: {
@@ -174,7 +159,6 @@ function registerSchemaTypes(
       },
     },
   });
-
   composer.Mutation.addFields({
     [`create${typeName}`]: {
       type: entryTC.NonNull,
