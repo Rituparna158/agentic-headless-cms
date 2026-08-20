@@ -465,6 +465,7 @@ describe('Auth Module', () => {
         );
         expect(authRepository.createMfaResetRequest).toHaveBeenCalledWith(
           'user-id-123',
+          undefined,
         );
       });
     });
