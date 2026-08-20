@@ -1,0 +1,1 @@
+ALTER TABLE "mfa_reset_requests" ADD COLUMN "source_app" varchar(255);
