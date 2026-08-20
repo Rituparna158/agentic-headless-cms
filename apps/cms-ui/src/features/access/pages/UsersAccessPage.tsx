@@ -1,11 +1,21 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import { accessApi } from '../api/access.api';
 import { User, Role } from '../types/access.types';
 import { Button, Typography, DataTable } from '@repo/shared-ui';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { InviteUserDialog } from '../components/InviteUserDialog';
 import { useAuthStore } from '../../auth/store/auth.store';
+import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
+
+const SORTABLE_COLUMNS = ['email', 'status', 'createdAt'] as const;
+const SEARCHABLE_LABEL = 'Search users...';
+
 export const UsersAccessPage = () => {
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = currentUser?.roles?.some((roleName: string) =>
@@ -13,15 +23,34 @@ export const UsersAccessPage = () => {
   );
   const queryClient = useQueryClient();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const { data: usersResponse, isLoading: usersLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: accessApi.getUsers,
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sort, setSort] = useState('createdAt:desc');
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
+
+  const {
+    data: usersResponse,
+    isLoading: usersLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ['users', page, pageSize, sort, debouncedSearch],
+    queryFn: () =>
+      accessApi.getUsers({
+        page,
+        pageSize,
+        sort,
+        search: debouncedSearch,
+      }),
+    placeholderData: keepPreviousData,
   });
   const { data: rolesResponse } = useQuery({
     queryKey: ['roles'],
-    queryFn: accessApi.getRoles,
+    queryFn: () => accessApi.getRoles({ page: 1, pageSize: 100 }),
   });
   const users = usersResponse?.data?.data || [];
+  const pagination = usersResponse?.data?.meta?.pagination;
   const roles = rolesResponse?.data?.data || [];
   const deleteMutation = useMutation({
     mutationFn: (id: string) => accessApi.deleteUser(id),
@@ -66,99 +95,141 @@ export const UsersAccessPage = () => {
             Loading users...
           </div>
         ) : (
-          <DataTable
-            className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden"
-            columns={[
-              { key: 'user', label: 'USER' },
-              { key: 'role', label: 'ROLE' },
-              { key: 'status', label: 'STATUS' },
-              { key: 'joined', label: 'JOINED' },
-              { key: 'actions', label: 'ACTIONS', sortable: false },
-            ]}
-            rows={users.map((user: User & { roleId?: string }) => {
-              const currentRoleId = user.roleId || user.roles?.[0]?.id;
-              const userRole = roles.find((r: Role) => r.id === currentRoleId);
-              const canEditRole = isSuperAdmin && user.id !== currentUser?.id;
-              return {
-                id: user.id,
-                user: (
-                  <div className="flex items-center gap-3 py-1">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
-                      {user.firstName
-                        ? user.firstName.charAt(0).toUpperCase()
-                        : user.email.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">
-                        {user.firstName} {user.lastName}
+          <>
+            {isFetching && (
+              <div className="flex items-center gap-2 justify-end pb-3 text-xs text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" />
+                Updating...
+              </div>
+            )}
+            <DataTable
+              className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden"
+              columns={[
+                { key: 'email', label: 'USER', sortable: true },
+                { key: 'role', label: 'ROLE', sortable: false },
+                { key: 'status', label: 'STATUS', sortable: true },
+                { key: 'createdAt', label: 'JOINED', sortable: true },
+                { key: 'actions', label: 'ACTIONS', sortable: false },
+              ]}
+              rows={users.map((user: User & { roleId?: string }) => {
+                const currentRoleId = user.roleId || user.roles?.[0]?.id;
+                const userRole = roles.find(
+                  (r: Role) => r.id === currentRoleId,
+                );
+                const canEditRole = isSuperAdmin && user.id !== currentUser?.id;
+                return {
+                  id: user.id,
+                  email: (
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                        {user.firstName
+                          ? user.firstName.charAt(0).toUpperCase()
+                          : user.email.charAt(0).toUpperCase()}
                       </div>
-                      <div className="text-muted-foreground text-xs">
-                        {user.email}
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div className="text-muted-foreground text-xs">
+                          {user.email}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ),
-                role: canEditRole ? (
-                  <select
-                    className="bg-transparent border border-transparent hover:border-input focus:border-input rounded px-2 py-1 -ml-2 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring text-sm"
-                    value={currentRoleId || ''}
-                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                    disabled={updateRoleMutation.isPending}
-                  >
-                    <option value="" disabled>
-                      No Role
-                    </option>
-                    {roles.map((role: Role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <span className="font-medium text-foreground text-sm">
-                    {userRole?.name || 'No Role'}
-                  </span>
-                ),
-                status: (
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                      user.status === 'active'
-                        ? 'bg-green-500/10 text-green-500'
-                        : 'bg-yellow-500/10 text-yellow-500'
-                    }`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        user.status === 'active'
-                          ? 'bg-green-500'
-                          : 'bg-yellow-500'
-                      }`}
-                    />
-                    {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                  </span>
-                ),
-                joined: (
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </span>
-                ),
-                actions: (
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-2 rounded-md hover:bg-muted"
-                      title="Remove user"
+                  ),
+                  role: canEditRole ? (
+                    <select
+                      className="bg-transparent border border-transparent hover:border-input focus:border-input rounded px-2 py-1 -ml-2 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                      value={currentRoleId || ''}
+                      onChange={(e) =>
+                        handleRoleChange(user.id, e.target.value)
+                      }
+                      disabled={updateRoleMutation.isPending}
                     >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ),
-              };
-            })}
-            enablePagination
-            enableFiltering
-            filterPlaceholder="Search users..."
-          />
+                      <option value="" disabled>
+                        No Role
+                      </option>
+                      {roles.map((role: Role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="font-medium text-foreground text-sm">
+                      {userRole?.name || 'No Role'}
+                    </span>
+                  ),
+                  status: (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                        user.status === 'active'
+                          ? 'bg-green-500/10 text-green-500'
+                          : 'bg-yellow-500/10 text-yellow-500'
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          user.status === 'active'
+                            ? 'bg-green-500'
+                            : 'bg-yellow-500'
+                        }`}
+                      />
+                      {user.status.charAt(0).toUpperCase() +
+                        user.status.slice(1)}
+                    </span>
+                  ),
+                  createdAt: (
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </span>
+                  ),
+                  actions: (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors p-2 rounded-md hover:bg-muted"
+                        title="Remove user"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ),
+                };
+              })}
+              enablePagination
+              manualPagination
+              page={page}
+              pageCount={pagination?.pageCount ?? 1}
+              totalCount={pagination?.total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+              enableSorting
+              manualSorting
+              defaultSortKey={sort.split(':')[0]}
+              defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
+              onSortChange={(key, direction) => {
+                if (
+                  SORTABLE_COLUMNS.includes(
+                    key as (typeof SORTABLE_COLUMNS)[number],
+                  )
+                ) {
+                  setSort(`${String(key)}:${direction}`);
+                  setPage(1);
+                }
+              }}
+              enableFiltering
+              manualFiltering
+              filterPlaceholder={SEARCHABLE_LABEL}
+              onSearchChange={(value) => {
+                setSearch(value);
+                setPage(1);
+              }}
+            />
+          </>
         )}
       </div>
       {isInviteDialogOpen && (

@@ -70,3 +70,26 @@ export interface InviteUserPayload {
   lastName?: string;
   roleId: string;
 }
+export type MfaRequestStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'completed'
+  | 'expired';
+export type MfaRequestFilter = MfaRequestStatus | 'history';
+export interface MfaRequestRecord {
+  id: string;
+  userId: string;
+  status: MfaRequestStatus;
+  createdAt: string;
+  user?: {
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+  };
+  admin?: {
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+  };
+}
