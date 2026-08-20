@@ -1,61 +1,32 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { MfaResetCompletePage } from '../../../../src/pages/MfaResetComplete/MfaResetCompletePage';
-import { authApi } from '../../../../src/features/auth/api/auth.api';
 
-vi.mock('../../../../src/features/auth/api/auth.api', () => ({
-  authApi: {
-    completeMfaReset: vi.fn(),
-  },
-}));
-
-const renderPage = (token: string | null) =>
+const renderPage = () =>
   render(
-    <MemoryRouter
-      initialEntries={[`/mfa-reset-complete${token ? `?token=${token}` : ''}`]}
-    >
+    <MemoryRouter initialEntries={['/mfa-reset-complete']}>
       <Routes>
         <Route path="/mfa-reset-complete" element={<MfaResetCompletePage />} />
-        <Route path="/login" element={<div>Login Page</div>} />
       </Routes>
     </MemoryRouter>,
   );
 
 describe('MfaResetCompletePage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it('renders the MFA reset successful message', () => {
+    renderPage();
+    expect(screen.getByText('MFA Reset Successful')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Your multi-factor authentication has been successfully disabled by an administrator. You can now log in using just your password.',
+      ),
+    ).toBeInTheDocument();
   });
 
-  it('shows invalid request when no token is present', () => {
-    renderPage(null);
-    expect(screen.getByText('Invalid Request')).toBeInTheDocument();
-  });
-
-  it('completes the reset with the token from the URL', async () => {
-    vi.mocked(authApi.completeMfaReset).mockResolvedValue({
-      success: true,
-    } as never);
-    renderPage('valid-token');
-    fireEvent.click(
-      screen.getByRole('button', { name: /Complete MFA Reset/i }),
-    );
-    await waitFor(() => {
-      expect(authApi.completeMfaReset).toHaveBeenCalledWith('valid-token');
-    });
-    expect(screen.getByText('Reset Complete')).toBeInTheDocument();
-  });
-
-  it('shows an error when the reset fails', async () => {
-    vi.mocked(authApi.completeMfaReset).mockRejectedValue(
-      new Error('Token expired'),
-    );
-    renderPage('expired-token');
-    fireEvent.click(
-      screen.getByRole('button', { name: /Complete MFA Reset/i }),
-    );
-    await waitFor(() => {
-      expect(screen.getByText('Token expired')).toBeInTheDocument();
-    });
+  it('contains a link to the login page', () => {
+    renderPage();
+    const loginLink = screen.getByRole('link', { name: /Sign In Now/i });
+    expect(loginLink).toBeInTheDocument();
+    expect(loginLink).toHaveAttribute('href', '/login');
   });
 });
