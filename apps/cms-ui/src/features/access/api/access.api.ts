@@ -1,5 +1,6 @@
 import { requestHandler } from '../../../api/requestHandler';
 import { ENDPOINTS } from '../../../api/endpoints';
+import { buildQueryString, TableQueryParams } from '../../../api/queryParams';
 import {
   Role,
   RoleWithPermissions,
@@ -9,11 +10,15 @@ import {
   PaginatedResponse,
   User,
   InviteUserPayload,
+  MfaRequestRecord,
+  MfaRequestFilter,
 } from '../types/access.types';
 export const accessApi = {
   // Roles
-  getRoles: async () => {
-    return requestHandler.get<PaginatedResponse<Role>>(ENDPOINTS.ACCESS.ROLES);
+  getRoles: async (options: TableQueryParams = {}) => {
+    return requestHandler.get<PaginatedResponse<Role>>(
+      `${ENDPOINTS.ACCESS.ROLES}${buildQueryString(options)}`,
+    );
   },
   getRole: async (id: string) => {
     return requestHandler.get<RoleWithPermissions>(
@@ -44,8 +49,10 @@ export const accessApi = {
     );
   },
   // Users
-  getUsers: async () => {
-    return requestHandler.get<PaginatedResponse<User>>(ENDPOINTS.ACCESS.USERS);
+  getUsers: async (options: TableQueryParams = {}) => {
+    return requestHandler.get<PaginatedResponse<User>>(
+      `${ENDPOINTS.ACCESS.USERS}${buildQueryString(options)}`,
+    );
   },
   inviteUser: async (payload: InviteUserPayload) => {
     return requestHandler.post<{
@@ -63,6 +70,33 @@ export const accessApi = {
     return requestHandler.patch<{ success: boolean }>(
       `${ENDPOINTS.ACCESS.USERS}/${id}/role`,
       { roleId },
+    );
+  },
+  // MFA reset requests
+  getMfaRequests: async (
+    status?: MfaRequestFilter,
+    options: TableQueryParams = {},
+  ) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (options.page && options.page > 1)
+      params.append('page', String(options.page));
+    if (options.pageSize) params.append('pageSize', String(options.pageSize));
+    if (options.sort) params.append('sort', options.sort);
+    if (options.search) params.append('search', options.search);
+    const qs = params.toString();
+    return requestHandler.get<PaginatedResponse<MfaRequestRecord>>(
+      `${ENDPOINTS.ACCESS.MFA_REQUESTS}${qs ? `?${qs}` : ''}`,
+    );
+  },
+  approveMfaRequest: async (id: string) => {
+    return requestHandler.post<{ success: boolean }>(
+      `${ENDPOINTS.ACCESS.MFA_REQUESTS}/${id}/approve`,
+    );
+  },
+  rejectMfaRequest: async (id: string) => {
+    return requestHandler.post<{ success: boolean }>(
+      `${ENDPOINTS.ACCESS.MFA_REQUESTS}/${id}/reject`,
     );
   },
 };
