@@ -1,4 +1,5 @@
-import { eq, ne, and, inArray } from 'drizzle-orm';
+import { eq, ne, and, inArray, sql, getTableColumns } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import {
@@ -8,12 +9,15 @@ import {
   roles,
   permissions,
   mfaResetRequests,
+  mfaResetRequestStatusEnum,
   passwordResetRequests,
   userIdentities,
   applications,
   withTransaction,
+  buildPaginationOptions,
 } from '@repo/shared-db';
 import { ApiError } from '@repo/utils';
+import type { BaseQueryOptions } from '@repo/types';
 import { REPO_ERRORS } from './error-constants.js';
 export class AuthRepository {
   async getUserByEmail(email: string) {
@@ -268,12 +272,15 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
-  async createMfaResetRequest(userId: string) {
+  async createMfaResetRequest(userId: string, sourceApp?: string) {
     try {
       logger.info({ userId }, 'AuthRepository: creating MFA reset request');
       const db = getDatabaseAdapter().getDb();
       const result = await withTransaction(db, async (tx) => {
-        return await tx.insert(mfaResetRequests).values({ userId }).returning();
+        return await tx
+          .insert(mfaResetRequests)
+          .values({ userId, sourceApp })
+          .returning();
       });
       return result[0];
     } catch (error) {
@@ -304,7 +311,11 @@ export class AuthRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_USER_FAILED); // or custom error
     }
   }
-  async getAllMfaResetRequests(appId?: string, statusFilter?: string) {
+  async getAllMfaResetRequests(
+    appId?: string,
+    statusFilter?: string,
+    options: BaseQueryOptions = {},
+  ) {
     try {
       logger.info({ appId }, 'AuthRepository: fetching MFA reset requests');
       const db = getDatabaseAdapter().getDb();
@@ -312,7 +323,10 @@ export class AuthRepository {
       if (statusFilter === 'history') {
         whereClause = ne(mfaResetRequests.status, 'pending');
       } else if (statusFilter) {
-        whereClause = eq(mfaResetRequests.status, statusFilter as 'pending');
+        whereClause = eq(
+          mfaResetRequests.status,
+          statusFilter as (typeof mfaResetRequestStatusEnum)['enumValues'][number],
+        );
       }
       // If an appId is provided, restrict to users who belong to this application
       if (appId) {
@@ -327,21 +341,53 @@ export class AuthRepository {
             .where(eq(applications.name, appId));
         });
         const ids = appUserIds.map((r) => r.userId);
-        if (ids.length === 0) return [];
+        if (ids.length === 0) return [[], 0] as const;
         const appFilter = inArray(mfaResetRequests.userId, ids);
         whereClause = whereClause ? and(whereClause, appFilter) : appFilter;
       }
+      const {
+        limit,
+        offset,
+        orderBy,
+        where: searchWhere,
+      } = buildPaginationOptions(
+        options,
+        {
+          createdAt: mfaResetRequests.createdAt,
+          status: mfaResetRequests.status,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+        [users.email, users.firstName, users.lastName],
+      );
+      const finalWhere = searchWhere
+        ? whereClause
+          ? and(whereClause, searchWhere)
+          : searchWhere
+        : whereClause;
+      const adminUser = alias(users, 'admin_user');
       const result = await withTransaction(db, async (tx) => {
-        return await tx.query.mfaResetRequests.findMany({
-          where: whereClause,
-          with: {
-            user: true,
-            admin: true,
-          },
-          orderBy: (mfaResetRequests, { desc }) => [
-            desc(mfaResetRequests.createdAt),
-          ],
-        });
+        const rows = await tx
+          .select({
+            ...getTableColumns(mfaResetRequests),
+            user: getTableColumns(users),
+            admin: getTableColumns(adminUser),
+          })
+          .from(mfaResetRequests)
+          .innerJoin(users, eq(mfaResetRequests.userId, users.id))
+          .leftJoin(adminUser, eq(mfaResetRequests.adminId, adminUser.id))
+          .where(finalWhere)
+          .orderBy(...orderBy)
+          .limit(limit)
+          .offset(offset);
+        const countResult = await tx
+          .select({ count: sql<number>`cast(count(*) as integer)` })
+          .from(mfaResetRequests)
+          .innerJoin(users, eq(mfaResetRequests.userId, users.id))
+          .leftJoin(adminUser, eq(mfaResetRequests.adminId, adminUser.id))
+          .where(finalWhere);
+        return [rows, countResult[0]?.count ?? 0] as const;
       });
       return result;
     } catch (error) {
