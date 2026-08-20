@@ -78,6 +78,7 @@ export const mfaResetRequests = pgTable('mfa_reset_requests', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
+  sourceApp: varchar('source_app', { length: 255 }),
   status: mfaResetRequestStatusEnum('status').notNull().default('pending'),
   adminId: uuid('admin_id').references(() => users.id, {
     onDelete: 'set null',

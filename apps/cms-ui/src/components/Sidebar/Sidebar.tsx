@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Menu, LogOut } from 'lucide-react';
+import { ChevronDown, ChevronRight, Menu, LogOut, Loader2 } from 'lucide-react';
 import { sidebarNavConfig } from './SidebarNavConfig';
 import { useAuthStore } from '../../features/auth/store/auth.store';
+import { useLogoutMutation } from '../../features/auth/hooks/useAuthMutations';
 export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
@@ -10,7 +11,7 @@ export const Sidebar = () => {
   );
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.clearAuth);
+  const { mutate: logout, isPending } = useLogoutMutation();
   // Extract user capabilities from permissions
   const userCapabilities =
     user?.permissions
@@ -23,6 +24,14 @@ export const Sidebar = () => {
   );
   // Filter navigation items
   const filteredNavConfig = sidebarNavConfig.filter((item) => {
+    if (item.requiredRoles) {
+      return (
+        isSuperAdmin ||
+        user?.roles?.some((roleName: string) =>
+          item.requiredRoles!.includes(roleName.toLowerCase()),
+        )
+      );
+    }
     if (!item.requiredCapability) return true;
     return isSuperAdmin || userCapabilities.includes(item.requiredCapability);
   });
@@ -159,13 +168,20 @@ export const Sidebar = () => {
       {/* Footer / User Area */}
       <div className="p-4 border-t border-zinc-800">
         <button
-          onClick={logout}
-          className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors ${
+          onClick={() => logout()}
+          disabled={isPending}
+          className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors disabled:opacity-50 ${
             isCollapsed ? 'justify-center px-0' : ''
           }`}
         >
-          <LogOut size={20} className="shrink-0" />
-          {!isCollapsed && <span>Logout</span>}
+          {isPending ? (
+            <Loader2 size={20} className="shrink-0 animate-spin" />
+          ) : (
+            <LogOut size={20} className="shrink-0" />
+          )}
+          {!isCollapsed && (
+            <span>{isPending ? 'Logging out...' : 'Logout'}</span>
+          )}
         </button>
       </div>
     </aside>

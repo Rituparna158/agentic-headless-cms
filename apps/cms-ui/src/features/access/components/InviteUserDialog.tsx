@@ -19,7 +19,7 @@ export const InviteUserDialog = ({ onClose }: InviteUserDialogProps) => {
   const [copied, setCopied] = useState(false);
   const { data: rolesResponse, isLoading: rolesLoading } = useQuery({
     queryKey: ['roles'],
-    queryFn: accessApi.getRoles,
+    queryFn: () => accessApi.getRoles(),
   });
   const roles = rolesResponse?.data?.data || [];
   const mutation = useMutation({

@@ -257,24 +257,31 @@ describe('AccessService', () => {
   describe('MFA Reset Requests', () => {
     it('should list MFA reset requests', async () => {
       const mockRequests = [{ id: 'req-1', status: 'pending' }];
-      vi.mocked(authRepository.getAllMfaResetRequests).mockResolvedValue(
+      vi.mocked(authRepository.getAllMfaResetRequests).mockResolvedValue([
         mockRequests as any,
-      );
+        1,
+      ]);
       const result = await accessService.listMfaRequests('pending');
       expect(authRepository.getAllMfaResetRequests).toHaveBeenCalledWith(
         undefined,
         'pending',
+        {},
       );
-      expect(result).toEqual([
-        {
-          id: 'req-1',
-          userId: undefined,
-          status: 'pending',
-          createdAt: undefined,
-          user: undefined,
-          admin: undefined,
+      expect(result).toEqual({
+        data: [
+          {
+            id: 'req-1',
+            userId: undefined,
+            status: 'pending',
+            createdAt: undefined,
+            user: undefined,
+            admin: undefined,
+          },
+        ],
+        meta: {
+          pagination: { page: 1, pageSize: 25, total: 1, pageCount: 1 },
         },
-      ]);
+      });
     });
     it('should throw NotFoundError if MFA request not found on approval', async () => {
       vi.mocked(authRepository.getMfaResetRequestById).mockResolvedValue(null);

@@ -63,9 +63,10 @@ vi.mock('../../../../src/modules/access/access.service.js', () => {
     inviteUrl: 'http://localhost:3001/accept-invite?token=abc123',
     user: { id: 'u2', email: 'invitee@example.com', status: 'invited' },
   });
-  AccessService.prototype.listMfaRequests = vi
-    .fn()
-    .mockResolvedValue([{ id: 'req-1', status: 'pending' }]);
+  AccessService.prototype.listMfaRequests = vi.fn().mockResolvedValue({
+    data: [{ id: 'req-1', status: 'pending' }],
+    meta: { pagination: { page: 1, pageSize: 25, total: 1, pageCount: 1 } },
+  });
   AccessService.prototype.approveMfaResetRequest = vi
     .fn()
     .mockResolvedValue({ success: true });
@@ -206,8 +207,8 @@ describe('Access Module', () => {
         .set('Cookie', [`token_default=${validToken}`]);
       if (res.status === 500) console.error('ERROR 500 BODY: ', res.body);
       expect(res.status).toBe(200);
-      expect(res.body.data).toHaveLength(1);
-      expect(res.body.data[0].id).toBe('req-1');
+      expect(res.body.data.data).toHaveLength(1);
+      expect(res.body.data.data[0].id).toBe('req-1');
     });
   });
   describe('POST /api/v1/access/mfa-requests/:id/approve', () => {

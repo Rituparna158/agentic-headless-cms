@@ -41,9 +41,12 @@ export function MfaRequestsTab() {
   const fetchRequests = async (status: string) => {
     try {
       setLoading(true);
-      const endpoint = `${API_PATHS.ACCESS.MFA_REQUESTS}?status=${status}`;
-      const data = await apiFetch<MfaRequestRecord[]>(endpoint);
-      setRequests(data);
+      const endpoint = `${API_PATHS.ACCESS.MFA_REQUESTS}?status=${status}&pageSize=100`;
+      const data = await apiFetch<{
+        data: MfaRequestRecord[];
+        meta: unknown;
+      }>(endpoint);
+      setRequests(data.data);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Failed to fetch MFA requests',

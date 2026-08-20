@@ -13,7 +13,7 @@ import { useEffect } from 'react';
 export const RolesTab = () => {
   const { data: rolesResponse, isLoading: rolesLoading } = useQuery({
     queryKey: ['roles'],
-    queryFn: accessApi.getRoles,
+    queryFn: () => accessApi.getRoles(),
   });
   const roles = rolesResponse?.data?.data || [];
   const [selectedRole, setSelectedRole] = useState<Role | 'new' | null>(null);
