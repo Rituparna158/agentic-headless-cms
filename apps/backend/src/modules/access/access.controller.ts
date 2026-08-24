@@ -176,7 +176,7 @@ export const deleteUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     logger.info({ id }, 'AccessController: deleteUser start');
-    await accessService.deleteUser(id as string);
+    await accessService.deleteUser(id as string, req.user!.id);
     logger.debug({ id }, 'AccessController: deleteUser success');
     res.status(HTTP_STATUS.NO_CONTENT).send();
   },

@@ -209,6 +209,66 @@ describe('AccessService', () => {
       expect(transporterMock.sendMail).toHaveBeenCalled(); // It should still send using the fallback
     });
   });
+  describe('DeleteUser guards', () => {
+    it('should delete a regular user', async () => {
+      vi.mocked(authRepository.getUserById).mockResolvedValue({
+        id: 'u1',
+        email: 'user@test.com',
+      } as any);
+      mockRepository.getAdminUsers.mockResolvedValue([] as any);
+      mockRepository.deleteUser.mockResolvedValue({ id: 'u1' });
+      const result = await accessService.deleteUser('u1', 'actor-1');
+      expect(mockRepository.deleteUser).toHaveBeenCalledWith('u1');
+      expect(result).toEqual({ id: 'u1' });
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        EVENT_NAMES.AUDIT_LOG,
+        expect.objectContaining({
+          action: AUDIT_ACTIONS.DELETE,
+          resourceType: 'user',
+          resourceId: 'u1',
+        }),
+      );
+    });
+    it('should not allow a user to delete themselves', async () => {
+      await expect(accessService.deleteUser('u1', 'u1')).rejects.toThrow(
+        ERROR_MESSAGES.ACCESS.CANNOT_DELETE_SELF,
+      );
+      expect(mockRepository.deleteUser).not.toHaveBeenCalled();
+    });
+    it('should throw NotFoundError when the user does not exist', async () => {
+      vi.mocked(authRepository.getUserById).mockResolvedValue(null as any);
+      await expect(
+        accessService.deleteUser('missing-user', 'actor-1'),
+      ).rejects.toThrow(ERROR_MESSAGES.ACCESS.USER_NOT_FOUND);
+      expect(mockRepository.deleteUser).not.toHaveBeenCalled();
+    });
+    it('should not allow deleting the last active administrator', async () => {
+      vi.mocked(authRepository.getUserById).mockResolvedValue({
+        id: 'u-last-admin',
+        email: 'last-admin@test.com',
+      } as any);
+      mockRepository.getAdminUsers.mockResolvedValue([
+        { id: 'u-last-admin', email: 'last-admin@test.com' },
+      ] as any);
+      await expect(
+        accessService.deleteUser('u-last-admin', 'actor-1'),
+      ).rejects.toThrow(ERROR_MESSAGES.ACCESS.CANNOT_DELETE_LAST_ADMIN);
+      expect(mockRepository.deleteUser).not.toHaveBeenCalled();
+    });
+    it('should allow deleting an admin when other admins remain', async () => {
+      vi.mocked(authRepository.getUserById).mockResolvedValue({
+        id: 'u-admin-1',
+        email: 'admin1@test.com',
+      } as any);
+      mockRepository.getAdminUsers.mockResolvedValue([
+        { id: 'u-admin-1', email: 'admin1@test.com' },
+        { id: 'u-admin-2', email: 'admin2@test.com' },
+      ] as any);
+      mockRepository.deleteUser.mockResolvedValue({ id: 'u-admin-1' });
+      await accessService.deleteUser('u-admin-1', 'u-admin-2');
+      expect(mockRepository.deleteUser).toHaveBeenCalledWith('u-admin-1');
+    });
+  });
   describe('Tokens', () => {
     it('should list tokens', async () => {
       const mockTokens = [{ id: 't1', name: 'My Token' }];
