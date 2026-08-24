@@ -22,6 +22,7 @@ import {
   InternalServerError,
   ApiError,
   UnauthorizedError,
+  NotFoundError,
 } from '@repo/utils';
 import { authenticator } from 'otplib';
 import { logger } from '@repo/logger';
@@ -155,9 +156,25 @@ export class AccessService {
       throw new ApiError(500, SERVICE_ERRORS.FETCH_ROLES_FAILED);
     }
   }
-  async deleteUser(id: string) {
+  async deleteUser(id: string, currentUserId?: string) {
     try {
       logger.info({ id }, 'AccessService: deleteUser start');
+      if (currentUserId && currentUserId === id) {
+        logger.warn(
+          { id },
+          'AccessService: deleteUser blocked, user cannot delete themselves',
+        );
+        throw new BadRequestError(ERROR_MESSAGES.ACCESS.CANNOT_DELETE_SELF);
+      }
+      const user = await authRepository.getUserById(id);
+      if (!user) {
+        logger.warn(
+          { id },
+          'AccessService: deleteUser blocked, user not found',
+        );
+        throw new NotFoundError(ERROR_MESSAGES.ACCESS.USER_NOT_FOUND);
+      }
+      await this.ensureNotLastAdmin(id);
       const result = await this.repository.deleteUser(id);
       logger.debug(
         { id },
@@ -177,7 +194,24 @@ export class AccessService {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'AccessService Error in deleteUser:');
+      if (
+        error instanceof BadRequestError ||
+        error instanceof NotFoundError ||
+        error instanceof InternalServerError
+      )
+        throw error;
       throw new ApiError(500, SERVICE_ERRORS.DELETE_ROLE_FAILED);
+    }
+  }
+  private async ensureNotLastAdmin(userId: string) {
+    const adminUsers = await this.repository.getAdminUsers();
+    const isTargetAdmin = adminUsers.some((admin) => admin.id === userId);
+    if (isTargetAdmin && adminUsers.length <= 1) {
+      logger.warn(
+        { userId },
+        'AccessService: deleteUser blocked, cannot delete the last active administrator',
+      );
+      throw new BadRequestError(ERROR_MESSAGES.ACCESS.CANNOT_DELETE_LAST_ADMIN);
     }
   }
   async updateUserRole(userId: string, roleId: string) {
