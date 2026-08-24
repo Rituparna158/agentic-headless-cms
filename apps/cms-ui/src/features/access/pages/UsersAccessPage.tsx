@@ -8,7 +8,7 @@ import {
 import { accessApi } from '../api/access.api';
 import { User, Role } from '../types/access.types';
 import { Button, Typography, DataTable } from '@repo/shared-ui';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
 import { InviteUserDialog } from '../components/InviteUserDialog';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
@@ -52,10 +52,18 @@ export const UsersAccessPage = () => {
   const users = usersResponse?.data?.data || [];
   const pagination = usersResponse?.data?.meta?.pagination;
   const roles = rolesResponse?.data?.data || [];
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const deleteMutation = useMutation({
     mutationFn: (id: string) => accessApi.deleteUser(id),
     onSuccess: () => {
+      setDeleteError(null);
       queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err) => {
+      setDeleteError(
+        (err as { message?: string })?.message ||
+          'Failed to delete user. Please try again.',
+      );
     },
   });
   const updateRoleMutation = useMutation({
@@ -65,7 +73,33 @@ export const UsersAccessPage = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
-  const handleDelete = (id: string) => {
+  const isSelf = (user: User) => user.id === currentUser?.id;
+  const visibleAdminIds = new Set(
+    users
+      .map((user: User & { roleId?: string }) => {
+        const roleId = user.roleId || user.roles?.[0]?.id;
+        const role = roles.find((r: Role) => r.id === roleId);
+        return role?.name?.toLowerCase().includes('admin') ? user.id : null;
+      })
+      .filter((id): id is string => Boolean(id)),
+  );
+  const isLastVisibleAdmin =
+    !debouncedSearch &&
+    (pagination?.pageCount ?? 1) <= 1 &&
+    visibleAdminIds.size === 1;
+  const getDeleteBlockReason = (
+    user: User & { roleId?: string },
+  ): string | null => {
+    if (isSelf(user)) return 'You cannot delete your own account';
+    if (isLastVisibleAdmin && visibleAdminIds.has(user.id))
+      return 'Cannot delete the last active administrator';
+    return null;
+  };
+  const handleDelete = (id: string, blockReason: string | null) => {
+    if (blockReason) {
+      setDeleteError(blockReason);
+      return;
+    }
     if (confirm('Are you sure you want to remove this user?')) {
       deleteMutation.mutate(id);
     }
@@ -96,6 +130,21 @@ export const UsersAccessPage = () => {
           </div>
         ) : (
           <>
+            {deleteError && (
+              <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                <span className="flex items-center gap-2">
+                  <AlertCircle size={16} className="shrink-0" />
+                  {deleteError}
+                </span>
+                <button
+                  onClick={() => setDeleteError(null)}
+                  className="shrink-0 hover:opacity-70 transition-opacity"
+                  title="Dismiss"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
             {isFetching && (
               <div className="flex items-center gap-2 justify-end pb-3 text-xs text-muted-foreground">
                 <Loader2 className="size-3.5 animate-spin" />
@@ -183,17 +232,26 @@ export const UsersAccessPage = () => {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </span>
                   ),
-                  actions: (
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="text-muted-foreground hover:text-destructive transition-colors p-2 rounded-md hover:bg-muted"
-                        title="Remove user"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ),
+                  actions: (() => {
+                    const blockReason = getDeleteBlockReason(user);
+                    const deletable = !blockReason;
+                    return (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => handleDelete(user.id, blockReason)}
+                          disabled={!deletable}
+                          className={`transition-colors p-2 rounded-md ${
+                            deletable
+                              ? 'text-muted-foreground hover:text-destructive hover:bg-muted cursor-pointer'
+                              : 'text-muted-foreground/40 cursor-not-allowed'
+                          }`}
+                          title={blockReason ? blockReason : 'Remove user'}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    );
+                  })(),
                 };
               })}
               enablePagination
