@@ -30,8 +30,8 @@ export default function NotFound() {
         </ErrorPageIcons>
         <ErrorPageHeading>Page Not Found</ErrorPageHeading>
         <ErrorPageDesc>
-          The page you're looking for doesn't exist. It might have been moved,
-          deleted, or the URL might be incorrect.
+          The page you&apos;re looking for doesn&apos;t exist. It might have
+          been moved, deleted, or the URL might be incorrect.
         </ErrorPageDesc>
         <ErrorPageLinks>
           <ButtonWithIcon
