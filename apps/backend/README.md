@@ -63,7 +63,7 @@ pnpm check-types                # tsc --noEmit
 pnpm test                       # vitest run
 pnpm test:watch                 # vitest watch mode
 pnpm seed:admin                 # create/update the initial superadmin user
-pnpm seed:e2e-expired-invite    # E2E-only fixture, see docs/testing.md
+pnpm seed:e2e-expired-invite    # E2E-only fixture,see docs/testing.md
 ```
 
 ## Health checks
