@@ -176,6 +176,11 @@ export class AccessService {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'AccessService Error in deleteUser:');
+      if (
+        error instanceof Error &&
+        (error.name === 'ApiError' || 'statusCode' in error)
+      )
+        throw error;
       throw new ApiError(500, SERVICE_ERRORS.DELETE_ROLE_FAILED);
     }
   }
@@ -186,6 +191,11 @@ export class AccessService {
       logger.debug({ userId, roleId }, 'AccessService: updateUserRole success');
     } catch (error) {
       logger.error({ err: error }, 'AccessService Error in updateUserRole:');
+      if (
+        error instanceof Error &&
+        (error.name === 'ApiError' || 'statusCode' in error)
+      )
+        throw error;
       throw new ApiError(500, SERVICE_ERRORS.UPDATE_ROLE_FAILED);
     }
   }

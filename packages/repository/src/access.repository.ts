@@ -321,6 +321,40 @@ export class AccessRepository {
   async deleteUser(id: string) {
     try {
       logger.info({ id }, 'AccessRepository: deleting user');
+
+      const adminApps = await this.db
+        .select({ applicationId: userApplications.applicationId })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .innerJoin(
+          userApplications,
+          eq(userRoles.userApplicationId, userApplications.id),
+        )
+        .where(and(eq(userApplications.userId, id), eq(roles.name, 'admin')));
+
+      for (const app of adminApps) {
+        const adminUsers = await this.db
+          .select({ userId: userApplications.userId })
+          .from(userRoles)
+          .innerJoin(roles, eq(userRoles.roleId, roles.id))
+          .innerJoin(
+            userApplications,
+            eq(userRoles.userApplicationId, userApplications.id),
+          )
+          .where(
+            and(
+              eq(roles.name, 'admin'),
+              eq(roles.applicationId, app.applicationId),
+            ),
+          );
+        if (adminUsers.length === 1 && adminUsers[0]?.userId === id) {
+          throw new ApiError(
+            400,
+            'Cannot remove the last Administrator. At least one user must retain administrative privileges.',
+          );
+        }
+      }
+
       await withTransaction(this.db, async (tx) => {
         return await tx
           .delete(userApplications)
@@ -339,7 +373,13 @@ export class AccessRepository {
       return deleted;
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in deleteUser:');
-      if (error instanceof RecordNotFoundError) throw error;
+      if (
+        error instanceof RecordNotFoundError ||
+        (error instanceof Error &&
+          (error.name === 'ApiError' || 'statusCode' in error))
+      ) {
+        throw error;
+      }
       throw new ApiError(500, REPO_ERRORS.DB_DELETE_FAILED);
     }
   }
@@ -354,6 +394,67 @@ export class AccessRepository {
           .limit(1);
       });
       if (!role) throw new ApiError(400, 'Role not found');
+
+      // Prevent demoting the last Administrator of this application
+      if (role.name !== 'admin') {
+        const currentAdminRoles = await this.db
+          .select({
+            userRoleId: userRoles.id,
+            roleName: roles.name,
+          })
+          .from(userRoles)
+          .innerJoin(roles, eq(userRoles.roleId, roles.id))
+          .innerJoin(
+            userApplications,
+            eq(userRoles.userApplicationId, userApplications.id),
+          )
+          .where(
+            and(
+              eq(userApplications.userId, userId),
+              eq(userApplications.applicationId, role.applicationId),
+            ),
+          );
+
+        logger.info(
+          { userId, applicationId: role.applicationId, currentAdminRoles },
+          'AccessRepository: debug currentAdminRoles',
+        );
+
+        const hasAdminRole = currentAdminRoles.some(
+          (r) => r.roleName === 'admin',
+        );
+        logger.info({ hasAdminRole }, 'AccessRepository: debug hasAdminRole');
+
+        if (hasAdminRole) {
+          const adminUsers = await this.db
+            .select({ userId: userApplications.userId })
+            .from(userRoles)
+            .innerJoin(roles, eq(userRoles.roleId, roles.id))
+            .innerJoin(
+              userApplications,
+              eq(userRoles.userApplicationId, userApplications.id),
+            )
+            .where(
+              and(
+                eq(roles.name, 'admin'),
+                eq(roles.applicationId, role.applicationId),
+              ),
+            );
+
+          logger.info({ adminUsers }, 'AccessRepository: debug adminUsers');
+
+          if (adminUsers.length === 1 && adminUsers[0]?.userId === userId) {
+            logger.info(
+              'AccessRepository: THROWING ApiError for last Administrator',
+            );
+            throw new ApiError(
+              400,
+              'Cannot remove the last Administrator. At least one user must retain administrative privileges.',
+            );
+          }
+        }
+      }
+
       let [userApp] = await withTransaction(this.db, async (tx) => {
         return await tx
           .select()
@@ -395,6 +496,11 @@ export class AccessRepository {
       );
     } catch (error) {
       logger.error({ err: error }, 'AccessRepository Error in updateUserRole:');
+      if (
+        error instanceof Error &&
+        (error.name === 'ApiError' || 'statusCode' in error)
+      )
+        throw error;
       throw new ApiError(500, REPO_ERRORS.DB_UPDATE_FAILED);
     }
   }
