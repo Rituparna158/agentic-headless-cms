@@ -22,12 +22,14 @@ import {
   InternalServerError,
   ApiError,
   UnauthorizedError,
+  NotFoundError,
 } from '@repo/utils';
 import { authenticator } from 'otplib';
 import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
+import { formatPaginatedResponse } from '../../utils/pagination.util.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export class AccessService {
@@ -154,9 +156,25 @@ export class AccessService {
       throw new ApiError(500, SERVICE_ERRORS.FETCH_ROLES_FAILED);
     }
   }
-  async deleteUser(id: string) {
+  async deleteUser(id: string, currentUserId?: string) {
     try {
       logger.info({ id }, 'AccessService: deleteUser start');
+      if (currentUserId && currentUserId === id) {
+        logger.warn(
+          { id },
+          'AccessService: deleteUser blocked, user cannot delete themselves',
+        );
+        throw new BadRequestError(ERROR_MESSAGES.ACCESS.CANNOT_DELETE_SELF);
+      }
+      const user = await authRepository.getUserById(id);
+      if (!user) {
+        logger.warn(
+          { id },
+          'AccessService: deleteUser blocked, user not found',
+        );
+        throw new NotFoundError(ERROR_MESSAGES.ACCESS.USER_NOT_FOUND);
+      }
+      await this.ensureNotLastAdmin(id);
       const result = await this.repository.deleteUser(id);
       logger.debug(
         { id },
@@ -182,6 +200,17 @@ export class AccessService {
       )
         throw error;
       throw new ApiError(500, SERVICE_ERRORS.DELETE_ROLE_FAILED);
+    }
+  }
+  private async ensureNotLastAdmin(userId: string) {
+    const adminUsers = await this.repository.getAdminUsers();
+    const isTargetAdmin = adminUsers.some((admin) => admin.id === userId);
+    if (isTargetAdmin && adminUsers.length <= 1) {
+      logger.warn(
+        { userId },
+        'AccessService: deleteUser blocked, cannot delete the last active administrator',
+      );
+      throw new BadRequestError(ERROR_MESSAGES.ACCESS.CANNOT_DELETE_LAST_ADMIN);
     }
   }
   async updateUserRole(userId: string, roleId: string) {
@@ -471,15 +500,20 @@ export class AccessService {
       throw new UnauthorizedError('Invalid MFA code.');
     }
   }
-  async listMfaRequests(status?: string, appId?: string) {
+  async listMfaRequests(
+    status?: string,
+    appId?: string,
+    options: BaseQueryOptions = {},
+  ) {
     try {
       logger.info('AccessService: listMfaRequests start');
-      const requests = await authRepository.getAllMfaResetRequests(
+      const [requests, total] = await authRepository.getAllMfaResetRequests(
         appId,
         status,
+        options,
       );
       // We explicitly map the data structure to match the frontend expectations.
-      return requests.map((req) => ({
+      const data = requests.map((req) => ({
         id: req.id,
         userId: req.userId,
         status: req.status,
@@ -499,6 +533,12 @@ export class AccessService {
             }
           : undefined,
       }));
+      return formatPaginatedResponse(
+        data,
+        total,
+        options.page ?? 1,
+        options.pageSize ?? 25,
+      );
     } catch (error) {
       logger.error({ err: error }, 'AccessService Error in listMfaRequests:');
       throw new ApiError(500, 'Failed to fetch MFA requests');
@@ -538,7 +578,7 @@ export class AccessService {
             pass: env.SMTP_PASS,
           },
         });
-        const appUrl = env.APP_URL;
+        const appUrl = request.sourceApp || env.APP_URL;
         const resetUrl = `${appUrl}/mfa-reset-complete?token=${rawToken}`;
         const htmlTemplatePath = path.join(
           __dirname,

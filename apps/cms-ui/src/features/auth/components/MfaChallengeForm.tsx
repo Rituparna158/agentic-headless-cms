@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button, Input } from '@repo/shared-ui';
 import { useAuthStore } from '../store/auth.store';
 import { useVerifyMfaMutation } from '../hooks/useAuthMutations';
@@ -63,6 +64,18 @@ export function MfaChallengeForm() {
         >
           Cancel and Sign In Again
         </Button>
+
+        <div className="flex flex-col items-center gap-1 border-t pt-4">
+          <p className="text-sm text-muted-foreground text-center">
+            Lost access to your authenticator app?
+          </p>
+          <Link
+            to="/request-access"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Request MFA Reset
+          </Link>
+        </div>
       </form>
     </div>
   );

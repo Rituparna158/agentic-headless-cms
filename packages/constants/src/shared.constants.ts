@@ -17,6 +17,9 @@ export const ERROR_MESSAGES = {
     PASSWORD_TOO_SHORT: 'Password must be at least 8 characters long',
     INVITE_NOT_FOUND: 'Invalid or expired invitation token',
     ROLE_NOT_FOUND: 'Role not found',
+    USER_NOT_FOUND: 'User not found',
+    CANNOT_DELETE_SELF: 'You cannot delete your own account',
+    CANNOT_DELETE_LAST_ADMIN: 'Cannot delete the last active administrator',
   },
   CONTENT: {
     ENTRY_NOT_FOUND: 'Entry not found',
