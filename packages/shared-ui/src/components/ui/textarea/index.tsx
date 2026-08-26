@@ -94,7 +94,7 @@ const AnimatedTextarea: React.FC<AnimatedTextareaProps> = ({
   error,
   success,
   icon: Icon,
-  maxLength = 1000,
+  maxLength,
   minRows = 3,
   maxRows = 10,
   size = 'md',
