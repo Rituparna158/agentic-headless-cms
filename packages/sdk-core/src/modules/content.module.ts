@@ -4,18 +4,30 @@ import type {
   ContentEntryRecord,
   ContentVersionRecord,
   ListContentEntriesOptions,
-  ListContentEntriesResult,
+  PaginationMeta,
 } from '@repo/types';
 
-export class ContentModule {
+type InferEntryType<TMap, TSlug extends string> = TSlug extends keyof TMap
+  ? TMap[TSlug]
+  : ContentEntryRecord;
+
+export class ContentModule<
+  TMap extends Record<string, unknown> = Record<string, unknown>,
+> {
   constructor(private transport: HttpTransport) {}
 
-  public async list(
-    schemaSlug: string,
+  public async list<TSlug extends keyof TMap & string>(
+    schemaSlug: TSlug,
     options?: ListContentEntriesOptions,
-  ): Promise<ListContentEntriesResult> {
+  ): Promise<{
+    data: InferEntryType<TMap, TSlug>[];
+    meta: { pagination: PaginationMeta };
+  }> {
     const res = await this.transport.request<
-      ApiResponse<ListContentEntriesResult>
+      ApiResponse<{
+        data: InferEntryType<TMap, TSlug>[];
+        meta: { pagination: PaginationMeta };
+      }>
     >(`/content/${schemaSlug}`, {
       params:
         (options as Record<string, string | number | boolean | undefined>) ||
@@ -24,79 +36,63 @@ export class ContentModule {
     return res.data;
   }
 
-  public async findOne(
-    schemaSlug: string,
+  public async findOne<TSlug extends keyof TMap & string>(
+    schemaSlug: TSlug,
     entryId: string,
     options?: { locale?: string },
-  ): Promise<ContentEntryRecord> {
-    const res = await this.transport.request<ApiResponse<ContentEntryRecord>>(
-      `/content/${schemaSlug}/${entryId}`,
-      {
-        params: options as Record<
-          string,
-          string | number | boolean | undefined
-        >,
-      },
-    );
+  ): Promise<InferEntryType<TMap, TSlug>> {
+    const res = await this.transport.request<
+      ApiResponse<InferEntryType<TMap, TSlug>>
+    >(`/content/${schemaSlug}/${entryId}`, {
+      params: options as Record<string, string | number | boolean | undefined>,
+    });
     return res.data;
   }
 
-  public async create(
-    schemaSlug: string,
+  public async create<TSlug extends keyof TMap & string>(
+    schemaSlug: TSlug,
     data: Record<string, unknown>,
     options?: { locale?: string },
-  ): Promise<ContentEntryRecord> {
-    const res = await this.transport.request<ApiResponse<ContentEntryRecord>>(
-      `/content/${schemaSlug}`,
-      {
-        method: 'POST',
-        body: JSON.stringify(data),
-        params: options as Record<
-          string,
-          string | number | boolean | undefined
-        >,
-      },
-    );
+  ): Promise<InferEntryType<TMap, TSlug>> {
+    const res = await this.transport.request<
+      ApiResponse<InferEntryType<TMap, TSlug>>
+    >(`/content/${schemaSlug}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      params: options as Record<string, string | number | boolean | undefined>,
+    });
     return res.data;
   }
 
-  public async update(
-    schemaSlug: string,
+  public async update<TSlug extends keyof TMap & string>(
+    schemaSlug: TSlug,
     entryId: string,
     data: Record<string, unknown>,
     options?: { locale?: string },
-  ): Promise<ContentEntryRecord> {
-    const res = await this.transport.request<ApiResponse<ContentEntryRecord>>(
-      `/content/${schemaSlug}/${entryId}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify(data),
-        params: options as Record<
-          string,
-          string | number | boolean | undefined
-        >,
-      },
-    );
+  ): Promise<InferEntryType<TMap, TSlug>> {
+    const res = await this.transport.request<
+      ApiResponse<InferEntryType<TMap, TSlug>>
+    >(`/content/${schemaSlug}/${entryId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      params: options as Record<string, string | number | boolean | undefined>,
+    });
     return res.data;
   }
 
-  public async updatePartial(
-    schemaSlug: string,
+  public async updatePartial<TSlug extends keyof TMap & string>(
+    schemaSlug: TSlug,
     entryId: string,
     data: Record<string, unknown>,
     options?: { locale?: string },
-  ): Promise<ContentEntryRecord> {
-    const res = await this.transport.request<ApiResponse<ContentEntryRecord>>(
-      `/content/${schemaSlug}/${entryId}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-        params: options as Record<
-          string,
-          string | number | boolean | undefined
-        >,
-      },
-    );
+  ): Promise<InferEntryType<TMap, TSlug>> {
+    const res = await this.transport.request<
+      ApiResponse<InferEntryType<TMap, TSlug>>
+    >(`/content/${schemaSlug}/${entryId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      params: options as Record<string, string | number | boolean | undefined>,
+    });
     return res.data;
   }
 
@@ -106,21 +102,17 @@ export class ContentModule {
     });
   }
 
-  public async publish(
-    schemaSlug: string,
+  public async publish<TSlug extends keyof TMap & string>(
+    schemaSlug: TSlug,
     entryId: string,
     options?: { locale?: string },
-  ): Promise<ContentEntryRecord> {
-    const res = await this.transport.request<ApiResponse<ContentEntryRecord>>(
-      `/content/${schemaSlug}/${entryId}/publish`,
-      {
-        method: 'POST',
-        params: options as Record<
-          string,
-          string | number | boolean | undefined
-        >,
-      },
-    );
+  ): Promise<InferEntryType<TMap, TSlug>> {
+    const res = await this.transport.request<
+      ApiResponse<InferEntryType<TMap, TSlug>>
+    >(`/content/${schemaSlug}/${entryId}/publish`, {
+      method: 'POST',
+      params: options as Record<string, string | number | boolean | undefined>,
+    });
     return res.data;
   }
 
@@ -137,23 +129,19 @@ export class ContentModule {
     return res.data;
   }
 
-  public async revert(
-    schemaSlug: string,
+  public async revert<TSlug extends keyof TMap & string>(
+    schemaSlug: TSlug,
     entryId: string,
     versionNo: number,
     options?: { locale?: string },
-  ): Promise<ContentEntryRecord> {
-    const res = await this.transport.request<ApiResponse<ContentEntryRecord>>(
-      `/content/${schemaSlug}/${entryId}/revert`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ versionNo }),
-        params: options as Record<
-          string,
-          string | number | boolean | undefined
-        >,
-      },
-    );
+  ): Promise<InferEntryType<TMap, TSlug>> {
+    const res = await this.transport.request<
+      ApiResponse<InferEntryType<TMap, TSlug>>
+    >(`/content/${schemaSlug}/${entryId}/revert`, {
+      method: 'POST',
+      body: JSON.stringify({ versionNo }),
+      params: options as Record<string, string | number | boolean | undefined>,
+    });
     return res.data;
   }
 }

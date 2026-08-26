@@ -703,6 +703,9 @@ importers:
       '@repo/utils':
         specifier: workspace:*
         version: link:../utils
+      drizzle-orm:
+        specifier: ^0.36.4
+        version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.2.18)(pg@8.22.0)(react@19.2.0)
       express:
         specifier: ^5.2.1
         version: 5.2.1
@@ -765,6 +768,31 @@ importers:
       typescript:
         specifier: 5.9.2
         version: 5.9.2
+
+  packages/sdk-codegen:
+    dependencies:
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../types
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.3
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.16)(tsx@4.23.0)(typescript@5.9.2)(yaml@2.9.0)
+      typescript:
+        specifier: 5.9.2
+        version: 5.9.2
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.13.3)(jsdom@29.1.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(msw@2.15.0(@types/node@24.13.3)(typescript@5.9.2))(terser@5.49.0)
 
   packages/sdk-core:
     dependencies:
