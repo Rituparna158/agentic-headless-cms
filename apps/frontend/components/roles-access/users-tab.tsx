@@ -133,7 +133,11 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
             title="Invite User"
             showFooter={false}
           >
-            <form onSubmit={handleInvite} className="space-y-4 pt-4">
+            <form
+              method="POST"
+              onSubmit={handleInvite}
+              className="space-y-4 pt-4"
+            >
               <div className="space-y-2">
                 <label htmlFor="email">
                   <Typography as="span" variant="label">

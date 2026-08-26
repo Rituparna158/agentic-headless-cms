@@ -72,6 +72,7 @@ export function LoginForm() {
           </p>
         </div>
         <form
+          method="POST"
           onSubmit={async (e: React.FormEvent) => {
             e.preventDefault();
             setSubmitError(null);
@@ -200,6 +201,7 @@ export function LoginForm() {
         </div>
       )}
       <form
+        method="POST"
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         className="grid gap-4"
       >

@@ -88,7 +88,7 @@ export function AcceptInviteForm() {
           Please set a password to activate your account.
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form method="POST" onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="password">

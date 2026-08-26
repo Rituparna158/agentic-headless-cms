@@ -196,7 +196,11 @@ export function SecurityTab() {
                     </p>
                   </div>
 
-                  <form onSubmit={handleVerify} className="space-y-4">
+                  <form
+                    method="POST"
+                    onSubmit={handleVerify}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Input
                         placeholder="000000"
