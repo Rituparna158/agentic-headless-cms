@@ -67,6 +67,7 @@ export function FieldTypeInput({
     case 'date':
       return (
         <DatePicker
+          themeMode="light"
           value={typeof value === 'string' && value ? new Date(value) : null}
           onChange={(
             date: Parameters<
