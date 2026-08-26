@@ -17,5 +17,6 @@ export { default as Textarea } from './components/ui/textarea';
 export * from './components/ui/textarea';
 export * from './components/ui/typography';
 export * from './components/ui/button-with-icon';
+export * from './components/ui/datepicker';
 export * from './components/ui/spinner';
 export * from './templates/errorpage';

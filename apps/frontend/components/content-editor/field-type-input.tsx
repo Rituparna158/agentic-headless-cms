@@ -8,8 +8,8 @@ import {
   Textarea,
   Dropdown,
   DropdownItem,
+  DatePicker,
 } from '@repo/shared-ui';
-
 import { LexicalRichTextField } from './lexical-rich-text-field';
 import { MediaPickerField } from './media-picker-field';
 
@@ -66,15 +66,16 @@ export function FieldTypeInput({
 
     case 'date':
       return (
-        <Input
-          type="date"
+        <DatePicker
+          themeMode="light"
+          value={typeof value === 'string' && value ? new Date(value) : null}
+          onChange={(
+            date: Parameters<
+              NonNullable<React.ComponentProps<typeof DatePicker>['onChange']>
+            >[0],
+          ) => onChange(date instanceof Date ? date.toISOString() : '')}
           disabled={disabled}
-          variant="default"
           placeholder={field.displayName}
-          value={typeof value === 'string' ? value.slice(0, 10) : ''}
-          onChange={(val: string) =>
-            onChange(val ? new Date(val).toISOString() : '')
-          }
           {...rest}
         />
       );
@@ -98,7 +99,9 @@ export function FieldTypeInput({
       return (
         <Textarea
           disabled={disabled}
-          className="font-mono text-xs h-32"
+          className="font-mono text-xs"
+          minRows={3}
+          maxRows={10}
           placeholder={field.displayName}
           variant="default"
           value={
