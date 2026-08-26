@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   Users,
   Settings,
+  ShieldCheck,
   Puzzle,
   LayoutTemplate,
   LayoutDashboard,
@@ -17,6 +18,7 @@ export interface NavItem {
   icon?: LucideIcon;
   subItems?: { title: string; href: string }[];
   requiredCapability?: string;
+  requiredRoles?: string[];
 }
 export const sidebarNavConfig: NavItem[] = [
   {
@@ -90,6 +92,12 @@ export const sidebarNavConfig: NavItem[] = [
     ],
   },
   {
+    title: 'MFA Requests',
+    href: '/users/mfa-requests',
+    icon: ShieldCheck,
+    requiredRoles: ['admin', 'support'],
+  },
+  {
     title: 'Settings',
     href: '/settings',
     icon: Settings,
@@ -99,5 +107,11 @@ export const sidebarNavConfig: NavItem[] = [
       { title: 'Reading', href: '/settings/reading' },
       { title: 'Writing', href: '/settings/writing' },
     ],
+  },
+  {
+    title: 'Security',
+    href: '/security',
+    icon: ShieldCheck,
+    subItems: [{ title: 'MFA Integration', href: '/security' }],
   },
 ];

@@ -515,7 +515,7 @@ export class AuthService {
       throw new ApiError(500, 'Failed to complete MFA challenge');
     }
   }
-  async requestMfaReset(email: string) {
+  async requestMfaReset(email: string, sourceApp?: string) {
     try {
       logger.info({ email }, 'AuthService: requestMfaReset start');
       const user = await authRepository.getUserByEmail(email);
@@ -530,7 +530,10 @@ export class AuthService {
       if (!user.mfaEnabled) {
         throw new BadRequestError('MFA is not enabled for this user.');
       }
-      const request = await authRepository.createMfaResetRequest(user.id);
+      const request = await authRepository.createMfaResetRequest(
+        user.id,
+        sourceApp,
+      );
       if (!request) {
         throw new InternalServerError('Failed to create MFA reset request');
       }

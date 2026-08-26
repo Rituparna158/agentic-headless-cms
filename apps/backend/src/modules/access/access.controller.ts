@@ -176,7 +176,7 @@ export const deleteUser: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     logger.info({ id }, 'AccessController: deleteUser start');
-    await accessService.deleteUser(id as string);
+    await accessService.deleteUser(id as string, req.user!.id);
     logger.debug({ id }, 'AccessController: deleteUser success');
     res.status(HTTP_STATUS.NO_CONTENT).send();
   },
@@ -268,10 +268,11 @@ export const listMfaRequests: RequestHandler = asyncHandler(
     logger.info('AccessController: listMfaRequests start');
     const { status } = req.query as { status?: string };
     const appId = req.headers['x-app-id'] as string | undefined;
-    const requests = await accessService.listMfaRequests(status, appId);
+    const options = parseQueryOptions(req.query);
+    const result = await accessService.listMfaRequests(status, appId, options);
     res
       .status(200)
-      .json(new ApiResponse(200, requests, 'MFA requests listed successfully'));
+      .json(new ApiResponse(200, result, 'MFA requests listed successfully'));
   },
 );
 export const approveMfaResetRequest: RequestHandler = asyncHandler(

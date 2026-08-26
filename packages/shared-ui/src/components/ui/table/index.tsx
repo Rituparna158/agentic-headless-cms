@@ -388,6 +388,12 @@ export interface DataTableProps {
    * Callback when the search filter changes.
    */
   onSearchChange?: (query: string) => void;
+  /**
+   * Custom message or component to display when there are no rows.
+   *
+   * Default: "No rows match your filter."
+   */
+  emptyMessage?: React.ReactNode;
 }
 /**
  * DataTable: self-contained table with sorting, pagination, and filtering.
@@ -455,6 +461,7 @@ export const DataTable: React.FC<DataTableProps> = ({
   onPageSizeChange,
   onSortChange: manualOnSortChange,
   onSearchChange: manualOnSearchChange,
+  emptyMessage = 'No rows match your filter.',
 }) => {
   const effectiveRows = rows;
   const effectiveColumns = columns;
@@ -846,7 +853,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                     colSpan={effectiveColumns.length}
                     className="px-3 py-6 text-center text-sm text-muted-foreground"
                   >
-                    No rows match your filter.
+                    {emptyMessage}
                   </td>
                 </tr>
               ) : (

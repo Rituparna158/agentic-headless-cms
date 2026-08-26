@@ -120,6 +120,13 @@
       "when": 1787111143398,
       "tag": "0016_fix_schema_slug_per_app_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787210659464,
+      "tag": "0017_curly_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

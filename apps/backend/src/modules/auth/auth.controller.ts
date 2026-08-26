@@ -340,7 +340,8 @@ export const requestMfaReset: RequestHandler = asyncHandler(
     if (!email) {
       throw new BadRequestError('Email is required');
     }
-    const result = await authService.requestMfaReset(email);
+    const sourceApp = req.get('origin') || undefined;
+    const result = await authService.requestMfaReset(email, sourceApp);
     res
       .status(200)
       .json(new ApiResponse(200, result, 'MFA reset request submitted'));
