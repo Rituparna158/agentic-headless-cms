@@ -2,7 +2,7 @@
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
+    "baseUrl": ".",
     "types": ["node", "vitest/globals"]
   },
   "include": ["src", "__tests__"],

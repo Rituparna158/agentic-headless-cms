@@ -4,6 +4,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "codegen": "node ./packages/sdk-codegen/dist/cli.js --url http://localhost:3000 --output ./apps/frontend/types.ts",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",

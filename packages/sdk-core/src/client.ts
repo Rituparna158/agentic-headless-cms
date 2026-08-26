@@ -7,10 +7,12 @@ import { MediaModule } from './modules/media.module.js';
 import { GraphQLModule } from './modules/graphql.module.js';
 import { SearchModule } from './modules/search.module.js';
 
-export class AgenticCmsClient {
+export class AgenticCmsClient<
+  TMap extends Record<string, unknown> = Record<string, unknown>,
+> {
   public auth: AuthClient;
   public transport: HttpTransport;
-  public content: ContentModule;
+  public content: ContentModule<TMap>;
   public schema: SchemaModule;
   public media: MediaModule;
   public graphql: GraphQLModule;
@@ -23,7 +25,7 @@ export class AgenticCmsClient {
     this.transport = new HttpTransport(baseUrl, this.auth);
     this.auth.setTransport(this.transport);
 
-    this.content = new ContentModule(this.transport);
+    this.content = new ContentModule<TMap>(this.transport);
     this.schema = new SchemaModule(this.transport);
     this.media = new MediaModule(this.transport);
     this.graphql = new GraphQLModule(this.transport);
@@ -31,6 +33,8 @@ export class AgenticCmsClient {
   }
 }
 
-export function createClient(config: ClientConfig): AgenticCmsClient {
-  return new AgenticCmsClient(config);
+export function createClient<
+  TMap extends Record<string, unknown> = Record<string, unknown>,
+>(config: ClientConfig): AgenticCmsClient<TMap> {
+  return new AgenticCmsClient<TMap>(config);
 }
