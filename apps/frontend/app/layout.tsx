@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { QueryProvider } from '@/components/providers/query-provider';
+import { UrlSanitizer } from '@/components/providers/url-sanitizer';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -13,7 +14,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <Suspense fallback={null}>
+            <UrlSanitizer />
+          </Suspense>
+          {children}
+        </QueryProvider>
         <Toaster />
       </body>
     </html>

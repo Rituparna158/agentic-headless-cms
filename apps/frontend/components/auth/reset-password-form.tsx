@@ -75,7 +75,11 @@ export function ResetPasswordForm() {
       </div>
 
       <Form spacing="comfortable">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+        <form
+          method="POST"
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="grid gap-4"
+        >
           <Controller
             control={form.control}
             name="password"
