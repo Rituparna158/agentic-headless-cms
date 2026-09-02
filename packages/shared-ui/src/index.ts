@@ -20,3 +20,4 @@ export * from './components/ui/button-with-icon';
 export * from './components/ui/datepicker';
 export * from './components/ui/spinner';
 export * from './templates/errorpage';
+export * from './templates/maintenance-page';
