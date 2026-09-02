@@ -56,16 +56,25 @@ describe('SidebarNav', () => {
   });
 
   it('marks the item matching the current pathname as the current page', () => {
-    mockUsePathname.mockReturnValue('/webhooks');
+    mockUsePathname.mockReturnValue('/roles-access');
     render(<SidebarNav />);
 
-    expect(screen.getByRole('link', { name: /Webhooks/ })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    expect(
+      screen.getByRole('link', { name: /Roles & Access/ }),
+    ).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: /Dashboard/ })).not.toHaveAttribute(
       'aria-current',
     );
+  });
+
+  it('renders disabled nav items as non-interactive elements', () => {
+    mockUsePathname.mockReturnValue('/');
+    render(<SidebarNav />);
+
+    expect(screen.getByText('Webhooks')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Webhooks/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('calls onNavigate when a nav link is clicked', () => {
