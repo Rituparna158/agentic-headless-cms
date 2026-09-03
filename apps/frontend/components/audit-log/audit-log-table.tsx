@@ -96,7 +96,7 @@ export function AuditLogTable() {
   const { data, isLoading, isError, refetch } = useAuditLogs(queryParams);
 
   // Use server-returned data directly — the API already handles search filtering
-  const displayLogs = data?.data ?? [];
+  const displayLogs = React.useMemo(() => data?.data ?? [], [data?.data]);
 
   // Client-side sorting on the actual record data values
   const sortedLogs = React.useMemo(() => {
@@ -249,7 +249,7 @@ export function AuditLogTable() {
         ),
       };
     });
-  }, [sortedLogs]);
+  }, [sortedLogs, handleRowClick]);
 
   return (
     <div className="flex flex-col gap-4">
