@@ -1,7 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import { listWebhooks, createWebhook, deleteWebhook } from '@/lib/api/webhooks';
 import { WebhookRecord } from '@repo/types';
 import { Button, Input, Checkbox, Modal, DataTable } from '@repo/shared-ui';
@@ -33,6 +38,7 @@ export function WebhooksTable() {
   const { data: webhooksData, isLoading } = useQuery({
     queryKey: ['webhooks', page, pageSize, sort, search],
     queryFn: () => listWebhooks({ page, pageSize, sort, search }),
+    placeholderData: keepPreviousData,
   });
 
   const webhooks = webhooksData?.data || [];
@@ -69,13 +75,13 @@ export function WebhooksTable() {
     );
   };
 
-  if (isLoading) {
+  if (isLoading && !webhooksData) {
     return (
       <div className="text-center text-muted-foreground py-8">Loading...</div>
     );
   }
 
-  if (webhooks.length === 0) {
+  if (!search && webhooks.length === 0) {
     return (
       <div className="space-y-4">
         <div className="flex justify-end">
@@ -249,6 +255,7 @@ export function WebhooksTable() {
           }))}
           enableFiltering={true}
           manualFiltering={true}
+          searchValue={search}
           filterPlaceholder="Search webhooks..."
           onSearchChange={(val: string) => {
             setSearch(val);
@@ -272,6 +279,7 @@ export function WebhooksTable() {
           pageSize={pageSize}
           onPageSizeChange={(newSize: number) => setPageSize(newSize)}
           onPageChange={(newPage: number) => setPage(newPage)}
+          emptyMessage="No webhooks match your search criteria."
         />
       </div>
 
