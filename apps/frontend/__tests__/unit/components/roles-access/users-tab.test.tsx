@@ -57,7 +57,7 @@ describe('UsersTab', () => {
 
   it('hides the invite button entirely for non-admins', async () => {
     renderTab(false);
-    await screen.findByText('No users found.');
+    await screen.findByText('No users match your search criteria.');
     expect(
       screen.queryByRole('button', { name: '+ Invite User' }),
     ).not.toBeInTheDocument();
@@ -72,7 +72,9 @@ describe('UsersTab', () => {
 
   it('shows an empty state when there are no users', async () => {
     renderTab(true);
-    expect(await screen.findByText('No users found.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('No users match your search criteria.'),
+    ).toBeInTheDocument();
   });
 
   it('lists an existing user', async () => {

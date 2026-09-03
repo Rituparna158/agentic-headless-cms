@@ -55,7 +55,7 @@ describe('TokensTab', () => {
   it('shows an empty state when there are no tokens', async () => {
     renderTab();
     expect(
-      await screen.findByText('No tokens generated yet.'),
+      await screen.findByText('No tokens match your search criteria.'),
     ).toBeInTheDocument();
   });
   it('lists a token with its resolved role name and Active status', async () => {
@@ -90,7 +90,7 @@ describe('TokensTab', () => {
     });
     const user = userEvent.setup();
     renderTab();
-    await screen.findByText('No tokens generated yet.');
+    await screen.findByText('No tokens match your search criteria.');
     await user.click(screen.getByRole('button', { name: 'Generate Token' }));
     await user.type(
       screen.getByPlaceholderText('e.g. CI/CD Script'),
