@@ -1,6 +1,11 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -42,6 +47,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
   const { data: usersData, isLoading } = useQuery({
     queryKey: ['access', 'users', page, pageSize, sort, search],
     queryFn: () => listUsers({ page, pageSize, sort, search }),
+    placeholderData: keepPreviousData,
   });
 
   const { data: rolesData } = useQuery({
@@ -116,7 +122,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
     inviteMutation.mutate({ email, firstName, lastName, roleId });
   };
 
-  if (isLoading) {
+  if (isLoading && !usersData) {
     return (
       <div className="text-center text-muted-foreground py-8">Loading...</div>
     );
@@ -340,6 +346,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
           }))}
           enableFiltering={true}
           manualFiltering={true}
+          searchValue={search}
           filterPlaceholder="Search users..."
           onSearchChange={(val: string) => {
             setSearch(val);
@@ -363,12 +370,8 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
           pageSize={pageSize}
           onPageSizeChange={(newSize: number) => setPageSize(newSize)}
           onPageChange={(newPage: number) => setPage(newPage)}
+          emptyMessage="No users match your search criteria."
         />
-        {users.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground border-t">
-            No users found.
-          </div>
-        )}
       </div>
     </div>
   );
