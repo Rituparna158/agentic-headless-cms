@@ -389,6 +389,10 @@ export interface DataTableProps {
    */
   onSearchChange?: (query: string) => void;
   /**
+   * Controlled search query string value.
+   */
+  searchValue?: string;
+  /**
    * Custom message or component to display when there are no rows.
    *
    * Default: "No rows match your filter."
@@ -461,6 +465,7 @@ export const DataTable: React.FC<DataTableProps> = ({
   onPageSizeChange,
   onSortChange: manualOnSortChange,
   onSearchChange: manualOnSearchChange,
+  searchValue,
   emptyMessage = 'No rows match your filter.',
 }) => {
   const effectiveRows = rows;
@@ -477,7 +482,11 @@ export const DataTable: React.FC<DataTableProps> = ({
     useState(initialRowsPerPage);
   const rowsPerPage = pageSize !== undefined ? pageSize : internalRowsPerPage;
   // Filter state
-  const [filterQuery, setFilterQuery] = useState('');
+  const [internalFilterQuery, setInternalFilterQuery] = useState(
+    searchValue ?? '',
+  );
+  const filterQuery =
+    searchValue !== undefined ? searchValue : internalFilterQuery;
   const totalCount =
     manualPagination && manualTotalCount !== undefined
       ? manualTotalCount
@@ -696,7 +705,9 @@ export const DataTable: React.FC<DataTableProps> = ({
   const handleFilterChange = useCallback(
     (value: string) => {
       if (!enableFiltering) return;
-      setFilterQuery(value);
+      if (searchValue === undefined) {
+        setInternalFilterQuery(value);
+      }
       if (!manualPagination) {
         setCurrentPage(1);
       }
@@ -704,7 +715,7 @@ export const DataTable: React.FC<DataTableProps> = ({
         manualOnSearchChange(value);
       }
     },
-    [enableFiltering, manualPagination, manualOnSearchChange],
+    [enableFiltering, manualPagination, manualOnSearchChange, searchValue],
   );
   /**
    * Handle clear filter button click.
@@ -712,14 +723,16 @@ export const DataTable: React.FC<DataTableProps> = ({
    */
   const handleClearFilter = useCallback(() => {
     if (!enableFiltering) return;
-    setFilterQuery('');
+    if (searchValue === undefined) {
+      setInternalFilterQuery('');
+    }
     if (!manualPagination) {
       setCurrentPage(1);
     }
     if (manualOnSearchChange) {
       manualOnSearchChange('');
     }
-  }, [enableFiltering, manualPagination, manualOnSearchChange]);
+  }, [enableFiltering, manualPagination, manualOnSearchChange, searchValue]);
   const startRowIndex =
     totalFilteredCount === 0
       ? 0
