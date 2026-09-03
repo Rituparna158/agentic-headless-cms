@@ -13,6 +13,11 @@ export function getRedisConnection(): Redis {
 
   connection = new Redis(env.REDIS_URL, {
     maxRetriesPerRequest: null,
+    lazyConnect: true,
+  });
+
+  connection.on('error', () => {
+    // Prevent unhandled EventEmitter error crash when Redis is offline
   });
 
   return connection;
