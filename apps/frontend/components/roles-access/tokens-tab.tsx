@@ -1,5 +1,10 @@
 'use client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import { Check, Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -34,6 +39,7 @@ export function TokensTab() {
   const { data: tokensData, isLoading } = useQuery({
     queryKey: ['access', 'tokens', page, pageSize, sort, search],
     queryFn: () => listTokens({ page, pageSize, sort, search }),
+    placeholderData: keepPreviousData,
   });
   const { data: rolesData } = useQuery({
     queryKey: ['access', 'roles'],
@@ -86,7 +92,7 @@ export function TokensTab() {
     setTokenToRevoke(null);
     setMfaCode('');
   };
-  if (isLoading) {
+  if (isLoading && !tokensData) {
     return (
       <div className="text-center text-muted-foreground py-8">Loading...</div>
     );
@@ -267,6 +273,7 @@ export function TokensTab() {
           }))}
           enableFiltering={true}
           manualFiltering={true}
+          searchValue={search}
           filterPlaceholder="Search tokens..."
           onSearchChange={(val: string) => {
             setSearch(val);
@@ -290,12 +297,8 @@ export function TokensTab() {
           pageSize={pageSize}
           onPageSizeChange={(newSize: number) => setPageSize(newSize)}
           onPageChange={(newPage: number) => setPage(newPage)}
+          emptyMessage="No tokens match your search criteria."
         />
-        {tokens.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground border-t">
-            No tokens generated yet.
-          </div>
-        )}
       </div>
     </div>
   );
