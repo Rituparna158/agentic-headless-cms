@@ -49,7 +49,7 @@ export function LocalesTab() {
     setName('');
   };
 
-  if (isLoading) {
+  if (isLoading && !localesData) {
     return (
       <div className="text-center text-muted-foreground py-8">Loading...</div>
     );

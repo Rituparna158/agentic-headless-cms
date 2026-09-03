@@ -80,6 +80,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     try {
       await logoutRequest();
+    } catch {
+      // Ignore network/server errors during logout so client state is cleared regardless
     } finally {
       set({
         user: null,
