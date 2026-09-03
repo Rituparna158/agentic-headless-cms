@@ -134,6 +134,6 @@ describe('AuditLogTable', () => {
     const detailsButton = screen.getByTitle('View details');
     fireEvent.click(detailsButton);
 
-    expect(await screen.findByText(/Audit Log Details/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Audit Event Details/i)).toBeInTheDocument();
   });
 });

@@ -562,28 +562,36 @@ const parseDate = (str: string, format: DateFormat): Date | null => {
         }
         case 'MMM DD, YYYY': {
           const parts = cleaned.split(/[\s,]+/);
-          if (parts.length < 3) return null;
+          if (parts.length < 3 || !parts[0] || !parts[1] || !parts[2])
+            return null;
+          const p0 = parts[0];
+          const p1 = parts[1];
+          const p2 = parts[2];
           const mIndex = MONTH_NAMES.findIndex((m) =>
-            m.toLowerCase().startsWith(parts[0].toLowerCase()),
+            m.toLowerCase().startsWith(p0.toLowerCase()),
           );
           if (mIndex === -1) return null;
           month = mIndex + 1;
-          day = parseInt(parts[1]);
-          year = parseInt(parts[2]);
-          yearStr = parts[2] || '';
+          day = parseInt(p1, 10);
+          year = parseInt(p2, 10);
+          yearStr = p2;
           break;
         }
         case 'DD MMM YYYY': {
           const parts2 = cleaned.split(/[\s,]+/);
-          if (parts2.length < 3) return null;
+          if (parts2.length < 3 || !parts2[0] || !parts2[1] || !parts2[2])
+            return null;
+          const p2_0 = parts2[0];
+          const p2_1 = parts2[1];
+          const p2_2 = parts2[2];
           const mIndex2 = MONTH_NAMES.findIndex((m) =>
-            m.toLowerCase().startsWith(parts2[1].toLowerCase()),
+            m.toLowerCase().startsWith(p2_1.toLowerCase()),
           );
           if (mIndex2 === -1) return null;
-          day = parseInt(parts2[0]);
+          day = parseInt(p2_0, 10);
           month = mIndex2 + 1;
-          year = parseInt(parts2[2]);
-          yearStr = parts2[2] || '';
+          year = parseInt(p2_2, 10);
+          yearStr = p2_2;
           break;
         }
       }
@@ -755,7 +763,9 @@ const getPopupPositionClasses = (position: string): string => {
     left: 'right-full top-0 mr-2',
     right: 'left-full top-0 ml-2',
   };
-  return positions[position] || positions['bottom-left'];
+  return (
+    positions[position] ?? positions['bottom-left'] ?? 'top-full right-0 mt-2'
+  );
 };
 
 // ========== VARIANTS ==========
@@ -1055,7 +1065,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const getDayName = (index: number): string => {
     const adjustedIndex =
       weekStart === 1 ? (index === 6 ? 0 : index + 1) : index;
-    return dayNames[adjustedIndex] || DAY_NAMES[adjustedIndex];
+    return dayNames[adjustedIndex] ?? DAY_NAMES[adjustedIndex] ?? '';
   };
 
   return (
