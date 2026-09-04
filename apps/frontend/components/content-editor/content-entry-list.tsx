@@ -1,25 +1,18 @@
 'use client';
 
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Button, Card } from '@repo/shared-ui';
-import { useHasPermission } from '@/hooks/use-permissions';
-import { deleteContentEntry, listContentEntries } from '@/lib/api/content';
+import { Card, DataTable } from '@repo/shared-ui';
+import { listContentEntries } from '@/lib/api/content';
 import type { ContentEntryListProps } from '@/types/component.types';
 import { pickTitleField } from '@/utils/schema';
+import { ContentEntryRowActions } from './content-entry-row-actions';
 import { MediaThumbnailCell } from './media-thumbnail-cell';
-import { DataTable } from '@repo/shared-ui';
 
 // Page size is now managed via state
 export function ContentEntryList({ schema }: ContentEntryListProps) {
-  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState('');
@@ -47,14 +40,6 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
     placeholderData: keepPreviousData,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (entryId: string) => deleteContentEntry(schema.slug, entryId),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['content', schema.slug] }),
-  });
-
-  const canDelete = useHasPermission('delete', schema.id);
-
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">Loading entries…</p>;
   }
@@ -81,51 +66,61 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
             },
             { label: 'Status', key: 'status', sortable: true },
             { label: 'Updated', key: 'updatedAt', sortable: true },
-            { label: 'Actions', key: 'actions', sortable: false },
+            {
+              label: 'Actions',
+              key: 'actions',
+              sortable: false,
+              align: 'right',
+            },
           ]}
-          rows={entries.map((entry) => ({
-            [titleField?.apiId ?? 'id']:
-              titleField?.dataType === 'media' &&
-              typeof entry.data[titleField.apiId] === 'string' &&
-              entry.data[titleField.apiId] ? (
-                <MediaThumbnailCell
-                  assetId={entry.data[titleField.apiId] as string}
-                  alt={titleField.displayName}
-                />
-              ) : titleField &&
-                typeof entry.data[titleField.apiId] === 'string' ? (
-                (entry.data[titleField.apiId] as string)
-              ) : (
-                <span className="text-muted-foreground text-xs">
-                  {entry.id}
-                </span>
-              ),
-            status: <span className="capitalize">{entry.status}</span>,
-            updatedAt: entry.updatedAt
-              ? new Date(entry.updatedAt).toLocaleString()
-              : '—',
-            actions: (
-              <div className="flex justify-end gap-2 text-right">
-                <Button asChild variant="ghost" size="sm">
-                  <Link href={`/content/${schema.slug}/${entry.id}`}>Edit</Link>
-                </Button>
-                <span
-                  title={
-                    !canDelete ? 'You do not have permission to delete.' : ''
-                  }
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={!canDelete || deleteMutation.isPending}
-                    onClick={() => deleteMutation.mutate(entry.id)}
+          rows={entries.map((entry) => {
+            const displayTitle =
+              titleField && typeof entry.data[titleField.apiId] === 'string'
+                ? (entry.data[titleField.apiId] as string)
+                : undefined;
+
+            return {
+              [titleField?.apiId ?? 'id']:
+                titleField?.dataType === 'media' &&
+                typeof entry.data[titleField.apiId] === 'string' &&
+                entry.data[titleField.apiId] ? (
+                  <MediaThumbnailCell
+                    assetId={entry.data[titleField.apiId] as string}
+                    alt={titleField.displayName}
+                  />
+                ) : displayTitle ? (
+                  <Link
+                    href={`/content/${schema.slug}/${entry.id}`}
+                    className="font-medium text-foreground hover:text-primary no-underline transition-colors cursor-pointer"
+                    title="Click to view/edit entry"
                   >
-                    Delete
-                  </Button>
-                </span>
-              </div>
-            ),
-          }))}
+                    {displayTitle}
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/content/${schema.slug}/${entry.id}`}
+                    className="font-medium text-muted-foreground hover:text-primary no-underline transition-colors text-xs cursor-pointer"
+                    title="Click to view/edit entry"
+                  >
+                    {entry.id}
+                  </Link>
+                ),
+              status: <span className="capitalize">{entry.status}</span>,
+              updatedAt: entry.updatedAt
+                ? new Date(entry.updatedAt).toLocaleString()
+                : '—',
+              actions: (
+                <div className="flex items-center justify-end">
+                  <ContentEntryRowActions
+                    schemaSlug={schema.slug}
+                    schemaId={schema.id}
+                    entryId={entry.id}
+                    title={displayTitle}
+                  />
+                </div>
+              ),
+            };
+          })}
           enableFiltering={!!titleField}
           manualFiltering={true}
           filterPlaceholder={`Search by ${titleField?.displayName ?? 'Entry'}...`}
