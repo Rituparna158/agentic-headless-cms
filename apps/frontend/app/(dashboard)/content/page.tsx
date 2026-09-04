@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { ContentEntriesView } from '@/components/content-editor/content-entries-view';
 
 export const metadata: Metadata = {
@@ -6,5 +7,15 @@ export const metadata: Metadata = {
 };
 
 export default function ContentPage() {
-  return <ContentEntriesView />;
+  return (
+    <Suspense
+      fallback={
+        <div className="p-4 text-sm text-muted-foreground">
+          Loading content entries...
+        </div>
+      }
+    >
+      <ContentEntriesView />
+    </Suspense>
+  );
 }

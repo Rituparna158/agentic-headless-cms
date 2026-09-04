@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -16,7 +16,9 @@ export function Sidebar() {
   if (!mounted) {
     return (
       <aside className="bg-background hidden w-64 shrink-0 border-r md:flex md:flex-col">
-        <SidebarNav />
+        <Suspense fallback={null}>
+          <SidebarNav />
+        </Suspense>
       </aside>
     );
   }
@@ -28,7 +30,9 @@ export function Sidebar() {
 
   return (
     <aside className="bg-background hidden w-64 shrink-0 border-r md:flex md:flex-col">
-      <SidebarNav />
+      <Suspense fallback={null}>
+        <SidebarNav />
+      </Suspense>
     </aside>
   );
 }
