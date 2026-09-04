@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Button, Modal, Dropdown, DropdownItem } from '@repo/shared-ui';
@@ -45,15 +46,26 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
   return (
     <>
       <Dropdown
+        align="end"
         trigger={
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost" className="h-8 w-8 p-0" title="Actions">
             <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreVertical className="h-4 w-4" />
           </Button>
         }
       >
+        <DropdownItem asChild>
+          <Link
+            href={`/content-types/${schema.slug}/edit`}
+            className="flex items-center no-underline w-full cursor-pointer"
+          >
+            <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
+            Edit
+          </Link>
+        </DropdownItem>
+
         <DropdownItem
-          className="text-destructive focus:text-destructive"
+          className="text-destructive focus:text-destructive cursor-pointer"
           onSelect={(e: Event) => {
             if (canDelete) setShowDeleteDialog(true);
             else e.preventDefault();
