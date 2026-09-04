@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { PencilIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
-import { Button, Card, CardContent, DataTable } from '@repo/shared-ui';
+import { Card, CardContent, DataTable } from '@repo/shared-ui';
 import { SchemaRowActions } from './schema-row-actions';
 
 export function SchemaList() {
@@ -57,14 +56,22 @@ export function SchemaList() {
         { label: 'Kind', key: 'kind', sortable: true },
         { label: 'Fields', key: 'fields', sortable: true },
         { label: 'Localized', key: 'localized', sortable: true },
-        { label: 'Actions', key: 'actions', sortable: false },
+        { label: 'Actions', key: 'actions', sortable: false, align: 'right' },
       ]}
       rows={data.map((schema) => {
         const isLocalized = schema.definition.fields.some(
           (field) => field.isLocalized,
         );
         return {
-          name: <span className="font-medium">{schema.name}</span>,
+          name: (
+            <Link
+              href={`/content-types/${schema.slug}/edit`}
+              className="font-medium text-foreground hover:text-primary no-underline transition-colors cursor-pointer"
+              title="Click to edit content type"
+            >
+              {schema.name}
+            </Link>
+          ),
           slug: <span className="text-muted-foreground">{schema.slug}</span>,
           kind: <span className="text-muted-foreground">{schema.type}</span>,
           fields: (
@@ -78,15 +85,7 @@ export function SchemaList() {
             </span>
           ),
           actions: (
-            <div className="flex items-center justify-end gap-2">
-              <Button variant="ghost" size="icon" asChild>
-                <Link
-                  href={`/content-types/${schema.slug}/edit`}
-                  title="Edit content type"
-                >
-                  <PencilIcon className="size-4" />
-                </Link>
-              </Button>
+            <div className="flex items-center justify-end">
               <SchemaRowActions schema={schema} />
             </div>
           ),
