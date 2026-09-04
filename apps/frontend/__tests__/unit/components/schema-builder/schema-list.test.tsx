@@ -90,7 +90,7 @@ describe('SchemaList', () => {
     renderList();
 
     const editLink = await screen.findByRole('link', {
-      name: /edit content type/i,
+      name: /blog post/i,
     });
     expect(editLink).toHaveAttribute('href', '/content-types/blog-post/edit');
   });
