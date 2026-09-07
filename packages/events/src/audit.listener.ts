@@ -1,6 +1,7 @@
 import { eventBus } from './event-bus.js';
 import { EVENT_NAMES } from '@repo/constants';
 import { AuditRepository } from '@repo/repository';
+import { getRedisConnection } from '@repo/config';
 
 export function setupAuditListener() {
   const repository = new AuditRepository();
@@ -23,6 +24,14 @@ export function setupAuditListener() {
           afterState: payload.afterState,
           context: payload.context,
         });
+
+        // Invalidate Redis Page 1 audit cache on new log insertion
+        try {
+          const redis = getRedisConnection();
+          await redis.del('audit:logs:default_page1');
+        } catch {
+          // ignore cache error if Redis is unavailable
+        }
       } catch (error) {
         console.error(
           JSON.stringify({

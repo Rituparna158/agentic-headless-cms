@@ -36,7 +36,8 @@ export function ContentTypeList() {
     return (
       <Card>
         <CardContent className="text-muted-foreground py-8 text-center text-sm">
-          No content types exist yet. Create one under Content-Types first.
+          No content types found. Create one in the Content Type Builder to get
+          started.
         </CardContent>
       </Card>
     );
@@ -53,8 +54,8 @@ export function ContentTypeList() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground text-sm">
-              {schema.definition.fields.length} field
-              {schema.definition.fields.length === 1 ? '' : 's'}
+              {schema.definition.fields.length}{' '}
+              {schema.definition.fields.length === 1 ? 'Field' : 'Fields'}
             </CardContent>
           </Card>
         </Link>

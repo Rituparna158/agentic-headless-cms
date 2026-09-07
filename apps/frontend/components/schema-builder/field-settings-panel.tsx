@@ -49,7 +49,7 @@ export function FieldSettingsPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Field settings</CardTitle>
+        <CardTitle>Field Settings</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4">
         <Controller
@@ -59,7 +59,7 @@ export function FieldSettingsPanel({
             <div className="grid gap-2">
               <label htmlFor={`display-name-${index}`}>
                 <Typography as="span" variant="label">
-                  Display name
+                  Display Name
                 </Typography>
               </label>
               <Input
@@ -277,7 +277,7 @@ export function FieldSettingsPanel({
             size="sm"
             onClick={() => onRemove(index)}
           >
-            Delete field
+            Delete Field
           </Button>
         </div>
       </CardContent>

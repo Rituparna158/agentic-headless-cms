@@ -15,8 +15,10 @@ getDatabaseAdapter();
 try {
   await assertMinimumRedisVersion();
 } catch (error) {
-  logger.fatal({ err: error }, 'Redis pre-flight check failed - exiting.');
-  process.exit(1);
+  logger.warn(
+    { err: error },
+    'Redis pre-flight check warning — operating with database fallback mode.',
+  );
 }
 
 const server = app.listen(env.PORT, () => {

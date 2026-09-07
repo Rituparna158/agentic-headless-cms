@@ -11,7 +11,7 @@ describe('QuickActions', () => {
       '/content',
     );
     expect(
-      screen.getByRole('link', { name: '+ Content-Type' }),
+      screen.getByRole('link', { name: '+ New Content Type' }),
     ).toHaveAttribute('href', '/content-types/new');
     expect(screen.getByRole('link', { name: 'Upload Media' })).toHaveAttribute(
       'href',

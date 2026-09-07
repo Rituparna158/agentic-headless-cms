@@ -1,15 +1,26 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AnchorHTMLAttributes } from 'react';
 
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 
-const { mockUsePathname } = vi.hoisted(() => ({
-  mockUsePathname: vi.fn(),
-}));
+const { mockUsePathname, mockUseRouter, mockUseSearchParams } = vi.hoisted(
+  () => ({
+    mockUsePathname: vi.fn(),
+    mockUseRouter: vi.fn(() => ({ push: vi.fn() })),
+    mockUseSearchParams: vi.fn(() => ({ get: vi.fn() })),
+  }),
+);
 
 vi.mock('next/navigation', () => ({
   usePathname: mockUsePathname,
+  useRouter: mockUseRouter,
+  useSearchParams: mockUseSearchParams,
+}));
+
+vi.mock('@/lib/api/schemas', () => ({
+  listSchemas: vi.fn(() => Promise.resolve({ data: [] })),
 }));
 
 vi.mock(
@@ -36,6 +47,17 @@ vi.mock(
     }) satisfies Record<string, unknown>,
 );
 
+function renderSidebarNav(onNavigate?: () => void) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <SidebarNav onNavigate={onNavigate} />
+    </QueryClientProvider>,
+  );
+}
+
 describe('SidebarNav', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -43,11 +65,11 @@ describe('SidebarNav', () => {
 
   it('renders both primary and secondary nav items', () => {
     mockUsePathname.mockReturnValue('/');
-    render(<SidebarNav />);
+    renderSidebarNav();
 
     expect(screen.getByRole('link', { name: /Dashboard/ })).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /Content-Types/ }),
+      screen.getByRole('link', { name: /Content Type Builder/ }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Roles & Access/ }),
@@ -56,22 +78,31 @@ describe('SidebarNav', () => {
   });
 
   it('marks the item matching the current pathname as the current page', () => {
-    mockUsePathname.mockReturnValue('/webhooks');
-    render(<SidebarNav />);
+    mockUsePathname.mockReturnValue('/roles-access');
+    renderSidebarNav();
 
-    expect(screen.getByRole('link', { name: /Webhooks/ })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    expect(
+      screen.getByRole('link', { name: /Roles & Access/ }),
+    ).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: /Dashboard/ })).not.toHaveAttribute(
       'aria-current',
     );
   });
 
+  it('renders disabled nav items as non-interactive elements', () => {
+    mockUsePathname.mockReturnValue('/');
+    renderSidebarNav();
+
+    expect(screen.getByText('Webhooks')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Webhooks/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it('calls onNavigate when a nav link is clicked', () => {
     mockUsePathname.mockReturnValue('/');
     const onNavigate = vi.fn();
-    render(<SidebarNav onNavigate={onNavigate} />);
+    renderSidebarNav(onNavigate);
 
     const link = screen.getByRole('link', { name: /Media/ });
     fireEvent.click(link);

@@ -39,8 +39,13 @@ export function Topbar() {
   }, []);
 
   async function handleLogout() {
-    await logout();
-    router.push('/login');
+    try {
+      await logout();
+    } catch {
+      // Ignore errors during logout
+    } finally {
+      router.push('/login');
+    }
   }
 
   const displayName = user

@@ -59,4 +59,8 @@ export const API_PATHS = {
     VERSIONS: (schemaSlug: string, entryId: string) =>
       `/api/v1/content/${schemaSlug}/${entryId}/versions`,
   },
+  AUDIT_LOGS: {
+    BASE: '/api/v1/audit-logs',
+    BY_ID: (id: string) => `/api/v1/audit-logs/${id}`,
+  },
 } as const;
