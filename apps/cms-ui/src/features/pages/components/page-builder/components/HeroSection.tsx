@@ -1,4 +1,4 @@
-import { forwardRef, useLayoutEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
 import { usePageBuilderStore, HERO_DEFAULTS } from '../stores/pageBuilderStore';
 
 interface HeroSectionProps {
@@ -9,6 +9,15 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
   (props, ref) => {
     const id = props.componentId ?? 'default';
     const s = usePageBuilderStore((state) => state.hero[id] ?? HERO_DEFAULTS);
+
+    const [isBuilder, setIsBuilder] = useState(true);
+
+    useEffect(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        setIsBuilder(true);
+      }
+    }, [id]);
 
     // Initial Mount Sync: Load JSON data safely
     useLayoutEffect(() => {
@@ -57,55 +66,64 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <h1
+        <div
           style={{
-            fontSize: '2.5rem',
-            fontWeight: 800,
-            margin: '0 0 16px',
-            color: s.titleColor || '#ffffff',
-            lineHeight: 1.2,
-            maxWidth: '700px',
+            pointerEvents: isBuilder ? 'none' : 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: alignmentMap[s.alignment] || 'center',
           }}
         >
-          {s.title || 'Click to change title'}
-        </h1>
-        <p
-          style={{
-            fontSize: '1.125rem',
-            margin: '0 0 32px',
-            color: s.subtitleColor || '#e2e8f0',
-            maxWidth: '600px',
-            lineHeight: 1.6,
-          }}
-        >
-          {s.subtitle || 'Click to change subtitle'}
-        </p>
-        {s.showButton && (
-          <a
-            href={s.buttonUrl || '#'}
+          <h1
             style={{
-              display: 'inline-block',
-              padding: '14px 32px',
-              backgroundColor: s.buttonColor || '#ffffff',
-              color: s.buttonTextColor || '#1a202c',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '1rem',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = 'none';
+              fontSize: '2.5rem',
+              fontWeight: 800,
+              margin: '0 0 16px',
+              color: s.titleColor || '#ffffff',
+              lineHeight: 1.2,
+              maxWidth: '700px',
             }}
           >
-            {s.buttonText || 'Learn More'}
-          </a>
-        )}
+            {s.title || 'Click to change title'}
+          </h1>
+          <p
+            style={{
+              fontSize: '1.125rem',
+              margin: '0 0 32px',
+              color: s.subtitleColor || '#e2e8f0',
+              maxWidth: '600px',
+              lineHeight: 1.6,
+            }}
+          >
+            {s.subtitle || 'Click to change subtitle'}
+          </p>
+          {s.showButton && (
+            <a
+              href={s.buttonUrl || '#'}
+              style={{
+                display: 'inline-block',
+                padding: '14px 32px',
+                backgroundColor: s.buttonColor || '#ffffff',
+                color: s.buttonTextColor || '#1a202c',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontWeight: 600,
+                fontSize: '1rem',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              {s.buttonText || 'Learn More'}
+            </a>
+          )}
+        </div>
       </div>
     );
   },

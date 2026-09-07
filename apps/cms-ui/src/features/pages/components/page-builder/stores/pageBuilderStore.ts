@@ -51,59 +51,191 @@ export interface CtaBannerSettings {
   showButton: boolean;
 }
 
-export interface TestimonialSettings {
-  quote: string;
-  authorName: string;
-  authorRole: string;
-  authorCompany: string;
-  authorImageUrl: string;
-  rating: 1 | 2 | 3 | 4 | 5;
+export interface SearchBarSettings {
+  placeholder: string;
+  buttonText: string;
   backgroundColor: string;
-  quoteColor: string;
-  authorColor: string;
-  roleColor: string;
-  showRating: boolean;
-  starColor: string;
-  borderRadius: number;
-}
-
-export interface PricingPlan {
-  name: string;
-  price: string;
-  period: string;
-  features: string[];
-  highlighted: boolean;
-}
-
-export interface PricingTableSettings {
-  title: string;
-  subtitle: string;
-  plans: PricingPlan[];
-  backgroundColor: string;
-  titleColor: string;
-  subtitleColor: string;
-  highlightedPlanColor: string;
+  textColor: string;
   buttonColor: string;
   buttonTextColor: string;
-  cardBorderRadius: number;
+  showButton: boolean;
+  borderRadius: number;
+  iconColor: string;
+  alignment: 'left' | 'center' | 'right';
+  maxWidth: string;
 }
 
-export interface FaqItem {
+export interface ContactFormSettings {
+  title: string;
+  subtitle: string;
+  showName: boolean;
+  showPhone: boolean;
+  showCompany: boolean;
+  buttonText: string;
+  backgroundColor: string;
+  textColor: string;
+  inputBackgroundColor: string;
+  inputBorderColor: string;
+  buttonColor: string;
+  buttonTextColor: string;
+  alignment: 'left' | 'center' | 'right';
+}
+
+export interface NewsletterFormSettings {
+  title: string;
+  subtitle: string;
+  placeholder: string;
+  buttonText: string;
+  backgroundColor: string;
+  textColor: string;
+  inputBackgroundColor: string;
+  inputBorderColor: string;
+  buttonColor: string;
+  buttonTextColor: string;
+  alignment: 'left' | 'center' | 'right';
+  layout: 'inline' | 'stacked';
+}
+
+export interface DynamicFormField {
+  id: string;
+  type: 'text' | 'email' | 'textarea' | 'select' | 'checkbox' | 'radio';
+  label: string;
+  placeholder?: string;
+  required: boolean;
+  options?: string[]; // Used for select, radio, checkbox
+}
+
+export interface DynamicFormSettings {
+  title: string;
+  subtitle: string;
+  fields: DynamicFormField[];
+  buttonText: string;
+  backgroundColor: string;
+  textColor: string;
+  inputBackgroundColor: string;
+  inputBorderColor: string;
+  buttonColor: string;
+  buttonTextColor: string;
+  alignment: 'left' | 'center' | 'right';
+}
+
+export interface NavbarLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export interface NavbarSettings {
+  brandText: string;
+  links: NavbarLink[];
+  ctaText: string;
+  ctaUrl: string;
+  backgroundColor: string;
+  textColor: string;
+  ctaButtonColor: string;
+  ctaButtonTextColor: string;
+  layout: 'left' | 'center' | 'right';
+  isSticky: boolean;
+}
+
+export interface FooterSettings {
+  brandText: string;
+  description: string;
+  copyrightText: string;
+  links: NavbarLink[]; // Reusing NavbarLink since it has id, label, url
+  backgroundColor: string;
+  textColor: string;
+  dividerColor: string;
+}
+
+export interface VideoItem {
+  id: string;
+  url: string;
+  title: string;
+  description: string;
+}
+
+export interface VideoShowcaseSettings {
+  layout: 'single' | 'grid' | 'hero';
+  videos: VideoItem[];
+  backgroundColor: string;
+  textColor: string;
+  overlayOpacity: number; // For hero layout
+}
+
+export interface ImageItem {
+  id: string;
+  url: string;
+  alt: string;
+  caption: string;
+}
+
+export interface ImageShowcaseSettings {
+  layout: 'grid' | 'masonry' | 'slider' | 'hero';
+  images: ImageItem[];
+  backgroundColor: string;
+  textColor: string;
+  borderRadius: number;
+  gap: number;
+  overlayOpacity: number; // For hero layout
+}
+
+export interface ReviewItem {
+  id: string;
+  name: string;
+  role: string;
+  quote: string;
+  avatar: string;
+  rating: number; // 1-5
+}
+
+export interface TestimonialSettings {
+  layout: 'grid' | 'slider';
+  reviews: ReviewItem[];
+  backgroundColor: string;
+  textColor: string;
+  cardColor: string;
+}
+
+export interface PricingFeature {
+  id: string;
+  text: string;
+  included: boolean;
+}
+
+export interface PricingTier {
+  id: string;
+  name: string;
+  price: string;
+  cycle: string; // e.g., "/month"
+  description: string;
+  features: PricingFeature[];
+  buttonText: string;
+  buttonUrl: string;
+  isPopular: boolean;
+}
+
+export interface PricingSettings {
+  tiers: PricingTier[];
+  backgroundColor: string;
+  textColor: string;
+  cardColor: string;
+  accentColor: string;
+}
+
+export interface FAQItem {
+  id: string;
   question: string;
   answer: string;
 }
 
-export interface FaqAccordionSettings {
+export interface FAQSettings {
   title: string;
-  subtitle: string;
-  items: FaqItem[];
+  description: string;
+  items: FAQItem[];
   backgroundColor: string;
-  titleColor: string;
-  subtitleColor: string;
-  questionColor: string;
-  answerColor: string;
-  borderColor: string;
-  activeColor: string;
+  textColor: string;
+  accordionColor: string;
 }
 
 // ─── Default Values ───
@@ -168,94 +300,393 @@ export const CTA_BANNER_DEFAULTS: CtaBannerSettings = {
   showButton: true,
 };
 
-export const TESTIMONIAL_DEFAULTS: TestimonialSettings = {
-  quote: '"This product has transformed how we work. Highly recommended!"',
-  authorName: 'John Doe',
-  authorRole: 'CEO',
-  authorCompany: 'Tech Corp',
-  authorImageUrl: '',
-  rating: 5,
-  backgroundColor: '#f7fafc',
-  quoteColor: '#2d3748',
-  authorColor: '#1a202c',
-  roleColor: '#718096',
-  showRating: true,
-  starColor: '#f6ad55',
-  borderRadius: 16,
+export interface EmbedCodeSettings {
+  htmlContent: string;
+}
+
+export interface StatItem {
+  id: string;
+  value: string;
+  label: string;
+  prefix: string;
+  suffix: string;
+}
+
+export interface StatCounterSettings {
+  items: StatItem[];
+  backgroundColor: string;
+  textColor: string;
+  valueColor: string;
+}
+
+export interface TabItem {
+  id: string;
+  title: string;
+  content: string;
+}
+
+export interface TabsSettings {
+  items: TabItem[];
+  backgroundColor: string;
+  textColor: string;
+  activeColor: string;
+  inactiveColor: string;
+}
+
+export interface SocialShareSettings {
+  layout: 'icons' | 'buttons';
+  platforms: {
+    twitter: string;
+    linkedin: string;
+    facebook: string;
+    instagram: string;
+  };
+  alignment: 'left' | 'center' | 'right';
+  iconColor: string;
+  hoverColor: string;
+}
+
+export interface ButtonItem {
+  id: string;
+  text: string;
+  url: string;
+  variant: 'solid' | 'outline' | 'ghost';
+  color: string;
+}
+
+export interface ButtonGroupSettings {
+  buttons: ButtonItem[];
+  alignment: 'left' | 'center' | 'right';
+  layout: 'row' | 'column';
+  gap: number;
+}
+
+export interface CountdownSettings {
+  targetDate: string; // ISO string
+  labelDays: string;
+  labelHours: string;
+  labelMinutes: string;
+  labelSeconds: string;
+  backgroundColor: string;
+  textColor: string;
+  numberColor: string;
+}
+
+export interface MapEmbedSettings {
+  address: string;
+  height: number;
+  zoom: number;
+}
+
+export const EMBED_CODE_DEFAULTS: EmbedCodeSettings = {
+  htmlContent:
+    '<div style="padding: 20px; text-align: center; border: 2px dashed #ccc;">Paste your HTML/iframe here</div>',
 };
 
-export const PRICING_TABLE_DEFAULTS: PricingTableSettings = {
-  title: 'Simple, Transparent Pricing',
-  subtitle: 'Choose the plan that fits your needs',
-  plans: [
-    {
-      name: 'Basic',
-      price: '$9',
-      period: '/month',
-      features: ['5 Pages', 'Basic Analytics', 'Email Support'],
-      highlighted: false,
-    },
-    {
-      name: 'Pro',
-      price: '$29',
-      period: '/month',
-      features: [
-        'Unlimited Pages',
-        'Advanced Analytics',
-        'Priority Support',
-        'Custom Domains',
-      ],
-      highlighted: true,
-    },
-    {
-      name: 'Enterprise',
-      price: '$99',
-      period: '/month',
-      features: [
-        'Everything in Pro',
-        'Dedicated Account Manager',
-        'Custom Integrations',
-        'SLA',
-      ],
-      highlighted: false,
-    },
+export const STAT_COUNTER_DEFAULTS: StatCounterSettings = {
+  items: [
+    { id: '1', value: '10', label: 'Users', prefix: '', suffix: 'M+' },
+    { id: '2', value: '99.9', label: 'Uptime', prefix: '', suffix: '%' },
+    { id: '3', value: '50', label: 'Awards', prefix: '', suffix: '+' },
   ],
   backgroundColor: '#ffffff',
-  titleColor: '#1a202c',
-  subtitleColor: '#718096',
-  highlightedPlanColor: '#667eea',
-  buttonColor: '#667eea',
-  buttonTextColor: '#ffffff',
-  cardBorderRadius: 12,
+  textColor: '#4b5563',
+  valueColor: '#111827',
 };
 
-export const FAQ_DEFAULTS: FaqAccordionSettings = {
-  title: 'Frequently Asked Questions',
-  subtitle: 'Got questions? We have answers',
+export const TABS_DEFAULTS: TabsSettings = {
   items: [
     {
-      question: 'How do I get started?',
-      answer:
-        'Simply sign up for an account and start building your pages with our intuitive drag-and-drop editor.',
+      id: '1',
+      title: 'Tab 1',
+      content:
+        'This is the content for Tab 1. You can edit this text in the settings panel.',
     },
     {
-      question: 'Can I use my own domain?',
-      answer:
-        'Yes! You can connect any custom domain to your pages on our Pro and Enterprise plans.',
-    },
-    {
-      question: 'Is there a free trial?',
-      answer:
-        'Yes, we offer a 14-day free trial on all plans. No credit card required.',
+      id: '2',
+      title: 'Tab 2',
+      content:
+        'This is the content for Tab 2. Tabs are a great way to organize dense information.',
     },
   ],
   backgroundColor: '#ffffff',
-  titleColor: '#1a202c',
-  subtitleColor: '#718096',
-  questionColor: '#2d3748',
-  answerColor: '#4a5568',
-  borderColor: '#e2e8f0',
-  activeColor: '#667eea',
+  textColor: '#4b5563',
+  activeColor: '#2563eb',
+  inactiveColor: '#e5e7eb',
+};
+
+export const SOCIAL_SHARE_DEFAULTS: SocialShareSettings = {
+  layout: 'icons',
+  platforms: {
+    twitter: 'https://twitter.com',
+    linkedin: 'https://linkedin.com',
+    facebook: '',
+    instagram: '',
+  },
+  alignment: 'center',
+  iconColor: '#4b5563',
+  hoverColor: '#2563eb',
+};
+
+export const BUTTON_GROUP_DEFAULTS: ButtonGroupSettings = {
+  buttons: [
+    {
+      id: '1',
+      text: 'Primary Action',
+      url: '#',
+      variant: 'solid',
+      color: '#2563eb',
+    },
+    {
+      id: '2',
+      text: 'Secondary',
+      url: '#',
+      variant: 'outline',
+      color: '#4b5563',
+    },
+  ],
+  alignment: 'center',
+  layout: 'row',
+  gap: 16,
+};
+
+export const COUNTDOWN_DEFAULTS: CountdownSettings = {
+  targetDate: new Date(Date.now() + 86400000 * 7).toISOString(), // 7 days from now
+  labelDays: 'Days',
+  labelHours: 'Hours',
+  labelMinutes: 'Minutes',
+  labelSeconds: 'Seconds',
+  backgroundColor: '#ffffff',
+  textColor: '#4b5563',
+  numberColor: '#111827',
+};
+
+export const MAP_EMBED_DEFAULTS: MapEmbedSettings = {
+  address: '1600 Amphitheatre Parkway, Mountain View, CA',
+  height: 400,
+  zoom: 14,
+};
+
+export const SEARCH_BAR_DEFAULTS: SearchBarSettings = {
+  placeholder: 'Search for anything...',
+  buttonText: 'Search',
+  backgroundColor: '#ffffff',
+  textColor: '#1a202c',
+  buttonColor: '#667eea',
+  buttonTextColor: '#ffffff',
+  showButton: true,
+  borderRadius: 8,
+  iconColor: '#a0aec0',
+  alignment: 'center',
+  maxWidth: '600px',
+};
+
+export const CONTACT_FORM_DEFAULTS: ContactFormSettings = {
+  title: 'Contact Us',
+  subtitle: 'We would love to hear from you. Fill out the form below.',
+  showName: true,
+  showPhone: false,
+  showCompany: false,
+  buttonText: 'Send Message',
+  backgroundColor: '#ffffff',
+  textColor: '#1a202c',
+  inputBackgroundColor: '#f7fafc',
+  inputBorderColor: '#e2e8f0',
+  buttonColor: '#667eea',
+  buttonTextColor: '#ffffff',
+  alignment: 'center',
+};
+
+export const NEWSLETTER_FORM_DEFAULTS: NewsletterFormSettings = {
+  title: 'Subscribe to our Newsletter',
+  subtitle: 'Get the latest news and updates right to your inbox.',
+  placeholder: 'Enter your email address',
+  buttonText: 'Subscribe',
+  backgroundColor: '#f7fafc',
+  textColor: '#1a202c',
+  inputBackgroundColor: '#ffffff',
+  inputBorderColor: '#e2e8f0',
+  buttonColor: '#667eea',
+  buttonTextColor: '#ffffff',
+  alignment: 'center',
+  layout: 'inline',
+};
+
+export const DYNAMIC_FORM_DEFAULTS: DynamicFormSettings = {
+  title: 'Custom Form',
+  subtitle: 'Please fill out this form.',
+  fields: [],
+  buttonText: 'Submit',
+  backgroundColor: '#ffffff',
+  textColor: '#1a202c',
+  inputBackgroundColor: '#f7fafc',
+  inputBorderColor: '#e2e8f0',
+  buttonColor: '#667eea',
+  buttonTextColor: '#ffffff',
+  alignment: 'center',
+};
+
+export const NAVBAR_DEFAULTS: NavbarSettings = {
+  brandText: 'MyBrand',
+  links: [
+    { id: '1', label: 'Home', url: '#' },
+    { id: '2', label: 'About', url: '#about' },
+    { id: '3', label: 'Contact', url: '#contact' },
+  ],
+  ctaText: 'Get Started',
+  ctaUrl: '#',
+  backgroundColor: '#ffffff',
+  textColor: '#1a202c',
+  ctaButtonColor: '#2563eb',
+  ctaButtonTextColor: '#ffffff',
+  layout: 'right',
+  isSticky: true,
+};
+
+export const FOOTER_DEFAULTS: FooterSettings = {
+  brandText: 'MyBrand',
+  description: 'Building the future of web design, one block at a time.',
+  copyrightText: '© 2026 MyBrand. All rights reserved.',
+  links: [
+    { id: '1', label: 'Privacy Policy', url: '#' },
+    { id: '2', label: 'Terms of Service', url: '#' },
+    { id: '3', label: 'Contact Us', url: '#' },
+  ],
+  backgroundColor: '#111827',
+  textColor: '#f9fafb',
+  dividerColor: '#374151',
+};
+
+export const VIDEO_SHOWCASE_DEFAULTS: VideoShowcaseSettings = {
+  layout: 'single',
+  videos: [
+    {
+      id: '1',
+      url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+      title: 'Sample Video',
+      description: 'This is a placeholder video description.',
+    },
+  ],
+  backgroundColor: '#ffffff',
+  textColor: '#1a202c',
+  overlayOpacity: 0.5,
+};
+
+export const IMAGE_SHOWCASE_DEFAULTS: ImageShowcaseSettings = {
+  layout: 'grid',
+  images: [
+    {
+      id: '1',
+      url: 'https://images.unsplash.com/photo-1506744626753-dba37c2ade9a?w=800&auto=format&fit=crop&q=60',
+      alt: 'Beautiful landscape',
+      caption: 'Mountain View',
+    },
+    {
+      id: '2',
+      url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&auto=format&fit=crop&q=60',
+      alt: 'Scenic valley',
+      caption: 'Green Valley',
+    },
+    {
+      id: '3',
+      url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&auto=format&fit=crop&q=60',
+      alt: 'Nature hike',
+      caption: 'Forest Trail',
+    },
+  ],
+  backgroundColor: '#ffffff',
+  textColor: '#1a202c',
+  borderRadius: 8,
+  gap: 16,
+  overlayOpacity: 0.4,
+};
+
+export const TESTIMONIAL_DEFAULTS: TestimonialSettings = {
+  layout: 'grid',
+  reviews: [
+    {
+      id: '1',
+      name: 'Sarah Jenkins',
+      role: 'CEO at TechCorp',
+      quote:
+        'This platform completely transformed the way we build pages. Highly recommended!',
+      avatar: 'https://i.pravatar.cc/150?u=sarah',
+      rating: 5,
+    },
+    {
+      id: '2',
+      name: 'David Chen',
+      role: 'Marketing Director',
+      quote:
+        'The ease of use and versatility is unmatched. It saved us hundreds of hours.',
+      avatar: 'https://i.pravatar.cc/150?u=david',
+      rating: 5,
+    },
+  ],
+  backgroundColor: '#f9fafb',
+  textColor: '#111827',
+  cardColor: '#ffffff',
+};
+
+export const PRICING_DEFAULTS: PricingSettings = {
+  tiers: [
+    {
+      id: '1',
+      name: 'Starter',
+      price: '$29',
+      cycle: '/month',
+      description: 'Perfect for small teams getting started.',
+      features: [
+        { id: 'f1', text: '1 Project', included: true },
+        { id: 'f2', text: 'Basic Analytics', included: true },
+        { id: 'f3', text: 'Priority Support', included: false },
+      ],
+      buttonText: 'Start Free Trial',
+      buttonUrl: '#',
+      isPopular: false,
+    },
+    {
+      id: '2',
+      name: 'Pro',
+      price: '$79',
+      cycle: '/month',
+      description: 'Everything you need to scale your business.',
+      features: [
+        { id: 'f1', text: 'Unlimited Projects', included: true },
+        { id: 'f2', text: 'Advanced Analytics', included: true },
+        { id: 'f3', text: 'Priority Support', included: true },
+      ],
+      buttonText: 'Get Started',
+      buttonUrl: '#',
+      isPopular: true,
+    },
+  ],
+  backgroundColor: '#ffffff',
+  textColor: '#111827',
+  cardColor: '#f9fafb',
+  accentColor: '#3b82f6',
+};
+
+export const FAQ_DEFAULTS: FAQSettings = {
+  title: 'Frequently Asked Questions',
+  description: 'Everything you need to know about our product and billing.',
+  items: [
+    {
+      id: '1',
+      question: 'Can I cancel my subscription at any time?',
+      answer:
+        'Yes, you can cancel your subscription at any time from your account settings. You will still have access to the platform until the end of your current billing period.',
+    },
+    {
+      id: '2',
+      question: 'Do you offer a free trial?',
+      answer:
+        'Yes! We offer a 14-day free trial on all plans. No credit card is required to sign up and start building.',
+    },
+  ],
+  backgroundColor: '#ffffff',
+  textColor: '#111827',
+  accordionColor: '#f9fafb',
 };
 
 // ─── Store Types ───
@@ -264,9 +695,24 @@ interface ComponentState {
   hero: Record<string, HeroSettings>;
   featureGrid: Record<string, FeatureGridSettings>;
   ctaBanner: Record<string, CtaBannerSettings>;
-  testimonial: Record<string, TestimonialSettings>;
-  pricingTable: Record<string, PricingTableSettings>;
-  faq: Record<string, FaqAccordionSettings>;
+  searchBar: Record<string, SearchBarSettings>;
+  contactForm: Record<string, ContactFormSettings>;
+  newsletterForm: Record<string, NewsletterFormSettings>;
+  dynamicForm: Record<string, DynamicFormSettings>;
+  navbar: Record<string, NavbarSettings>;
+  footer: Record<string, FooterSettings>;
+  videoShowcase: Record<string, VideoShowcaseSettings>;
+  imageShowcase: Record<string, ImageShowcaseSettings>;
+  testimonials: Record<string, TestimonialSettings>;
+  pricing: Record<string, PricingSettings>;
+  faq: Record<string, FAQSettings>;
+  embedCode: Record<string, EmbedCodeSettings>;
+  statCounter: Record<string, StatCounterSettings>;
+  tabs: Record<string, TabsSettings>;
+  socialShare: Record<string, SocialShareSettings>;
+  buttonGroup: Record<string, ButtonGroupSettings>;
+  countdown: Record<string, CountdownSettings>;
+  mapEmbed: Record<string, MapEmbedSettings>;
 }
 
 interface ComponentActions {
@@ -283,16 +729,71 @@ interface ComponentActions {
   clearCtaBanner: (id: string) => void;
 
   // Testimonial
-  setTestimonial: (id: string, patch: Partial<TestimonialSettings>) => void;
   clearTestimonial: (id: string) => void;
 
   // Pricing Table
-  setPricingTable: (id: string, patch: Partial<PricingTableSettings>) => void;
-  clearPricingTable: (id: string) => void;
 
   // FAQ
-  setFaq: (id: string, patch: Partial<FaqAccordionSettings>) => void;
-  clearFaq: (id: string) => void;
+
+  setEmbedCode: (id: string, patch: Partial<EmbedCodeSettings>) => void;
+  clearEmbedCode: (id: string) => void;
+  setStatCounter: (id: string, patch: Partial<StatCounterSettings>) => void;
+  clearStatCounter: (id: string) => void;
+  setTabs: (id: string, patch: Partial<TabsSettings>) => void;
+  clearTabs: (id: string) => void;
+  setSocialShare: (id: string, patch: Partial<SocialShareSettings>) => void;
+  clearSocialShare: (id: string) => void;
+  setButtonGroup: (id: string, patch: Partial<ButtonGroupSettings>) => void;
+  clearButtonGroup: (id: string) => void;
+  setCountdown: (id: string, patch: Partial<CountdownSettings>) => void;
+  clearCountdown: (id: string) => void;
+  setMapEmbed: (id: string, patch: Partial<MapEmbedSettings>) => void;
+  clearMapEmbed: (id: string) => void;
+
+  // Search Bar
+  setSearchBar: (id: string, patch: Partial<SearchBarSettings>) => void;
+  clearSearchBar: (id: string) => void;
+
+  // Contact Form
+  setContactForm: (id: string, patch: Partial<ContactFormSettings>) => void;
+  clearContactForm: (id: string) => void;
+
+  // Newsletter Form
+  setNewsletterForm: (
+    id: string,
+    patch: Partial<NewsletterFormSettings>,
+  ) => void;
+  clearNewsletterForm: (id: string) => void;
+
+  // Dynamic Form
+  setDynamicForm: (id: string, patch: Partial<DynamicFormSettings>) => void;
+  clearDynamicForm: (id: string) => void;
+
+  // Navbar
+  setNavbar: (id: string, patch: Partial<NavbarSettings>) => void;
+  clearNavbar: (id: string) => void;
+
+  // Footer
+  setFooter: (id: string, patch: Partial<FooterSettings>) => void;
+  clearFooter: (id: string) => void;
+
+  // Video Showcase
+  setVideoShowcase: (id: string, patch: Partial<VideoShowcaseSettings>) => void;
+  clearVideoShowcase: (id: string) => void;
+
+  // Image Showcase
+  setImageShowcase: (id: string, patch: Partial<ImageShowcaseSettings>) => void;
+  clearImageShowcase: (id: string) => void;
+
+  // Testimonials
+  setTestimonial: (id: string, patch: Partial<TestimonialSettings>) => void;
+  // Pricing
+  setPricing: (id: string, patch: Partial<PricingSettings>) => void;
+  clearPricing: (id: string) => void;
+
+  // FAQ
+  setFAQ: (id: string, patch: Partial<FAQSettings>) => void;
+  clearFAQ: (id: string) => void;
 
   // Reset entirely
   resetStore: () => void;
@@ -307,9 +808,24 @@ export const usePageBuilderStore = create<PageBuilderStore>((set) => ({
   hero: {},
   featureGrid: {},
   ctaBanner: {},
-  testimonial: {},
-  pricingTable: {},
+  searchBar: {},
+  contactForm: {},
+  newsletterForm: {},
+  dynamicForm: {},
+  navbar: {},
+  footer: {},
+  videoShowcase: {},
+  imageShowcase: {},
+  testimonials: {},
+  pricing: {},
   faq: {},
+  embedCode: {},
+  statCounter: {},
+  tabs: {},
+  socialShare: {},
+  buttonGroup: {},
+  countdown: {},
+  mapEmbed: {},
 
   // Reset Entire Store
   resetStore: () =>
@@ -317,9 +833,19 @@ export const usePageBuilderStore = create<PageBuilderStore>((set) => ({
       hero: {},
       featureGrid: {},
       ctaBanner: {},
-      testimonial: {},
-      pricingTable: {},
       faq: {},
+      embedCode: {},
+      statCounter: {},
+      tabs: {},
+      socialShare: {},
+      buttonGroup: {},
+      countdown: {},
+      mapEmbed: {},
+
+      searchBar: {},
+      contactForm: {},
+      newsletterForm: {},
+      dynamicForm: {},
     }),
 
   // Hero
@@ -367,48 +893,272 @@ export const usePageBuilderStore = create<PageBuilderStore>((set) => ({
       return { ctaBanner };
     }),
 
-  // Testimonial
-  setTestimonial: (id, patch) =>
+  setEmbedCode: (id, patch) =>
     set((state) => ({
-      testimonial: {
-        ...state.testimonial,
-        [id]: { ...(state.testimonial[id] ?? TESTIMONIAL_DEFAULTS), ...patch },
+      embedCode: {
+        ...state.embedCode,
+        [id]: { ...(state.embedCode[id] ?? EMBED_CODE_DEFAULTS), ...patch },
       },
     })),
-  clearTestimonial: (id) =>
+  clearEmbedCode: (id) =>
     set((state) => {
-      const testimonial = { ...state.testimonial };
-      delete testimonial[id];
-      return { testimonial };
+      const embedCode = { ...state.embedCode };
+      delete embedCode[id];
+      return { embedCode };
     }),
 
-  // Pricing Table
-  setPricingTable: (id, patch) =>
+  setStatCounter: (id, patch) =>
     set((state) => ({
-      pricingTable: {
-        ...state.pricingTable,
+      statCounter: {
+        ...state.statCounter,
+        [id]: { ...(state.statCounter[id] ?? STAT_COUNTER_DEFAULTS), ...patch },
+      },
+    })),
+  clearStatCounter: (id) =>
+    set((state) => {
+      const statCounter = { ...state.statCounter };
+      delete statCounter[id];
+      return { statCounter };
+    }),
+
+  setTabs: (id, patch) =>
+    set((state) => ({
+      tabs: {
+        ...state.tabs,
+        [id]: { ...(state.tabs[id] ?? TABS_DEFAULTS), ...patch },
+      },
+    })),
+  clearTabs: (id) =>
+    set((state) => {
+      const tabs = { ...state.tabs };
+      delete tabs[id];
+      return { tabs };
+    }),
+
+  setSocialShare: (id, patch) =>
+    set((state) => ({
+      socialShare: {
+        ...state.socialShare,
+        [id]: { ...(state.socialShare[id] ?? SOCIAL_SHARE_DEFAULTS), ...patch },
+      },
+    })),
+  clearSocialShare: (id) =>
+    set((state) => {
+      const socialShare = { ...state.socialShare };
+      delete socialShare[id];
+      return { socialShare };
+    }),
+
+  setButtonGroup: (id, patch) =>
+    set((state) => ({
+      buttonGroup: {
+        ...state.buttonGroup,
+        [id]: { ...(state.buttonGroup[id] ?? BUTTON_GROUP_DEFAULTS), ...patch },
+      },
+    })),
+  clearButtonGroup: (id) =>
+    set((state) => {
+      const buttonGroup = { ...state.buttonGroup };
+      delete buttonGroup[id];
+      return { buttonGroup };
+    }),
+
+  setCountdown: (id, patch) =>
+    set((state) => ({
+      countdown: {
+        ...state.countdown,
+        [id]: { ...(state.countdown[id] ?? COUNTDOWN_DEFAULTS), ...patch },
+      },
+    })),
+  clearCountdown: (id) =>
+    set((state) => {
+      const countdown = { ...state.countdown };
+      delete countdown[id];
+      return { countdown };
+    }),
+
+  setMapEmbed: (id, patch) =>
+    set((state) => ({
+      mapEmbed: {
+        ...state.mapEmbed,
+        [id]: { ...(state.mapEmbed[id] ?? MAP_EMBED_DEFAULTS), ...patch },
+      },
+    })),
+  clearMapEmbed: (id) =>
+    set((state) => {
+      const mapEmbed = { ...state.mapEmbed };
+      delete mapEmbed[id];
+      return { mapEmbed };
+    }),
+
+  // Search Bar
+  setSearchBar: (id, patch) =>
+    set((state) => ({
+      searchBar: {
+        ...state.searchBar,
+        [id]: { ...(state.searchBar[id] ?? SEARCH_BAR_DEFAULTS), ...patch },
+      },
+    })),
+  clearSearchBar: (id) =>
+    set((state) => {
+      const searchBar = { ...state.searchBar };
+      delete searchBar[id];
+      return { searchBar };
+    }),
+
+  // Contact Form
+  setContactForm: (id, patch) =>
+    set((state) => ({
+      contactForm: {
+        ...state.contactForm,
+        [id]: { ...(state.contactForm[id] ?? CONTACT_FORM_DEFAULTS), ...patch },
+      },
+    })),
+  clearContactForm: (id) =>
+    set((state) => {
+      const contactForm = { ...state.contactForm };
+      delete contactForm[id];
+      return { contactForm };
+    }),
+
+  // Newsletter Form
+  setNewsletterForm: (id, patch) =>
+    set((state) => ({
+      newsletterForm: {
+        ...state.newsletterForm,
         [id]: {
-          ...(state.pricingTable[id] ?? PRICING_TABLE_DEFAULTS),
+          ...(state.newsletterForm[id] ?? NEWSLETTER_FORM_DEFAULTS),
           ...patch,
         },
       },
     })),
-  clearPricingTable: (id) =>
+  clearNewsletterForm: (id) =>
     set((state) => {
-      const pricingTable = { ...state.pricingTable };
-      delete pricingTable[id];
-      return { pricingTable };
+      const newsletterForm = { ...state.newsletterForm };
+      delete newsletterForm[id];
+      return { newsletterForm };
+    }),
+
+  // Dynamic Form
+  setDynamicForm: (id, patch) =>
+    set((state) => ({
+      dynamicForm: {
+        ...state.dynamicForm,
+        [id]: { ...(state.dynamicForm[id] ?? DYNAMIC_FORM_DEFAULTS), ...patch },
+      },
+    })),
+  clearDynamicForm: (id) =>
+    set((state) => {
+      const dynamicForm = { ...state.dynamicForm };
+      delete dynamicForm[id];
+      return { dynamicForm };
+    }),
+
+  // Navbar
+  setNavbar: (id, patch) =>
+    set((state) => ({
+      navbar: {
+        ...state.navbar,
+        [id]: { ...(state.navbar[id] ?? NAVBAR_DEFAULTS), ...patch },
+      },
+    })),
+  clearNavbar: (id) =>
+    set((state) => {
+      const navbar = { ...state.navbar };
+      delete navbar[id];
+      return { navbar };
+    }),
+
+  // Footer
+  setFooter: (id, patch) =>
+    set((state) => ({
+      footer: {
+        ...state.footer,
+        [id]: { ...(state.footer[id] ?? FOOTER_DEFAULTS), ...patch },
+      },
+    })),
+  clearFooter: (id) =>
+    set((state) => {
+      const footer = { ...state.footer };
+      delete footer[id];
+      return { footer };
+    }),
+
+  // Video Showcase
+  setVideoShowcase: (id, patch) =>
+    set((state) => ({
+      videoShowcase: {
+        ...state.videoShowcase,
+        [id]: {
+          ...(state.videoShowcase[id] ?? VIDEO_SHOWCASE_DEFAULTS),
+          ...patch,
+        },
+      },
+    })),
+  clearVideoShowcase: (id) =>
+    set((state) => {
+      const videoShowcase = { ...state.videoShowcase };
+      delete videoShowcase[id];
+      return { videoShowcase };
+    }),
+
+  // Image Showcase
+  setImageShowcase: (id, patch) =>
+    set((state) => ({
+      imageShowcase: {
+        ...state.imageShowcase,
+        [id]: {
+          ...(state.imageShowcase[id] ?? IMAGE_SHOWCASE_DEFAULTS),
+          ...patch,
+        },
+      },
+    })),
+  clearImageShowcase: (id) =>
+    set((state) => {
+      const imageShowcase = { ...state.imageShowcase };
+      delete imageShowcase[id];
+      return { imageShowcase };
+    }),
+
+  // Testimonials
+  setTestimonial: (id, patch) =>
+    set((state) => ({
+      testimonials: {
+        ...state.testimonials,
+        [id]: { ...(state.testimonials[id] ?? TESTIMONIAL_DEFAULTS), ...patch },
+      },
+    })),
+  clearTestimonial: (id) =>
+    set((state) => {
+      const testimonials = { ...state.testimonials };
+      delete testimonials[id];
+      return { testimonials };
+    }),
+
+  // Pricing
+  setPricing: (id, patch) =>
+    set((state) => ({
+      pricing: {
+        ...state.pricing,
+        [id]: { ...(state.pricing[id] ?? PRICING_DEFAULTS), ...patch },
+      },
+    })),
+  clearPricing: (id) =>
+    set((state) => {
+      const pricing = { ...state.pricing };
+      delete pricing[id];
+      return { pricing };
     }),
 
   // FAQ
-  setFaq: (id, patch) =>
+  setFAQ: (id, patch) =>
     set((state) => ({
       faq: {
         ...state.faq,
         [id]: { ...(state.faq[id] ?? FAQ_DEFAULTS), ...patch },
       },
     })),
-  clearFaq: (id) =>
+  clearFAQ: (id) =>
     set((state) => {
       const faq = { ...state.faq };
       delete faq[id];
@@ -424,9 +1174,25 @@ document.addEventListener('pb:component-removed', (e: Event) => {
   store.clearHero(componentId);
   store.clearFeatureGrid(componentId);
   store.clearCtaBanner(componentId);
+
+  store.clearEmbedCode(componentId);
+  store.clearStatCounter(componentId);
+  store.clearTabs(componentId);
+  store.clearSocialShare(componentId);
+  store.clearButtonGroup(componentId);
+  store.clearCountdown(componentId);
+  store.clearMapEmbed(componentId);
+  store.clearSearchBar(componentId);
+  store.clearContactForm(componentId);
+  store.clearNewsletterForm(componentId);
+  store.clearDynamicForm(componentId);
+  store.clearNavbar(componentId);
+  store.clearFooter(componentId);
+  store.clearVideoShowcase(componentId);
+  store.clearImageShowcase(componentId);
   store.clearTestimonial(componentId);
-  store.clearPricingTable(componentId);
-  store.clearFaq(componentId);
+  store.clearPricing(componentId);
+  store.clearFAQ(componentId);
 });
 
 // ─── Auto-save: trigger canvas state save on settings change ───

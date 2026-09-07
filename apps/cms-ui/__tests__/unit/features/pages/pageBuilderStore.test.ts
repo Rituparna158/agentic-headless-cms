@@ -11,8 +11,8 @@ describe('pageBuilderStore', () => {
     expect(state.hero).toEqual({});
     expect(state.featureGrid).toEqual({});
     expect(state.ctaBanner).toEqual({});
-    expect(state.testimonial).toEqual({});
-    expect(state.pricingTable).toEqual({});
+    expect(state.testimonials).toEqual({});
+    expect(state.pricing).toEqual({});
     expect(state.faq).toEqual({});
   });
 

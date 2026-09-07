@@ -1,4 +1,4 @@
-import { forwardRef, useLayoutEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
 import {
   usePageBuilderStore,
   CTA_BANNER_DEFAULTS,
@@ -13,6 +13,15 @@ const CtaBanner = forwardRef<HTMLDivElement, CtaBannerProps>((props, ref) => {
   const s = usePageBuilderStore(
     (state) => state.ctaBanner[id] ?? CTA_BANNER_DEFAULTS,
   );
+
+  const [isBuilder, setIsBuilder] = useState(true);
+
+  useEffect(() => {
+    const el = document.getElementById(id);
+    if (el) {
+      setIsBuilder(true);
+    }
+  }, [id]);
 
   useLayoutEffect(() => {
     const el = document.getElementById(id);
@@ -56,52 +65,61 @@ const CtaBanner = forwardRef<HTMLDivElement, CtaBannerProps>((props, ref) => {
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
-      <h2
+      <div
         style={{
-          fontSize: '2rem',
-          fontWeight: 700,
-          margin: '0 0 12px',
-          color: s.textColor,
+          pointerEvents: isBuilder ? 'none' : 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: alignmentMap[s.alignment],
         }}
       >
-        {s.title}
-      </h2>
-      <p
-        style={{
-          fontSize: '1.125rem',
-          margin: '0 0 32px',
-          opacity: 0.9,
-          maxWidth: '600px',
-        }}
-      >
-        {s.subtitle}
-      </p>
-      {s.showButton && (
-        <a
-          href={s.buttonUrl}
+        <h2
           style={{
-            display: 'inline-block',
-            padding: '14px 32px',
-            backgroundColor: s.buttonColor,
-            color: s.buttonTextColor,
-            borderRadius: '8px',
-            textDecoration: 'none',
-            fontWeight: 600,
-            fontSize: '1rem',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
+            fontSize: '2rem',
+            fontWeight: 700,
+            margin: '0 0 12px',
+            color: s.textColor,
           }}
         >
-          {s.buttonText}
-        </a>
-      )}
+          {s.title}
+        </h2>
+        <p
+          style={{
+            fontSize: '1.125rem',
+            margin: '0 0 32px',
+            opacity: 0.9,
+            maxWidth: '600px',
+          }}
+        >
+          {s.subtitle}
+        </p>
+        {s.showButton && (
+          <a
+            href={s.buttonUrl}
+            style={{
+              display: 'inline-block',
+              padding: '14px 32px',
+              backgroundColor: s.buttonColor,
+              color: s.buttonTextColor,
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            {s.buttonText}
+          </a>
+        )}
+      </div>
     </div>
   );
 });

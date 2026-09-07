@@ -1,19 +1,25 @@
-import { forwardRef, useLayoutEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
 import {
   usePageBuilderStore,
-  PRICING_TABLE_DEFAULTS,
+  PRICING_DEFAULTS,
 } from '../stores/pageBuilderStore';
 
-interface PricingTableProps {
+interface PricingProps {
   componentId: string;
 }
 
-const PricingTable = forwardRef<HTMLDivElement, PricingTableProps>(
+export const PricingTable = forwardRef<HTMLElement, PricingProps>(
   (props, ref) => {
-    const id = props.componentId ?? 'default';
+    const id = props.componentId ?? 'preview';
     const s = usePageBuilderStore(
-      (state) => state.pricingTable[id] ?? PRICING_TABLE_DEFAULTS,
+      (state) => state.pricing[id] ?? PRICING_DEFAULTS,
     );
+    const [isBuilder, setIsBuilder] = useState(true);
+
+    useEffect(() => {
+      const el = document.getElementById(id);
+      if (el) setIsBuilder(true);
+    }, [id]);
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);
@@ -21,9 +27,8 @@ const PricingTable = forwardRef<HTMLDivElement, PricingTableProps>(
       const saved = el.getAttribute('data-pb-settings');
       if (saved) {
         try {
-          const parsed = JSON.parse(saved);
-          usePageBuilderStore.getState().setPricingTable(id, parsed);
-        } catch {
+          usePageBuilderStore.getState().setPricing(id, JSON.parse(saved));
+        } catch (_e) {
           /* ignore */
         }
       }
@@ -31,84 +36,95 @@ const PricingTable = forwardRef<HTMLDivElement, PricingTableProps>(
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);
-      el?.setAttribute('data-pb-settings', JSON.stringify(s));
-    });
+      if (el) el.setAttribute('data-pb-settings', JSON.stringify(s));
+    }, [id, s]);
+
+    if (!s) return null;
+
+    const { tiers, backgroundColor, textColor, cardColor, accentColor } = s;
 
     return (
-      <div
+      <section
         ref={ref}
         id={id}
         data-pb-settings={JSON.stringify(s)}
         style={{
-          backgroundColor: s.backgroundColor,
-          padding: '64px 24px',
+          width: '100%',
+          backgroundColor,
+          padding: '80px 24px',
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div
+          style={{
+            maxWidth: '1280px',
+            margin: '0 auto',
+            pointerEvents: isBuilder ? 'none' : 'auto',
+          }}
+        >
+          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
             <h2
               style={{
-                fontSize: '2rem',
-                fontWeight: 700,
-                color: s.titleColor,
-                margin: '0 0 12px',
+                color: textColor,
+                fontSize: '2.5rem',
+                fontWeight: 800,
+                margin: '0 0 16px 0',
               }}
             >
-              {s.title}
+              Simple, transparent pricing
             </h2>
             <p
               style={{
+                color: textColor,
+                opacity: 0.8,
                 fontSize: '1.125rem',
-                color: s.subtitleColor,
                 margin: 0,
               }}
             >
-              {s.subtitle}
+              No hidden fees. No surprise charges.
             </p>
           </div>
 
-          {/* Plans */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${s.plans.length}, 1fr)`,
-              gap: '24px',
-              alignItems: 'start',
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '32px',
+              alignItems: 'stretch',
             }}
           >
-            {s.plans.map((plan, index) => (
+            {tiers.map((tier) => (
               <div
-                key={index}
+                key={tier.id}
                 style={{
-                  border: plan.highlighted
-                    ? `2px solid ${s.highlightedPlanColor}`
-                    : '1px solid #e2e8f0',
-                  borderRadius: `${s.cardBorderRadius}px`,
-                  padding: '32px 24px',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: cardColor,
+                  borderRadius: '16px',
+                  padding: '40px 32px',
+                  width: '100%',
+                  maxWidth: '360px',
+                  boxShadow: tier.isPopular
+                    ? `0 0 0 2px ${accentColor}, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)`
+                    : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                   position: 'relative',
-                  transform: plan.highlighted ? 'scale(1.05)' : 'scale(1)',
-                  boxShadow: plan.highlighted
-                    ? '0 8px 32px rgba(102, 126, 234, 0.2)'
-                    : '0 2px 8px rgba(0,0,0,0.04)',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  display: 'flex',
+                  flexDirection: 'column',
                 }}
               >
-                {plan.highlighted && (
+                {tier.isPopular && (
                   <div
                     style={{
                       position: 'absolute',
-                      top: '-12px',
+                      top: '-16px',
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      backgroundColor: s.highlightedPlanColor,
+                      backgroundColor: accentColor,
                       color: '#ffffff',
                       padding: '4px 16px',
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.875rem',
                       fontWeight: 600,
+                      letterSpacing: '0.05em',
                       textTransform: 'uppercase',
                     }}
                   >
@@ -118,38 +134,51 @@ const PricingTable = forwardRef<HTMLDivElement, PricingTableProps>(
 
                 <h3
                   style={{
+                    color: textColor,
                     fontSize: '1.25rem',
                     fontWeight: 600,
-                    color: s.titleColor,
-                    margin: '0 0 8px',
+                    margin: '0 0 8px 0',
                   }}
                 >
-                  {plan.name}
+                  {tier.name}
                 </h3>
-
+                <p
+                  style={{
+                    color: textColor,
+                    opacity: 0.7,
+                    fontSize: '0.875rem',
+                    minHeight: '40px',
+                    margin: '0 0 24px 0',
+                  }}
+                >
+                  {tier.description}
+                </p>
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'baseline',
-                    gap: '4px',
-                    marginBottom: '24px',
+                    marginBottom: '32px',
                   }}
                 >
                   <span
                     style={{
-                      fontSize: '2.5rem',
+                      color: textColor,
+                      fontSize: '3rem',
                       fontWeight: 800,
-                      color: plan.highlighted
-                        ? s.highlightedPlanColor
-                        : s.titleColor,
+                      letterSpacing: '-0.025em',
                     }}
                   >
-                    {plan.price}
+                    {tier.price}
                   </span>
                   <span
-                    style={{ fontSize: '0.875rem', color: s.subtitleColor }}
+                    style={{
+                      color: textColor,
+                      opacity: 0.7,
+                      fontSize: '1rem',
+                      marginLeft: '4px',
+                    }}
                   >
-                    {plan.period}
+                    {tier.cycle}
                   </span>
                 </div>
 
@@ -157,76 +186,88 @@ const PricingTable = forwardRef<HTMLDivElement, PricingTableProps>(
                   style={{
                     listStyle: 'none',
                     padding: 0,
-                    margin: '0 0 24px',
+                    margin: '0 0 32px 0',
+                    flexGrow: 1,
                   }}
                 >
-                  {plan.features.map((feature, fIndex) => (
+                  {tier.features.map((feature) => (
                     <li
-                      key={fIndex}
+                      key={feature.id}
                       style={{
-                        padding: '8px 0',
-                        borderBottom:
-                          fIndex < plan.features.length - 1
-                            ? '1px solid #f0f0f0'
-                            : 'none',
-                        fontSize: '0.9375rem',
-                        color: '#4a5568',
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
+                        alignItems: 'flex-start',
+                        marginBottom: '16px',
                       }}
                     >
-                      <span style={{ color: '#48bb78', fontWeight: 600 }}>
-                        ✓
+                      <svg
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          flexShrink: 0,
+                          marginRight: '12px',
+                          color: feature.included ? accentColor : '#9ca3af',
+                        }}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        {feature.included ? (
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        ) : (
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        )}
+                      </svg>
+                      <span
+                        style={{
+                          color: textColor,
+                          opacity: feature.included ? 1 : 0.5,
+                          fontSize: '0.95rem',
+                        }}
+                      >
+                        {feature.text}
                       </span>
-                      {feature}
                     </li>
                   ))}
                 </ul>
 
-                <button
+                <a
+                  href={tier.buttonUrl}
+                  onClick={(e) => isBuilder && e.preventDefault()}
                   style={{
+                    display: 'block',
                     width: '100%',
-                    padding: '12px 24px',
-                    backgroundColor: plan.highlighted
-                      ? s.highlightedPlanColor
+                    textAlign: 'center',
+                    backgroundColor: tier.isPopular
+                      ? accentColor
                       : 'transparent',
-                    color: plan.highlighted
-                      ? '#ffffff'
-                      : s.highlightedPlanColor,
-                    border: plan.highlighted
-                      ? 'none'
-                      : `2px solid ${s.highlightedPlanColor}`,
+                    color: tier.isPopular ? '#ffffff' : accentColor,
+                    border: `1px solid ${accentColor}`,
+                    padding: '12px 24px',
                     borderRadius: '8px',
+                    fontSize: '1rem',
                     fontWeight: 600,
-                    fontSize: '0.9375rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!plan.highlighted) {
-                      e.currentTarget.style.backgroundColor =
-                        s.highlightedPlanColor;
-                      e.currentTarget.style.color = '#ffffff';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!plan.highlighted) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = s.highlightedPlanColor;
-                    }
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
                   }}
                 >
-                  Get Started
-                </button>
+                  {tier.buttonText}
+                </a>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
     );
   },
 );
 
 PricingTable.displayName = 'PricingTable';
-export default PricingTable;

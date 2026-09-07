@@ -1,4 +1,4 @@
-import { forwardRef, useLayoutEffect } from 'react';
+import { forwardRef, useEffect, useLayoutEffect, useState } from 'react';
 import {
   usePageBuilderStore,
   FEATURE_GRID_DEFAULTS,
@@ -14,6 +14,15 @@ const FeatureGrid = forwardRef<HTMLDivElement, FeatureGridProps>(
     const s = usePageBuilderStore(
       (state) => state.featureGrid[id] ?? FEATURE_GRID_DEFAULTS,
     );
+
+    const [isBuilder, setIsBuilder] = useState(true);
+
+    useEffect(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        setIsBuilder(true);
+      }
+    }, [id]);
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);
@@ -51,7 +60,13 @@ const FeatureGrid = forwardRef<HTMLDivElement, FeatureGridProps>(
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            pointerEvents: isBuilder ? 'none' : 'auto',
+          }}
+        >
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <h2
