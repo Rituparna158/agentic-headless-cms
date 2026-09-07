@@ -105,7 +105,7 @@ describe('AuditLogTable', () => {
 
     renderComponent();
 
-    const searchInput = screen.getByPlaceholderText(/search by resource/i);
+    const searchInput = screen.getByRole('textbox');
 
     // Type non-matching term
     fireEvent.change(searchInput, { target: { value: 'non-matching-term' } });

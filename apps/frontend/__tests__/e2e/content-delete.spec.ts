@@ -3,7 +3,7 @@ import { API_PATHS } from '@/lib/constants/api-paths';
 import { test, expect } from '@playwright/test';
 import { BACKEND_URL } from './constants';
 
-test('content entries can be deleted from the list and from the edit view — neither asks for confirmation', async ({
+test('content entries can be deleted from the list and from the edit view', async ({
   page,
 }) => {
   const slug = `e2e-delete-${crypto.randomUUID()}`;
@@ -42,20 +42,22 @@ test('content entries can be deleted from the list and from the edit view — ne
 
   await page.goto(`/content/${slug}`);
 
-  // List-row delete: no ConfirmDialog, just refetches the list in place.
+  // List-row delete: opens actions dropdown, selects Delete, confirms in modal.
   const listRow = page.getByRole('row', { name: 'Delete From List' });
   await expect(listRow).toBeVisible();
-  await listRow.getByRole('button', { name: 'Delete', exact: true }).click();
+  await listRow.getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
+  await expect(page.getByText('Are you absolutely sure?')).toBeVisible();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(listRow).not.toBeVisible();
   await expect(
     page.getByRole('row', { name: 'Delete From Edit View' }),
   ).toBeVisible();
 
-  // Edit-view delete: no ConfirmDialog either, but it redirects back to the
-  // entry list afterward instead of refetching in place.
+  // Edit-view delete: redirects back to the entry list afterward.
   await page
     .getByRole('row', { name: 'Delete From Edit View' })
-    .getByRole('link', { name: 'Edit' })
+    .getByRole('link', { name: 'Delete From Edit View' })
     .click();
   await expect(
     page.getByRole('button', { name: 'Delete', exact: true }),

@@ -6,40 +6,37 @@ import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Button, Modal, Dropdown, DropdownItem } from '@repo/shared-ui';
-import { deleteSchema } from '@/lib/api/schemas';
-import type { SchemaRecord } from '@repo/types';
+import { deleteContentEntry } from '@/lib/api/content';
 import { useHasPermission } from '@/hooks/use-permissions';
 
-export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
+interface ContentEntryRowActionsProps {
+  schemaSlug: string;
+  schemaId: string;
+  entryId: string;
+  title?: string;
+}
+
+export function ContentEntryRowActions({
+  schemaSlug,
+  schemaId,
+  entryId,
+  title,
+}: ContentEntryRowActionsProps) {
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showForceDeleteDialog, setShowForceDeleteDialog] = useState(false);
 
-  const canDelete = useHasPermission('delete', schema.id);
+  const canDelete = useHasPermission('delete', schemaId);
 
   const deleteMutation = useMutation({
-    mutationFn: ({ id, force }: { id: string; force: boolean }) =>
-      deleteSchema(id, force),
+    mutationFn: () => deleteContentEntry(schemaSlug, entryId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['schemas'] });
+      queryClient.invalidateQueries({ queryKey: ['content', schemaSlug] });
       setShowDeleteDialog(false);
-      setShowForceDeleteDialog(false);
     },
     onError: (error: unknown) => {
-      const err = error as { status?: number; message?: string };
-      if (
-        err?.status === 409 ||
-        err?.message?.toLowerCase().includes('conflict') ||
-        err?.message?.includes('FOREIGN_KEY_VIOLATION') ||
-        err?.message?.includes('constraint')
-      ) {
-        setShowDeleteDialog(false);
-        setShowForceDeleteDialog(true);
-      } else {
-        console.error('Failed to delete schema:', error);
-        alert('Failed to delete schema. Please try again.');
-        setShowDeleteDialog(false);
-      }
+      console.error('Failed to delete content entry:', error);
+      alert('Failed to delete entry. Please try again.');
+      setShowDeleteDialog(false);
     },
   });
 
@@ -56,7 +53,7 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
       >
         <DropdownItem asChild>
           <Link
-            href={`/content-types/${schema.slug}/edit`}
+            href={`/content/${schemaSlug}/${entryId}`}
             className="flex items-center no-underline w-full cursor-pointer"
           >
             <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -86,30 +83,13 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
         title="Are you absolutely sure?"
         confirmText={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
         cancelText="Cancel"
-        onConfirm={() => deleteMutation.mutate({ id: schema.id, force: false })}
+        onConfirm={() => deleteMutation.mutate()}
         onCancel={() => setShowDeleteDialog(false)}
       >
         <div className="text-sm text-muted-foreground py-4 wrap-break-word">
-          This will permanently delete the <strong>{schema.name}</strong>{' '}
-          content type.
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={showForceDeleteDialog}
-        onClose={() => setShowForceDeleteDialog(false)}
-        title="Content Type Has Existing Entries"
-        confirmText={
-          deleteMutation.isPending ? 'Deleting...' : 'Force Delete All'
-        }
-        cancelText="Cancel"
-        onConfirm={() => deleteMutation.mutate({ id: schema.id, force: true })}
-        onCancel={() => setShowForceDeleteDialog(false)}
-      >
-        <div className="text-sm text-muted-foreground py-4">
-          The <strong>{schema.name}</strong> content type has existing content
-          entries. Are you sure you want to delete this content type{' '}
-          <strong>AND all of its content</strong>? This action cannot be undone.
+          This will permanently delete{' '}
+          {title ? <strong>{title}</strong> : 'this entry'}. This action cannot
+          be undone.
         </div>
       </Modal>
     </>

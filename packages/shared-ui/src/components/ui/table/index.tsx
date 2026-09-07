@@ -1,3 +1,28 @@
+/**
+ * AdvancedTable Component
+ *
+ * A configurable data-table component with sorting, filtering, and pagination.
+ * Data and columns are required props; behavior is controlled via flags.
+ *
+ * Features:
+ * - Headers, rows, and columns driven entirely by props
+ * - Striped and alternating row colors
+ * - Clickable, sortable column headers with visual sort indicators (↑ / ↓)
+ * - Client-side sorting with direction toggle (numeric columns sorted numerically)
+ * - Pagination controls (first, previous, numbered pages, next, last)
+ * - Rows-per-page selector with live updates
+ * - Total count and page range display
+ * - Filter input above the table with real-time filtering
+ * - Clear filter button
+ * - Highlighting of matching content in filtered rows
+ *
+ * The component is optimized with `useMemo`, `useCallback`, and small memoized
+ * subcomponents to reduce unnecessary re-renders.
+ *
+ * @file index.tsx
+ * @component AdvancedTable
+ */
+
 'use client';
 
 import type React from 'react';

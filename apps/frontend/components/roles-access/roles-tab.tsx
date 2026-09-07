@@ -286,7 +286,7 @@ function RoleDetails({
             rows={schemas.map((schema) => ({
               type: schema.name,
               read: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'read')}
                     onChange={() => onTogglePermission(schema.id, 'read')}
@@ -294,7 +294,7 @@ function RoleDetails({
                 </div>
               ),
               create: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'create')}
                     onChange={() => onTogglePermission(schema.id, 'create')}
@@ -302,7 +302,7 @@ function RoleDetails({
                 </div>
               ),
               update: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'update')}
                     onChange={() => onTogglePermission(schema.id, 'update')}
@@ -310,7 +310,7 @@ function RoleDetails({
                 </div>
               ),
               delete: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'delete')}
                     onChange={() => onTogglePermission(schema.id, 'delete')}
@@ -318,7 +318,7 @@ function RoleDetails({
                 </div>
               ),
               publish: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'publish')}
                     onChange={() => onTogglePermission(schema.id, 'publish')}
