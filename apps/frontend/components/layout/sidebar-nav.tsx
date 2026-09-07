@@ -17,7 +17,7 @@ import {
   secondaryNavItems,
 } from '@/components/layout/nav-items';
 import { listSchemas } from '@/lib/api/schemas';
-import { ScrollArea } from '@repo/shared-ui';
+import { Badge, ScrollArea } from '@repo/shared-ui';
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -70,9 +70,13 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             {item.label}
           </span>
           {item.disabledBadge ? (
-            <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border/40">
+            <Badge
+              variant="outline"
+              size="sm"
+              className="text-[10px] uppercase font-semibold tracking-wider"
+            >
               {item.disabledBadge}
-            </span>
+            </Badge>
           ) : null}
         </div>
       );
@@ -111,9 +115,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             </Link>
             <div className="flex items-center gap-1.5">
               {schemas.length > 0 && (
-                <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-xs font-normal">
+                <Badge variant="secondary" size="sm" className="font-normal">
                   {schemas.length}
-                </span>
+                </Badge>
               )}
               <button
                 type="button"
@@ -230,9 +234,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           {item.label}
         </span>
         {item.badge ? (
-          <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-xs">
+          <Badge variant="default" size="sm">
             {item.badge}
-          </span>
+          </Badge>
         ) : null}
       </Link>
     );

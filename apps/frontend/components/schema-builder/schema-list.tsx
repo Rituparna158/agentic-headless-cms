@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import Link from 'next/link';
 import { listSchemas } from '@/lib/api/schemas';
-import { Card, CardContent, DataTable } from '@repo/shared-ui';
+import { Badge, Card, CardContent, DataTable } from '@repo/shared-ui';
 import { SchemaRowActions } from './schema-row-actions';
 
 export function SchemaList() {
@@ -75,9 +75,9 @@ export function SchemaList() {
           ),
           slug: <span className="text-muted-foreground">{schema.slug}</span>,
           type: (
-            <span className="text-muted-foreground capitalize">
+            <Badge variant="outline" size="sm" className="capitalize">
               {schema.type}
-            </span>
+            </Badge>
           ),
           fields: (
             <span className="text-muted-foreground">
