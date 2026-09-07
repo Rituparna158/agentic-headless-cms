@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { LayersIcon, PlusIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
-import { Button, Card, CardContent } from '@repo/shared-ui';
+import { Badge, Button, Card, CardContent } from '@repo/shared-ui';
 import { ContentEntryList } from './content-entry-list';
 
 export function ContentEntriesView() {
@@ -90,9 +90,9 @@ export function ContentEntriesView() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold">{activeSchema.name}</h1>
-            <span className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-xs font-medium">
+            <Badge variant="outline" size="sm" className="font-mono">
               {activeSchema.slug}
-            </span>
+            </Badge>
           </div>
           <p className="text-muted-foreground text-xs mt-1">
             Managing entries for content type &quot;{activeSchema.name}&quot; (
