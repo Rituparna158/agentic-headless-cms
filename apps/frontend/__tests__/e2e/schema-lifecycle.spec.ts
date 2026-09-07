@@ -53,7 +53,7 @@ test('admin can create a schema with two fields and reorder them via drag-and-dr
   await expect(rowNames).toHaveText(['Beta Field', 'Alpha Field']);
 
   await page
-    .getByRole('button', { name: 'Create schema', exact: true })
+    .getByRole('button', { name: 'Create Content Type', exact: true })
     .click();
 
   await expect(page).toHaveURL(new RegExp(`/content-types\\?created=${slug}`), {
