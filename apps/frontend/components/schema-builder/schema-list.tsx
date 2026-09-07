@@ -44,7 +44,7 @@ export function SchemaList() {
     return (
       <Card>
         <CardContent className="text-muted-foreground py-8 text-center text-sm">
-          No content types yet. Create one to get started.
+          No content types found. Create your first content type to get started.
         </CardContent>
       </Card>
     );
@@ -55,7 +55,7 @@ export function SchemaList() {
       columns={[
         { label: 'Name', key: 'name', sortable: true },
         { label: 'API ID', key: 'slug', sortable: true },
-        { label: 'Kind', key: 'kind', sortable: true },
+        { label: 'Type', key: 'type', sortable: true },
         { label: 'Fields', key: 'fields', sortable: true },
         { label: 'Localized', key: 'localized', sortable: true },
         { label: 'Actions', key: 'actions', sortable: false },
@@ -67,7 +67,11 @@ export function SchemaList() {
         return {
           name: <span className="font-medium">{schema.name}</span>,
           slug: <span className="text-muted-foreground">{schema.slug}</span>,
-          kind: <span className="text-muted-foreground">{schema.type}</span>,
+          type: (
+            <span className="text-muted-foreground capitalize">
+              {schema.type}
+            </span>
+          ),
           fields: (
             <span className="text-muted-foreground">
               {schema.definition.fields.length}

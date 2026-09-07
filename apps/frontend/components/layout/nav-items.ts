@@ -28,9 +28,9 @@ export interface NavItem {
 /** Primary navigation — content-authoring surfaces (SRS §4.1–4.7). */
 export const primaryNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { label: 'Content', href: '/content', icon: FileText },
-  { label: 'Media', href: '/media', icon: ImageIcon },
-  { label: 'Content-Types', href: '/content-types', icon: Layers },
+  { label: 'Content Manager', href: '/content', icon: FileText },
+  { label: 'Media Library', href: '/media', icon: ImageIcon },
+  { label: 'Content Type Builder', href: '/content-types', icon: Layers },
   {
     label: 'Workflows',
     href: '/workflows',

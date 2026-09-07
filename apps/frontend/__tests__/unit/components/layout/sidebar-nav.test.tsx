@@ -47,7 +47,7 @@ describe('SidebarNav', () => {
 
     expect(screen.getByRole('link', { name: /Dashboard/ })).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /Content-Types/ }),
+      screen.getByRole('link', { name: /Content Type Builder/ }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Roles & Access/ }),

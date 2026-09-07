@@ -86,7 +86,7 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
       <Modal
         isOpen={showForceDeleteDialog}
         onClose={() => setShowForceDeleteDialog(false)}
-        title="Schema has existing content"
+        title="Content Type Has Existing Entries"
         confirmText={
           deleteMutation.isPending ? 'Deleting...' : 'Force Delete All'
         }
