@@ -13,7 +13,7 @@ export default function NewContentTypePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Schema</CardTitle>
+          <CardTitle>Content Type Definition</CardTitle>
         </CardHeader>
         <CardContent>
           <SchemaBuilderForm />

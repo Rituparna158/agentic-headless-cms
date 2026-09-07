@@ -271,12 +271,12 @@ function RoleDetails({
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-medium">Permissions per content-type</h3>
+        <h3 className="font-medium">Permissions per Content Type</h3>
         <div className="border rounded-md overflow-x-auto">
           <DataTable
             enablePagination={false}
             columns={[
-              { label: 'Type', key: 'type', sortable: true },
+              { label: 'Content Type', key: 'type', sortable: true },
               { label: 'Read', key: 'read', sortable: false },
               { label: 'Create', key: 'create', sortable: false },
               { label: 'Update', key: 'update', sortable: false },
@@ -331,7 +331,7 @@ function RoleDetails({
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-medium">Row-level condition (JSON filter)</h3>
+        <h3 className="font-medium">Row-Level Condition (JSON Filter)</h3>
         <p className="text-xs text-muted-foreground">
           Applies to all read/write operations for this role.
         </p>

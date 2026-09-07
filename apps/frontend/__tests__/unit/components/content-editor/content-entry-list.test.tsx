@@ -62,9 +62,7 @@ describe('ContentEntryList', () => {
     });
     renderList();
     await waitFor(() => {
-      expect(
-        screen.getByText(/no rows match your filter/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/no content entries found/i)).toBeInTheDocument();
     });
   });
   it('renders entries using the first text field as the title column', async () => {

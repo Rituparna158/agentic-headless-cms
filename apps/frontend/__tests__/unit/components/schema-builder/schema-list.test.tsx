@@ -60,7 +60,7 @@ describe('SchemaList', () => {
 
     expect(
       await screen.findByText(
-        'No content types yet. Create one to get started.',
+        'No content types found. Create your first content type to get started.',
       ),
     ).toBeInTheDocument();
   });
@@ -80,7 +80,7 @@ describe('SchemaList', () => {
 
     expect(await screen.findByText('Blog Post')).toBeInTheDocument();
     expect(screen.getByText('blog-post')).toBeInTheDocument();
-    expect(screen.getByText('collection')).toBeInTheDocument();
+    expect(screen.getByText(/collection/i)).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('Yes')).toBeInTheDocument();
   });

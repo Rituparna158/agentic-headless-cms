@@ -47,7 +47,7 @@ describe('MediaGrid', () => {
     renderGrid();
 
     await waitFor(() => {
-      expect(screen.getByText(/no media yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/no media files found/i)).toBeInTheDocument();
     });
   });
 

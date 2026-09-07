@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { ContentEntriesView } from '@/components/content-editor/content-entries-view';
 
 export const metadata: Metadata = {
-  title: 'Content Entries — Agentic CMS',
+  title: 'Content Manager — Agentic CMS',
 };
 
 export default function ContentPage() {

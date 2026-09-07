@@ -65,7 +65,7 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
               sortable: true,
             },
             { label: 'Status', key: 'status', sortable: true },
-            { label: 'Updated', key: 'updatedAt', sortable: true },
+            { label: 'Last Updated', key: 'updatedAt', sortable: true },
             {
               label: 'Actions',
               key: 'actions',
@@ -147,6 +147,7 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
           pageCount={data?.meta?.pagination?.pageCount ?? 1}
           totalCount={data?.meta?.pagination?.total ?? 0}
           onPageChange={(newPage: number) => setPage(newPage)}
+          emptyMessage="No content entries found. Create your first entry to get started."
         />
       </Card>
     </div>

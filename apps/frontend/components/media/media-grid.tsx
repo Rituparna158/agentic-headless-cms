@@ -128,7 +128,7 @@ export function MediaGrid({ folderId }: { folderId?: string }) {
     return (
       <Card>
         <CardContent className="text-muted-foreground py-8 text-center text-sm">
-          No media yet. Upload a file to get started.
+          No media files found. Upload an asset to get started.
         </CardContent>
       </Card>
     );

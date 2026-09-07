@@ -40,9 +40,9 @@ describe('SchemaBuilderForm', () => {
   it('renders with a single default field row, selected in the settings panel', () => {
     renderForm();
     // Master-detail layout: only the selected field's full config is
-    // rendered at a time, so "Display name" appears once (in the settings
+    // rendered at a time, so "Display Name" appears once (in the settings
     // panel for the auto-selected first field), not once per field row.
-    expect(screen.getAllByLabelText('Display name')).toHaveLength(1);
+    expect(screen.getAllByLabelText(/display name/i)).toHaveLength(1);
     expect(screen.getByLabelText('Remove field 1')).toBeInTheDocument();
   });
 
@@ -56,7 +56,7 @@ describe('SchemaBuilderForm', () => {
     expect(screen.getByLabelText('Remove field 2')).toBeInTheDocument();
     // The settings panel still shows exactly one field's config — the
     // newly added field, which "Add field" auto-selects.
-    expect(screen.getAllByLabelText('Display name')).toHaveLength(1);
+    expect(screen.getAllByLabelText(/display name/i)).toHaveLength(1);
   });
 
   it('removes a field row when its remove button is clicked', async () => {
@@ -76,19 +76,21 @@ describe('SchemaBuilderForm', () => {
     renderForm();
 
     await user.click(screen.getByRole('button', { name: /add field/i }));
-    await user.type(screen.getByLabelText('Display name'), 'Views');
+    await user.type(screen.getByLabelText(/display name/i), 'Views');
 
     // Selecting field 1 again should show ITS displayName input, empty —
     // not "Views" leaking across from field 2's now-deselected panel.
     await user.click(screen.getByText('Field 1'));
-    expect(screen.getByLabelText('Display name')).toHaveValue('');
+    expect(screen.getByLabelText(/display name/i)).toHaveValue('');
   });
 
   it('shows validation errors and does not submit for an empty form', async () => {
     const user = userEvent.setup();
     renderForm();
 
-    await user.click(screen.getByRole('button', { name: /create schema/i }));
+    await user.click(
+      screen.getByRole('button', { name: /create (content type|schema)/i }),
+    );
 
     await waitFor(() => {
       expect(screen.getByText('name is required')).toBeInTheDocument();
@@ -114,10 +116,12 @@ describe('SchemaBuilderForm', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Blog Post');
     await user.type(screen.getByLabelText('Slug'), 'blog-post');
-    await user.type(screen.getByLabelText('Display name'), 'Title');
+    await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
-    await user.click(screen.getByRole('button', { name: /create schema/i }));
+    await user.click(
+      screen.getByRole('button', { name: /create (content type|schema)/i }),
+    );
 
     await waitFor(() => {
       expect(mockCreateSchema).toHaveBeenCalledTimes(1);
@@ -147,13 +151,17 @@ describe('SchemaBuilderForm', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Blog Post');
     await user.type(screen.getByLabelText('Slug'), 'blog-post');
-    await user.type(screen.getByLabelText('Display name'), 'Title');
+    await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
-    await user.click(screen.getByRole('button', { name: /create schema/i }));
+    await user.click(
+      screen.getByRole('button', { name: /create (content type|schema)/i }),
+    );
 
     await waitFor(() => {
-      expect(screen.getByText(/failed to create schema/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/failed to create (content type|schema)/i),
+      ).toBeInTheDocument();
     });
     expect(mockPush).not.toHaveBeenCalled();
   });
