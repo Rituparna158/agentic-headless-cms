@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  Badge,
   Button,
   Modal,
   Input,
@@ -301,7 +302,21 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
           rows={users.map((user) => ({
             email: user.email,
             name: `${user.firstName} ${user.lastName}`,
-            status: <span className="capitalize">{user.status}</span>,
+            status: (
+              <Badge
+                variant={
+                  user.status === 'active'
+                    ? 'success'
+                    : user.status === 'pending'
+                      ? 'warning'
+                      : 'secondary'
+                }
+                size="sm"
+                className="capitalize"
+              >
+                {user.status}
+              </Badge>
+            ),
             role: isAdmin ? (
               <Dropdown
                 trigger={
