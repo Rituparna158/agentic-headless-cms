@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Card, DataTable } from '@repo/shared-ui';
+import { Badge, Card, DataTable } from '@repo/shared-ui';
 import { listContentEntries } from '@/lib/api/content';
 import type { ContentEntryListProps } from '@/types/component.types';
 import { pickTitleField } from '@/utils/schema';
@@ -105,7 +105,17 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
                     {entry.id}
                   </Link>
                 ),
-              status: <span className="capitalize">{entry.status}</span>,
+              status: (
+                <Badge
+                  variant={
+                    entry.status === 'published' ? 'success' : 'secondary'
+                  }
+                  size="sm"
+                  className="capitalize"
+                >
+                  {entry.status}
+                </Badge>
+              ),
               updatedAt: entry.updatedAt
                 ? new Date(entry.updatedAt).toLocaleString()
                 : '—',
