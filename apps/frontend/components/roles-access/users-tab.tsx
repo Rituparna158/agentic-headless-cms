@@ -288,7 +288,14 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
             { label: 'Role', key: 'role', sortable: true },
             { label: 'Created At', key: 'createdAt', sortable: true },
             ...(isAdmin
-              ? [{ label: 'Actions', key: 'actions', sortable: false }]
+              ? [
+                  {
+                    label: 'Actions',
+                    key: 'actions',
+                    sortable: false,
+                    align: 'right',
+                  },
+                ]
               : []),
           ]}
           rows={users.map((user) => ({

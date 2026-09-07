@@ -106,14 +106,19 @@ export function LocalesTab() {
             { label: 'Code', key: 'code', sortable: true },
             { label: 'Name', key: 'name', sortable: true },
             { label: 'Default', key: 'isDefault', sortable: true },
-            { label: 'Actions', key: 'actions', sortable: false },
+            {
+              label: 'Actions',
+              key: 'actions',
+              sortable: false,
+              align: 'right',
+            },
           ]}
           rows={locales.map((locale) => ({
             code: <span className="font-mono text-xs">{locale.code}</span>,
             name: locale.name,
             isDefault: locale.isDefault ? 'Yes' : '',
             actions: (
-              <div className="text-right">
+              <div className="flex justify-end">
                 <Button
                   variant="ghost"
                   size="icon"

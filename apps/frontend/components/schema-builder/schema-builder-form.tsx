@@ -165,7 +165,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
       setSubmitError(
         error instanceof ApiError
           ? error.message
-          : `Failed to ${isEditing ? 'update' : 'create'} schema. Please try again.`,
+          : `Failed to ${isEditing ? 'update' : 'create'} content type. Please try again.`,
       );
     }
   }
@@ -213,7 +213,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                   onClick={handleAddField}
                 >
                   <PlusIcon className="size-4" />
-                  Add field
+                  Add Field
                 </Button>
               </div>
 
@@ -251,7 +251,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Type options</CardTitle>
+                <CardTitle className="text-sm">Content Type Settings</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
                 <Controller
@@ -286,7 +286,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                   render={({ field, fieldState }) => (
                     <div className="grid gap-2">
                       <Typography as="span" variant="label">
-                        Kind
+                        Type
                       </Typography>
                       <Dropdown
                         trigger={
@@ -340,8 +340,8 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                 ? 'Saving…'
                 : 'Creating…'
               : isEditing
-                ? 'Save changes'
-                : 'Create schema'}
+                ? 'Save Changes'
+                : 'Create Content Type'}
           </Button>
         </div>
       </form>

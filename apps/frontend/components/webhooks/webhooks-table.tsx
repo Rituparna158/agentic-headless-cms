@@ -215,7 +215,7 @@ export function WebhooksTable() {
         <DataTable
           columns={[
             { label: 'Name', key: 'name', sortable: true },
-            { label: 'URL', key: 'url', sortable: true },
+            { label: 'Target URL', key: 'url', sortable: true },
             { label: 'Events', key: 'events', sortable: false },
             { label: 'Status', key: 'status', sortable: true },
             { label: 'Actions', key: 'actions', sortable: false },
