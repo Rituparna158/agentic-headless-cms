@@ -79,6 +79,7 @@ export interface FieldListItemProps<T extends FieldValues = FieldValues> {
   index: number;
   control: Control<T>;
   isSelected: boolean;
+  hasError?: boolean;
   onSelect: (index: number) => void;
   onRemove: (index: number) => void;
 }

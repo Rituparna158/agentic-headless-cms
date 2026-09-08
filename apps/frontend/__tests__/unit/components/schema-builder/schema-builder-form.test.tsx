@@ -6,14 +6,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SchemaBuilderForm } from '@/components/schema-builder/schema-builder-form';
 
-const { mockPush, mockCreateSchema, mockUpdateSchema } = vi.hoisted(() => ({
-  mockPush: vi.fn(),
-  mockCreateSchema: vi.fn(),
-  mockUpdateSchema: vi.fn(),
-}));
+const { mockPush, mockCreateSchema, mockUpdateSchema, mockToastError } =
+  vi.hoisted(() => ({
+    mockPush: vi.fn(),
+    mockCreateSchema: vi.fn(),
+    mockUpdateSchema: vi.fn(),
+    mockToastError: vi.fn(),
+  }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+}));
+
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: mockToastError,
+  },
 }));
 
 vi.mock('@/lib/api/schemas', () => ({
@@ -46,9 +55,87 @@ describe('SchemaBuilderForm', () => {
     expect(screen.getByLabelText('Remove field 1')).toBeInTheDocument();
   });
 
-  it('adds a new field row when "Add field" is clicked', async () => {
+  it('does not add a new field and displays validation errors when current field is incomplete', async () => {
     const user = userEvent.setup();
     renderForm();
+
+    // Click "Add field" while field 1 is empty
+    await user.click(screen.getByRole('button', { name: /add field/i }));
+
+    // Field 2 must NOT be added
+    expect(screen.queryByLabelText('Remove field 2')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Remove field 1')).toBeInTheDocument();
+
+    // Validation error messages must be visible
+    await waitFor(() => {
+      expect(screen.getByText('Display Name is required')).toBeInTheDocument();
+      expect(screen.getByText('API ID is required')).toBeInTheDocument();
+    });
+
+    // Error indicator in the list item must be visible
+    expect(screen.getByLabelText('Field has errors')).toBeInTheDocument();
+    expect(screen.getByText('invalid')).toBeInTheDocument();
+    expect(mockToastError).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Please complete the required details for Field 1',
+      ),
+    );
+  });
+
+  it('clears validation errors in real-time as the user types after triggering incomplete field validation', async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    // Click "Add field" while field 1 is empty to trigger validation
+    await user.click(screen.getByRole('button', { name: /add field/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Display Name is required')).toBeInTheDocument();
+      expect(screen.getByText('API ID is required')).toBeInTheDocument();
+    });
+    expect(screen.getByText('invalid')).toBeInTheDocument();
+
+    // Start typing in Display Name — the error should vanish immediately in real-time
+    await user.type(screen.getByLabelText(/display name/i), 'T');
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Display Name is required'),
+      ).not.toBeInTheDocument();
+    });
+
+    // API ID error is still present until user types in it
+    expect(screen.getByText('API ID is required')).toBeInTheDocument();
+
+    // Type in an invalid API ID starting with a capital letter — real-time regex error must appear
+    await user.type(screen.getByLabelText('API ID'), 'Title');
+    await waitFor(() => {
+      expect(
+        screen.getByText(/must start with a lowercase letter/i),
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByText('API ID is required')).not.toBeInTheDocument();
+
+    // Correct the API ID to all lowercase — error must vanish immediately in real-time
+    await user.clear(screen.getByLabelText('API ID'));
+    await user.type(screen.getByLabelText('API ID'), 'title');
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/must start with a lowercase letter/i),
+      ).not.toBeInTheDocument();
+    });
+
+    // Both Display Name and API ID are now valid — the list item "invalid" badge must disappear in real-time
+    expect(screen.queryByText('invalid')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Field has errors')).not.toBeInTheDocument();
+  });
+
+  it('adds a new field row when "Add field" is clicked after completing the current field', async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    // Fill current field with valid inputs
+    await user.type(screen.getByLabelText(/display name/i), 'Title');
+    await user.type(screen.getByLabelText('API ID'), 'title');
 
     await user.click(screen.getByRole('button', { name: /add field/i }));
 
@@ -63,6 +150,9 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
+    await user.type(screen.getByLabelText(/display name/i), 'Title');
+    await user.type(screen.getByLabelText('API ID'), 'title');
+
     await user.click(screen.getByRole('button', { name: /add field/i }));
     expect(screen.getByLabelText('Remove field 2')).toBeInTheDocument();
 
@@ -75,13 +165,16 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
+    await user.type(screen.getByLabelText(/display name/i), 'Title');
+    await user.type(screen.getByLabelText('API ID'), 'title');
+
     await user.click(screen.getByRole('button', { name: /add field/i }));
     await user.type(screen.getByLabelText(/display name/i), 'Views');
 
-    // Selecting field 1 again should show ITS displayName input, empty —
+    // Selecting field 1 again should show ITS displayName input with "Title",
     // not "Views" leaking across from field 2's now-deselected panel.
-    await user.click(screen.getByText('Field 1'));
-    expect(screen.getByLabelText(/display name/i)).toHaveValue('');
+    await user.click(screen.getByText('Title'));
+    expect(screen.getByLabelText(/display name/i)).toHaveValue('Title');
   });
 
   it('shows validation errors and does not submit for an empty form', async () => {
@@ -96,6 +189,24 @@ describe('SchemaBuilderForm', () => {
       expect(screen.getByText('name is required')).toBeInTheDocument();
     });
     expect(mockCreateSchema).not.toHaveBeenCalled();
+  });
+
+  it('clears schema name error in real-time as the user types', async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.click(
+      screen.getByRole('button', { name: /create (content type|schema)/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('name is required')).toBeInTheDocument();
+    });
+
+    await user.type(screen.getByLabelText('Name'), 'B');
+    await waitFor(() => {
+      expect(screen.queryByText('name is required')).not.toBeInTheDocument();
+    });
   });
 
   it('submits a valid schema and navigates to the list on success', async () => {
@@ -164,6 +275,38 @@ describe('SchemaBuilderForm', () => {
       ).toBeInTheDocument();
     });
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('auto-selects first invalid field and displays an error message on submit when fields are incomplete', async () => {
+    const user = userEvent.setup();
+    renderForm();
+
+    await user.type(screen.getByLabelText('Name'), 'Blog Post');
+    await user.type(screen.getByLabelText('Slug'), 'blog-post');
+    await user.type(screen.getByLabelText(/display name/i), 'Title');
+    await user.type(screen.getByLabelText('API ID'), 'title');
+
+    // Add field 2
+    await user.click(screen.getByRole('button', { name: /add field/i }));
+    expect(screen.getByLabelText('Remove field 2')).toBeInTheDocument();
+
+    // Switch back to Field 1, leaving Field 2 incomplete and unselected
+    await user.click(screen.getByText('Title'));
+
+    // Attempt to submit the form
+    await user.click(
+      screen.getByRole('button', { name: /create (content type|schema)/i }),
+    );
+
+    // It should automatically switch focus to Field 2 and show the error inline in the settings panel
+    await waitFor(() => {
+      expect(screen.getByText('Display Name is required')).toBeInTheDocument();
+    });
+
+    expect(mockToastError).toHaveBeenCalledWith(
+      expect.stringContaining('Field 2'),
+    );
+    expect(mockCreateSchema).not.toHaveBeenCalled();
   });
 
   describe('editing an existing schema', () => {

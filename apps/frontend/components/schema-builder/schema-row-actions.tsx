@@ -86,6 +86,7 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
         title="Are you absolutely sure?"
         confirmText={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
         cancelText="Cancel"
+        colorScheme="destructive"
         onConfirm={() => deleteMutation.mutate({ id: schema.id, force: false })}
         onCancel={() => setShowDeleteDialog(false)}
       >
@@ -103,6 +104,7 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
           deleteMutation.isPending ? 'Deleting...' : 'Force Delete All'
         }
         cancelText="Cancel"
+        colorScheme="destructive"
         onConfirm={() => deleteMutation.mutate({ id: schema.id, force: true })}
         onCancel={() => setShowForceDeleteDialog(false)}
       >
