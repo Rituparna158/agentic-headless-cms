@@ -67,10 +67,14 @@ export function FieldSettingsPanel({
                 placeholder="e.g. Title"
                 variant="default"
                 {...field}
+                value={field.value ?? ''}
               />
               {fieldState.error?.message ? (
                 <p className="text-sm font-medium text-destructive">
-                  {fieldState.error.message}
+                  {fieldState.error.message.toLowerCase() ===
+                  'displayname is required'
+                    ? 'Display Name is required'
+                    : fieldState.error.message}
                 </p>
               ) : null}
             </div>
@@ -92,10 +96,16 @@ export function FieldSettingsPanel({
                 placeholder="e.g. title"
                 variant="default"
                 {...field}
+                value={field.value ?? ''}
               />
               {fieldState.error?.message ? (
                 <p className="text-sm font-medium text-destructive">
-                  {fieldState.error.message}
+                  {fieldState.error.message.includes('at least 1 character') ||
+                  fieldState.error.message.toLowerCase() === 'apiid is required'
+                    ? 'API ID is required'
+                    : fieldState.error.message.startsWith('apiId')
+                      ? fieldState.error.message.replace(/^apiId/, 'API ID')
+                      : fieldState.error.message}
                 </p>
               ) : null}
             </div>
