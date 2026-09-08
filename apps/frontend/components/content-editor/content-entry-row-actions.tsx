@@ -83,6 +83,7 @@ export function ContentEntryRowActions({
         title="Are you absolutely sure?"
         confirmText={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
         cancelText="Cancel"
+        colorScheme="destructive"
         onConfirm={() => deleteMutation.mutate()}
         onCancel={() => setShowDeleteDialog(false)}
       >
