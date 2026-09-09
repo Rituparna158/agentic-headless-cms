@@ -6,6 +6,7 @@ import {
 
 interface CountdownProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const Countdown = forwardRef<HTMLElement, CountdownProps>(
@@ -14,7 +15,12 @@ export const Countdown = forwardRef<HTMLElement, CountdownProps>(
     const s = usePageBuilderStore(
       (state) => state.countdown[id] ?? COUNTDOWN_DEFAULTS,
     );
-    const [isBuilder, setIsBuilder] = useState(true);
+    const [isBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     const [timeLeft, setTimeLeft] = useState({
       days: 0,
@@ -22,11 +28,6 @@ export const Countdown = forwardRef<HTMLElement, CountdownProps>(
       minutes: 0,
       seconds: 0,
     });
-
-    useEffect(() => {
-      const el = document.getElementById(id);
-      if (el) setIsBuilder(true);
-    }, [id]);
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);

@@ -6,6 +6,7 @@ import {
 
 interface ContactFormProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 const ContactForm = forwardRef<HTMLDivElement, ContactFormProps>(
@@ -15,12 +16,22 @@ const ContactForm = forwardRef<HTMLDivElement, ContactFormProps>(
       (state) => state.contactForm[id] ?? CONTACT_FORM_DEFAULTS,
     );
 
-    const [isBuilder, setIsBuilder] = useState(true);
+    const [isBuilder, setIsBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useEffect(() => {
       const el = document.getElementById(id);
       if (el) {
-        setIsBuilder(true);
+        setIsBuilder(
+          !(
+            (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+            window.location.pathname.startsWith('/preview')
+          ),
+        );
       }
     }, [id]);
 

@@ -1,4 +1,4 @@
-import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState } from 'react';
 import {
   usePageBuilderStore,
   TESTIMONIAL_DEFAULTS,
@@ -6,6 +6,7 @@ import {
 
 interface TestimonialProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const Testimonials = forwardRef<HTMLElement, TestimonialProps>(
@@ -14,12 +15,12 @@ export const Testimonials = forwardRef<HTMLElement, TestimonialProps>(
     const s = usePageBuilderStore(
       (state) => state.testimonials[id] ?? TESTIMONIAL_DEFAULTS,
     );
-    const [isBuilder, setIsBuilder] = useState(true);
-
-    useEffect(() => {
-      const el = document.getElementById(id);
-      if (el) setIsBuilder(true);
-    }, [id]);
+    const [isBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);

@@ -1,13 +1,11 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   PageBuilderReact,
   type PageBuilderDesign,
 } from '@mindfiredigital/page-builder-react';
 import { pagesApi } from '../api/pages.api';
-import { usePageSchema } from '../hooks/usePageSchema';
 
 // Custom page-builder components
 import HeroSection from '../components/page-builder/components/HeroSection';
@@ -58,49 +56,54 @@ import { FAQ } from '../components/page-builder/components/FAQ';
 import { FAQSettings } from '../components/page-builder/settings/FAQSettings';
 import { usePageBuilderStore } from '../components/page-builder/stores/pageBuilderStore';
 
-function slugify(text: string): string {
-  return (
-    '/' +
-    text
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/[\s]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-  );
-}
-
-export function PageEditorPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const schemaQuery = usePageSchema();
+export function PagePreviewPage() {
+  const { slug } = useParams<{ slug: string }>();
 
   const pageQuery = useQuery({
-    queryKey: ['page', id],
-    queryFn: () => pagesApi.getPage(id!),
-    enabled: !!id && !!schemaQuery.data,
+    queryKey: ['pageBySlug', slug],
+    queryFn: () => pagesApi.getPageBySlug(slug!),
+    enabled: !!slug,
   });
 
-  (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ = false;
+  (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ = true;
 
   useEffect(() => {
-    // Reset the global component configuration store when switching pages
-    // This prevents components like 'FeatureGrid1' from bleeding across different pages
     usePageBuilderStore.getState().resetStore();
-  }, [id]);
+    return () => {
+      delete (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__;
+    };
+  }, [slug]);
 
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [initialBody, setInitialBody] = useState<PageBuilderDesign | undefined>(
     undefined,
   );
-  const [isBuilderReady, setIsBuilderReady] = useState(false);
 
-  const bodyRef = useRef<PageBuilderDesign>([]);
+  useEffect(() => {
+    if (pageQuery.data) {
+      if (pageQuery.data.data.body) {
+        setInitialBody(pageQuery.data.data.body as PageBuilderDesign);
+      } else {
+        setInitialBody([]);
+      }
+    }
+  }, [pageQuery.data]);
+
+  useEffect(() => {
+    // Some browsers prevent input focus if an ancestor has contenteditable="false".
+    // Since this is the live preview, we strip all contenteditable attributes.
+    const observer = new MutationObserver(() => {
+      const canvas = document.getElementById('canvas');
+      if (canvas) {
+        const elements = canvas.querySelectorAll('[contenteditable]');
+        elements.forEach((el) => {
+          el.removeAttribute('contenteditable');
+        });
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   const pageBuilderConfig = useMemo(
     () => ({
@@ -297,235 +300,90 @@ export function PageEditorPage() {
     [],
   );
 
-  useEffect(() => {
-    if (pageQuery.data) {
-      setTitle(pageQuery.data.data.title);
-      setSlug(pageQuery.data.data.slug);
-      const bodyData = pageQuery.data.data.body;
-      const safeBodyData = Array.isArray(bodyData) ? bodyData : [];
-      setInitialBody(safeBodyData as PageBuilderDesign);
-      bodyRef.current = safeBodyData as PageBuilderDesign;
-      setIsBuilderReady(true);
-    }
-  }, [pageQuery.data]);
-
-  const updateMutation = useMutation({
-    mutationFn: () =>
-      pagesApi.updatePage(id!, {
-        title: title.trim(),
-        slug: slug.trim() || slugify(title),
-        body: bodyRef.current ?? [],
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pages'] });
-      queryClient.invalidateQueries({ queryKey: ['page', id] });
-    },
-  });
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value;
-    setTitle(newTitle);
-    if (!slugManuallyEdited) {
-      setSlug(slugify(newTitle));
-    }
-  };
-
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSlug(e.target.value);
-    setSlugManuallyEdited(true);
-  };
-
-  const handleDesignChange = useCallback((newDesign: PageBuilderDesign) => {
-    bodyRef.current = newDesign;
-  }, []);
-
-  useEffect(() => {
-    const rebuildCustomSettingsPanel = (component: HTMLElement) => {
-      const skipClasses = new Set([
-        'custom-component',
-        'editable-component',
-        'component-resizer',
-      ]);
-      const componentTypeClass = Array.from(component.classList).find(
-        (cls) => cls.endsWith('-component') && !skipClasses.has(cls),
-      );
-      if (!componentTypeClass) return;
-
-      const componentType = componentTypeClass.replace('-component', '');
-      const componentId = component.id;
-      const settingsTagName = `react-settings-component-${componentType.toLowerCase()}`;
-
-      setTimeout(() => {
-        const panel = document.getElementById('functions-panel');
-        if (!panel) return;
-
-        const hasFallback = Array.from(panel.children).some(
-          (el) =>
-            el.tagName === 'P' &&
-            el.textContent?.includes('No specific settings'),
-        );
-        if (!hasFallback) return;
-
-        panel.innerHTML = '';
-        let settingsEl = panel.querySelector(
-          settingsTagName,
-        ) as HTMLElement | null;
-        if (!settingsEl) {
-          settingsEl = document.createElement(settingsTagName) as HTMLElement;
-          panel.appendChild(settingsEl);
-        }
-        settingsEl.setAttribute(
-          'data-settings',
-          JSON.stringify({ targetComponentId: componentId }),
-        );
-      }, 50);
-    };
-
-    const waitForElements = setInterval(() => {
-      const canvas = document.getElementById('canvas');
-      const attributeTab = document.getElementById('attribute-tab');
-      if (!canvas || !attributeTab) return;
-      clearInterval(waitForElements);
-
-      // Fix A: canvas click — auto-switch to Attribute tab then rebuild panel
-      canvas.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        const customComp = target.closest(
-          '.custom-component',
-        ) as HTMLElement | null;
-        if (!customComp) return;
-
-        setTimeout(() => {
-          attributeTab.click();
-          rebuildCustomSettingsPanel(customComp);
-        }, 0);
-      });
-
-      // Fix B: Attribute tab click — if a custom component is already selected,
-      // rebuild the panel (handles switching back from Customize/Layers tabs)
-      attributeTab.addEventListener('click', () => {
-        const sidebar = (
-          window as unknown as {
-            CustomizationSidebar?: { selectedComponent: HTMLElement | null };
-          }
-        ).CustomizationSidebar;
-        const selected: HTMLElement | null = sidebar?.selectedComponent ?? null;
-        if (!selected?.classList.contains('custom-component')) return;
-        rebuildCustomSettingsPanel(selected);
-      });
-    }, 200);
-
-    return () => clearInterval(waitForElements);
-  }, []);
-
-  const handleSave = () => {
-    if (!title.trim()) return;
-    updateMutation.mutate();
-  };
-
-  if (pageQuery.isLoading) {
+  if (pageQuery.isLoading)
+    return <div className="p-8 text-center">Loading...</div>;
+  if (pageQuery.isError)
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="p-8 text-center">
+        Error loading page or page not found
       </div>
     );
-  }
-
-  if (pageQuery.isError || !pageQuery.data) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
-        <p className="text-muted-foreground">Page not found</p>
-        <button
-          onClick={() => navigate('/pages')}
-          className="text-primary hover:text-primary/80 font-medium"
-        >
-          Back to Pages
-        </button>
-      </div>
-    );
-  }
+  if (!initialBody) return null;
 
   return (
-    <div className="flex flex-col h-[100vh]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-background">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/pages')}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="flex flex-col gap-1">
-            <input
-              type="text"
-              value={title}
-              onChange={handleTitleChange}
-              placeholder="Page Title"
-              className="text-lg font-semibold bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
-            />
-            <input
-              type="text"
-              value={slug}
-              onChange={handleSlugChange}
-              placeholder="/page-slug"
-              className="text-sm font-mono bg-transparent border-none outline-none text-muted-foreground placeholder:text-muted-foreground/50"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() =>
-              window.open(
-                `/preview${slug.startsWith('/') ? '' : '/'}${slug}`,
-                '_blank',
-              )
-            }
-            disabled={!slug}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors disabled:opacity-50"
-          >
-            <Eye className="h-4 w-4" />
-            Preview
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!title.trim() || updateMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            {updateMutation.isPending ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </div>
-
-      {/* Page Builder Canvas */}
-      <div className="flex-1 overflow-hidden relative flex flex-col min-h-0">
-        <style>{`
-          #functions-panel {
-            overflow-y: auto !important;
-            max-height: calc(100vh - 120px) !important;
-            padding-bottom: 40px !important;
-          }
-        `}</style>
-        {isBuilderReady && (
-          <PageBuilderReact
-            key={id}
-            config={JSON.parse(JSON.stringify(pageBuilderConfig))}
-            customComponents={Object.fromEntries(
-              Object.entries(customComponents).map(([key, val]) => [
-                key,
-                { ...val },
-              ]),
-            )}
-            initialDesign={initialBody}
-            onChange={handleDesignChange}
-            editable={true}
-            brandTitle={title || 'Page Builder'}
-            layoutMode="grid"
-            showAttributeTab={true}
-          />
+    <div className="flex-1 overflow-x-hidden min-h-screen bg-background text-foreground">
+      <style>{`
+        /* Override custom builder's global html/body overflow hidden */
+        html, body {
+          overflow: auto !important;
+          height: auto !important;
+        }
+        
+        /* Hide Custom Builder Editor Toolbar and sidebars in Preview Mode */
+        #page-builder-header, 
+        #sidebar,
+        #customization,
+        .component-controls,
+        .component-label,
+        .canvas-resizers {
+          display: none !important;
+        }
+        
+        /* Make Canvas Full Screen and let browser handle scrolling */
+        page-builder {
+          display: block;
+          width: 100%;
+          height: auto;
+        }
+        #app {
+          border-radius: 0 !important;
+          box-shadow: none !important;
+          overflow: visible !important;
+          height: auto !important;
+          min-height: 100vh !important;
+        }
+        #canvas {
+          width: 100% !important;
+          height: auto !important;
+          min-height: 100vh !important;
+          background-image: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          overflow: visible !important;
+          pointer-events: auto !important;
+        }
+        
+        /* Force interactivity for form elements in preview mode */
+        input, textarea, select, button, a, form, .component {
+          pointer-events: auto !important;
+          user-select: auto !important;
+        }
+        
+        /* Remove dashed borders from editable components */
+        .editable-component {
+          border-color: transparent !important;
+        }
+        .editable-component:hover {
+          border-color: transparent !important;
+          box-shadow: none !important;
+        }
+      `}</style>
+      <PageBuilderReact
+        key={slug}
+        config={JSON.parse(JSON.stringify(pageBuilderConfig))}
+        customComponents={Object.fromEntries(
+          Object.entries(customComponents).map(([key, val]) => [
+            key,
+            { ...val },
+          ]),
         )}
-      </div>
+        initialDesign={initialBody}
+        onChange={() => {}}
+        editable={false}
+        brandTitle={pageQuery.data?.data.title || 'Page Preview'}
+        layoutMode="grid"
+        showAttributeTab={false}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState } from 'react';
 import {
   usePageBuilderStore,
   BUTTON_GROUP_DEFAULTS,
@@ -7,6 +7,7 @@ import {
 
 interface ButtonGroupProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const ButtonGroup = forwardRef<HTMLElement, ButtonGroupProps>(
@@ -15,12 +16,12 @@ export const ButtonGroup = forwardRef<HTMLElement, ButtonGroupProps>(
     const s = usePageBuilderStore(
       (state) => state.buttonGroup[id] ?? BUTTON_GROUP_DEFAULTS,
     );
-    const [isBuilder, setIsBuilder] = useState(true);
-
-    useEffect(() => {
-      const el = document.getElementById(id);
-      if (el) setIsBuilder(true);
-    }, [id]);
+    const [isBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);

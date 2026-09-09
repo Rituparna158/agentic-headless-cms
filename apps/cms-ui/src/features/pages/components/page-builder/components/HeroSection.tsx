@@ -3,6 +3,7 @@ import { usePageBuilderStore, HERO_DEFAULTS } from '../stores/pageBuilderStore';
 
 interface HeroSectionProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
@@ -10,12 +11,22 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
     const id = props.componentId ?? 'default';
     const s = usePageBuilderStore((state) => state.hero[id] ?? HERO_DEFAULTS);
 
-    const [isBuilder, setIsBuilder] = useState(true);
+    const [isBuilder, setIsBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useEffect(() => {
       const el = document.getElementById(id);
       if (el) {
-        setIsBuilder(true);
+        setIsBuilder(
+          !(
+            (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+            window.location.pathname.startsWith('/preview')
+          ),
+        );
       }
     }, [id]);
 

@@ -91,6 +91,11 @@ const PageEditorPage = React.lazy(() =>
     default: m.PageEditorPage,
   })),
 );
+const PagePreviewPage = React.lazy(() =>
+  import('./features/pages/pages/PagePreviewPage').then((m) => ({
+    default: m.PagePreviewPage,
+  })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -181,6 +186,10 @@ export const App = () => {
                     </Route>
                     {/* Error Pages */}
                     <Route path="/error" element={<GeneralErrorPage />} />
+                    <Route
+                      path="/preview/:slug"
+                      element={<PagePreviewPage />}
+                    />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </Suspense>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState } from 'react';
 import {
   usePageBuilderStore,
   MAP_EMBED_DEFAULTS,
@@ -7,6 +7,7 @@ import {
 
 interface MapEmbedProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const MapEmbed = forwardRef<HTMLElement, MapEmbedProps>((props, ref) => {
@@ -14,12 +15,12 @@ export const MapEmbed = forwardRef<HTMLElement, MapEmbedProps>((props, ref) => {
   const s = usePageBuilderStore(
     (state) => state.mapEmbed[id] ?? MAP_EMBED_DEFAULTS,
   );
-  const [isBuilder, setIsBuilder] = useState(true);
-
-  useEffect(() => {
-    const el = document.getElementById(id);
-    if (el) setIsBuilder(true);
-  }, [id]);
+  const [isBuilder] = useState(
+    !(
+      (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+      window.location.pathname.startsWith('/preview')
+    ),
+  );
 
   useLayoutEffect(() => {
     const el = document.getElementById(id);
