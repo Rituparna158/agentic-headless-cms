@@ -18,10 +18,15 @@ import { type CreateSchemaInput, type SchemaRecord } from '@repo/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-
-import { FormProvider, Controller } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import {
+  useFieldArray,
+  useForm,
+  FormProvider,
+  Controller,
+  type FieldErrors,
+} from 'react-hook-form';
+import { toast } from 'sonner';
 import {
   Button,
   Card,
@@ -67,6 +72,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
 
   const form = useForm<SchemaBuilderFieldValues, unknown, CreateSchemaInput>({
     resolver: zodResolver(createSchemaSchema),
+    mode: 'onChange',
     defaultValues: schema
       ? {
           name: schema.name,
@@ -81,6 +87,17 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
           fields: [emptyField()],
         },
   });
+
+  const { errors } = form.formState;
+
+  // Clear top-level submission error as soon as the user starts editing any field
+  useEffect(() => {
+    if (!submitError) return;
+    const subscription = form.watch(() => {
+      setSubmitError(null);
+    });
+    return () => subscription.unsubscribe();
+  }, [submitError, form]);
 
   const fieldArray = useFieldArray({ control: form.control, name: 'fields' });
   // useFieldArray's `field.id` serves as a stable drag identity for dnd-kit.
@@ -124,9 +141,53 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
   }
 
   /**
-   * Appends a new empty field to the end of the schema.
+   * Appends a new empty field to the end of the schema after validating the current field.
    */
-  function handleAddField() {
+  async function handleAddField() {
+    // 1. If there's an active field currently being edited, validate it first
+    if (
+      selectedIndex !== null &&
+      selectedIndex >= 0 &&
+      selectedIndex < fieldArray.fields.length
+    ) {
+      const isDisplayNameValid = await form.trigger(
+        `fields.${selectedIndex}.displayName`,
+      );
+      const isApiIdValid = await form.trigger(`fields.${selectedIndex}.apiId`);
+      const isDataTypeValid = await form.trigger(
+        `fields.${selectedIndex}.dataType`,
+      );
+
+      if (!isDisplayNameValid || !isApiIdValid || !isDataTypeValid) {
+        toast.error(
+          `Please complete the required details for Field ${selectedIndex + 1} before adding a new field.`,
+        );
+        return;
+      }
+    }
+
+    // 2. Also ensure all existing fields are valid before appending a new one
+    const isAllFieldsValid = await form.trigger('fields');
+    if (!isAllFieldsValid) {
+      const fieldsErrors = form.formState.errors.fields;
+      if (fieldsErrors && Array.isArray(fieldsErrors)) {
+        const firstInvalidIdx = fieldsErrors.findIndex(
+          (f) => !!f && typeof f === 'object' && Object.keys(f).length > 0,
+        );
+        if (firstInvalidIdx !== -1) {
+          setSelectedIndex(firstInvalidIdx);
+          toast.error(
+            `Please complete Field ${firstInvalidIdx + 1} before adding a new field.`,
+          );
+          return;
+        }
+      }
+      toast.error(
+        'Please complete all existing fields before adding a new field.',
+      );
+      return;
+    }
+
     fieldArray.append(emptyField(), { shouldFocus: false });
     setSelectedIndex(fieldArray.fields.length);
   }
@@ -170,10 +231,62 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
     }
   }
 
+  /**
+   * Handles validation errors when form submission is attempted.
+   * Auto-selects the first invalid field so the user sees the error inline.
+   */
+  function onInvalid(errors: FieldErrors<SchemaBuilderFieldValues>) {
+    if (errors.fields) {
+      const fieldsErrors = errors.fields;
+      let firstErrorIndex: number | null = null;
+
+      if (Array.isArray(fieldsErrors)) {
+        const idx = fieldsErrors.findIndex(
+          (f) => !!f && typeof f === 'object' && Object.keys(f).length > 0,
+        );
+        if (idx !== -1) firstErrorIndex = idx;
+      } else if (typeof fieldsErrors === 'object') {
+        for (const key of Object.keys(fieldsErrors)) {
+          const num = Number(key);
+          if (!isNaN(num) && (fieldsErrors as Record<string, unknown>)[key]) {
+            firstErrorIndex = num;
+            break;
+          }
+        }
+      }
+
+      if (firstErrorIndex !== null) {
+        setSelectedIndex(firstErrorIndex);
+        const fieldErrorObj = (
+          fieldsErrors as Record<string, Record<string, { message?: string }>>
+        )[firstErrorIndex];
+        const errorMsg =
+          fieldErrorObj?.displayName?.message ||
+          fieldErrorObj?.apiId?.message ||
+          `Validation failed for Field ${firstErrorIndex + 1}.`;
+        const fullMsg = `Field ${firstErrorIndex + 1}: ${errorMsg}`;
+        toast.error(fullMsg);
+        return;
+      }
+    }
+
+    if (errors.name?.message) {
+      toast.error(errors.name.message);
+      return;
+    }
+
+    if (errors.slug?.message) {
+      toast.error(errors.slug.message);
+      return;
+    }
+
+    toast.error('Please fix all validation errors before submitting.');
+  }
+
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
+        onSubmit={(event) => void form.handleSubmit(onSubmit, onInvalid)(event)}
         className="grid gap-6"
       >
         <Controller
@@ -191,6 +304,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                 placeholder="e.g. Blog Post"
                 variant="default"
                 {...field}
+                value={field.value ?? ''}
               />
               {fieldState.error?.message ? (
                 <p className="text-sm font-medium text-destructive">
@@ -217,9 +331,9 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                 </Button>
               </div>
 
-              {form.formState.errors.fields?.root?.message ? (
+              {errors.fields?.root?.message ? (
                 <p role="alert" className="text-destructive text-sm">
-                  {form.formState.errors.fields.root.message}
+                  {errors.fields.root.message}
                 </p>
               ) : null}
 
@@ -233,17 +347,27 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="grid gap-2">
-                    {fieldArray.fields.map((field, index) => (
-                      <FieldListItem
-                        key={field.id}
-                        id={field.id}
-                        index={index}
-                        control={form.control}
-                        isSelected={selectedIndex === index}
-                        onSelect={setSelectedIndex}
-                        onRemove={handleRemoveField}
-                      />
-                    ))}
+                    {fieldArray.fields.map((field, index) => {
+                      const fieldErrors = errors.fields?.[index];
+                      const hasError = !!(
+                        fieldErrors &&
+                        typeof fieldErrors === 'object' &&
+                        Object.keys(fieldErrors).length > 0
+                      );
+
+                      return (
+                        <FieldListItem
+                          key={field.id}
+                          id={field.id}
+                          index={index}
+                          control={form.control}
+                          isSelected={selectedIndex === index}
+                          hasError={hasError}
+                          onSelect={setSelectedIndex}
+                          onRemove={handleRemoveField}
+                        />
+                      );
+                    })}
                   </div>
                 </SortableContext>
               </DndContext>
@@ -270,6 +394,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                         disabled={isEditing}
                         variant="default"
                         {...field}
+                        value={field.value ?? ''}
                       />
                       {fieldState.error?.message ? (
                         <p className="text-sm font-medium text-destructive">

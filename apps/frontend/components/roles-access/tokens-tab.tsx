@@ -8,6 +8,7 @@ import {
 import { Check, Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
+  Badge,
   Button,
   Modal,
   Input,
@@ -241,16 +242,25 @@ export function TokensTab() {
             { label: 'Role', key: 'role', sortable: true },
             { label: 'Created At', key: 'createdAt', sortable: true },
             { label: 'Status', key: 'status', sortable: true },
-            { label: 'Actions', key: 'actions', sortable: false },
+            {
+              label: 'Actions',
+              key: 'actions',
+              sortable: false,
+              align: 'right',
+            },
           ]}
           rows={tokens.map((token) => ({
             name: token.name,
             role: roles.find((r) => r.id === token.roleId)?.name || 'Unknown',
             createdAt: new Date(token.createdAt).toLocaleDateString(),
             status: token.revokedAt ? (
-              <span className="text-red-500 font-medium">Revoked</span>
+              <Badge variant="destructive" size="sm">
+                Revoked
+              </Badge>
             ) : (
-              <span className="text-green-500 font-medium">Active</span>
+              <Badge variant="success" size="sm">
+                Active
+              </Badge>
             ),
             actions: (
               <div className="text-right">

@@ -10,9 +10,15 @@
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "test:coverage": "pnpm -r run test -- --coverage",
-    "prepare": "husky"
+    "prepare": "husky",
+    "changeset": "changeset",
+    "changeset:autogenerate": "node .github/changeset-autogenerate.mjs",
+    "version-packages": "node .github/changeset-version.mjs",
+    "release": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.0",
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
     "@repo/eslint-config": "workspace:*",

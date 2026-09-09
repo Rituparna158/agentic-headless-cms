@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@repo/shared-ui';
-import { DataTable } from '@repo/shared-ui';
+import { Badge, Button, DataTable } from '@repo/shared-ui';
 import {
   Card,
   CardContent,
@@ -189,16 +188,19 @@ export function MfaRequestsTab() {
                       timeStyle: 'short',
                     }).format(new Date(req.createdAt)),
                     status: (
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <Badge
+                        variant={
                           req.status === 'approved'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                        }`}
+                            ? 'success'
+                            : req.status === 'rejected'
+                              ? 'destructive'
+                              : 'warning'
+                        }
+                        size="sm"
                       >
                         {req.status.charAt(0).toUpperCase() +
                           req.status.slice(1)}
-                      </span>
+                      </Badge>
                     ),
                     admin: req.admin?.email || 'System',
                   }))}

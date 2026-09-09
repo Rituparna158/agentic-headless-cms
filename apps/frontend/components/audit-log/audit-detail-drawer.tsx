@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+  Badge,
   Drawer,
   Button,
   Tabs,
@@ -18,35 +19,14 @@ interface AuditDetailDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const ACTION_COLORS: Record<
-  string,
-  { bg: string; text: string; border: string }
-> = {
-  create: {
-    bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
-    text: 'text-emerald-700 dark:text-emerald-400',
-    border: 'border-emerald-500/30',
-  },
-  update: {
-    bg: 'bg-blue-500/10 dark:bg-blue-500/20',
-    text: 'text-blue-700 dark:text-blue-400',
-    border: 'border-blue-500/30',
-  },
-  publish: {
-    bg: 'bg-purple-500/10 dark:bg-purple-500/20',
-    text: 'text-purple-700 dark:text-purple-400',
-    border: 'border-purple-500/30',
-  },
-  rollback: {
-    bg: 'bg-amber-500/10 dark:bg-amber-500/20',
-    text: 'text-amber-700 dark:text-amber-400',
-    border: 'border-amber-500/30',
-  },
-  delete: {
-    bg: 'bg-rose-500/10 dark:bg-rose-500/20',
-    text: 'text-rose-700 dark:text-rose-400',
-    border: 'border-rose-500/30',
-  },
+type BadgeVariant = React.ComponentProps<typeof Badge>['variant'];
+
+const ACTION_BADGE_VARIANTS: Record<string, BadgeVariant> = {
+  create: 'success',
+  update: 'info',
+  publish: 'purple',
+  rollback: 'warning',
+  delete: 'destructive',
 };
 
 function initialsFor(name: string): string {
@@ -65,12 +45,6 @@ export function AuditDetailDrawer({
   const [activeTab, setActiveTab] = React.useState<'diff' | 'raw'>('diff');
 
   if (!log) return null;
-
-  const actionStyle = ACTION_COLORS[log.action.toLowerCase()] || {
-    bg: 'bg-muted',
-    text: 'text-muted-foreground',
-    border: 'border-border',
-  };
 
   const actorName =
     log.actorFirstName && log.actorLastName
@@ -119,11 +93,15 @@ export function AuditDetailDrawer({
         <Card variant="default" className="p-6 md:p-7 flex flex-col gap-6">
           {/* Header Row */}
           <div className="flex items-center justify-between pb-2">
-            <span
-              className={`text-xs uppercase font-bold tracking-wider px-3.5 py-1.5 rounded-md border ${actionStyle.bg} ${actionStyle.text} ${actionStyle.border}`}
+            <Badge
+              variant={
+                ACTION_BADGE_VARIANTS[log.action.toLowerCase()] || 'default'
+              }
+              size="md"
+              className="font-bold tracking-wider"
             >
               {log.action.toUpperCase()}
-            </span>
+            </Badge>
             <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
               <Clock className="size-4 text-muted-foreground/80" />
               <span>{formattedDate}</span>

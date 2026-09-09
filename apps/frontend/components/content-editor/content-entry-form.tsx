@@ -14,7 +14,7 @@ import {
   updateContentEntry,
 } from '@/lib/api/content';
 import { ApiError } from '@/lib/api-client';
-import { Button } from '@repo/shared-ui';
+import { Badge, Button } from '@repo/shared-ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
 import { FormProvider } from 'react-hook-form';
 import { DynamicField } from './dynamic-field';
@@ -119,11 +119,21 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               <CardTitle className="text-sm">Publishing</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2 text-sm">
-              <div className="flex justify-between">
+              <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Status</span>
-                <span className="font-medium capitalize">
+                <Badge
+                  variant={
+                    entry?.status === 'published'
+                      ? 'success'
+                      : entry?.status === 'draft'
+                        ? 'secondary'
+                        : 'outline'
+                  }
+                  size="sm"
+                  className="capitalize"
+                >
                   {entry?.status ?? 'Not saved'}
-                </span>
+                </Badge>
               </div>
             </CardContent>
           </Card>
