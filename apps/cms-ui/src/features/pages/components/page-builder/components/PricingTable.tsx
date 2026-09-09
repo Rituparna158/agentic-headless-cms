@@ -1,4 +1,4 @@
-import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState } from 'react';
 import {
   usePageBuilderStore,
   PRICING_DEFAULTS,
@@ -6,6 +6,7 @@ import {
 
 interface PricingProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const PricingTable = forwardRef<HTMLElement, PricingProps>(
@@ -14,12 +15,12 @@ export const PricingTable = forwardRef<HTMLElement, PricingProps>(
     const s = usePageBuilderStore(
       (state) => state.pricing[id] ?? PRICING_DEFAULTS,
     );
-    const [isBuilder, setIsBuilder] = useState(true);
-
-    useEffect(() => {
-      const el = document.getElementById(id);
-      if (el) setIsBuilder(true);
-    }, [id]);
+    const [isBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);

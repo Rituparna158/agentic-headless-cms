@@ -6,17 +6,28 @@ import {
 
 interface NavbarProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const Navbar = forwardRef<HTMLElement, NavbarProps>((props, ref) => {
   const id = props.componentId ?? 'preview';
   const s = usePageBuilderStore((state) => state.navbar[id] ?? NAVBAR_DEFAULTS);
-  const [isBuilder, setIsBuilder] = useState(true);
+  const [isBuilder, setIsBuilder] = useState(
+    !(
+      (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+      window.location.pathname.startsWith('/preview')
+    ),
+  );
 
   useEffect(() => {
     const el = document.getElementById(id);
     if (el) {
-      setIsBuilder(true);
+      setIsBuilder(
+        !(
+          (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+          window.location.pathname.startsWith('/preview')
+        ),
+      );
     }
   }, [id]);
 

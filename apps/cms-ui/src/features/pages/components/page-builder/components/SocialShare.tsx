@@ -1,5 +1,5 @@
 import React from 'react';
-import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState } from 'react';
 import {
   usePageBuilderStore,
   SOCIAL_SHARE_DEFAULTS,
@@ -7,6 +7,7 @@ import {
 
 interface SocialShareProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const SocialShare = forwardRef<HTMLElement, SocialShareProps>(
@@ -15,12 +16,12 @@ export const SocialShare = forwardRef<HTMLElement, SocialShareProps>(
     const s = usePageBuilderStore(
       (state) => state.socialShare[id] ?? SOCIAL_SHARE_DEFAULTS,
     );
-    const [isBuilder, setIsBuilder] = useState(true);
-
-    useEffect(() => {
-      const el = document.getElementById(id);
-      if (el) setIsBuilder(true);
-    }, [id]);
+    const [isBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);

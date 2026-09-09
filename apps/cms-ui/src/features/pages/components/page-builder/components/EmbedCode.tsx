@@ -1,5 +1,5 @@
 import React from 'react';
-import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState } from 'react';
 import {
   usePageBuilderStore,
   EMBED_CODE_DEFAULTS,
@@ -7,6 +7,7 @@ import {
 
 interface EmbedCodeProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const EmbedCode = forwardRef<HTMLElement, EmbedCodeProps>(
@@ -15,12 +16,12 @@ export const EmbedCode = forwardRef<HTMLElement, EmbedCodeProps>(
     const s = usePageBuilderStore(
       (state) => state.embedCode[id] ?? EMBED_CODE_DEFAULTS,
     );
-    const [isBuilder, setIsBuilder] = useState(true);
-
-    useEffect(() => {
-      const el = document.getElementById(id);
-      if (el) setIsBuilder(true);
-    }, [id]);
+    const [isBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useLayoutEffect(() => {
       const el = document.getElementById(id);

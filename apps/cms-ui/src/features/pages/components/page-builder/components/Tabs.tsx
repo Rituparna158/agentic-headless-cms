@@ -3,18 +3,19 @@ import { usePageBuilderStore, TABS_DEFAULTS } from '../stores/pageBuilderStore';
 
 interface TabsProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const Tabs = forwardRef<HTMLElement, TabsProps>((props, ref) => {
   const id = props.componentId ?? 'preview';
   const s = usePageBuilderStore((state) => state.tabs[id] ?? TABS_DEFAULTS);
-  const [isBuilder, setIsBuilder] = useState(true);
+  const [isBuilder] = useState(
+    !(
+      (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+      window.location.pathname.startsWith('/preview')
+    ),
+  );
   const [activeTab, setActiveTab] = useState(s.items[0]?.id || '');
-
-  useEffect(() => {
-    const el = document.getElementById(id);
-    if (el) setIsBuilder(true);
-  }, [id]);
 
   useLayoutEffect(() => {
     const el = document.getElementById(id);

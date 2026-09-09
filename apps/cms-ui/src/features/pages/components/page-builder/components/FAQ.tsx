@@ -1,19 +1,20 @@
-import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
+import { forwardRef, useLayoutEffect, useState } from 'react';
 import { usePageBuilderStore, FAQ_DEFAULTS } from '../stores/pageBuilderStore';
 
 interface FAQProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 export const FAQ = forwardRef<HTMLElement, FAQProps>((props, ref) => {
   const id = props.componentId ?? 'preview';
   const s = usePageBuilderStore((state) => state.faq[id] ?? FAQ_DEFAULTS);
-  const [isBuilder, setIsBuilder] = useState(true);
-
-  useEffect(() => {
-    const el = document.getElementById(id);
-    if (el) setIsBuilder(true);
-  }, [id]);
+  const [isBuilder] = useState(
+    !(
+      (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+      window.location.pathname.startsWith('/preview')
+    ),
+  );
 
   useLayoutEffect(() => {
     const el = document.getElementById(id);

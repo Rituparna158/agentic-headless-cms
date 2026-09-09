@@ -6,6 +6,7 @@ import {
 
 interface DynamicFormProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 const DynamicForm = forwardRef<HTMLDivElement, DynamicFormProps>(
@@ -15,12 +16,22 @@ const DynamicForm = forwardRef<HTMLDivElement, DynamicFormProps>(
       (state) => state.dynamicForm[id] ?? DYNAMIC_FORM_DEFAULTS,
     );
 
-    const [isBuilder, setIsBuilder] = useState(true);
+    const [isBuilder, setIsBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useEffect(() => {
       const el = document.getElementById(id);
       if (el) {
-        setIsBuilder(true);
+        setIsBuilder(
+          !(
+            (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+            window.location.pathname.startsWith('/preview')
+          ),
+        );
       }
     }, [id]);
 

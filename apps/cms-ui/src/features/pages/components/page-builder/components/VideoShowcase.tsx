@@ -6,6 +6,7 @@ import {
 
 interface VideoShowcaseProps {
   componentId: string;
+  isPreview?: boolean;
 }
 
 const isYouTube = (url: string) => {
@@ -34,12 +35,22 @@ export const VideoShowcase = forwardRef<HTMLElement, VideoShowcaseProps>(
     const s = usePageBuilderStore(
       (state) => state.videoShowcase[id] ?? VIDEO_SHOWCASE_DEFAULTS,
     );
-    const [isBuilder, setIsBuilder] = useState(true);
+    const [isBuilder, setIsBuilder] = useState(
+      !(
+        (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+        window.location.pathname.startsWith('/preview')
+      ),
+    );
 
     useEffect(() => {
       const el = document.getElementById(id);
       if (el) {
-        setIsBuilder(true);
+        setIsBuilder(
+          !(
+            (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ ||
+            window.location.pathname.startsWith('/preview')
+          ),
+        );
       }
     }, [id]);
 
