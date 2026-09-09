@@ -177,6 +177,26 @@ export const publishEntry: RequestHandler = asyncHandler(
       .json(new ApiResponse(200, entry, 'Entry published successfully'));
   },
 );
+export const unpublishEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: unpublishEntry start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+    logger.debug({ entryId, userId }, 'ContentController: unpublishing entry');
+    const entry = await contentService.unpublishEntry(
+      entryId as string,
+      userId,
+      locale,
+    );
+    logger.info({ entryId }, 'ContentController: unpublishEntry end');
+    res
+      .status(200)
+      .json(new ApiResponse(200, entry, 'Entry unpublished successfully'));
+  },
+);
+
 export const revertEntry: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { entryId } = req.params;

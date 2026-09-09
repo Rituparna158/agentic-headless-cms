@@ -51,6 +51,12 @@ contentRoutes.post(
   contentController.publishEntry,
 );
 contentRoutes.post(
+  '/:schemaSlug/:entryId/unpublish',
+  requirePermission('publish'),
+  contentController.unpublishEntry,
+);
+
+contentRoutes.post(
   '/:schemaSlug/:entryId/revert',
   requirePermission('update'),
   contentController.revertEntry,

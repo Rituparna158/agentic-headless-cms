@@ -77,6 +77,16 @@ export function publishContentEntry(
   );
 }
 
+export function unpublishContentEntry(
+  schemaSlug: string,
+  entryId: string,
+): Promise<ContentEntryRecord> {
+  return apiFetch<ContentEntryRecord>(
+    API_PATHS.CONTENT.UNPUBLISH(schemaSlug, entryId),
+    { method: 'POST' },
+  );
+}
+
 export function deleteContentEntry(
   schemaSlug: string,
   entryId: string,

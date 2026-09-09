@@ -22,7 +22,10 @@ function useDocusaurusTheme(): ThemeMode {
 
     const root = document.documentElement;
     const body = document.body;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQuery =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-color-scheme: dark)')
+        : null;
 
     const read = (): ThemeMode => {
       const hasDarkClass =
@@ -40,7 +43,7 @@ function useDocusaurusTheme(): ThemeMode {
         return 'light';
       }
 
-      return mediaQuery.matches ? 'dark' : 'light';
+      return mediaQuery?.matches ? 'dark' : 'light';
     };
 
     setTheme(read());
@@ -53,11 +56,11 @@ function useDocusaurusTheme(): ThemeMode {
     observer.observe(body, { attributes: true, attributeFilter: ['class'] });
 
     const listener = () => setTheme(read());
-    mediaQuery.addEventListener('change', listener);
+    mediaQuery?.addEventListener?.('change', listener);
 
     return () => {
       observer.disconnect();
-      mediaQuery.removeEventListener('change', listener);
+      mediaQuery?.removeEventListener?.('change', listener);
     };
   }, []);
 

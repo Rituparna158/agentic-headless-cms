@@ -22,6 +22,7 @@ export interface ContentEntryRecord {
   status: 'draft' | 'published';
   data: Record<string, unknown>;
   publishedData: Record<string, unknown> | null;
+  publishedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
