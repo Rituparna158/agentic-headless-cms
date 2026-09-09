@@ -32,8 +32,6 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
-  const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
-  const [isUnpublishConfirmOpen, setIsUnpublishConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const canPublish = useHasPermission('publish', schema.id);
@@ -82,7 +80,6 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     },
     onSuccess: async () => {
       await invalidateList();
-      setIsPublishConfirmOpen(false);
       toast.success('Entry published successfully');
       router.refresh();
     },
@@ -102,7 +99,6 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     },
     onSuccess: async () => {
       await invalidateList();
-      setIsUnpublishConfirmOpen(false);
       toast.success('Entry unpublished successfully');
       router.refresh();
     },
@@ -155,7 +151,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
       toast.error('Please fix validation errors before publishing.');
       return;
     }
-    setIsPublishConfirmOpen(true);
+    publishMutation.mutate();
   }
 
   const { isDirty, isSubmitting } = form.formState;
@@ -241,7 +237,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                     size="sm"
                     className="text-xs font-medium flex items-center gap-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400"
                     disabled={!canPublish || unpublishMutation.isPending}
-                    onClick={() => setIsUnpublishConfirmOpen(true)}
+                    onClick={() => unpublishMutation.mutate()}
                   >
                     <Undo2 className="size-3.5" />
                     <span>
@@ -314,29 +310,6 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           ))}
         </div>
       </form>
-
-      {/* Publish Confirmation Dialog */}
-      <ConfirmDialog
-        open={isPublishConfirmOpen}
-        onOpenChange={setIsPublishConfirmOpen}
-        title="Publish Entry"
-        description="Are you sure you want to publish this entry to live? It will be immediately visible to all live consumers."
-        confirmLabel={publishMutation.isPending ? 'Publishing…' : 'Publish Now'}
-        onConfirm={() => publishMutation.mutate()}
-      />
-
-      {/* Unpublish Confirmation Dialog */}
-      <ConfirmDialog
-        open={isUnpublishConfirmOpen}
-        onOpenChange={setIsUnpublishConfirmOpen}
-        title="Unpublish Entry"
-        description="Are you sure you want to unpublish this entry? It will revert to draft status and be removed from live delivery channels."
-        confirmLabel={
-          unpublishMutation.isPending ? 'Unpublishing…' : 'Unpublish'
-        }
-        destructive={true}
-        onConfirm={() => unpublishMutation.mutate()}
-      />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
