@@ -9,6 +9,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "test:coverage": "pnpm -r run test -- --coverage",
     "prepare": "husky"
   },
   "devDependencies": {
