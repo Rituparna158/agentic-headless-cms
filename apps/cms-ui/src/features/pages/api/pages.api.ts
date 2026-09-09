@@ -127,4 +127,15 @@ export const pagesApi = {
   deletePage: async (entryId: string): Promise<void> => {
     await requestHandler.delete(ENDPOINTS.CONTENT.ENTRY('page', entryId));
   },
+
+  getPageBySlug: async (slug: string): Promise<PageEntry> => {
+    const formattedSlug = slug.startsWith('/') ? slug : `/${slug}`;
+    const res = await requestHandler.get<PaginatedResponse<PageEntry>>(
+      `${ENDPOINTS.CONTENT.BY_SCHEMA('page')}?filters[slug][$eq]=${formattedSlug}`,
+    );
+    if (!res.data.data.length) {
+      throw new Error(`Page with slug ${slug} not found`);
+    }
+    return res.data.data[0] as PageEntry;
+  },
 };
