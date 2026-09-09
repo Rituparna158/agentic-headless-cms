@@ -11,12 +11,15 @@ import {
   createContentEntry,
   deleteContentEntry,
   publishContentEntry,
+  unpublishContentEntry,
   updateContentEntry,
 } from '@/lib/api/content';
 import { ApiError } from '@/lib/api-client';
 import { Badge, Button } from '@repo/shared-ui';
-import { History, Trash2 } from 'lucide-react';
+import { History, Trash2, Undo2 } from 'lucide-react';
 import { FormProvider } from 'react-hook-form';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DynamicField } from './dynamic-field';
 import { VersionHistoryDrawer } from './version-history-drawer';
 import type { ContentEntryFormProps } from '@/types/component.types';
@@ -29,6 +32,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const canPublish = useHasPermission('publish', schema.id);
   const canDelete = useHasPermission('delete', schema.id);
@@ -57,7 +61,15 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         : createContentEntry(schema.slug, values),
     onSuccess: async (saved) => {
       await invalidateList();
+      toast.success('Draft saved successfully');
       router.push(`/content/${schema.slug}/${saved.id}`);
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : 'Failed to save draft. Please try again.',
+      );
     },
   });
 
@@ -68,7 +80,34 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     },
     onSuccess: async () => {
       await invalidateList();
+      toast.success('Entry published successfully');
       router.refresh();
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : 'Failed to publish entry. Please try again.',
+      );
+    },
+  });
+
+  const unpublishMutation = useMutation({
+    mutationFn: () => {
+      if (!entry) throw new Error('Entry not found.');
+      return unpublishContentEntry(schema.slug, entry.id);
+    },
+    onSuccess: async () => {
+      await invalidateList();
+      toast.success('Entry unpublished successfully');
+      router.refresh();
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : 'Failed to unpublish entry. Please try again.',
+      );
     },
   });
 
@@ -80,7 +119,16 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     },
     onSuccess: async () => {
       await invalidateList();
+      setIsDeleteConfirmOpen(false);
+      toast.success('Entry deleted successfully');
       router.push(`/content/${schema.slug}`);
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : 'Failed to delete entry. Please try again.',
+      );
     },
   });
 
@@ -97,6 +145,15 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     }
   }
 
+  async function handlePublishClick() {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      toast.error('Please fix validation errors before publishing.');
+      return;
+    }
+    publishMutation.mutate();
+  }
+
   const { isDirty, isSubmitting } = form.formState;
   const showSaveDraft = !entry || entry.status !== 'published' || isDirty;
 
@@ -109,7 +166,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         {/* Sleek Top Action Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 p-3.5 sm:p-4 rounded-xl border bg-muted/30 backdrop-blur-sm">
           {/* Status Badge */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Status
             </span>
@@ -155,7 +212,43 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               </Button>
             ) : null}
 
-            {entry ? (
+            {entry?.status === 'published' ? (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="text-xs font-medium opacity-70 cursor-not-allowed"
+                  disabled
+                >
+                  Published
+                </Button>
+
+                <span
+                  title={
+                    !canPublish
+                      ? 'You do not have permission to unpublish.'
+                      : ''
+                  }
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs font-medium flex items-center gap-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400"
+                    disabled={!canPublish || unpublishMutation.isPending}
+                    onClick={() => unpublishMutation.mutate()}
+                  >
+                    <Undo2 className="size-3.5" />
+                    <span>
+                      {unpublishMutation.isPending
+                        ? 'Unpublishing…'
+                        : 'Unpublish'}
+                    </span>
+                  </Button>
+                </span>
+              </>
+            ) : entry ? (
               <span
                 title={
                   !canPublish ? 'You do not have permission to publish.' : ''
@@ -165,18 +258,10 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   type="button"
                   size="sm"
                   className="text-xs font-medium"
-                  disabled={
-                    !canPublish ||
-                    publishMutation.isPending ||
-                    entry.status === 'published'
-                  }
-                  onClick={() => publishMutation.mutate()}
+                  disabled={!canPublish || publishMutation.isPending}
+                  onClick={() => void handlePublishClick()}
                 >
-                  {publishMutation.isPending
-                    ? 'Publishing…'
-                    : entry.status === 'published'
-                      ? 'Published'
-                      : 'Publish'}
+                  {publishMutation.isPending ? 'Publishing…' : 'Publish'}
                 </Button>
               </span>
             ) : null}
@@ -189,11 +274,11 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               >
                 <Button
                   type="button"
-                  variant="danger"
+                  variant="outline"
                   size="sm"
-                  className="text-xs font-medium flex items-center gap-1.5"
+                  className="text-xs font-medium flex items-center gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
                   disabled={!canDelete || deleteMutation.isPending}
-                  onClick={() => deleteMutation.mutate()}
+                  onClick={() => setIsDeleteConfirmOpen(true)}
                 >
                   <Trash2 className="size-3.5" />
                   <span>
@@ -225,6 +310,17 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           ))}
         </div>
       </form>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        title="Delete Entry"
+        description="Are you sure you want to permanently delete this entry? This action cannot be undone."
+        confirmLabel={deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+        destructive={true}
+        onConfirm={() => deleteMutation.mutate()}
+      />
 
       {entry ? (
         <VersionHistoryDrawer

@@ -13,14 +13,27 @@ const {
   mockCreate,
   mockUpdate,
   mockPublish,
+  mockUnpublish,
   mockDelete,
+  mockToastSuccess,
+  mockToastError,
 } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockRefresh: vi.fn(),
   mockCreate: vi.fn(),
   mockUpdate: vi.fn(),
   mockPublish: vi.fn(),
+  mockUnpublish: vi.fn(),
   mockDelete: vi.fn(),
+  mockToastSuccess: vi.fn(),
+  mockToastError: vi.fn(),
+}));
+
+vi.mock('sonner', () => ({
+  toast: {
+    success: mockToastSuccess,
+    error: mockToastError,
+  },
 }));
 
 vi.mock('@/hooks/use-permissions', () => ({
@@ -35,6 +48,7 @@ vi.mock('@/lib/api/content', () => ({
   createContentEntry: mockCreate,
   updateContentEntry: mockUpdate,
   publishContentEntry: mockPublish,
+  unpublishContentEntry: mockUnpublish,
   deleteContentEntry: mockDelete,
 }));
 
@@ -195,9 +209,12 @@ describe('ContentEntryForm', () => {
     await waitFor(() => {
       expect(mockPublish).toHaveBeenCalledWith('article', 'entry-1');
     });
+    expect(mockToastSuccess).toHaveBeenCalledWith(
+      'Entry published successfully',
+    );
   });
 
-  it('deletes an existing entry and navigates back to the list', async () => {
+  it('shows confirmation modal before deleting an existing entry and deletes on confirm', async () => {
     const entry: ContentEntryRecord = {
       id: 'entry-1',
       status: 'draft',
@@ -210,6 +227,19 @@ describe('ContentEntryForm', () => {
     renderForm(entry);
 
     await user.click(screen.getByRole('button', { name: /delete/i }));
+
+    expect(screen.getByText('Delete Entry')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Are you sure you want to permanently delete this entry/i,
+      ),
+    ).toBeInTheDocument();
+
+    // Confirm button in the modal
+    const deleteButtons = await screen.findAllByRole('button', {
+      name: /delete/i,
+    });
+    await user.click(deleteButtons[deleteButtons.length - 1]!);
 
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith('article', 'entry-1');
@@ -256,5 +286,59 @@ describe('ContentEntryForm', () => {
     expect(
       screen.getByRole('button', { name: /save draft/i }),
     ).toBeInTheDocument();
+  });
+
+  it('prevents publishing and displays an error toast when required fields fail validation', async () => {
+    const entry: ContentEntryRecord = {
+      id: 'entry-1',
+      status: 'draft',
+      data: { title: '', views: 42 },
+      publishedData: null,
+    };
+
+    const user = userEvent.setup();
+    renderForm(entry);
+
+    const titleInput = screen.getByLabelText(/title/i);
+    await user.clear(titleInput);
+    await user.click(screen.getByRole('button', { name: /^publish$/i }));
+
+    expect(mockPublish).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('button', { name: /publish now/i }),
+    ).not.toBeInTheDocument();
+    expect(mockToastError).toHaveBeenCalledWith(
+      'Please fix validation errors before publishing.',
+    );
+  });
+
+  it('lets a published entry be unpublished directly on click', async () => {
+    const entry: ContentEntryRecord = {
+      id: 'entry-1',
+      status: 'published',
+      data: { title: 'Published Article', views: 10 },
+      publishedData: { title: 'Published Article', views: 10 },
+    };
+    mockUnpublish.mockResolvedValue({
+      ...entry,
+      status: 'draft',
+      publishedData: null,
+    });
+
+    const user = userEvent.setup();
+    renderForm(entry);
+
+    expect(screen.getByText('published')).toBeInTheDocument();
+    const unpublishBtn = screen.getByRole('button', { name: /unpublish/i });
+    expect(unpublishBtn).toBeInTheDocument();
+
+    await user.click(unpublishBtn);
+
+    await waitFor(() => {
+      expect(mockUnpublish).toHaveBeenCalledWith('article', 'entry-1');
+    });
+    expect(mockToastSuccess).toHaveBeenCalledWith(
+      'Entry unpublished successfully',
+    );
   });
 });

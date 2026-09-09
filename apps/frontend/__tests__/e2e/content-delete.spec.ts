@@ -63,6 +63,11 @@ test('content entries can be deleted from the list and from the edit view', asyn
     page.getByRole('button', { name: 'Delete', exact: true }),
   ).toBeVisible({ timeout: 15_000 });
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await expect(page.getByText('Delete Entry')).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Delete', exact: true })
+    .last()
+    .click();
 
   await expect(page).toHaveURL(new RegExp(`/content/${slug}$`));
   await expect(

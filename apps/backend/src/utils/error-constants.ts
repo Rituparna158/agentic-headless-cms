@@ -24,6 +24,7 @@ export const SERVICE_ERRORS = {
   CREATE_DRAFT_FAILED: 'Failed to create entry draft',
   UPDATE_DRAFT_FAILED: 'Failed to update entry draft',
   PUBLISH_ENTRY_FAILED: 'Failed to publish entry',
+  UNPUBLISH_ENTRY_FAILED: 'Failed to unpublish entry',
   REVERT_ENTRY_FAILED: 'Failed to revert entry',
   LIST_ENTRY_VERSIONS_FAILED: 'Failed to list entry versions',
   DELETE_ENTRY_FAILED: 'Failed to delete entry',

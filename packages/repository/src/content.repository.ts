@@ -171,6 +171,7 @@ export class ContentRepository {
             status: entryLocalizations.status,
             data: entryLocalizations.data,
             publishedData: entryLocalizations.publishedData,
+            publishedAt: entryLocalizations.publishedAt,
           })
           .from(contentEntries)
           .innerJoin(
@@ -340,6 +341,67 @@ export class ContentRepository {
       logger.error({ err: error }, 'ContentRepository Error in publishEntry:');
       if (error instanceof RecordNotFoundError) throw error;
       throw new ApiError(500, REPO_ERRORS.PUBLISH_ENTRY_FAILED);
+    }
+  }
+  async unpublishEntry(
+    entryId: string,
+    userId: string,
+    locale: string = DEFAULT_LOCALE,
+  ) {
+    try {
+      logger.info(
+        { entryId, userId, locale },
+        'ContentRepository: unpublishing entry',
+      );
+      const entry = await this.getEntryById(entryId, locale);
+      if (!entry) {
+        throw new RecordNotFoundError('Entry not found');
+      }
+      if (entry.status !== 'published') {
+        throw new ApiError(400, 'Entry is not currently published');
+      }
+
+      await createEntryVersion(this.db, {
+        entryId,
+        locale,
+        data: entry.data,
+        status: 'draft',
+        actorType: 'user',
+        createdByUserId: userId,
+        comment: 'Unpublished entry',
+      });
+
+      await this.db
+        .update(entryLocalizations)
+        .set({
+          status: 'draft',
+          publishedData: null,
+          publishedAt: null,
+          scheduledPublishAt: null,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(entryLocalizations.entryId, entryId),
+            eq(entryLocalizations.locale, locale),
+          ),
+        );
+
+      const unpublishedEntry = await this.getEntryById(entryId, locale);
+      if (!unpublishedEntry) {
+        throw new ApiError(500, REPO_ERRORS.FETCH_ENTRY_FAILED);
+      }
+      logger.info({ entryId }, 'ContentRepository: unpublishEntry complete');
+      return unpublishedEntry;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'ContentRepository Error in unpublishEntry:',
+      );
+      if (error instanceof RecordNotFoundError || error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError(500, 'Failed to unpublish entry');
     }
   }
   async revertEntry(
