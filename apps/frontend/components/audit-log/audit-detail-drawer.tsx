@@ -73,7 +73,8 @@ export function AuditDetailDrawer({
       isOpen={open}
       onClose={() => onOpenChange(false)}
       title="Audit Event Details"
-      size="840px"
+      size="min(840px, 100vw)"
+      className="w-full max-w-[100vw] sm:max-w-[840px]"
       position="right"
       animationType="slide"
       footer={
@@ -90,7 +91,10 @@ export function AuditDetailDrawer({
     >
       <div className="flex flex-col gap-6 p-1 w-full max-w-full overflow-x-hidden">
         {/* Top Summary Card */}
-        <Card variant="default" className="p-6 md:p-7 flex flex-col gap-6">
+        <Card
+          variant="default"
+          className="p-4 sm:p-6 md:p-7 flex flex-col gap-6"
+        >
           {/* Header Row */}
           <div className="flex items-center justify-between pb-2">
             <Badge
@@ -145,14 +149,14 @@ export function AuditDetailDrawer({
           </div>
 
           {/* Plain Context / Metadata */}
-          <div className="pt-4 border-t border-border/30 flex flex-wrap items-center gap-6 text-xs text-muted-foreground mt-1">
+          <div className="pt-4 border-t border-border/30 flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-muted-foreground mt-1">
             <div className="flex items-center gap-2">
               <Globe className="size-4 text-muted-foreground/80" />
               <span>IP Address: {ipAddress}</span>
             </div>
             {userAgent && (
               <div
-                className="flex items-center gap-2 truncate max-w-sm"
+                className="flex items-center gap-2 truncate max-w-full"
                 title={userAgent}
               >
                 <Shield className="size-4 text-muted-foreground/80 shrink-0" />
