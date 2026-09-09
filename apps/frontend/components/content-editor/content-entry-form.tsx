@@ -15,7 +15,7 @@ import {
 } from '@/lib/api/content';
 import { ApiError } from '@/lib/api-client';
 import { Badge, Button } from '@repo/shared-ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
+import { History, Trash2 } from 'lucide-react';
 import { FormProvider } from 'react-hook-form';
 import { DynamicField } from './dynamic-field';
 import { VersionHistoryDrawer } from './version-history-drawer';
@@ -97,76 +97,63 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     }
   }
 
+  const { isDirty, isSubmitting } = form.formState;
+  const showSaveDraft = !entry || entry.status !== 'published' || isDirty;
+
   return (
     <FormProvider {...form}>
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="grid gap-6 lg:grid-cols-[1fr_18rem]"
+        className="flex flex-col gap-6"
       >
-        <div className="grid gap-4">
-          {definition.fields.map((field) => (
-            <DynamicField
-              key={field.apiId}
-              field={field}
-              control={form.control}
-            />
-          ))}
-        </div>
+        {/* Sleek Top Action Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 p-3.5 sm:p-4 rounded-xl border bg-muted/30 backdrop-blur-sm">
+          {/* Status Badge */}
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Status
+            </span>
+            <Badge
+              variant={
+                entry?.status === 'published'
+                  ? 'success'
+                  : entry?.status === 'draft'
+                    ? 'secondary'
+                    : 'outline'
+              }
+              size="sm"
+              className="capitalize font-medium flex items-center gap-1.5"
+            >
+              {entry?.status ?? 'Not saved'}
+            </Badge>
+          </div>
 
-        <div className="grid gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Publishing</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Status</span>
-                <Badge
-                  variant={
-                    entry?.status === 'published'
-                      ? 'success'
-                      : entry?.status === 'draft'
-                        ? 'secondary'
-                        : 'outline'
-                  }
-                  size="sm"
-                  className="capitalize"
-                >
-                  {entry?.status ?? 'Not saved'}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Action Buttons Group */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {entry ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1.5 text-xs font-medium"
+                onClick={() => setIsVersionHistoryOpen(true)}
+              >
+                <History className="size-3.5 text-muted-foreground" />
+                <span>View history</span>
+              </Button>
+            ) : null}
 
-          {entry ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Versions</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-2 text-sm">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full justify-between"
-                  onClick={() => setIsVersionHistoryOpen(true)}
-                >
-                  View history
-                  <span aria-hidden="true">&rarr;</span>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {submitError ? (
-            <p role="alert" className="text-destructive text-sm">
-              {submitError}
-            </p>
-          ) : null}
-
-          <div className="grid gap-2">
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Saving…' : 'Save Draft'}
-            </Button>
+            {showSaveDraft ? (
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="text-xs font-medium"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving…' : 'Save Draft'}
+              </Button>
+            ) : null}
 
             {entry ? (
               <span
@@ -175,9 +162,9 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 }
               >
                 <Button
-                  className="w-full"
                   type="button"
-                  variant="outline"
+                  size="sm"
+                  className="text-xs font-medium"
                   disabled={
                     !canPublish ||
                     publishMutation.isPending ||
@@ -201,17 +188,41 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 }
               >
                 <Button
-                  className="w-full"
                   type="button"
                   variant="danger"
+                  size="sm"
+                  className="text-xs font-medium flex items-center gap-1.5"
                   disabled={!canDelete || deleteMutation.isPending}
                   onClick={() => deleteMutation.mutate()}
                 >
-                  {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                  <Trash2 className="size-3.5" />
+                  <span>
+                    {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                  </span>
                 </Button>
               </span>
             ) : null}
           </div>
+        </div>
+
+        {submitError ? (
+          <p
+            role="alert"
+            className="text-destructive text-sm bg-destructive/10 border border-destructive/20 rounded-md p-3"
+          >
+            {submitError}
+          </p>
+        ) : null}
+
+        {/* Dynamic Fields taking full width */}
+        <div className="grid gap-5 w-full">
+          {definition.fields.map((field) => (
+            <DynamicField
+              key={field.apiId}
+              field={field}
+              control={form.control}
+            />
+          ))}
         </div>
       </form>
 

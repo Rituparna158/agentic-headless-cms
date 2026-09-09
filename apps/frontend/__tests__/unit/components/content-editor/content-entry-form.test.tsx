@@ -233,4 +233,28 @@ describe('ContentEntryForm', () => {
     });
     expect(mockPush).not.toHaveBeenCalled();
   });
+
+  it('hides Save Draft button when entry is published and unmodified, and shows it when modified', async () => {
+    const entry: ContentEntryRecord = {
+      id: 'entry-1',
+      status: 'published',
+      data: { title: 'Published Article', views: 10 },
+      publishedData: { title: 'Published Article', views: 10 },
+    };
+
+    const user = userEvent.setup();
+    renderForm(entry);
+
+    expect(screen.getByText('published')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /save draft/i }),
+    ).not.toBeInTheDocument();
+
+    const titleInput = screen.getByLabelText(/title/i);
+    await user.type(titleInput, ' - Updated');
+
+    expect(
+      screen.getByRole('button', { name: /save draft/i }),
+    ).toBeInTheDocument();
+  });
 });
