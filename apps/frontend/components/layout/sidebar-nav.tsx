@@ -97,22 +97,22 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               setIsContentExpanded((prev) => !prev);
               if (!isContentPath) {
                 router.push('/content');
-                onNavigate?.();
               }
             }}
           >
-            <Link
-              href="/content"
+            <div
+              className="flex items-center gap-2 flex-1"
               onClick={(e) => {
                 e.stopPropagation();
-                setIsContentExpanded(true);
-                onNavigate?.();
+                setIsContentExpanded((prev) => !prev);
+                if (!isContentPath) {
+                  router.push('/content');
+                }
               }}
-              className="flex items-center gap-2 flex-1"
             >
               <Icon className="size-4" />
               <span>{item.label}</span>
-            </Link>
+            </div>
             <div className="flex items-center gap-1.5">
               {schemas.length > 0 && (
                 <Badge variant="secondary" size="sm" className="font-normal">
@@ -158,9 +158,10 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
               {/* Ignix-UI ScrollArea for 10+ / 1000s of Content Types */}
               <ScrollArea
-                className="max-h-64 pr-1"
+                className="max-h-56 sm:max-h-64 [&>[data-radix-scroll-area-viewport]]:max-h-56 sm:[&>[data-radix-scroll-area-viewport]]:max-h-64 [&>[data-radix-scroll-area-viewport]]:overscroll-contain pr-1.5 touch-pan-y"
+                type="always"
                 variant="thin"
-                thumbColor="subtle"
+                thumbColor="default"
               >
                 <div className="space-y-1">
                   {schemas.length === 0 ? (
