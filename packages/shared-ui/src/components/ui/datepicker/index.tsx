@@ -562,11 +562,10 @@ const parseDate = (str: string, format: DateFormat): Date | null => {
         }
         case 'MMM DD, YYYY': {
           const parts = cleaned.split(/[\s,]+/);
-          if (parts.length < 3 || !parts[0] || !parts[1] || !parts[2])
-            return null;
           const p0 = parts[0];
           const p1 = parts[1];
           const p2 = parts[2];
+          if (!p0 || !p1 || !p2) return null;
           const mIndex = MONTH_NAMES.findIndex((m) =>
             m.toLowerCase().startsWith(p0.toLowerCase()),
           );
@@ -579,19 +578,18 @@ const parseDate = (str: string, format: DateFormat): Date | null => {
         }
         case 'DD MMM YYYY': {
           const parts2 = cleaned.split(/[\s,]+/);
-          if (parts2.length < 3 || !parts2[0] || !parts2[1] || !parts2[2])
-            return null;
-          const p2_0 = parts2[0];
-          const p2_1 = parts2[1];
-          const p2_2 = parts2[2];
+          const p0 = parts2[0];
+          const p1 = parts2[1];
+          const p2 = parts2[2];
+          if (!p0 || !p1 || !p2) return null;
           const mIndex2 = MONTH_NAMES.findIndex((m) =>
-            m.toLowerCase().startsWith(p2_1.toLowerCase()),
+            m.toLowerCase().startsWith(p1.toLowerCase()),
           );
           if (mIndex2 === -1) return null;
-          day = parseInt(p2_0, 10);
+          day = parseInt(p0, 10);
           month = mIndex2 + 1;
-          year = parseInt(p2_2, 10);
-          yearStr = p2_2;
+          year = parseInt(p2, 10);
+          yearStr = p2;
           break;
         }
       }
@@ -1523,6 +1521,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     const [internalError, setInternalError] = useState<string | null>(null);
     const [computedPosition, setComputedPosition] =
       useState<PopupPosition>(popupPosition);
+    const [maxPopupHeight, setMaxPopupHeight] = useState<number | null>(null);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const popupRef = useRef<HTMLDivElement>(null);
@@ -1610,6 +1609,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     useEffect(() => {
       if (!isOpen) {
         setComputedPosition(popupPosition);
+        setMaxPopupHeight(null);
         return;
       }
 
@@ -1644,6 +1644,9 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
             side = 'left';
           }
           setComputedPosition(side as PopupPosition);
+
+          const availableSpace = viewportHeight - triggerRect.top;
+          setMaxPopupHeight(Math.max(availableSpace - 16, 0));
           return;
         }
 
@@ -1663,16 +1666,19 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         if (
           vertical === 'bottom' &&
           spaceBelow < popupHeight &&
-          spaceAbove > popupHeight
+          spaceAbove > spaceBelow
         ) {
           vertical = 'top';
         } else if (
           vertical === 'top' &&
           spaceAbove < popupHeight &&
-          spaceBelow > popupHeight
+          spaceBelow > spaceAbove
         ) {
           vertical = 'bottom';
         }
+
+        const availableSpace = vertical === 'top' ? spaceAbove : spaceBelow;
+        setMaxPopupHeight(Math.max(availableSpace - 16, 0));
 
         if (horizontal === 'right') {
           const rightEdge = triggerRect.left + popupWidth;
@@ -2007,10 +2013,15 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
                 damping: 25,
               }}
               className={cn(
-                'absolute z-50',
+                'absolute z-50 overflow-y-auto',
                 getPopupPositionClasses(computedPosition),
                 calendarClassName,
               )}
+              style={
+                maxPopupHeight != null
+                  ? { maxHeight: maxPopupHeight }
+                  : undefined
+              }
             >
               <CalendarView
                 currentMonth={currentMonth}
