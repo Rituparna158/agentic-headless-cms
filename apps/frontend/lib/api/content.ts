@@ -34,32 +34,44 @@ export function listContentEntries(
   );
 }
 
+function withLocale(path: string, locale?: string): string {
+  if (!locale) return path;
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}locale=${encodeURIComponent(locale)}`;
+}
+
 export function getContentEntry(
   schemaSlug: string,
   entryId: string,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
   return apiFetch<ContentEntryRecord>(
-    API_PATHS.CONTENT.BY_ID(schemaSlug, entryId),
+    withLocale(API_PATHS.CONTENT.BY_ID(schemaSlug, entryId), locale),
   );
 }
 
 export function createContentEntry(
   schemaSlug: string,
   data: Record<string, unknown>,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
-  return apiFetch<ContentEntryRecord>(API_PATHS.CONTENT.BASE(schemaSlug), {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return apiFetch<ContentEntryRecord>(
+    withLocale(API_PATHS.CONTENT.BASE(schemaSlug), locale),
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+  );
 }
 
 export function updateContentEntry(
   schemaSlug: string,
   entryId: string,
   data: Record<string, unknown>,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
   return apiFetch<ContentEntryRecord>(
-    API_PATHS.CONTENT.BY_ID(schemaSlug, entryId),
+    withLocale(API_PATHS.CONTENT.BY_ID(schemaSlug, entryId), locale),
     {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -70,9 +82,10 @@ export function updateContentEntry(
 export function publishContentEntry(
   schemaSlug: string,
   entryId: string,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
   return apiFetch<ContentEntryRecord>(
-    API_PATHS.CONTENT.PUBLISH(schemaSlug, entryId),
+    withLocale(API_PATHS.CONTENT.PUBLISH(schemaSlug, entryId), locale),
     { method: 'POST' },
   );
 }
@@ -80,9 +93,10 @@ export function publishContentEntry(
 export function unpublishContentEntry(
   schemaSlug: string,
   entryId: string,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
   return apiFetch<ContentEntryRecord>(
-    API_PATHS.CONTENT.UNPUBLISH(schemaSlug, entryId),
+    withLocale(API_PATHS.CONTENT.UNPUBLISH(schemaSlug, entryId), locale),
     { method: 'POST' },
   );
 }

@@ -10,21 +10,25 @@ import { ContentEntryForm } from '@/components/content-editor/content-entry-form
 const {
   mockPush,
   mockRefresh,
+  mockGetEntry,
   mockCreate,
   mockUpdate,
   mockPublish,
   mockUnpublish,
   mockDelete,
+  mockListLocales,
   mockToastSuccess,
   mockToastError,
 } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockRefresh: vi.fn(),
+  mockGetEntry: vi.fn(),
   mockCreate: vi.fn(),
   mockUpdate: vi.fn(),
   mockPublish: vi.fn(),
   mockUnpublish: vi.fn(),
   mockDelete: vi.fn(),
+  mockListLocales: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
 }));
@@ -44,7 +48,12 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
 }));
 
+vi.mock('@/lib/api/locales', () => ({
+  listLocales: mockListLocales,
+}));
+
 vi.mock('@/lib/api/content', () => ({
+  getContentEntry: mockGetEntry,
   createContentEntry: mockCreate,
   updateContentEntry: mockUpdate,
   publishContentEntry: mockPublish,
@@ -103,6 +112,8 @@ function renderForm(entry?: ContentEntryRecord) {
 describe('ContentEntryForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockListLocales.mockResolvedValue({ data: [] });
+    mockGetEntry.mockResolvedValue(undefined);
   });
 
   it('renders one control per schema field and a "Not saved" status for a new entry', () => {
@@ -186,6 +197,7 @@ describe('ContentEntryForm', () => {
         expect.objectContaining({
           title: 'Updated',
         }),
+        'en',
       );
     });
     expect(mockCreate).not.toHaveBeenCalled();
@@ -214,10 +226,10 @@ describe('ContentEntryForm', () => {
     await user.click(publishButtons[publishButtons.length - 1]!);
 
     await waitFor(() => {
-      expect(mockPublish).toHaveBeenCalledWith('article', 'entry-1');
+      expect(mockPublish).toHaveBeenCalledWith('article', 'entry-1', 'en');
     });
     expect(mockToastSuccess).toHaveBeenCalledWith(
-      'Entry published successfully',
+      expect.stringContaining('Entry published successfully'),
     );
   });
 
@@ -349,10 +361,75 @@ describe('ContentEntryForm', () => {
     await user.click(unpublishButtons[unpublishButtons.length - 1]!);
 
     await waitFor(() => {
-      expect(mockUnpublish).toHaveBeenCalledWith('article', 'entry-1');
+      expect(mockUnpublish).toHaveBeenCalledWith('article', 'entry-1', 'en');
     });
     expect(mockToastSuccess).toHaveBeenCalledWith(
-      'Entry unpublished successfully',
+      expect.stringContaining('Entry unpublished successfully'),
     );
+  });
+
+  it('displays available locales in the locale selector and switches locale', async () => {
+    mockListLocales.mockResolvedValue({
+      data: [
+        { id: 'loc-1', code: 'en', name: 'English', isDefault: true },
+        { id: 'loc-2', code: 'es', name: 'Spanish', isDefault: false },
+      ],
+    });
+    const user = userEvent.setup();
+    renderForm();
+
+    const localeBtn = await screen.findByRole('button', {
+      name: /select locale/i,
+    });
+    expect(localeBtn).toBeInTheDocument();
+    expect(screen.getByText('en')).toBeInTheDocument();
+
+    await user.click(localeBtn);
+    expect(await screen.findByText('Spanish')).toBeInTheDocument();
+    await user.click(screen.getByText('Spanish'));
+
+    expect(screen.getByText('es')).toBeInTheDocument();
+  });
+
+  it('fetches and populates localized data when switching locale on an existing entry', async () => {
+    mockListLocales.mockResolvedValue({
+      data: [
+        { id: 'loc-1', code: 'en', name: 'English', isDefault: true },
+        { id: 'loc-2', code: 'es', name: 'Spanish', isDefault: false },
+      ],
+    });
+    mockGetEntry.mockResolvedValue({
+      id: 'entry-1',
+      status: 'draft',
+      data: { title: 'Hola Mundo', views: 99 },
+    });
+
+    const entry: ContentEntryRecord = {
+      id: 'entry-1',
+      status: 'draft',
+      data: { title: 'Hello World', views: 42 },
+      publishedData: null,
+    };
+
+    const user = userEvent.setup();
+    renderForm(entry);
+
+    expect(screen.getByDisplayValue('Hello World')).toBeInTheDocument();
+
+    const localeBtn = await screen.findByRole('button', {
+      name: /select locale/i,
+    });
+    await user.click(localeBtn);
+
+    const spanishOption = await screen.findByText('Spanish');
+    await user.click(spanishOption);
+
+    await waitFor(() => {
+      expect(mockGetEntry).toHaveBeenCalledWith('article', 'entry-1', 'es');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Hola Mundo')).toBeInTheDocument();
+    });
   });
 });
