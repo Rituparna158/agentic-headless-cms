@@ -49,9 +49,9 @@ export const uploadMedia: RequestHandler = asyncHandler(
       'media.uploaded',
       {
         assetId: asset.id,
-        filename: asset.fileName,
+        filename: asset.filename,
         mimeType: asset.mimeType,
-        size: asset.size,
+        size: asset.sizeBytes,
         url: asset.url,
       },
       req.context?.applicationId,

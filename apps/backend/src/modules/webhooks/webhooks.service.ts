@@ -105,8 +105,9 @@ export class WebhooksService {
       logger.info({ id }, 'WebhooksService: listDeliveries start');
       return await this.repository.listDeliveries(id, applicationId);
     } catch (error) {
+      if (error instanceof ApiError) throw error;
       logger.error({ err: error }, 'WebhooksService Error in listDeliveries:');
-      throw new ApiError(500, SERVICE_ERRORS.LIST_DELIVERIES_FAILED);
+      throw new ApiError(500, SERVICE_ERRORS.LIST_WEBHOOK_DELIVERIES_FAILED);
     }
   }
 }
