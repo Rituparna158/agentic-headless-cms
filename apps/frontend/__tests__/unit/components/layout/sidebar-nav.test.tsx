@@ -93,9 +93,9 @@ describe('SidebarNav', () => {
     mockUsePathname.mockReturnValue('/');
     renderSidebarNav();
 
-    expect(screen.getByText('Webhooks')).toBeInTheDocument();
+    expect(screen.getByText('Workflows')).toBeInTheDocument();
     expect(
-      screen.queryByRole('link', { name: /Webhooks/ }),
+      screen.queryByRole('link', { name: /Workflows/ }),
     ).not.toBeInTheDocument();
   });
 

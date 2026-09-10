@@ -33,6 +33,8 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
+  const [isUnpublishConfirmOpen, setIsUnpublishConfirmOpen] = useState(false);
 
   const canPublish = useHasPermission('publish', schema.id);
   const canDelete = useHasPermission('delete', schema.id);
@@ -151,7 +153,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
       toast.error('Please fix validation errors before publishing.');
       return;
     }
-    publishMutation.mutate();
+    setIsPublishConfirmOpen(true);
   }
 
   const { isDirty, isSubmitting } = form.formState;
@@ -237,7 +239,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                     size="sm"
                     className="text-xs font-medium flex items-center gap-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400"
                     disabled={!canPublish || unpublishMutation.isPending}
-                    onClick={() => unpublishMutation.mutate()}
+                    onClick={() => setIsUnpublishConfirmOpen(true)}
                   >
                     <Undo2 className="size-3.5" />
                     <span>
@@ -310,6 +312,35 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           ))}
         </div>
       </form>
+
+      {/* Publish Confirmation Dialog */}
+      <ConfirmDialog
+        open={isPublishConfirmOpen}
+        onOpenChange={setIsPublishConfirmOpen}
+        title="Publish Entry"
+        description="Are you sure you want to publish this entry? It will become publicly visible and trigger any connected webhooks."
+        confirmLabel={publishMutation.isPending ? 'Publishing…' : 'Publish'}
+        onConfirm={() => {
+          setIsPublishConfirmOpen(false);
+          publishMutation.mutate();
+        }}
+      />
+
+      {/* Unpublish Confirmation Dialog */}
+      <ConfirmDialog
+        open={isUnpublishConfirmOpen}
+        onOpenChange={setIsUnpublishConfirmOpen}
+        title="Unpublish Entry"
+        description="Are you sure you want to unpublish this entry? It will revert to draft status and be hidden from the public."
+        confirmLabel={
+          unpublishMutation.isPending ? 'Unpublishing…' : 'Unpublish'
+        }
+        destructive={true}
+        onConfirm={() => {
+          setIsUnpublishConfirmOpen(false);
+          unpublishMutation.mutate();
+        }}
+      />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
