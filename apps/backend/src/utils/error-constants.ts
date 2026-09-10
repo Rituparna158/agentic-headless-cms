@@ -59,4 +59,6 @@ export const SERVICE_ERRORS = {
   DELETE_WEBHOOK_FAILED: 'Failed to delete webhook',
   FETCH_WEBHOOK_FAILED: 'Failed to fetch webhook details',
   TRIGGER_WEBHOOK_FAILED: 'Failed to trigger webhook manually',
+  TEST_WEBHOOK_FAILED: 'Failed to test webhook',
+  LIST_WEBHOOK_DELIVERIES_FAILED: 'Failed to list webhook deliveries',
 };

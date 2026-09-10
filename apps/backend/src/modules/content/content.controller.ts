@@ -5,6 +5,7 @@ import { logger } from '@repo/logger';
 import { asyncHandler, ApiResponse, ApiError } from '@repo/utils';
 import { DEFAULT_LOCALE, ERROR_MESSAGES } from '@repo/constants';
 import type { SchemaDefinition } from '@repo/types';
+import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
 const contentService = new ContentService();
 export const listEntries: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
@@ -128,6 +129,16 @@ export const updateDraft: RequestHandler = asyncHandler(
       locale,
     );
     logger.info({ entryId }, 'ContentController: updateDraft end');
+    void webhookDispatcher.dispatch(
+      'content.updated',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
     res
       .status(200)
       .json(new ApiResponse(200, entry, 'Draft updated successfully'));
@@ -151,6 +162,16 @@ export const updatePartialEntry: RequestHandler = asyncHandler(
       locale,
     );
     logger.info({ entryId }, 'ContentController: updatePartialEntry end');
+    void webhookDispatcher.dispatch(
+      'content.updated',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
     res
       .status(200)
       .json(
@@ -172,6 +193,16 @@ export const publishEntry: RequestHandler = asyncHandler(
       locale,
     );
     logger.info({ entryId }, 'ContentController: publishEntry end');
+    void webhookDispatcher.dispatch(
+      'content.published',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
     res
       .status(200)
       .json(new ApiResponse(200, entry, 'Entry published successfully'));
@@ -191,12 +222,21 @@ export const unpublishEntry: RequestHandler = asyncHandler(
       locale,
     );
     logger.info({ entryId }, 'ContentController: unpublishEntry end');
+    void webhookDispatcher.dispatch(
+      'content.unpublish',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
     res
       .status(200)
       .json(new ApiResponse(200, entry, 'Entry unpublished successfully'));
   },
 );
-
 export const revertEntry: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const { entryId } = req.params;
@@ -238,6 +278,14 @@ export const deleteEntry: RequestHandler = asyncHandler(
     logger.debug({ entryId }, 'ContentController: deleting entry');
     await contentService.deleteEntry(entryId as string);
     logger.info({ entryId }, 'ContentController: deleteEntry end');
+    void webhookDispatcher.dispatch(
+      'content.deleted',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+      },
+      req.context?.applicationId,
+    );
     res.status(204).end();
   },
 );
