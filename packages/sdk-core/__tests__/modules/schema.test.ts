@@ -60,4 +60,9 @@ describe('SchemaModule', () => {
       params: { force: 'true' },
     });
   });
+
+  it('get by slug', async () => {
+    await schemaModule.get('articles');
+    expect(transport.request).toHaveBeenCalledWith('/schemas/slug/articles');
+  });
 });

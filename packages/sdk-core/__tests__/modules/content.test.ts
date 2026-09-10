@@ -67,6 +67,17 @@ describe('ContentModule', () => {
     );
   });
 
+  it('unpublish', async () => {
+    await content.unpublish('articles', '123', { locale: 'es' });
+    expect(transport.request).toHaveBeenCalledWith(
+      '/content/articles/123/unpublish',
+      {
+        method: 'POST',
+        params: { locale: 'es' },
+      },
+    );
+  });
+
   it('versions', async () => {
     await content.versions('articles', '123');
     expect(transport.request).toHaveBeenCalledWith(
