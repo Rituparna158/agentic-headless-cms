@@ -19,8 +19,8 @@ export interface RelationPickerFieldProps {
   onChange: (value: unknown) => void;
   disabled?: boolean;
   id?: string;
-  'aria-describedby'?: string;
-  'aria-invalid'?: boolean;
+  'aria-describedby'?: React.AriaAttributes['aria-describedby'];
+  'aria-invalid'?: React.AriaAttributes['aria-invalid'];
 }
 
 function getEntryTitle(entry: ContentEntryRecord): string {
@@ -149,6 +149,8 @@ export function RelationPickerField({
     );
   }
 
+  const isInvalid = Boolean(ariaInvalid && ariaInvalid !== 'false');
+
   return (
     <>
       <div
@@ -162,7 +164,7 @@ export function RelationPickerField({
           <div
             className={cn(
               'group relative flex items-center justify-between rounded-lg border bg-muted/30 p-3 transition-colors hover:bg-muted/40',
-              ariaInvalid && 'border-destructive',
+              isInvalid && 'border-destructive',
               disabled && 'opacity-50',
             )}
           >
@@ -224,7 +226,7 @@ export function RelationPickerField({
               onClick={() => setOpen(true)}
               className={cn(
                 'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-                ariaInvalid && 'border-destructive',
+                isInvalid && 'border-destructive',
               )}
             >
               <div className="flex items-center gap-2 text-muted-foreground">
