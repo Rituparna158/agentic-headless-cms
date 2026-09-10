@@ -24,8 +24,17 @@ export async function cmsServerFetch<T>(
   queryParams?: Record<string, string | number | boolean | undefined>,
   init?: Omit<RequestInit, 'next'>,
 ): Promise<T> {
-  const { baseUrl, apiToken } = resolveEnvConfig();
-  const url = new URL(`${baseUrl}${path}`);
+  const { baseUrl, apiToken, appId, apiKey } = resolveEnvConfig();
+
+  // Normalize baseUrl and path to avoid duplicate /api/v1 prefixes
+  const normalizedBase = baseUrl.replace(/\/$/, '');
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const fullPath =
+    normalizedBase.endsWith('/api/v1') && normalizedPath.startsWith('/api/v1')
+      ? normalizedPath.slice(7)
+      : normalizedPath;
+
+  const url = new URL(`${normalizedBase}${fullPath}`);
 
   if (queryParams) {
     Object.entries(queryParams).forEach(([key, value]) => {
@@ -33,15 +42,24 @@ export async function cmsServerFetch<T>(
     });
   }
 
+  const headers = new Headers({
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${apiToken}`,
+    ...init?.headers,
+  });
+
+  if (appId && !headers.has('x-app-id')) {
+    headers.set('x-app-id', appId);
+  }
+  if (apiKey && !headers.has('x-api-key')) {
+    headers.set('x-api-key', apiKey);
+  }
+
   const fetchOptions: RequestInit & { next?: NextFetchOptions } = {
     ...init,
     method: init?.method ?? 'GET',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiToken}`,
-      ...init?.headers,
-    },
+    headers,
     next: nextOptions,
   };
 

@@ -43,6 +43,25 @@ describe('getContentList', () => {
     );
   });
 
+  it('normalizes baseUrl when it already includes /api/v1', async () => {
+    process.env['CMS_API_URL'] = 'http://localhost:3000/api/v1';
+    await getContentList('blog-post', { draft: true });
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:3000/api/v1/content/blog-post',
+      expect.any(Object),
+    );
+  });
+
+  it('injects x-app-id and x-api-key headers when set in environment', async () => {
+    process.env['CMS_APP_ID'] = 'TEST_APP';
+    process.env['CMS_API_KEY'] = 'test-key';
+    await getContentList('blog-post', { draft: true });
+    const [, options] = vi.mocked(fetch).mock.calls[0]!;
+    const headers = options!.headers as Headers;
+    expect(headers.get('x-app-id')).toBe('TEST_APP');
+    expect(headers.get('x-api-key')).toBe('test-key');
+  });
+
   it('passes ISR tags with cms and content tags', async () => {
     await getContentList('blog-post', { draft: true });
     const [, options] = vi.mocked(fetch).mock.calls[0]!;
