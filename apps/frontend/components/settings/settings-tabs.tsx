@@ -8,11 +8,11 @@ import { SecurityTab } from '@/components/settings/security-tab';
 
 export function SettingsTabs() {
   const tabs = [
-    { label: 'General', id: 'general' },
+    { label: 'System Info', id: 'system-info' },
     { label: 'Locales', id: 'locales' },
     { label: 'Security', id: 'security' },
   ];
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('system-info');
   const activeIndex = tabs.findIndex((t) => t.id === activeTab);
 
   return (
@@ -24,7 +24,7 @@ export function SettingsTabs() {
           if (tabs[idx]) setActiveTab(tabs[idx].id);
         }}
       />
-      {activeTab === 'general' && (
+      {activeTab === 'system-info' && (
         <div className="space-y-4">
           <GeneralSettingsTab />
         </div>
