@@ -12,6 +12,7 @@ import {
 } from '@repo/shared-ui';
 import { LexicalRichTextField } from './lexical-rich-text-field';
 import { MediaPickerField } from './media-picker-field';
+import { RelationPickerField } from './relation-picker-field';
 
 /**
  * Renders a specific input control based on the field's dataType.
@@ -125,14 +126,12 @@ export function FieldTypeInput({
       );
 
     case 'relation':
-      // No relation picker UI yet - plain UUID input until a relation picker is built.
       return (
-        <Input
-          placeholder="UUID"
+        <RelationPickerField
+          field={field}
+          value={value}
+          onChange={onChange}
           disabled={disabled}
-          variant="default"
-          value={typeof value === 'string' ? value : ''}
-          onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );

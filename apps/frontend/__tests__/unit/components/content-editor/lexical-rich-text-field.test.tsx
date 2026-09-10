@@ -51,6 +51,21 @@ describe('LexicalRichTextField', () => {
     expect(
       screen.getByRole('button', { name: 'Underline' }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Heading 1' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Heading 2' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Bullet List' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Numbered List' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Insert Link' }),
+    ).toBeInTheDocument();
   });
 
   it('hydrates from a serialized editor state so existing content is shown on load', () => {
@@ -70,6 +85,13 @@ describe('LexicalRichTextField', () => {
     expect(screen.getByRole('button', { name: 'Bold' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Italic' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Underline' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Heading 1' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Heading 2' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Bullet List' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Numbered List' }),
+    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Insert Link' })).toBeDisabled();
     expect(screen.getByRole('textbox')).toHaveAttribute(
       'contenteditable',
       'false',
