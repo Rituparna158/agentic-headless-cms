@@ -206,6 +206,13 @@ describe('ContentEntryForm', () => {
     expect(screen.getByText('draft')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /^publish$/i }));
 
+    // Confirm in modal
+    expect(screen.getByText('Publish Entry')).toBeInTheDocument();
+    const publishButtons = await screen.findAllByRole('button', {
+      name: /^publish$/i,
+    });
+    await user.click(publishButtons[publishButtons.length - 1]!);
+
     await waitFor(() => {
       expect(mockPublish).toHaveBeenCalledWith('article', 'entry-1');
     });
@@ -312,7 +319,7 @@ describe('ContentEntryForm', () => {
     );
   });
 
-  it('lets a published entry be unpublished directly on click', async () => {
+  it('shows confirmation modal before unpublishing a published entry and unpublishes on confirm', async () => {
     const entry: ContentEntryRecord = {
       id: 'entry-1',
       status: 'published',
@@ -333,6 +340,13 @@ describe('ContentEntryForm', () => {
     expect(unpublishBtn).toBeInTheDocument();
 
     await user.click(unpublishBtn);
+
+    // Confirm in modal
+    expect(screen.getByText('Unpublish Entry')).toBeInTheDocument();
+    const unpublishButtons = await screen.findAllByRole('button', {
+      name: /unpublish/i,
+    });
+    await user.click(unpublishButtons[unpublishButtons.length - 1]!);
 
     await waitFor(() => {
       expect(mockUnpublish).toHaveBeenCalledWith('article', 'entry-1');

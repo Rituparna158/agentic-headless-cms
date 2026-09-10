@@ -53,6 +53,11 @@ test('admin can create, save as draft, and publish a content entry', async ({
   await expect(page.getByText('draft', { exact: true })).toBeVisible();
 
   await publishButton.click();
+  await expect(page.getByText('Publish Entry')).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Publish', exact: true })
+    .last()
+    .click();
 
   await expect(page.getByText('published', { exact: true })).toBeVisible();
   await expect(

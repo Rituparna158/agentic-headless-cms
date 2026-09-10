@@ -86,4 +86,28 @@ export class WebhooksService {
       throw new ApiError(500, SERVICE_ERRORS.DELETE_WEBHOOK_FAILED);
     }
   }
+
+  async test(id: string, applicationId?: string) {
+    try {
+      logger.info({ id }, 'WebhooksService: test start');
+      const { webhookDispatcher } =
+        await import('./webhook-dispatcher.service.js');
+      return await webhookDispatcher.testWebhook(id, applicationId);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      logger.error({ err: error }, 'WebhooksService Error in test:');
+      throw new ApiError(500, SERVICE_ERRORS.TEST_WEBHOOK_FAILED);
+    }
+  }
+
+  async listDeliveries(id: string, applicationId?: string) {
+    try {
+      logger.info({ id }, 'WebhooksService: listDeliveries start');
+      return await this.repository.listDeliveries(id, applicationId);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      logger.error({ err: error }, 'WebhooksService Error in listDeliveries:');
+      throw new ApiError(500, SERVICE_ERRORS.LIST_WEBHOOK_DELIVERIES_FAILED);
+    }
+  }
 }

@@ -4,14 +4,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { SchemaDefinition } from '@repo/types';
 import { StatsCards } from '@/components/dashboard/stats-cards';
 
-const { mockListSchemas, mockListContentEntries } = vi.hoisted(() => ({
-  mockListSchemas: vi.fn(),
-  mockListContentEntries: vi.fn(),
-}));
+const { mockListSchemas, mockListContentEntries, mockListMedia } = vi.hoisted(
+  () => ({
+    mockListSchemas: vi.fn(),
+    mockListContentEntries: vi.fn(),
+    mockListMedia: vi.fn(),
+  }),
+);
 
 vi.mock('@/lib/api/schemas', () => ({ listSchemas: mockListSchemas }));
 vi.mock('@/lib/api/content', () => ({
   listContentEntries: mockListContentEntries,
+}));
+vi.mock('@/lib/api/media', () => ({
+  listMedia: mockListMedia,
 }));
 
 const definition: SchemaDefinition = {
@@ -43,6 +49,10 @@ function renderCards() {
 describe('StatsCards', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockListMedia.mockResolvedValue({
+      data: [],
+      meta: { pagination: { total: 0 } },
+    });
   });
 
   it('renders the four stat labels', () => {
@@ -52,7 +62,7 @@ describe('StatsCards', () => {
     expect(screen.getByText('Total Entries')).toBeInTheDocument();
     expect(screen.getByText('Published')).toBeInTheDocument();
     expect(screen.getByText('Drafts')).toBeInTheDocument();
-    expect(screen.getByText('Pending Approvals')).toBeInTheDocument();
+    expect(screen.getByText('Media Assets')).toBeInTheDocument();
   });
 
   it('tallies total/published/draft counts across schemas', async () => {
@@ -100,14 +110,18 @@ describe('StatsCards', () => {
     expect(screen.getAllByText('1')).toHaveLength(2); // Published and Drafts both 1
   });
 
-  it('shows Pending Approvals as a placeholder since no such data exists yet', async () => {
+  it('shows media assets count', async () => {
     mockListSchemas.mockResolvedValue({ data: [], meta: { total: 0 } });
+    mockListMedia.mockResolvedValue({
+      data: [],
+      meta: { pagination: { total: 5 } },
+    });
     renderCards();
 
     await waitFor(() => {
-      const pendingCard =
-        screen.getByText('Pending Approvals').parentElement?.parentElement;
-      expect(pendingCard).toHaveTextContent('—');
+      const mediaCard =
+        screen.getByText('Media Assets').parentElement?.parentElement;
+      expect(mediaCard).toHaveTextContent('5');
     });
   });
 

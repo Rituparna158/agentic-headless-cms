@@ -51,13 +51,7 @@ export const primaryNavItems: NavItem[] = [
 /** Secondary navigation — governance/administration surfaces (SRS §4.8–4.9). */
 export const secondaryNavItems: NavItem[] = [
   { label: 'Audit Log', href: '/audit-log', icon: ScrollText },
-  {
-    label: 'Webhooks',
-    href: '/webhooks',
-    icon: Webhook,
-    disabled: true,
-    disabledBadge: 'Soon',
-  },
+  { label: 'Webhooks', href: '/webhooks', icon: Webhook },
   { label: 'Roles & Access', href: '/roles-access', icon: ShieldCheck },
   { label: 'Settings', href: '/settings', icon: Settings },
 ];

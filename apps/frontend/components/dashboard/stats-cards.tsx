@@ -1,19 +1,46 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { listMedia } from '@/lib/api/media';
 import { useDashboardOverview } from '@/lib/hooks/use-dashboard-overview';
 import { Card, CardContent, CardHeader } from '@repo/shared-ui';
 
 export function StatsCards() {
   const { data, isLoading, isError } = useDashboardOverview();
+  const {
+    data: mediaData,
+    isLoading: isMediaLoading,
+    isError: isMediaError,
+  } = useQuery({
+    queryKey: ['media', 'dashboard-count'],
+    queryFn: () => listMedia({ page: 1, pageSize: 1 }),
+  });
 
   const stats = [
-    { label: 'Total Entries', value: data?.totalEntries },
-    { label: 'Published', value: data?.publishedEntries },
-    { label: 'Drafts', value: data?.draftEntries },
-    // No workflow/approvals concept exists in the backend yet (that's the
-    // Workflows feature, a separate, later screen) — nothing to count, so
-    // this is left as a placeholder rather than a fabricated number.
-    { label: 'Pending Approvals', value: undefined },
+    {
+      label: 'Total Entries',
+      value: data?.totalEntries,
+      loading: isLoading,
+      error: isError,
+    },
+    {
+      label: 'Published',
+      value: data?.publishedEntries,
+      loading: isLoading,
+      error: isError,
+    },
+    {
+      label: 'Drafts',
+      value: data?.draftEntries,
+      loading: isLoading,
+      error: isError,
+    },
+    {
+      label: 'Media Assets',
+      value: mediaData?.meta.pagination.total,
+      loading: isMediaLoading,
+      error: isMediaError,
+    },
   ];
 
   return (
@@ -21,22 +48,19 @@ export function StatsCards() {
       {stats.map((stat) => (
         <Card key={stat.label}>
           <CardHeader>
-            {/* A real heading, not shadcn's CardTitle (a <div>) — screen
-                reader users commonly navigate by heading, and a <div> is
-                invisible to that. */}
             <h2 className="text-muted-foreground text-sm leading-none font-medium">
               {stat.label}
             </h2>
           </CardHeader>
           <CardContent className="text-2xl font-semibold" aria-live="polite">
-            {isError ? (
+            {stat.error ? (
               <span
                 role="alert"
                 className="text-destructive text-sm font-normal"
               >
                 Error
               </span>
-            ) : isLoading ? (
+            ) : stat.loading ? (
               <span
                 role="status"
                 className="text-muted-foreground text-sm font-normal"
@@ -44,7 +68,7 @@ export function StatsCards() {
                 Loading…
               </span>
             ) : (
-              (stat.value ?? '—')
+              (stat.value ?? 0)
             )}
           </CardContent>
         </Card>

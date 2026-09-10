@@ -67,4 +67,6 @@ export const REPO_ERRORS = {
   UPDATE_WEBHOOK_FAILED: 'Failed to update webhook',
   DELETE_WEBHOOK_FAILED: 'Failed to delete webhook',
   FETCH_WEBHOOK_FAILED: 'Failed to fetch webhook',
+  RECORD_WEBHOOK_DELIVERY_FAILED: 'Failed to record webhook delivery',
+  LIST_WEBHOOK_DELIVERIES_FAILED: 'Failed to list webhook deliveries',
 };

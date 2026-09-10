@@ -8,6 +8,7 @@ import { MediaService } from './media.service.js';
 import { parseResizeQuery, extractStorageKey } from '@repo/storage';
 import { parsePositiveIntParam } from '@repo/utils';
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@repo/constants';
+import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
 const mediaService = new MediaService();
 export const uploadMedia: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
@@ -44,6 +45,17 @@ export const uploadMedia: RequestHandler = asyncHandler(
       storageKey: extractStorageKey(asset),
       mimeType: asset.mimeType,
     });
+    void webhookDispatcher.dispatch(
+      'media.uploaded',
+      {
+        assetId: asset.id,
+        filename: asset.filename,
+        mimeType: asset.mimeType,
+        size: asset.sizeBytes,
+        url: asset.url,
+      },
+      req.context?.applicationId,
+    );
     logger.info({ assetId: asset.id }, 'MediaController: uploadMedia end');
     res
       .status(201)
