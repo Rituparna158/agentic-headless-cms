@@ -22,7 +22,7 @@ export function useContentEntry(
 ) {
   const client = useCmsClient();
   return useQuery({
-    queryKey: contentKeys.detail(schemaSlug, entryId),
+    queryKey: contentKeys.detail(schemaSlug, entryId, options?.locale),
     queryFn: () => client.content.findOne(schemaSlug, entryId, options),
     enabled: !!entryId,
   });
@@ -83,9 +83,41 @@ export function usePublishEntry(schemaSlug: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entryId: string) =>
-      client.content.publish(schemaSlug, entryId),
-    onSuccess: (_, entryId) => {
+    mutationFn: (variables: string | { entryId: string; locale?: string }) => {
+      const entryId =
+        typeof variables === 'string' ? variables : variables.entryId;
+      const locale =
+        typeof variables === 'string' ? undefined : variables.locale;
+      return client.content.publish(schemaSlug, entryId, { locale });
+    },
+    onSuccess: (_, variables) => {
+      const entryId =
+        typeof variables === 'string' ? variables : variables.entryId;
+      queryClient.invalidateQueries({
+        queryKey: contentKeys.lists(schemaSlug),
+      });
+      queryClient.invalidateQueries({
+        queryKey: contentKeys.detail(schemaSlug, entryId),
+      });
+    },
+  });
+}
+
+export function useUnpublishEntry(schemaSlug: string) {
+  const client = useCmsClient();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (variables: string | { entryId: string; locale?: string }) => {
+      const entryId =
+        typeof variables === 'string' ? variables : variables.entryId;
+      const locale =
+        typeof variables === 'string' ? undefined : variables.locale;
+      return client.content.unpublish(schemaSlug, entryId, { locale });
+    },
+    onSuccess: (_, variables) => {
+      const entryId =
+        typeof variables === 'string' ? variables : variables.entryId;
       queryClient.invalidateQueries({
         queryKey: contentKeys.lists(schemaSlug),
       });
