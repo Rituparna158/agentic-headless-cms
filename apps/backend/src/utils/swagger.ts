@@ -25,6 +25,18 @@ const options: swaggerJSDoc.Options = {
           scheme: 'bearer',
           bearerFormat: 'JWT',
         },
+        apiKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-api-key',
+          description: 'API key authentication',
+        },
+        appIdAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-app-id',
+          description: 'Application ID header',
+        },
       },
     },
     security: [

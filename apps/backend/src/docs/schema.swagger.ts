@@ -122,6 +122,37 @@
 
 /**
  * @swagger
+ * /schemas/slug/{slug}:
+ *   get:
+ *     summary: Get a schema by slug
+ *     tags: [Schemas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "blog-post"
+ *     responses:
+ *       200:
+ *         description: Schema details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 id: "sch_123"
+ *                 name: "Blog Post"
+ *                 slug: "blog-post"
+ *                 fields: [{ "name": "title", "type": "string" }]
+ *       404:
+ *         description: Schema not found
+ */
+
+/**
+ * @swagger
  * /schemas/{id}:
  *   delete:
  *     summary: Delete a schema
@@ -135,6 +166,12 @@
  *         schema:
  *           type: string
  *         example: "sch_123"
+ *       - in: query
+ *         name: force
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Force delete schema even if content entries exist
  *     responses:
  *       204:
  *         description: Schema deleted
