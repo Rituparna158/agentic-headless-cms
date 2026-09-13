@@ -8,3 +8,4 @@ export * from './modules/schema.module.js';
 export * from './modules/media.module.js';
 export * from './modules/graphql.module.js';
 export * from './modules/search.module.js';
+export type * from '@repo/types';
