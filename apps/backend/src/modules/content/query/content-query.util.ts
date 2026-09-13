@@ -31,12 +31,88 @@ const SORTABLE_BASE_COLUMNS = {
   status: entryLocalizations.status,
 } as const;
 
+const FILTERABLE_BASE_COLUMNS = {
+  status: {
+    column: entryLocalizations.status,
+    allowedOps: new Set<FilterOperator>(['$eq', '$ne', '$in']),
+  },
+  createdAt: {
+    column: contentEntries.createdAt,
+    allowedOps: new Set<FilterOperator>([
+      '$eq',
+      '$ne',
+      '$lt',
+      '$lte',
+      '$gt',
+      '$gte',
+    ]),
+  },
+  updatedAt: {
+    column: contentEntries.updatedAt,
+    allowedOps: new Set<FilterOperator>([
+      '$eq',
+      '$ne',
+      '$lt',
+      '$lte',
+      '$gt',
+      '$gte',
+    ]),
+  },
+} as const;
+
 function findField(fields: SchemaField[], apiId: string): SchemaField {
   const field = fields.find((f) => f.apiId === apiId);
   if (!field) {
     throw new BadRequestError(`Unknown field '${apiId}' for this schema.`);
   }
   return field;
+}
+
+function buildBaseColumnComparison(
+  columnConfig: (typeof FILTERABLE_BASE_COLUMNS)[keyof typeof FILTERABLE_BASE_COLUMNS],
+  operator: FilterOperator,
+  rawValue: string,
+  apiId: string,
+): SQL {
+  if (!columnConfig.allowedOps.has(operator)) {
+    throw new BadRequestError(
+      `Operator '${operator}' is not supported for base column '${apiId}'.`,
+    );
+  }
+
+  const col = columnConfig.column;
+
+  switch (operator) {
+    case '$eq':
+      return sql`${col} = ${rawValue}`;
+    case '$ne':
+      return sql`${col} != ${rawValue}`;
+    case '$lt':
+      return sql`${col} < ${rawValue}::timestamptz`;
+    case '$lte':
+      return sql`${col} <= ${rawValue}::timestamptz`;
+    case '$gt':
+      return sql`${col} > ${rawValue}::timestamptz`;
+    case '$gte':
+      return sql`${col} >= ${rawValue}::timestamptz`;
+    case '$in': {
+      const values = rawValue
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (values.length === 0) {
+        throw new BadRequestError(
+          `Operator '$in' for base column '${apiId}' requires at least one value.`,
+        );
+      }
+      const comparisons = values.map((v) => sql`${col} = ${v}`);
+      return or(...comparisons)!;
+    }
+    default:
+      throw new BadRequestError(
+        `Operator '${operator}' is not supported for base column '${apiId}'.`,
+      );
+  }
 }
 
 /** Build JSONB field expression */
@@ -126,7 +202,12 @@ function parseFilters(
         `Filter for '${apiId}' must specify an operator, e.g. filters[${apiId}][$eq]=value.`,
       );
     }
-    const field = findField(fields, apiId);
+
+    const isBaseCol = apiId in FILTERABLE_BASE_COLUMNS;
+    const baseColConfig = isBaseCol
+      ? FILTERABLE_BASE_COLUMNS[apiId as keyof typeof FILTERABLE_BASE_COLUMNS]
+      : undefined;
+    const field = !isBaseCol ? findField(fields, apiId) : undefined;
 
     for (const [op, value] of Object.entries(
       opsRaw as Record<string, unknown>,
@@ -141,7 +222,19 @@ function parseFilters(
           `Filter value for '${apiId}${op}' must be a string.`,
         );
       }
-      clauses.push(buildComparison(field, op as FilterOperator, value));
+
+      if (baseColConfig) {
+        clauses.push(
+          buildBaseColumnComparison(
+            baseColConfig,
+            op as FilterOperator,
+            value,
+            apiId,
+          ),
+        );
+      } else {
+        clauses.push(buildComparison(field!, op as FilterOperator, value));
+      }
     }
   }
 
@@ -228,10 +321,38 @@ function parsePositiveInt(
 export function parseContentQuery(
   query: Record<string, unknown>,
   fields: SchemaField[],
+  defaultStatus?: 'published' | 'draft' | 'all',
 ): ContentQueryOptions {
   const search = typeof query.search === 'string' ? query.search : undefined;
 
   let where = parseFilters(query.filters, fields);
+
+  // Check if status is explicitly specified via query.status or filters.status
+  const hasFilterStatus =
+    query.filters &&
+    typeof query.filters === 'object' &&
+    'status' in (query.filters as Record<string, unknown>);
+
+  if (query.status !== undefined) {
+    if (typeof query.status !== 'string') {
+      throw new BadRequestError(
+        "'status' must be a string ('published', 'draft', or 'all').",
+      );
+    }
+    const statusVal = query.status.toLowerCase();
+    if (statusVal === 'published' || statusVal === 'draft') {
+      const statusSql = sql`${entryLocalizations.status} = ${statusVal}`;
+      where = where ? and(where, statusSql) : statusSql;
+    } else if (statusVal !== 'all') {
+      throw new BadRequestError(
+        `Invalid status '${query.status}'. Supported: 'published', 'draft', 'all'.`,
+      );
+    }
+  } else if (!hasFilterStatus && defaultStatus && defaultStatus !== 'all') {
+    const statusSql = sql`${entryLocalizations.status} = ${defaultStatus}`;
+    where = where ? and(where, statusSql) : statusSql;
+  }
+
   if (search) {
     const searchSql = sql`jsonb_to_tsvector('english', ${entryLocalizations.data}, '["string"]') @@ plainto_tsquery('english', ${search})`;
     where = where ? and(where, searchSql) : searchSql;

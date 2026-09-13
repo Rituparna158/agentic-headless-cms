@@ -54,6 +54,66 @@ describe('parseContentQuery', () => {
     expect(result.where).toBeDefined();
   });
 
+  it('allows filtering on status base column with $eq (published or draft)', () => {
+    const publishedResult = parseContentQuery(
+      { filters: { status: { $eq: 'published' } } },
+      fields,
+    );
+    expect(publishedResult.where).toBeDefined();
+
+    const draftResult = parseContentQuery(
+      { filters: { status: { $eq: 'draft' } } },
+      fields,
+    );
+    expect(draftResult.where).toBeDefined();
+  });
+
+  it('allows filtering on status base column with $in', () => {
+    const result = parseContentQuery(
+      { filters: { status: { $in: 'published,draft' } } },
+      fields,
+    );
+    expect(result.where).toBeDefined();
+  });
+
+  it('rejects unsupported operator on status base column', () => {
+    expect(() =>
+      parseContentQuery({ filters: { status: { $gt: 'published' } } }, fields),
+    ).toThrow(/not supported for base column 'status'/);
+  });
+
+  it('allows filtering on createdAt base column with $gt', () => {
+    const result = parseContentQuery(
+      { filters: { createdAt: { $gt: '2026-01-01T00:00:00Z' } } },
+      fields,
+    );
+    expect(result.where).toBeDefined();
+  });
+
+  it('parses top-level query.status=published and query.status=draft', () => {
+    const pub = parseContentQuery({ status: 'published' }, fields);
+    expect(pub.where).toBeDefined();
+
+    const draft = parseContentQuery({ status: 'draft' }, fields);
+    expect(draft.where).toBeDefined();
+  });
+
+  it('parses top-level query.status=all without adding where clause', () => {
+    const result = parseContentQuery({ status: 'all' }, fields);
+    expect(result.where).toBeUndefined();
+  });
+
+  it('rejects invalid query.status value', () => {
+    expect(() => parseContentQuery({ status: 'archived' }, fields)).toThrow(
+      /Invalid status/,
+    );
+  });
+
+  it('applies defaultStatus if neither query.status nor filters.status is provided', () => {
+    const result = parseContentQuery({}, fields, 'published');
+    expect(result.where).toBeDefined();
+  });
+
   it('rejects filtering on a field that does not exist on the schema', () => {
     expect(() =>
       parseContentQuery({ filters: { nope: { $eq: 'x' } } }, fields),
