@@ -46,6 +46,7 @@ export interface ListContentEntriesOptions {
   pageSize?: number;
   sort?: string;
   locale?: string;
+  status?: 'published' | 'draft' | 'all';
   filters?: Record<string, Record<string, string>>;
 }
 
