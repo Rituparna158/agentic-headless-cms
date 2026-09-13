@@ -21,16 +21,15 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "dependencies": {
-    "@repo/sdk-core": "workspace:*",
-    "@repo/types": "workspace:*"
-  },
   "peerDependencies": {
+    "@repo/sdk-core": "*",
     "@tanstack/react-query": "^5.0.0",
-    "react": "^18.2.0"
+    "react": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
+    "@repo/sdk-core": "workspace:*",
+    "@repo/types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@tanstack/react-query": "^5.28.4",
     "@testing-library/react": "^14.2.1",

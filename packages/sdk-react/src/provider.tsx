@@ -7,13 +7,23 @@ export const CmsContext = createContext<AgenticCmsClient<
   Record<string, unknown>
 > | null>(null);
 
-export function CmsProvider({ baseUrl, apiToken, children }: CmsProviderProps) {
+export function CmsProvider({
+  baseUrl,
+  apiToken,
+  appId,
+  apiKey,
+  headers,
+  children,
+}: CmsProviderProps) {
   const client = useMemo(() => {
     return createClient({
       baseUrl: baseUrl || '',
       apiToken,
+      appId,
+      apiKey,
+      headers,
     });
-  }, [baseUrl, apiToken]);
+  }, [baseUrl, apiToken, appId, apiKey, headers]);
 
   return (
     <CmsContext.Provider
