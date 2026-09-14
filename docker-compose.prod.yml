@@ -6,33 +6,36 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-agentic_cms}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d agentic_cms']
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-agentic_cms}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - agentic-network
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - agentic-network
 
   backend:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
+    image: ghcr.io/mindfire-test/agentic-headless-cms/backend:latest
     restart: unless-stopped
     depends_on:
       postgres:
@@ -57,11 +60,11 @@ services:
       - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-admin}
     volumes:
       - media_uploads:/app/uploads
+    networks:
+      - agentic-network
 
   worker:
-    build:
-      context: .
-      dockerfile: apps/worker/Dockerfile
+    image: ghcr.io/mindfire-test/agentic-headless-cms/worker:latest
     restart: unless-stopped
     depends_on:
       backend:
@@ -76,11 +79,11 @@ services:
       - STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
     volumes:
       - media_uploads:/app/uploads
+    networks:
+      - agentic-network
 
   frontend:
-    build:
-      context: .
-      dockerfile: apps/frontend/Dockerfile
+    image: ghcr.io/mindfire-test/agentic-headless-cms/frontend:latest
     restart: unless-stopped
     depends_on:
       backend:
@@ -91,8 +94,14 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    networks:
+      - agentic-network
 
 volumes:
   postgres_data:
   redis_data:
   media_uploads:
+
+networks:
+  agentic-network:
+    driver: bridge

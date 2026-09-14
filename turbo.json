@@ -21,7 +21,9 @@
     "NEXT_PUBLIC_API_URL",
     "SUPPORT_EMAIL",
     "MODE",
-    "DATABASE_URL"
+    "DATABASE_URL",
+    "MIGRATIONS_FOLDER",
+    "AUTO_MIGRATE"
   ],
   "tasks": {
     "build": {
