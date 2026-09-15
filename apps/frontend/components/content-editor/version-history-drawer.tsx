@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import { Button, Drawer } from '@repo/shared-ui';
 import { listContentVersions, revertContentEntry } from '@/lib/api/content';
 import type { VersionHistoryDrawerProps } from '@/types/component.types';
@@ -67,13 +68,19 @@ export function VersionHistoryDrawer({
         {changes.map((part, i) => {
           if (part.added)
             return (
-              <span key={i} className="bg-green-200 text-green-900">
+              <span
+                key={i}
+                className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-medium px-0.5 rounded"
+              >
                 {part.value}
               </span>
             );
           if (part.removed)
             return (
-              <span key={i} className="bg-red-200 text-red-900 line-through">
+              <span
+                key={i}
+                className="bg-rose-500/20 text-rose-700 dark:text-rose-400 line-through px-0.5 rounded"
+              >
                 {part.value}
               </span>
             );
@@ -108,8 +115,8 @@ export function VersionHistoryDrawer({
       );
 
     return (
-      <div className="flex h-full min-h-0 divide-x overflow-hidden">
-        <div className="w-1/3 overflow-y-auto p-4 space-y-4">
+      <div className="flex flex-col md:flex-row h-full min-h-0 divide-y md:divide-y-0 md:divide-x overflow-y-auto md:overflow-hidden">
+        <div className="w-full md:w-64 lg:w-72 shrink-0 max-h-48 md:max-h-none overflow-y-auto p-4 space-y-4">
           <h3 className="font-semibold text-sm">Versions</h3>
           <div className="space-y-2">
             {versions.map((version) => (
@@ -129,7 +136,7 @@ export function VersionHistoryDrawer({
             ))}
           </div>
         </div>
-        <div className="w-2/3 overflow-y-auto p-4 flex flex-col gap-4">
+        <div className="flex-1 min-w-0 md:overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
           <h3 className="font-semibold text-sm">
             Diff:{' '}
             {previousVersion ? `v${previousVersion.versionNo}` : 'Initial'}{' '}
@@ -188,15 +195,34 @@ export function VersionHistoryDrawer({
   };
 
   return (
-    <Drawer isOpen={open} onClose={() => onOpenChange(false)} position="right">
-      <div className="w-[500px] sm:w-[540px] h-full flex flex-col p-6 bg-background">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold">Version History</h2>
-          <p className="text-sm text-muted-foreground mt-2">
-            View past versions and revert changes.
-          </p>
+    <Drawer
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      position="right"
+      size="min(960px, 95vw)"
+      className="w-full max-w-[95vw] lg:max-w-5xl"
+    >
+      <div className="w-full h-full flex flex-col p-4 sm:p-6 bg-background">
+        <div className="mb-4 sm:mb-6 flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Version History</h2>
+            <p className="text-sm text-muted-foreground mt-1 sm:mt-2">
+              View past versions and revert changes.
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            aria-label="Close version history"
+            className="rounded-full shrink-0 -mt-1 -mr-1"
+          >
+            <X className="size-5" />
+          </Button>
         </div>
-        <div className="flex-1 overflow-y-auto">{renderContent()}</div>
+        <div className="flex-1 overflow-y-auto md:overflow-hidden min-h-0">
+          {renderContent()}
+        </div>
       </div>
     </Drawer>
   );

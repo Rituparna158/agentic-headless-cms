@@ -52,6 +52,7 @@ const { repoMocks } = vi.hoisted(() => ({
     createEntry: vi.fn(),
     updateEntryDraft: vi.fn(),
     publishEntry: vi.fn(),
+    unpublishEntry: vi.fn(),
     revertEntry: vi.fn(),
     listEntryVersions: vi.fn(),
     deleteEntry: vi.fn(),
@@ -138,6 +139,15 @@ describe('Content API', () => {
         author: 'Tester',
       },
     });
+    repoMocks.unpublishEntry.mockResolvedValue({
+      status: 'draft',
+      data: {
+        title: 'Updated Post',
+        body: 'This is an updated body',
+        author: 'Tester',
+      },
+      publishedData: null,
+    });
     repoMocks.revertEntry.mockResolvedValue({
       status: 'draft',
       data: {
@@ -217,6 +227,14 @@ describe('Content API', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('published');
     expect(res.body.data.publishedData.title).toBe('Updated Post');
+  });
+  it('should unpublish the entry', async () => {
+    const res = await request(app)
+      .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/unpublish`)
+      .set('Cookie', [`token_default=${adminToken}`]);
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe('draft');
+    expect(res.body.data.publishedData).toBeNull();
   });
   it('should revert the entry to a previous version', async () => {
     const res = await request(app)

@@ -271,12 +271,12 @@ function RoleDetails({
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-medium">Permissions per content-type</h3>
+        <h3 className="font-medium">Permissions per Content Type</h3>
         <div className="border rounded-md overflow-x-auto">
           <DataTable
             enablePagination={false}
             columns={[
-              { label: 'Type', key: 'type', sortable: true },
+              { label: 'Content Type', key: 'type', sortable: true },
               { label: 'Read', key: 'read', sortable: false },
               { label: 'Create', key: 'create', sortable: false },
               { label: 'Update', key: 'update', sortable: false },
@@ -286,7 +286,7 @@ function RoleDetails({
             rows={schemas.map((schema) => ({
               type: schema.name,
               read: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'read')}
                     onChange={() => onTogglePermission(schema.id, 'read')}
@@ -294,7 +294,7 @@ function RoleDetails({
                 </div>
               ),
               create: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'create')}
                     onChange={() => onTogglePermission(schema.id, 'create')}
@@ -302,7 +302,7 @@ function RoleDetails({
                 </div>
               ),
               update: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'update')}
                     onChange={() => onTogglePermission(schema.id, 'update')}
@@ -310,7 +310,7 @@ function RoleDetails({
                 </div>
               ),
               delete: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'delete')}
                     onChange={() => onTogglePermission(schema.id, 'delete')}
@@ -318,7 +318,7 @@ function RoleDetails({
                 </div>
               ),
               publish: (
-                <div className="flex justify-center">
+                <div className="flex items-center justify-start pl-1">
                   <Checkbox
                     checked={hasPermission(schema.id, 'publish')}
                     onChange={() => onTogglePermission(schema.id, 'publish')}
@@ -331,7 +331,7 @@ function RoleDetails({
       </div>
 
       <div className="space-y-4">
-        <h3 className="font-medium">Row-level condition (JSON filter)</h3>
+        <h3 className="font-medium">Row-Level Condition (JSON Filter)</h3>
         <p className="text-xs text-muted-foreground">
           Applies to all read/write operations for this role.
         </p>

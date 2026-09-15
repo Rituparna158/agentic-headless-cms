@@ -28,3 +28,34 @@ export function createWebhook(data: {
 export function deleteWebhook(id: string): Promise<void> {
   return apiFetch<void>(API_PATHS.WEBHOOKS.BY_ID(id), { method: 'DELETE' });
 }
+
+export interface WebhookTestResponse {
+  success: boolean;
+  statusCode: number | null;
+  statusText?: string;
+  responseTimeMs: number;
+  error?: string;
+}
+
+export interface WebhookDeliveryRecord {
+  id: string;
+  webhookId: string;
+  eventType: string;
+  payload: unknown;
+  responseStatus: number | null;
+  attempt: number;
+  deliveredAt: string | null;
+  createdAt: string;
+}
+
+export function testWebhook(id: string): Promise<WebhookTestResponse> {
+  return apiFetch<WebhookTestResponse>(API_PATHS.WEBHOOKS.TEST(id), {
+    method: 'POST',
+  });
+}
+
+export function listWebhookDeliveries(
+  id: string,
+): Promise<WebhookDeliveryRecord[]> {
+  return apiFetch<WebhookDeliveryRecord[]>(API_PATHS.WEBHOOKS.DELIVERIES(id));
+}

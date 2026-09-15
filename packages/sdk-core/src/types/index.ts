@@ -3,10 +3,13 @@ import type { AuthenticatedUser } from '@repo/types';
 export interface ClientConfig {
   baseUrl: string;
   apiToken?: string;
+  appId?: string;
+  apiKey?: string;
+  headers?: Record<string, string>;
 }
 
 export interface FetchOptions extends RequestInit {
-  params?: Record<string, string | number | boolean | undefined>;
+  params?: Record<string, unknown>;
 }
 
 export interface ApiResponse<T> {

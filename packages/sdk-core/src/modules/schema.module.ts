@@ -27,12 +27,10 @@ export class SchemaModule {
   }
 
   public async get(slug: string): Promise<SchemaRecord> {
-    const listResponse = await this.list({ page: 1, pageSize: 1000 });
-    const schema = listResponse.data.find((s) => s.slug === slug);
-    if (!schema) {
-      throw new Error(`Schema with slug "${slug}" not found`);
-    }
-    return schema;
+    const res = await this.transport.request<ApiResponse<SchemaRecord>>(
+      `/schemas/slug/${encodeURIComponent(slug)}`,
+    );
+    return res.data;
   }
 
   public async create(definition: CreateSchemaInput): Promise<SchemaRecord> {

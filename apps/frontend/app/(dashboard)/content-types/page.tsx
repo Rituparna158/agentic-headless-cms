@@ -5,18 +5,18 @@ import { Button } from '@repo/shared-ui';
 import { SchemaList } from '@/components/schema-builder/schema-list';
 
 export const metadata: Metadata = {
-  title: 'Content Types — Agentic CMS',
+  title: 'Content Type Builder — Agentic CMS',
 };
 
 export default function ContentTypesPage() {
   return (
     <div className="grid gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Content Types</h1>
+        <h1 className="text-2xl font-semibold">Content Type Builder</h1>
         <Button asChild>
           <Link href="/content-types/new">
             <PlusIcon className="size-4" />
-            New content type
+            New Content Type
           </Link>
         </Button>
       </div>

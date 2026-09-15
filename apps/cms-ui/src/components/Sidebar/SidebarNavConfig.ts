@@ -44,7 +44,7 @@ export const sidebarNavConfig: NavItem[] = [
     requiredCapability: 'manage_content',
     subItems: [
       { title: 'All Pages', href: '/pages' },
-      { title: 'Add New', href: '/pages/new' },
+      { title: 'Add New', href: '/pages?create=true' },
     ],
   },
   {

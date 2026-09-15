@@ -201,6 +201,38 @@ export class ContentService {
       throw new ApiError(500, SERVICE_ERRORS.PUBLISH_ENTRY_FAILED);
     }
   }
+  async unpublishEntry(
+    entryId: string,
+    userId: string,
+    locale: string = DEFAULT_LOCALE,
+  ) {
+    try {
+      logger.info({ entryId, userId }, 'ContentService: unpublishEntry start');
+      const beforeState = await this.repository.getEntryById(entryId, locale);
+      const result = await this.repository.unpublishEntry(
+        entryId,
+        userId,
+        locale,
+      );
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.UNPUBLISH,
+        resourceType: 'content',
+        resourceId: entryId,
+        actorUserId: actorUserId || userId,
+        actorAgentId,
+        beforeState: beforeState,
+        afterState: result,
+        context,
+      });
+      return result;
+    } catch (error) {
+      logger.error({ err: error }, 'ContentService Error in unpublishEntry:');
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(500, SERVICE_ERRORS.UNPUBLISH_ENTRY_FAILED);
+    }
+  }
+
   async revertEntry(
     entryId: string,
     versionNo: number,

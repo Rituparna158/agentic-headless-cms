@@ -5,6 +5,7 @@ import { logger } from '@repo/logger';
 import { asyncHandler, ApiResponse, ApiError } from '@repo/utils';
 import { DEFAULT_LOCALE, ERROR_MESSAGES } from '@repo/constants';
 import type { SchemaDefinition } from '@repo/types';
+import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
 const contentService = new ContentService();
 export const listEntries: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
@@ -13,7 +14,48 @@ export const listEntries: RequestHandler = asyncHandler(
     const { fields } = req.schema!.definition as SchemaDefinition;
     const locale =
       typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
-    const contentQuery = parseContentQuery(req.query, fields);
+
+    // Check user authorization for draft access
+    const userRoles = (req.user?.roles || []).map((r: string) =>
+      r.toLowerCase(),
+    );
+    const isAuthorizedForDrafts = userRoles.some((r: string) =>
+      ['admin', 'super_admin', 'editor', 'author'].includes(r),
+    );
+
+    // Reject unauthorized requests trying to view draft or all entries
+    const requestedStatus =
+      typeof req.query.status === 'string'
+        ? req.query.status.toLowerCase()
+        : undefined;
+    const filterStatus =
+      req.query.filters && typeof req.query.filters === 'object'
+        ? (req.query.filters as Record<string, unknown>).status
+        : undefined;
+
+    if (!isAuthorizedForDrafts) {
+      if (requestedStatus === 'draft' || requestedStatus === 'all') {
+        throw new ApiError(
+          403,
+          'Unauthorized: Viewing draft content requires editor or admin permissions.',
+        );
+      }
+      if (filterStatus && typeof filterStatus === 'object') {
+        const statusFilters = filterStatus as Record<string, unknown>;
+        if (
+          statusFilters.$eq === 'draft' ||
+          statusFilters.$ne === 'published'
+        ) {
+          throw new ApiError(
+            403,
+            'Unauthorized: Viewing draft content requires editor or admin permissions.',
+          );
+        }
+      }
+    }
+
+    const defaultStatus = 'published';
+    const contentQuery = parseContentQuery(req.query, fields, defaultStatus);
     logger.debug(
       { schemaId, locale, page: contentQuery.page },
       'ContentController: fetching entries and count',
@@ -59,6 +101,19 @@ export const getEntry: RequestHandler = asyncHandler(
     );
     if (!entry) {
       logger.error({ entryId }, 'ContentController: entry not found');
+      throw new ApiError(404, ERROR_MESSAGES.CONTENT.ENTRY_NOT_FOUND);
+    }
+    const userRoles = (req.user?.roles || []).map((r: string) =>
+      r.toLowerCase(),
+    );
+    const isAuthorizedForDrafts = userRoles.some((r: string) =>
+      ['admin', 'super_admin', 'editor', 'author'].includes(r),
+    );
+    if (entry.status === 'draft' && !isAuthorizedForDrafts) {
+      logger.warn(
+        { entryId },
+        'ContentController: draft entry requested by unauthorized consumer',
+      );
       throw new ApiError(404, ERROR_MESSAGES.CONTENT.ENTRY_NOT_FOUND);
     }
     logger.info({ entryId }, 'ContentController: getEntry end');
@@ -128,6 +183,16 @@ export const updateDraft: RequestHandler = asyncHandler(
       locale,
     );
     logger.info({ entryId }, 'ContentController: updateDraft end');
+    void webhookDispatcher.dispatch(
+      'content.updated',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
     res
       .status(200)
       .json(new ApiResponse(200, entry, 'Draft updated successfully'));
@@ -151,6 +216,16 @@ export const updatePartialEntry: RequestHandler = asyncHandler(
       locale,
     );
     logger.info({ entryId }, 'ContentController: updatePartialEntry end');
+    void webhookDispatcher.dispatch(
+      'content.updated',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
     res
       .status(200)
       .json(
@@ -172,9 +247,48 @@ export const publishEntry: RequestHandler = asyncHandler(
       locale,
     );
     logger.info({ entryId }, 'ContentController: publishEntry end');
+    void webhookDispatcher.dispatch(
+      'content.published',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
     res
       .status(200)
       .json(new ApiResponse(200, entry, 'Entry published successfully'));
+  },
+);
+export const unpublishEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: unpublishEntry start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+    logger.debug({ entryId, userId }, 'ContentController: unpublishing entry');
+    const entry = await contentService.unpublishEntry(
+      entryId as string,
+      userId,
+      locale,
+    );
+    logger.info({ entryId }, 'ContentController: unpublishEntry end');
+    void webhookDispatcher.dispatch(
+      'content.unpublish',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, entry, 'Entry unpublished successfully'));
   },
 );
 export const revertEntry: RequestHandler = asyncHandler(
@@ -218,6 +332,14 @@ export const deleteEntry: RequestHandler = asyncHandler(
     logger.debug({ entryId }, 'ContentController: deleting entry');
     await contentService.deleteEntry(entryId as string);
     logger.info({ entryId }, 'ContentController: deleteEntry end');
+    void webhookDispatcher.dispatch(
+      'content.deleted',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+      },
+      req.context?.applicationId,
+    );
     res.status(204).end();
   },
 );

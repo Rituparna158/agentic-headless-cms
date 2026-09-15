@@ -250,7 +250,7 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
           id={id}
           autoFocus={autoFocus}
           type={inputType}
-          placeholder={!variants?.label ? placeholder : ''}
+          placeholder={placeholder}
           className={cn(
             // Base enhanced styles
             'w-full bg-background/90 backdrop-blur-sm border border-border/60 rounded-xl',

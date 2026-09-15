@@ -49,7 +49,7 @@ export function FieldSettingsPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Field settings</CardTitle>
+        <CardTitle>Field Settings</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4">
         <Controller
@@ -59,7 +59,7 @@ export function FieldSettingsPanel({
             <div className="grid gap-2">
               <label htmlFor={`display-name-${index}`}>
                 <Typography as="span" variant="label">
-                  Display name
+                  Display Name
                 </Typography>
               </label>
               <Input
@@ -67,10 +67,14 @@ export function FieldSettingsPanel({
                 placeholder="e.g. Title"
                 variant="default"
                 {...field}
+                value={field.value ?? ''}
               />
               {fieldState.error?.message ? (
                 <p className="text-sm font-medium text-destructive">
-                  {fieldState.error.message}
+                  {fieldState.error.message.toLowerCase() ===
+                  'displayname is required'
+                    ? 'Display Name is required'
+                    : fieldState.error.message}
                 </p>
               ) : null}
             </div>
@@ -92,10 +96,16 @@ export function FieldSettingsPanel({
                 placeholder="e.g. title"
                 variant="default"
                 {...field}
+                value={field.value ?? ''}
               />
               {fieldState.error?.message ? (
                 <p className="text-sm font-medium text-destructive">
-                  {fieldState.error.message}
+                  {fieldState.error.message.includes('at least 1 character') ||
+                  fieldState.error.message.toLowerCase() === 'apiid is required'
+                    ? 'API ID is required'
+                    : fieldState.error.message.startsWith('apiId')
+                      ? fieldState.error.message.replace(/^apiId/, 'API ID')
+                      : fieldState.error.message}
                 </p>
               ) : null}
             </div>
@@ -277,7 +287,7 @@ export function FieldSettingsPanel({
             size="sm"
             onClick={() => onRemove(index)}
           >
-            Delete field
+            Delete Field
           </Button>
         </div>
       </CardContent>

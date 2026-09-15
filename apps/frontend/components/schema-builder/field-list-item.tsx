@@ -2,10 +2,10 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2 } from 'lucide-react';
+import { AlertCircle, GripVertical, Trash2 } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
 
-import { Button } from '@repo/shared-ui';
+import { Button, Badge } from '@repo/shared-ui';
 import { cn } from '@/lib/utils';
 
 import type {
@@ -24,6 +24,7 @@ export function FieldListItem({
   index,
   control,
   isSelected,
+  hasError = false,
   onSelect,
   onRemove,
 }: FieldListItemProps<SchemaBuilderFieldValues>) {
@@ -64,8 +65,14 @@ export function FieldListItem({
       data-slot="field-list-item"
       data-dragging={isDragging || undefined}
       className={cn(
-        'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
-        isSelected ? 'border-primary bg-accent' : 'bg-card',
+        'flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors',
+        hasError
+          ? isSelected
+            ? 'border-destructive bg-destructive/10 ring-1 ring-destructive'
+            : 'border-destructive/60 bg-destructive/5'
+          : isSelected
+            ? 'border-primary bg-accent'
+            : 'bg-card',
       )}
     >
       <button
@@ -83,14 +90,48 @@ export function FieldListItem({
         onClick={() => onSelect(index)}
         className="flex flex-1 items-center gap-2 truncate text-left"
       >
-        <span className="font-medium">
+        {hasError ? (
+          <AlertCircle
+            className="size-4 text-destructive shrink-0"
+            aria-label="Field has errors"
+          />
+        ) : null}
+        <span className={cn('font-medium', hasError && 'text-destructive')}>
           {displayName || `Field ${index + 1}`}
         </span>
-        <span className="text-muted-foreground">{dataType}</span>
-        {isRequired ? <Badge>*required</Badge> : null}
-        {isUnique ? <Badge>unique</Badge> : null}
-        {isLocalized ? <Badge>localized</Badge> : null}
-        {isRepeatable ? <Badge>repeatable</Badge> : null}
+        <span
+          className={cn(
+            'text-muted-foreground',
+            hasError && 'text-destructive/80',
+          )}
+        >
+          {dataType}
+        </span>
+        {hasError ? (
+          <Badge variant="destructive" size="sm">
+            invalid
+          </Badge>
+        ) : null}
+        {isRequired ? (
+          <Badge variant="secondary" size="sm">
+            *required
+          </Badge>
+        ) : null}
+        {isUnique ? (
+          <Badge variant="secondary" size="sm">
+            unique
+          </Badge>
+        ) : null}
+        {isLocalized ? (
+          <Badge variant="secondary" size="sm">
+            localized
+          </Badge>
+        ) : null}
+        {isRepeatable ? (
+          <Badge variant="secondary" size="sm">
+            repeatable
+          </Badge>
+        ) : null}
       </button>
 
       <Button
@@ -103,13 +144,5 @@ export function FieldListItem({
         <Trash2 className="size-4" />
       </Button>
     </div>
-  );
-}
-
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-xs">
-      {children}
-    </span>
   );
 }

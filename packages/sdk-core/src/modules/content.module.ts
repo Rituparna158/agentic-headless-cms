@@ -116,6 +116,20 @@ export class ContentModule<
     return res.data;
   }
 
+  public async unpublish<TSlug extends keyof TMap & string>(
+    schemaSlug: TSlug,
+    entryId: string,
+    options?: { locale?: string },
+  ): Promise<InferEntryType<TMap, TSlug>> {
+    const res = await this.transport.request<
+      ApiResponse<InferEntryType<TMap, TSlug>>
+    >(`/content/${schemaSlug}/${entryId}/unpublish`, {
+      method: 'POST',
+      params: options as Record<string, string | number | boolean | undefined>,
+    });
+    return res.data;
+  }
+
   public async versions(
     schemaSlug: string,
     entryId: string,

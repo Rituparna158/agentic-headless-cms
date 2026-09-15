@@ -55,3 +55,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Disable pointer events on all descendants of custom components so GrapesJS selects the wrapper, not inner text/buttons */
+.custom-component * {
+  pointer-events: none !important;
+}
+
+/* Re-enable pointer events for GrapesJS injected UI like the toolbar (delete button) */
+.custom-component [class*="gjs-"],
+.custom-component [class*="gjs-"] * {
+  pointer-events: auto !important;
+}
+
+/* Restore pointer-events for interactive elements inside the settings panel
+   so that the settings controls remain usable. */
+#functions-panel * {
+  pointer-events: auto !important;
+}
+
+/* Ensure the page-builder custom element fills its flex parent */
+page-builder {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}

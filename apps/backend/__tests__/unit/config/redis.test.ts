@@ -11,6 +11,7 @@ const { mockRedisInstance, RedisMock } = vi.hoisted(() => {
   const mockRedisInstance = {
     quit: vi.fn().mockResolvedValue('OK'),
     info: vi.fn().mockResolvedValue('redis_version:7.2.4\r\n'),
+    on: vi.fn(),
   };
   return {
     mockRedisInstance,

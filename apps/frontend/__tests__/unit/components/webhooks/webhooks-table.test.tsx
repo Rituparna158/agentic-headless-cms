@@ -6,16 +6,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { WebhooksTable } from '@/components/webhooks/webhooks-table';
 
-const { mockList, mockCreate, mockDelete } = vi.hoisted(() => ({
-  mockList: vi.fn(),
-  mockCreate: vi.fn(),
-  mockDelete: vi.fn(),
-}));
+const { mockList, mockCreate, mockDelete, mockTest, mockListDeliveries } =
+  vi.hoisted(() => ({
+    mockList: vi.fn(),
+    mockCreate: vi.fn(),
+    mockDelete: vi.fn(),
+    mockTest: vi.fn(),
+    mockListDeliveries: vi.fn(),
+  }));
 
 vi.mock('@/lib/api/webhooks', () => ({
   listWebhooks: mockList,
   createWebhook: mockCreate,
   deleteWebhook: mockDelete,
+  testWebhook: mockTest,
+  listWebhookDeliveries: mockListDeliveries,
 }));
 
 const webhook: WebhookRecord = {
@@ -137,16 +142,29 @@ describe('WebhooksTable', () => {
     );
   });
 
-  it('deletes a webhook after confirming', async () => {
+  it('deletes a webhook after confirming from actions menu', async () => {
     mockList.mockResolvedValue({ data: [webhook], meta: { total: 1 } });
     mockDelete.mockResolvedValue(undefined);
     const user = userEvent.setup();
     renderTable();
     await screen.findByText('ISR Rebuild');
 
-    await user.click(screen.getByRole('button', { name: 'Delete Webhook' }));
+    // Open 3-dot dropdown menu
+    await user.click(screen.getByRole('button', { name: /open menu/i }));
+    await user.click(screen.getByText(/delete/i));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('wh-1'));
+  });
+
+  it('opens delivery history drawer from actions menu', async () => {
+    mockList.mockResolvedValue({ data: [webhook], meta: { total: 1 } });
+    const user = userEvent.setup();
+    renderTable();
+    await screen.findByText('ISR Rebuild');
+
+    // Open 3-dot dropdown menu
+    await user.click(screen.getByRole('button', { name: /open menu/i }));
+    expect(screen.getByText(/delivery history/i)).toBeInTheDocument();
   });
 });

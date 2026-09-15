@@ -93,3 +93,97 @@
  *       204:
  *         description: Webhook deleted
  */
+
+/**
+ * @swagger
+ * /webhooks/{id}/test:
+ *   post:
+ *     summary: Trigger a test ping for a webhook
+ *     tags: [Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "whk_456"
+ *     responses:
+ *       200:
+ *         description: Webhook test execution result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: "Webhook test executed successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     success:
+ *                       type: boolean
+ *                       example: true
+ *                     statusCode:
+ *                       type: integer
+ *                       example: 200
+ *                     responseTimeMs:
+ *                       type: integer
+ *                       example: 142
+ *       404:
+ *         description: Webhook not found
+ */
+
+/**
+ * @swagger
+ * /webhooks/{id}/deliveries:
+ *   get:
+ *     summary: List delivery history logs for a webhook
+ *     tags: [Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "whk_456"
+ *     responses:
+ *       200:
+ *         description: Webhook delivery history
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: "Webhook deliveries fetched successfully"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       webhookId:
+ *                         type: string
+ *                       event:
+ *                         type: string
+ *                       statusCode:
+ *                         type: integer
+ *                       durationMs:
+ *                         type: integer
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ */

@@ -30,6 +30,11 @@ export function ConfirmDialog({
       onConfirm={onConfirm}
       onCancel={() => onOpenChange(false)}
       colorScheme={destructive ? 'destructive' : 'primary'}
+      colorOverrides={{
+        confirmButton: destructive
+          ? 'bg-destructive text-white hover:bg-destructive/90 shadow-destructive/25'
+          : 'bg-primary text-white hover:bg-primary/90 shadow-primary/25',
+      }}
     >
       {description ? (
         <p className="text-muted-foreground text-sm">{description}</p>

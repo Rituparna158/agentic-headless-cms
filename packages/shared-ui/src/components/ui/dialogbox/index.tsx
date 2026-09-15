@@ -658,7 +658,8 @@ export const DialogProvider: React.FC<{ children: React.ReactNode }> = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.5 }}
                 >
-                  {options?.dialogType === 'confirm' && (
+                  {(options?.dialogType === 'confirm' ||
+                    !!options?.confirmationCallBack) && (
                     <motion.button
                       onClick={() => handleClose(true)}
                       className="

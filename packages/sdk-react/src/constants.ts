@@ -17,8 +17,16 @@ export const contentKeys = {
     [...contentKeys.lists(schemaSlug), options] as const,
   details: (schemaSlug: string) =>
     [...contentKeys.all, schemaSlug, 'detail'] as const,
-  detail: (schemaSlug: string, entryId: string) =>
-    [...contentKeys.details(schemaSlug), entryId] as const,
+  detail: (
+    schemaSlug: string,
+    entryId: string,
+    options?: { locale?: string } | string,
+  ) => {
+    const locale = typeof options === 'string' ? options : options?.locale;
+    return locale
+      ? ([...contentKeys.details(schemaSlug), entryId, { locale }] as const)
+      : ([...contentKeys.details(schemaSlug), entryId] as const);
+  },
 };
 
 export const mediaKeys = {

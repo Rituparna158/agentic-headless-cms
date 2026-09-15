@@ -18,13 +18,13 @@ export const schemaFieldDataTypes = [
 export const schemaFieldSchema = z.object({
   apiId: z
     .string()
-    .min(1)
+    .min(1, 'API ID is required')
     .max(255)
     .regex(
       /^[a-z][a-z0-9_]*$/,
       'apiId must start with a lowercase letter and contain only lowercase letters, numbers, and underscores',
     ),
-  displayName: z.string().min(1, 'displayName is required').max(255),
+  displayName: z.string().min(1, 'Display Name is required').max(255),
   dataType: z.enum(schemaFieldDataTypes),
   isRequired: z.boolean().default(false),
   isUnique: z.boolean().default(false),

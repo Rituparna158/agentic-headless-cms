@@ -2,14 +2,50 @@ import { AuthClient } from '../auth/auth.client.js';
 import { ApiError, AuthError } from '../errors/index.js';
 import { FetchOptions } from '../types/index.js';
 
+export interface HttpTransportConfig {
+  appId?: string;
+  apiKey?: string;
+  headers?: Record<string, string>;
+}
+
+function appendQueryParam(
+  params: URLSearchParams,
+  prefix: string,
+  value: unknown,
+): void {
+  if (value === undefined || value === null) return;
+
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    for (const [subKey, subVal] of Object.entries(value)) {
+      appendQueryParam(params, `${prefix}[${subKey}]`, subVal);
+    }
+  } else if (Array.isArray(value)) {
+    for (const item of value) {
+      params.append(prefix, String(item));
+    }
+  } else {
+    params.append(prefix, String(value));
+  }
+}
+
 export class HttpTransport {
   private baseUrl: string;
   private authClient: AuthClient;
+  private appId?: string;
+  private apiKey?: string;
+  private defaultHeaders?: Record<string, string>;
 
-  constructor(baseUrl: string, authClient: AuthClient) {
+  constructor(
+    baseUrl: string,
+    authClient: AuthClient,
+    config?: HttpTransportConfig,
+  ) {
     // Strip trailing slash if present
     this.baseUrl = baseUrl.replace(/\/$/, '');
     this.authClient = authClient;
+    this.appId = config?.appId;
+    this.apiKey = config?.apiKey;
+    this.defaultHeaders = config?.headers;
   }
 
   public getBaseUrl(): string {
@@ -30,13 +66,30 @@ export class HttpTransport {
 
     if (options.params) {
       Object.entries(options.params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          url.searchParams.append(key, String(value));
-        }
+        appendQueryParam(url.searchParams, key, value);
       });
     }
 
-    const headers = new Headers(options.headers);
+    const headers = new Headers();
+
+    if (this.defaultHeaders) {
+      Object.entries(this.defaultHeaders).forEach(([k, v]) => {
+        if (v !== undefined) headers.set(k, v);
+      });
+    }
+
+    if (this.appId && !headers.has('x-app-id')) {
+      headers.set('x-app-id', this.appId);
+    }
+    if (this.apiKey && !headers.has('x-api-key')) {
+      headers.set('x-api-key', this.apiKey);
+    }
+
+    if (options.headers) {
+      new Headers(options.headers).forEach((value, key) => {
+        headers.set(key, value);
+      });
+    }
 
     // Auto-set JSON content type if it's not FormData
     if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {

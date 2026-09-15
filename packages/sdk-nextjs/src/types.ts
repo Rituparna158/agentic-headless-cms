@@ -6,6 +6,8 @@ export interface NextFetchOptions {
 export interface FetchConfig {
   baseUrl: string;
   apiToken: string;
+  appId?: string;
+  apiKey?: string;
 }
 
 export interface CmsMetadata {

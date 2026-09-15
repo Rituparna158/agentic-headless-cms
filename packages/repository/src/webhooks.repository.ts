@@ -1,9 +1,10 @@
-import { eq, sql, and } from 'drizzle-orm';
+import { eq, sql, and, desc } from 'drizzle-orm';
 import type { BaseQueryOptions } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import {
   webhooks,
+  webhookDeliveries,
   RecordNotFoundError,
   buildPaginationOptions,
   withTransaction,
@@ -131,6 +132,115 @@ export class WebhooksRepository {
       logger.error({ err: error }, 'WebhooksRepository Error in delete:');
       if (error instanceof RecordNotFoundError) throw error;
       throw new ApiError(500, REPO_ERRORS.DELETE_WEBHOOK_FAILED);
+    }
+  }
+
+  async findActiveByEvent(eventType: string, applicationId?: string) {
+    try {
+      logger.info({ eventType }, 'WebhooksRepository: findActiveByEvent start');
+      const conditions = [eq(webhooks.isActive, true)];
+      if (applicationId) {
+        conditions.push(eq(webhooks.applicationId, applicationId));
+      }
+      const allActive = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(webhooks)
+          .where(and(...conditions));
+      });
+      const matching = allActive.filter((w) => {
+        const events = Array.isArray(w.events) ? w.events : [];
+        return events.includes(eventType) || events.includes('*');
+      });
+      logger.debug(
+        { eventType, count: matching.length },
+        'WebhooksRepository: findActiveByEvent complete',
+      );
+      return matching;
+    } catch (error) {
+      logger.error(
+        { err: error, eventType },
+        'WebhooksRepository: findActiveByEvent failed',
+      );
+      throw new ApiError(500, REPO_ERRORS.LIST_WEBHOOKS_FAILED);
+    }
+  }
+
+  async recordDelivery(data: {
+    webhookId: string;
+    applicationId?: string;
+    eventType: string;
+    payload: unknown;
+    responseStatus?: number | null;
+    attempt?: number;
+    deliveredAt?: Date | null;
+  }) {
+    try {
+      logger.info(
+        { webhookId: data.webhookId, eventType: data.eventType },
+        'WebhooksRepository: recordDelivery start',
+      );
+      const [delivery] = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .insert(webhookDeliveries)
+          .values({
+            webhookId: data.webhookId,
+            ...(data.applicationId
+              ? { applicationId: data.applicationId }
+              : {}),
+            eventType: data.eventType,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            payload: data.payload as any,
+            responseStatus: data.responseStatus ?? null,
+            attempt: data.attempt ?? 1,
+            deliveredAt: data.deliveredAt ?? null,
+          })
+          .returning();
+      });
+      logger.debug(
+        { deliveryId: delivery?.id },
+        'WebhooksRepository: recordDelivery complete',
+      );
+      return delivery;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'WebhooksRepository Error in recordDelivery:',
+      );
+      throw new ApiError(500, REPO_ERRORS.RECORD_WEBHOOK_DELIVERY_FAILED);
+    }
+  }
+
+  async listDeliveries(
+    webhookId: string,
+    applicationId?: string,
+    limit: number = 20,
+  ) {
+    try {
+      logger.info({ webhookId }, 'WebhooksRepository: listDeliveries start');
+      const conditions = [eq(webhookDeliveries.webhookId, webhookId)];
+      if (applicationId) {
+        conditions.push(eq(webhookDeliveries.applicationId, applicationId));
+      }
+      const deliveries = await withTransaction(this.db, async (tx) => {
+        return await tx
+          .select()
+          .from(webhookDeliveries)
+          .where(and(...conditions))
+          .orderBy(desc(webhookDeliveries.createdAt))
+          .limit(limit);
+      });
+      logger.debug(
+        { count: deliveries.length },
+        'WebhooksRepository: listDeliveries complete',
+      );
+      return deliveries;
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'WebhooksRepository Error in listDeliveries:',
+      );
+      throw new ApiError(500, REPO_ERRORS.LIST_WEBHOOK_DELIVERIES_FAILED);
     }
   }
 }

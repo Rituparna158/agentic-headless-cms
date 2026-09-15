@@ -76,3 +76,48 @@ export const deleteWebhook: RequestHandler = asyncHandler(
     res.status(HTTP_STATUS.NO_CONTENT).send();
   },
 );
+
+export const testWebhook: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'WebhooksController: testWebhook start');
+    const result = await webhooksService.test(
+      id as string,
+      req.context?.applicationId,
+    );
+    logger.debug({ id, result }, 'WebhooksController: testWebhook success');
+    res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new ApiResponse(
+          HTTP_STATUS.OK,
+          result,
+          'Webhook test executed successfully',
+        ),
+      );
+  },
+);
+
+export const listWebhookDeliveries: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'WebhooksController: listWebhookDeliveries start');
+    const deliveries = await webhooksService.listDeliveries(
+      id as string,
+      req.context?.applicationId,
+    );
+    logger.debug(
+      { id, count: deliveries.length },
+      'WebhooksController: listWebhookDeliveries success',
+    );
+    res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new ApiResponse(
+          HTTP_STATUS.OK,
+          deliveries,
+          'Webhook deliveries fetched successfully',
+        ),
+      );
+  },
+);

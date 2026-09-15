@@ -1,4 +1,5 @@
 import type { SchemaField } from '@repo/types';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -101,5 +102,24 @@ describe('FieldTypeInput', () => {
     );
     expect(screen.getByText('Body')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+  });
+
+  it('renders the relation picker for dataType "relation"', () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const onChange = vi.fn();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <FieldTypeInput
+          field={makeField({ dataType: 'relation', displayName: 'Author' })}
+          value=""
+          onChange={onChange}
+        />
+      </QueryClientProvider>,
+    );
+    expect(
+      screen.getByRole('button', { name: /select author…/i }),
+    ).toBeInTheDocument();
   });
 });

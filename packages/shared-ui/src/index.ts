@@ -1,4 +1,5 @@
 export * from './components/ui/avatar';
+export * from './components/ui/badge';
 export * from './components/ui/button';
 export * from './components/ui/card';
 export * from './components/ui/checkbox';
@@ -16,7 +17,11 @@ export * from './components/ui/tabs';
 export { default as Textarea } from './components/ui/textarea';
 export * from './components/ui/textarea';
 export * from './components/ui/typography';
+export * from './components/ui/toast';
 export * from './components/ui/button-with-icon';
 export * from './components/ui/datepicker';
 export * from './components/ui/spinner';
+export * from './components/ui/scroll-area';
+export * from './components/ui/split';
 export * from './templates/errorpage';
+export * from './templates/maintenance-page';

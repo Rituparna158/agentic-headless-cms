@@ -27,7 +27,7 @@ export function EditSchemaView({ slug }: { slug: string }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Schema</CardTitle>
+          <CardTitle>Content Type Definition</CardTitle>
         </CardHeader>
         <CardContent>
           <SchemaBuilderForm schema={schema} />

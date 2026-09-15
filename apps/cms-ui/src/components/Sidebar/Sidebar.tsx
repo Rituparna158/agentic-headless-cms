@@ -119,22 +119,30 @@ export const Sidebar = () => {
                     {/* Submenu */}
                     {!isCollapsed && isExpanded && (
                       <ul className="mt-1 mb-2 space-y-1">
-                        {item.subItems.map((subItem) => (
-                          <li key={subItem.title}>
-                            <NavLink
-                              to={subItem.href}
-                              className={({ isActive }) =>
-                                `block pl-11 pr-3 py-2 rounded-md text-sm transition-colors ${
-                                  isActive
-                                    ? 'text-zinc-100 bg-zinc-800/50 font-medium'
-                                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30'
-                                }`
-                              }
-                            >
-                              {subItem.title}
-                            </NavLink>
-                          </li>
-                        ))}
+                        {item.subItems.map((subItem) => {
+                          const [path, search] = subItem.href.split('?');
+                          const isSubActive = search
+                            ? location.pathname === path &&
+                              location.search === `?${search}`
+                            : location.pathname === path && !location.search;
+
+                          return (
+                            <li key={subItem.title}>
+                              <NavLink
+                                to={subItem.href}
+                                className={() =>
+                                  `block pl-11 pr-3 py-2 rounded-md text-sm transition-colors ${
+                                    isSubActive
+                                      ? 'text-zinc-100 bg-zinc-800/50 font-medium'
+                                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30'
+                                  }`
+                                }
+                              >
+                                {subItem.title}
+                              </NavLink>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>

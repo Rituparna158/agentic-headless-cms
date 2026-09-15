@@ -62,9 +62,7 @@ describe('ContentEntryList', () => {
     });
     renderList();
     await waitFor(() => {
-      expect(
-        screen.getByText(/no rows match your filter/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/no content entries found/i)).toBeInTheDocument();
     });
   });
   it('renders entries using the first text field as the title column', async () => {
@@ -94,9 +92,7 @@ describe('ContentEntryList', () => {
     const user = userEvent.setup();
     renderList();
     await waitFor(() => {
-      expect(
-        screen.getByPlaceholderText(/search by title/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/search by title/i)).toBeInTheDocument();
     });
     await user.type(screen.getByRole('textbox'), 'World');
     await waitFor(() => {
@@ -126,7 +122,12 @@ describe('ContentEntryList', () => {
     await waitFor(() =>
       expect(screen.getByText('Hello World')).toBeInTheDocument(),
     );
-    await user.click(screen.getByRole('button', { name: /delete/i }));
+    await user.click(screen.getByTitle('Actions'));
+    await user.click(screen.getByText('Delete'));
+    await waitFor(() => {
+      expect(screen.getByText('Are you absolutely sure?')).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith('article', 'entry-1');
     });

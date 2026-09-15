@@ -8,12 +8,17 @@ import { API_PATHS } from '@/lib/constants/api-paths';
 
 import { apiFetch } from '@/lib/api-client';
 
-function buildQueryString(options: ListContentEntriesOptions): string {
+export interface FrontendListContentEntriesOptions extends ListContentEntriesOptions {
+  status?: 'published' | 'draft' | 'all';
+}
+
+function buildQueryString(options: FrontendListContentEntriesOptions): string {
   const params = new URLSearchParams();
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
   if (options.sort) params.set('sort', options.sort);
   if (options.locale) params.set('locale', options.locale);
+  if (options.status) params.set('status', options.status);
   if (options.filters) {
     for (const [apiId, operators] of Object.entries(options.filters)) {
       for (const [operator, value] of Object.entries(operators)) {
@@ -26,40 +31,56 @@ function buildQueryString(options: ListContentEntriesOptions): string {
 
 export function listContentEntries(
   schemaSlug: string,
-  options: ListContentEntriesOptions = {},
+  options: FrontendListContentEntriesOptions = {},
 ): Promise<ListContentEntriesResult> {
-  const qs = buildQueryString(options);
+  const optsWithStatus: FrontendListContentEntriesOptions = {
+    status: 'all',
+    ...options,
+  };
+  const qs = buildQueryString(optsWithStatus);
   return apiFetch<ListContentEntriesResult>(
     API_PATHS.CONTENT.BASE(schemaSlug, qs),
   );
 }
 
+function withLocale(path: string, locale?: string): string {
+  if (!locale) return path;
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}locale=${encodeURIComponent(locale)}`;
+}
+
 export function getContentEntry(
   schemaSlug: string,
   entryId: string,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
   return apiFetch<ContentEntryRecord>(
-    API_PATHS.CONTENT.BY_ID(schemaSlug, entryId),
+    withLocale(API_PATHS.CONTENT.BY_ID(schemaSlug, entryId), locale),
   );
 }
 
 export function createContentEntry(
   schemaSlug: string,
   data: Record<string, unknown>,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
-  return apiFetch<ContentEntryRecord>(API_PATHS.CONTENT.BASE(schemaSlug), {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return apiFetch<ContentEntryRecord>(
+    withLocale(API_PATHS.CONTENT.BASE(schemaSlug), locale),
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+  );
 }
 
 export function updateContentEntry(
   schemaSlug: string,
   entryId: string,
   data: Record<string, unknown>,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
   return apiFetch<ContentEntryRecord>(
-    API_PATHS.CONTENT.BY_ID(schemaSlug, entryId),
+    withLocale(API_PATHS.CONTENT.BY_ID(schemaSlug, entryId), locale),
     {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -70,9 +91,21 @@ export function updateContentEntry(
 export function publishContentEntry(
   schemaSlug: string,
   entryId: string,
+  locale?: string,
 ): Promise<ContentEntryRecord> {
   return apiFetch<ContentEntryRecord>(
-    API_PATHS.CONTENT.PUBLISH(schemaSlug, entryId),
+    withLocale(API_PATHS.CONTENT.PUBLISH(schemaSlug, entryId), locale),
+    { method: 'POST' },
+  );
+}
+
+export function unpublishContentEntry(
+  schemaSlug: string,
+  entryId: string,
+  locale?: string,
+): Promise<ContentEntryRecord> {
+  return apiFetch<ContentEntryRecord>(
+    withLocale(API_PATHS.CONTENT.UNPUBLISH(schemaSlug, entryId), locale),
     { method: 'POST' },
   );
 }

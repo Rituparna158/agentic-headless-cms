@@ -22,7 +22,11 @@ export class AgenticCmsClient<
     this.auth = new AuthClient(config.apiToken);
     // Remove trailing slash if user included one
     const baseUrl = config.baseUrl.replace(/\/$/, '');
-    this.transport = new HttpTransport(baseUrl, this.auth);
+    this.transport = new HttpTransport(baseUrl, this.auth, {
+      appId: config.appId,
+      apiKey: config.apiKey,
+      headers: config.headers,
+    });
     this.auth.setTransport(this.transport);
 
     this.content = new ContentModule<TMap>(this.transport);

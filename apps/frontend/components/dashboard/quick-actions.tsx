@@ -15,7 +15,7 @@ export function QuickActions() {
         <Link href="/content">+ New Entry</Link>
       </Button>
       <Button asChild variant="outline">
-        <Link href="/content-types/new">+ Content-Type</Link>
+        <Link href="/content-types/new">+ New Content Type</Link>
       </Button>
       <Button asChild variant="outline">
         <Link href="/media">Upload Media</Link>

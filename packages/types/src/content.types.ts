@@ -22,6 +22,7 @@ export interface ContentEntryRecord {
   status: 'draft' | 'published';
   data: Record<string, unknown>;
   publishedData: Record<string, unknown> | null;
+  publishedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -45,6 +46,7 @@ export interface ListContentEntriesOptions {
   pageSize?: number;
   sort?: string;
   locale?: string;
+  status?: 'published' | 'draft' | 'all';
   filters?: Record<string, Record<string, string>>;
 }
 

@@ -1,8 +1,14 @@
 'use client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
 import { Check, Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
+  Badge,
   Button,
   Modal,
   Input,
@@ -34,6 +40,7 @@ export function TokensTab() {
   const { data: tokensData, isLoading } = useQuery({
     queryKey: ['access', 'tokens', page, pageSize, sort, search],
     queryFn: () => listTokens({ page, pageSize, sort, search }),
+    placeholderData: keepPreviousData,
   });
   const { data: rolesData } = useQuery({
     queryKey: ['access', 'roles'],
@@ -86,7 +93,7 @@ export function TokensTab() {
     setTokenToRevoke(null);
     setMfaCode('');
   };
-  if (isLoading) {
+  if (isLoading && !tokensData) {
     return (
       <div className="text-center text-muted-foreground py-8">Loading...</div>
     );
@@ -235,16 +242,25 @@ export function TokensTab() {
             { label: 'Role', key: 'role', sortable: true },
             { label: 'Created At', key: 'createdAt', sortable: true },
             { label: 'Status', key: 'status', sortable: true },
-            { label: 'Actions', key: 'actions', sortable: false },
+            {
+              label: 'Actions',
+              key: 'actions',
+              sortable: false,
+              align: 'right',
+            },
           ]}
           rows={tokens.map((token) => ({
             name: token.name,
             role: roles.find((r) => r.id === token.roleId)?.name || 'Unknown',
             createdAt: new Date(token.createdAt).toLocaleDateString(),
             status: token.revokedAt ? (
-              <span className="text-red-500 font-medium">Revoked</span>
+              <Badge variant="destructive" size="sm">
+                Revoked
+              </Badge>
             ) : (
-              <span className="text-green-500 font-medium">Active</span>
+              <Badge variant="success" size="sm">
+                Active
+              </Badge>
             ),
             actions: (
               <div className="text-right">
@@ -267,6 +283,7 @@ export function TokensTab() {
           }))}
           enableFiltering={true}
           manualFiltering={true}
+          searchValue={search}
           filterPlaceholder="Search tokens..."
           onSearchChange={(val: string) => {
             setSearch(val);
@@ -290,12 +307,8 @@ export function TokensTab() {
           pageSize={pageSize}
           onPageSizeChange={(newSize: number) => setPageSize(newSize)}
           onPageChange={(newPage: number) => setPage(newPage)}
+          emptyMessage="No tokens match your search criteria."
         />
-        {tokens.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground border-t">
-            No tokens generated yet.
-          </div>
-        )}
       </div>
     </div>
   );

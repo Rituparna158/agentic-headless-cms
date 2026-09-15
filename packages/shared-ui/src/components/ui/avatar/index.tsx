@@ -245,7 +245,7 @@ const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
   ) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(!!src);
-    const fallbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
       if (!src) {
@@ -383,7 +383,7 @@ const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
             className,
             'group',
           )}
-          style={getContainerStyle() as any}
+          style={getContainerStyle() as import('framer-motion').MotionStyle}
           whileHover={clickable ? { scale: 1.05 } : undefined}
           whileTap={clickable ? { scale: 0.95 } : undefined}
           {...props}

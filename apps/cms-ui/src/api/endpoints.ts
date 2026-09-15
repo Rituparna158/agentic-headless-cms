@@ -28,5 +28,12 @@ export const ENDPOINTS = {
   },
   SCHEMAS: {
     BASE: '/schemas',
+    BY_SLUG: (slug: string) => `/schemas/slug/${slug}`,
+  },
+  CONTENT: {
+    BASE: '/content',
+    BY_SCHEMA: (schemaSlug: string) => `/content/${schemaSlug}`,
+    ENTRY: (schemaSlug: string, entryId: string) =>
+      `/content/${schemaSlug}/${entryId}`,
   },
 } as const;

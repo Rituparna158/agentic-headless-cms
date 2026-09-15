@@ -129,6 +129,92 @@ export const authenticateToken = async (
   }
 };
 
+export const optionalAuthenticateToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const appId = (req.headers['x-app-id'] as string) || 'default';
+  const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
+
+  let token = (req.cookies as Record<string, string> | undefined)?.[cookieName];
+
+  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_SECRET) as AuthenticatedUser & {
+      isMfaChallenge?: boolean;
+    };
+    if (!decoded.isMfaChallenge) {
+      req.user = decoded;
+    }
+    return next();
+  } catch {
+    try {
+      const hash = crypto.createHash('sha256').update(token).digest('hex');
+      const db = getDatabaseAdapter().getDb();
+      const records = await db
+        .select({
+          token: apiTokens,
+          role: roles,
+        })
+        .from(apiTokens)
+        .leftJoin(roles, eq(apiTokens.roleId, roles.id))
+        .where(eq(apiTokens.tokenHash, hash))
+        .limit(1);
+
+      if (records.length > 0) {
+        const tokenRecord = records[0]!.token;
+        const roleRecord = records[0]!.role;
+
+        if (
+          !tokenRecord.revokedAt &&
+          (!tokenRecord.expiresAt ||
+            new Date(tokenRecord.expiresAt) >= new Date())
+        ) {
+          let tokenPermissions: Permission[] = [];
+          if (tokenRecord.roleId) {
+            tokenPermissions = await db
+              .select({
+                action: permissions.action,
+                effect: permissions.effect,
+                schemaId: permissions.schemaId,
+                fields: permissions.fields,
+                condition: permissions.condition,
+              })
+              .from(permissions)
+              .where(
+                and(
+                  eq(permissions.roleId, tokenRecord.roleId),
+                  eq(permissions.applicationId, tokenRecord.applicationId),
+                ),
+              );
+          }
+
+          req.user = {
+            id: tokenRecord.createdBy || 'system',
+            email: 'api-token@agentic-cms.local',
+            firstName: tokenRecord.name,
+            lastName: 'Token',
+            roles: [roleRecord?.name || 'user'],
+            permissions: tokenPermissions,
+            mfaEnabled: false,
+          };
+        }
+      }
+    } catch {
+      // Ignored for optional auth fallback
+    }
+    return next();
+  }
+};
+
 export const requireAdmin = (
   req: Request,
   res: Response,

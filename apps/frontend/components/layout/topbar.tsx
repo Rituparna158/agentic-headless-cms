@@ -36,11 +36,30 @@ export function Topbar() {
 
   useEffect(() => {
     setMounted(true);
+
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        setMobileNavOpen(false);
+      }
+    };
+
+    if (mediaQuery.matches) {
+      setMobileNavOpen(false);
+    }
+
+    mediaQuery.addEventListener('change', handleMediaChange);
+    return () => mediaQuery.removeEventListener('change', handleMediaChange);
   }, []);
 
   async function handleLogout() {
-    await logout();
-    router.push('/login');
+    try {
+      await logout();
+    } catch {
+      // Ignore errors during logout
+    } finally {
+      router.push('/login');
+    }
   }
 
   const displayName = user
@@ -57,14 +76,15 @@ export function Topbar() {
             isOpen={mobileNavOpen}
             onClose={() => setMobileNavOpen(false)}
             position="left"
+            title="Agentic CMS"
+            size="100%"
+            className="w-full max-w-full"
           >
-            <div className="w-64 p-0 h-full bg-background">
-              <div className="border-b p-4">
-                <h2 className="text-lg font-semibold">Agentic CMS</h2>
-              </div>
+            <div className="w-full h-full">
               <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
             </div>
           </Drawer>
+
           <Button
             variant="ghost"
             size="icon"

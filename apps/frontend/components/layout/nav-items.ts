@@ -19,16 +19,32 @@ export interface NavItem {
   icon: LucideIcon;
   /** Static placeholder count shown next to the label (e.g. pending approvals) — wired to real data once the content/workflow APIs exist. */
   badge?: number;
+  /** When true, the navigation item is frozen/disabled and non-clickable. */
+  disabled?: boolean;
+  /** Optional badge label for disabled items. */
+  disabledBadge?: string;
 }
 
 /** Primary navigation — content-authoring surfaces (SRS §4.1–4.7). */
 export const primaryNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { label: 'Content', href: '/content', icon: FileText },
-  { label: 'Media', href: '/media', icon: ImageIcon },
-  { label: 'Content-Types', href: '/content-types', icon: Layers },
-  { label: 'Workflows', href: '/workflows', icon: Workflow },
-  { label: 'Approvals', href: '/approvals', icon: SquareCheck },
+  { label: 'Content Manager', href: '/content', icon: FileText },
+  { label: 'Media Library', href: '/media', icon: ImageIcon },
+  { label: 'Content Type Builder', href: '/content-types', icon: Layers },
+  {
+    label: 'Workflows',
+    href: '/workflows',
+    icon: Workflow,
+    disabled: true,
+    disabledBadge: 'Soon',
+  },
+  {
+    label: 'Approvals',
+    href: '/approvals',
+    icon: SquareCheck,
+    disabled: true,
+    disabledBadge: 'Soon',
+  },
   { label: 'Agents', href: '/agents', icon: Bot },
 ];
 
