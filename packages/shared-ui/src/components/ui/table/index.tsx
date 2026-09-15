@@ -910,7 +910,7 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
           {enableFiltering && (
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
               <div className="relative flex-1 w-full sm:max-w-md">
-                <div className="relative [&>div.group]:mb-4 mt-4">
+                <div className="relative">
                   <AnimatedInput
                     placeholder={filterPlaceholder}
                     variant="clean"
