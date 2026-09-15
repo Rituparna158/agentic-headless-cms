@@ -93,6 +93,9 @@ importers:
       '@repo/middlewares':
         specifier: workspace:*
         version: link:../../packages/middlewares
+      '@repo/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
       '@repo/repository':
         specifier: workspace:*
         version: link:../../packages/repository
