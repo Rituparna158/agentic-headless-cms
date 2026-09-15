@@ -13,6 +13,8 @@
  *     tags: [Content]
  *     security:
  *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
  *     parameters:
  *       - in: path
  *         name: schemaSlug
@@ -20,19 +22,74 @@
  *         schema:
  *           type: string
  *         example: "blog-post"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of entries per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [draft, published, archived]
+ *         description: Filter by entry publication status
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Locale code to retrieve localized content
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search query matching entry content
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Field name to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order direction
  *     responses:
  *       200:
  *         description: List of entries
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *               example:
- *                 - id: "ent_123"
- *                   schemaSlug: "blog-post"
- *                   data: { "title": "My first blog post" }
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: "Entries listed successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     pageSize:
+ *                       type: integer
  */
 
 /**
@@ -43,6 +100,8 @@
  *     tags: [Content]
  *     security:
  *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
  *     parameters:
  *       - in: path
  *         name: schemaSlug
@@ -56,6 +115,12 @@
  *         schema:
  *           type: string
  *         example: "ent_123"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Locale code to retrieve localized content
  *     responses:
  *       200:
  *         description: Content entry details
@@ -66,7 +131,10 @@
  *               example:
  *                 id: "ent_123"
  *                 schemaSlug: "blog-post"
+ *                 status: "published"
  *                 data: { "title": "My first blog post" }
+ *       404:
+ *         description: Entry not found
  */
 
 /**
@@ -77,6 +145,8 @@
  *     tags: [Content]
  *     security:
  *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
  *     parameters:
  *       - in: path
  *         name: schemaSlug
@@ -90,6 +160,12 @@
  *         schema:
  *           type: string
  *         example: "ent_123"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Filter versions by locale
  *     responses:
  *       200:
  *         description: List of entry versions
@@ -100,9 +176,9 @@
  *               items:
  *                 type: object
  *               example:
- *                 - versionId: "ver_1"
+ *                 - versionNo: 1
  *                   data: { "title": "Draft 1" }
- *                 - versionId: "ver_2"
+ *                 - versionNo: 2
  *                   data: { "title": "Draft 2" }
  */
 
@@ -114,6 +190,8 @@
  *     tags: [Content]
  *     security:
  *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
  *     parameters:
  *       - in: path
  *         name: schemaSlug
@@ -121,6 +199,12 @@
  *         schema:
  *           type: string
  *         example: "blog-post"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Target locale for initial content
  *     requestBody:
  *       required: true
  *       content:
@@ -146,10 +230,12 @@
  * @swagger
  * /content/{schemaSlug}/{entryId}:
  *   put:
- *     summary: Update an existing draft
+ *     summary: Update an existing draft entry
  *     tags: [Content]
  *     security:
  *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
  *     parameters:
  *       - in: path
  *         name: schemaSlug
@@ -163,6 +249,12 @@
  *         schema:
  *           type: string
  *         example: "ent_456"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Target locale for update
  *     requestBody:
  *       required: true
  *       content:
@@ -186,12 +278,14 @@
 
 /**
  * @swagger
- * /content/{schemaSlug}/{entryId}/publish:
- *   post:
- *     summary: Publish a draft entry
+ * /content/{schemaSlug}/{entryId}:
+ *   patch:
+ *     summary: Partially update an existing entry
  *     tags: [Content]
  *     security:
  *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
  *     parameters:
  *       - in: path
  *         name: schemaSlug
@@ -205,6 +299,62 @@
  *         schema:
  *           type: string
  *         example: "ent_456"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Target locale for partial update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             example:
+ *               title: "Partially updated title"
+ *     responses:
+ *       200:
+ *         description: Entry partially updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 id: "ent_456"
+ *                 status: "draft"
+ *                 data: { "title": "Partially updated title" }
+ */
+
+/**
+ * @swagger
+ * /content/{schemaSlug}/{entryId}/publish:
+ *   post:
+ *     summary: Publish a draft entry
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: schemaSlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "blog-post"
+ *       - in: path
+ *         name: entryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "ent_456"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Target locale to publish
  *     responses:
  *       200:
  *         description: Entry published
@@ -220,12 +370,14 @@
 
 /**
  * @swagger
- * /content/{schemaSlug}/{entryId}/revert:
+ * /content/{schemaSlug}/{entryId}/unpublish:
  *   post:
- *     summary: Revert to a previous version
+ *     summary: Unpublish an entry back to draft
  *     tags: [Content]
  *     security:
  *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
  *     parameters:
  *       - in: path
  *         name: schemaSlug
@@ -239,17 +391,66 @@
  *         schema:
  *           type: string
  *         example: "ent_456"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Target locale to unpublish
+ *     responses:
+ *       200:
+ *         description: Entry unpublished successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 id: "ent_456"
+ *                 status: "draft"
+ *                 data: { "title": "Updated draft title" }
+ */
+
+/**
+ * @swagger
+ * /content/{schemaSlug}/{entryId}/revert:
+ *   post:
+ *     summary: Revert to a previous version
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: schemaSlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "blog-post"
+ *       - in: path
+ *         name: entryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "ent_456"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Target locale for reversion
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - versionNo
  *             properties:
- *               versionId:
- *                 type: string
- *             example:
- *               versionId: "ver_1"
+ *               versionNo:
+ *                 type: integer
+ *                 example: 2
  *     responses:
  *       200:
  *         description: Entry reverted
@@ -270,6 +471,8 @@
  *     tags: [Content]
  *     security:
  *       - bearerAuth: []
+ *       - apiKeyAuth: []
+ *       - appIdAuth: []
  *     parameters:
  *       - in: path
  *         name: schemaSlug
@@ -283,6 +486,12 @@
  *         schema:
  *           type: string
  *         example: "ent_456"
+ *       - in: query
+ *         name: locale
+ *         schema:
+ *           type: string
+ *         example: "en"
+ *         description: Specific locale to delete (or entire entry if omitted)
  *     responses:
  *       204:
  *         description: Entry deleted

@@ -8,12 +8,17 @@ import { API_PATHS } from '@/lib/constants/api-paths';
 
 import { apiFetch } from '@/lib/api-client';
 
-function buildQueryString(options: ListContentEntriesOptions): string {
+export interface FrontendListContentEntriesOptions extends ListContentEntriesOptions {
+  status?: 'published' | 'draft' | 'all';
+}
+
+function buildQueryString(options: FrontendListContentEntriesOptions): string {
   const params = new URLSearchParams();
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
   if (options.sort) params.set('sort', options.sort);
   if (options.locale) params.set('locale', options.locale);
+  if (options.status) params.set('status', options.status);
   if (options.filters) {
     for (const [apiId, operators] of Object.entries(options.filters)) {
       for (const [operator, value] of Object.entries(operators)) {
@@ -26,9 +31,13 @@ function buildQueryString(options: ListContentEntriesOptions): string {
 
 export function listContentEntries(
   schemaSlug: string,
-  options: ListContentEntriesOptions = {},
+  options: FrontendListContentEntriesOptions = {},
 ): Promise<ListContentEntriesResult> {
-  const qs = buildQueryString(options);
+  const optsWithStatus: FrontendListContentEntriesOptions = {
+    status: 'all',
+    ...options,
+  };
+  const qs = buildQueryString(optsWithStatus);
   return apiFetch<ListContentEntriesResult>(
     API_PATHS.CONTENT.BASE(schemaSlug, qs),
   );

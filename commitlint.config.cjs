@@ -59,6 +59,7 @@ module.exports = {
         'release',
         'deps',
         'ci',
+        'swagger',
         'all',
       ],
     ],

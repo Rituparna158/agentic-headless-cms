@@ -7,11 +7,15 @@ import {
 import { resolveSchema } from './validation/resolve-schema.middleware.js';
 import { authenticateToken } from '@repo/middlewares';
 import { requirePermission } from '../auth/rbac.middleware.js';
+
 export const contentRoutes = Router();
+
 // Require authentication
 contentRoutes.use(authenticateToken);
+
 // Resolve schema
 contentRoutes.use('/:schemaSlug', resolveSchema);
+
 contentRoutes.get(
   '/:schemaSlug',
   requirePermission('read'),
@@ -55,7 +59,6 @@ contentRoutes.post(
   requirePermission('publish'),
   contentController.unpublishEntry,
 );
-
 contentRoutes.post(
   '/:schemaSlug/:entryId/revert',
   requirePermission('update'),

@@ -67,10 +67,9 @@
  * @swagger
  * /media/file/{key}:
  *   get:
- *     summary: Serve a media file
+ *     summary: Serve a media file (Public)
  *     tags: [Media]
- *     security:
- *       - bearerAuth: []
+ *     security: []
  *     parameters:
  *       - in: path
  *         name: key
@@ -78,6 +77,21 @@
  *         schema:
  *           type: string
  *         example: "hero-image.png"
+ *       - in: query
+ *         name: w
+ *         schema:
+ *           type: integer
+ *         description: Optional target width for image resize
+ *       - in: query
+ *         name: h
+ *         schema:
+ *           type: integer
+ *         description: Optional target height for image resize
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: integer
+ *         description: Optional image quality (1-100)
  *     responses:
  *       200:
  *         description: Media file content
@@ -86,6 +100,51 @@
  *             schema:
  *               type: string
  *               format: binary
+ */
+
+/**
+ * @swagger
+ * /media/bulk-delete:
+ *   post:
+ *     summary: Bulk delete media assets
+ *     tags: [Media]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ids
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *             example:
+ *               ids: ["med_123", "med_456"]
+ *     responses:
+ *       200:
+ *         description: Media assets deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: "2 media asset(s) deleted successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     deletedCount:
+ *                       type: integer
+ *                       example: 2
  */
 
 /**
