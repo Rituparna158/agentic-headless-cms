@@ -51,6 +51,7 @@ export const createSchemaSchema = z.object({
       /^[a-z][a-z0-9-]*$/,
       'slug must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens',
     ),
+  description: z.string().optional().nullable(),
   type: z.enum(schemaTypeValues),
   fields: z.array(schemaFieldSchema).min(1, 'At least one field is required'),
 });
@@ -58,9 +59,16 @@ export const createSchemaSchema = z.object({
 export const updateSchemaSchema = z
   .object({
     name: z.string().min(1).max(255).optional(),
+    description: z.string().optional().nullable(),
     fields: z.array(schemaFieldSchema).min(1).optional(),
     migrationNotes: z.string().max(2000).optional(),
   })
-  .refine((data) => data.name !== undefined || data.fields !== undefined, {
-    message: 'At least one of name or fields must be provided',
-  });
+  .refine(
+    (data) =>
+      data.name !== undefined ||
+      data.fields !== undefined ||
+      data.description !== undefined,
+    {
+      message: 'At least one of name, fields, or description must be provided',
+    },
+  );
