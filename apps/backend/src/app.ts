@@ -21,11 +21,17 @@ import { apiRouter } from './routes/index.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './utils/swagger.js';
 import { globalAuthMiddleware } from './middlewares/global-auth.middleware.js';
+import path from 'node:path';
+import { pluginLoader } from './modules/plugins/index.js';
 // App assembly
 export function createApp(): Express {
   setupAuditListener();
   // Register listeners
   setupMediaQueueListener();
+  const pluginsDir = path.resolve(process.cwd(), 'plugins');
+  void pluginLoader.loadFromDirectory(pluginsDir).catch((err) => {
+    logger.warn({ err }, 'Failed to scan plugins directory during startup');
+  });
   const app = express();
   app.disable('x-powered-by');
   // Trust closest proxy

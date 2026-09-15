@@ -30,6 +30,7 @@
     "@repo/events": "workspace:*",
     "@repo/logger": "workspace:*",
     "@repo/middlewares": "workspace:*",
+    "@repo/plugin-sdk": "workspace:*",
     "@repo/repository": "workspace:*",
     "@repo/shared-db": "workspace:*",
     "@repo/storage": "workspace:*",
