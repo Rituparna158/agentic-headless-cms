@@ -38,14 +38,13 @@ export const sidebarNavConfig: NavItem[] = [
     ],
   },
   {
-    title: 'Pages',
-    href: '/pages',
+    title: 'Collections',
+    href: '/collections',
     icon: Files,
     requiredCapability: 'manage_content',
-    subItems: [
-      { title: 'All Pages', href: '/pages' },
-      { title: 'Add New', href: '/pages?create=true' },
-    ],
+    // subItems: [
+    //   { title: 'All Collections', href: '/collections' },
+    // ],
   },
   {
     title: 'Media',

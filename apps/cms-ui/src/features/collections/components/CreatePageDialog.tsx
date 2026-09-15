@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, FileText } from 'lucide-react';
-import { pagesApi } from '../api/pages.api';
-import { usePageSchema } from '../hooks/usePageSchema';
+import { collectionsApi } from '../api/collections.api';
 
 function slugify(text: string): string {
   return (
@@ -21,14 +20,18 @@ function slugify(text: string): string {
 interface CreatePageDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  schemaSlug: string;
 }
 
-export function CreatePageDialog({ isOpen, onClose }: CreatePageDialogProps) {
+export function CreatePageDialog({
+  isOpen,
+  onClose,
+  schemaSlug,
+}: CreatePageDialogProps) {
   const [title, setTitle] = useState('');
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const schemaQuery = usePageSchema();
 
   useEffect(() => {
     if (isOpen) {
@@ -50,23 +53,23 @@ export function CreatePageDialog({ isOpen, onClose }: CreatePageDialogProps) {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      if (!schemaQuery.data) throw new Error('Schema not ready');
-      return pagesApi.createPage({
+      if (!schemaSlug) throw new Error('Schema Slug missing');
+      return collectionsApi.createPage(schemaSlug, {
         title: title.trim(),
         slug: slugify(title),
         body: [],
       });
     },
     onSuccess: (entry) => {
-      queryClient.invalidateQueries({ queryKey: ['pages'] });
+      queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
       setTitle('');
       handleClose();
-      navigate(`/pages/${entry.id}`);
+      navigate(`/collections/${schemaSlug}/${entry.id}`);
     },
   });
 
   const handleConfirm = () => {
-    if (!title.trim() || !schemaQuery.data || createMutation.isPending) return;
+    if (!title.trim() || !schemaSlug || createMutation.isPending) return;
     createMutation.mutate();
   };
 
@@ -155,9 +158,7 @@ export function CreatePageDialog({ isOpen, onClose }: CreatePageDialogProps) {
           </button>
           <button
             onClick={handleConfirm}
-            disabled={
-              !title.trim() || !schemaQuery.data || createMutation.isPending
-            }
+            disabled={!title.trim() || !schemaSlug || createMutation.isPending}
             className="px-6 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-sm"
           >
             {createMutation.isPending ? 'Creating...' : 'Create Page'}

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { usePageBuilderStore } from '../../../../src/features/pages/components/page-builder/stores/pageBuilderStore';
+import { usePageBuilderStore } from '../../../../src/features/collections/components/page-builder/stores/pageBuilderStore';
 
 describe('pageBuilderStore', () => {
   beforeEach(() => {
