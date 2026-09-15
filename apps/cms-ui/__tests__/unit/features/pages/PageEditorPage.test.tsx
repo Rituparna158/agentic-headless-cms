@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { PageEditorPage } from '../../../../src/features/pages/pages/editors/PageEditorPage';
+import { PageEditorPage } from '../../../../src/features/collections/pages/editors/PageEditorPage';
 import { BrowserRouter } from 'react-router-dom';
 import * as ReactQuery from '@tanstack/react-query';
-import { usePageBuilderStore } from '../../../../src/features/pages/components/page-builder/stores/pageBuilderStore';
+import { usePageBuilderStore } from '../../../../src/features/collections/components/page-builder/stores/pageBuilderStore';
 
 // Mock dependencies
 vi.mock('@tanstack/react-query', async (importOriginal) => {
@@ -17,6 +17,13 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
     }),
   };
 });
+
+vi.mock('@repo/shared-ui', () => ({
+  useToast: () => ({
+    success: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
 
 // Mock react-router-dom useParams
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -43,26 +50,24 @@ vi.mock('@mindfiredigital/page-builder-react', () => ({
   ),
 }));
 
-// Mock custom hook
-vi.mock('../../../../src/features/pages/hooks/usePageSchema', () => ({
-  usePageSchema: () => ({ data: { id: 'schema-1' }, isLoading: false }),
-}));
-
 // Mock GrapesJSEditor
-vi.mock('../../../../src/features/pages/pages/editors/GrapesJSEditor', () => ({
-  GrapesJSEditor: ({
-    initialData,
-    brandTitle,
-  }: {
-    initialData: unknown;
-    brandTitle: string;
-  }) => (
-    <div data-testid="grapesjs-editor-mock">
-      <div data-testid="gjs-initial-data">{JSON.stringify(initialData)}</div>
-      <div data-testid="gjs-brand-title">{brandTitle}</div>
-    </div>
-  ),
-}));
+vi.mock(
+  '../../../../src/features/collections/pages/editors/GrapesJSEditor',
+  () => ({
+    GrapesJSEditor: ({
+      initialData,
+      brandTitle,
+    }: {
+      initialData: unknown;
+      brandTitle: string;
+    }) => (
+      <div data-testid="grapesjs-editor-mock">
+        <div data-testid="gjs-initial-data">{JSON.stringify(initialData)}</div>
+        <div data-testid="gjs-brand-title">{brandTitle}</div>
+      </div>
+    ),
+  }),
+);
 
 describe('PageEditorPage', () => {
   beforeEach(() => {
