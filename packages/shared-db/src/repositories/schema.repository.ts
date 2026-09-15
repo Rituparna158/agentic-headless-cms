@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, getTableColumns } from 'drizzle-orm';
 import type { Database } from '../client.js';
 import { RecordNotFoundError } from '../errors.js';
 import {
@@ -11,6 +11,7 @@ import type { actorTypeEnum, schemaTypeEnum } from '../schema/enums.js';
 import { withTransaction } from '../transaction.js';
 import { buildPaginationOptions } from '../queries/pagination.js';
 import type { BaseQueryOptions } from '@repo/types';
+
 export interface SchemaFieldInput {
   apiId: string;
   displayName: string;
@@ -23,9 +24,11 @@ export interface SchemaFieldInput {
   config?: unknown;
   sortOrder: number;
 }
+
 export interface CreateSchemaInput {
   name: string;
   slug: string;
+  description?: string | null;
   type: (typeof schemaTypeEnum.enumValues)[number];
   fields: SchemaFieldInput[];
   actorType: (typeof actorTypeEnum.enumValues)[number];
@@ -33,15 +36,22 @@ export interface CreateSchemaInput {
   createdByAgentId?: string | null;
   applicationId?: string;
 }
+
 export interface UpdateSchemaInput {
   name?: string;
+  description?: string | null;
   fields?: SchemaFieldInput[];
   migrationNotes?: string | null;
   actorType: (typeof actorTypeEnum.enumValues)[number];
   createdByUserId?: string | null;
   createdByAgentId?: string | null;
 }
-export type SchemaRecord = typeof schemas.$inferSelect;
+
+export type SchemaRecord = typeof schemas.$inferSelect & {
+  entryCount?: number;
+  lastUpdatedBy?: string | null;
+};
+
 async function insertFields(
   tx: Database,
   schemaId: string,
@@ -49,6 +59,7 @@ async function insertFields(
   fieldInputs: SchemaFieldInput[],
 ): Promise<void> {
   if (fieldInputs.length === 0) return;
+
   await tx.insert(fields).values(
     fieldInputs.map((field) => ({
       schemaId,
@@ -66,6 +77,7 @@ async function insertFields(
     })),
   );
 }
+
 export async function createSchema(
   db: Database,
   input: CreateSchemaInput,
@@ -75,11 +87,13 @@ export async function createSchema(
     db,
     async (tx) => {
       const definition = { fields: input.fields };
+
       const [schema] = await tx
         .insert(schemas)
         .values({
           name: input.name,
           slug: input.slug,
+          description: input.description,
           type: input.type,
           definition,
           ...(options.applicationId || input.applicationId
@@ -87,10 +101,13 @@ export async function createSchema(
             : {}),
         })
         .returning();
+
       if (!schema) {
         throw new RecordNotFoundError('Insert of schema returned no row.');
       }
+
       await insertFields(tx, schema.id, schema.applicationId, input.fields);
+
       await tx.insert(schemaVersions).values({
         schemaId: schema.id,
         applicationId: schema.applicationId,
@@ -100,11 +117,13 @@ export async function createSchema(
         createdByUserId: input.createdByUserId ?? null,
         createdByAgentId: input.createdByAgentId ?? null,
       });
+
       return schema;
     },
     options,
   );
 }
+
 export async function listSchemas(
   db: Database,
   options: BaseQueryOptions = {},
@@ -119,30 +138,51 @@ export async function listSchemas(
     },
     [schemas.name, schemas.slug],
   );
+
   const includeSystem =
     options.filters?.includeSystem === 'true' ||
     options.filters?.includeSystem === true;
+
   const systemFilter = includeSystem ? undefined : eq(schemas.isSystem, false);
+
   const finalWhere = where
     ? systemFilter
       ? sql`${where} AND ${systemFilter}`
       : where
     : systemFilter;
+
   const result = await withTransaction(db, async (tx) => {
     return await tx
-      .select()
+      .select({
+        ...getTableColumns(schemas),
+        entryCount: sql<number>`(
+          SELECT count(*) 
+          FROM content_entries ce 
+          WHERE ce.schema_id = schemas.id AND ce.deleted_at IS NULL
+        )::integer`,
+        lastUpdatedBy: sql<string>`(
+          SELECT COALESCE(u.first_name || ' ' || u.last_name, u.email)
+          FROM schema_versions sv
+          LEFT JOIN users u ON u.id = sv.created_by_user_id
+          WHERE sv.schema_id = schemas.id
+          ORDER BY sv.version DESC
+          LIMIT 1
+        )`,
+      })
       .from(schemas)
       .where(finalWhere)
       .limit(limit)
       .offset(offset)
       .orderBy(...orderBy);
   });
+
   const countResult = await withTransaction(db, async (tx) => {
     return await tx
       .select({ count: sql<number>`cast(count(${schemas.id}) as integer)` })
       .from(schemas)
       .where(finalWhere);
   });
+
   return [result, countResult[0]?.count ?? 0] as const;
 }
 export async function getSchemaById(
@@ -197,6 +237,10 @@ export async function updateSchema(
       .update(schemas)
       .set({
         name: input.name ?? existing.name,
+        description:
+          input.description !== undefined
+            ? input.description
+            : existing.description,
         definition,
         version: nextVersion,
         updatedAt: new Date(),
@@ -231,7 +275,28 @@ export async function deleteSchema(
   return withTransaction(db, async (tx) => {
     if (force) {
       await tx.delete(contentEntries).where(eq(contentEntries.schemaId, id));
+    } else {
+      // Normal delete: Check if there are active (non-deleted) pages
+      const [activePages] = await tx
+        .select({
+          count: sql<number>`cast(count(${contentEntries.id}) as integer)`,
+        })
+        .from(contentEntries)
+        .where(
+          sql`${contentEntries.schemaId} = ${id} AND ${contentEntries.deletedAt} IS NULL`,
+        );
+
+      if (activePages && activePages.count > 0) {
+        throw new Error(
+          'foreign key constraint: Cannot delete schema with active content entries',
+        );
+      }
+
+      // No active pages, so it's safe to physically delete the soft-deleted pages
+      // in order to satisfy the foreign key constraint before deleting the schema.
+      await tx.delete(contentEntries).where(eq(contentEntries.schemaId, id));
     }
+
     const [deleted] = await tx
       .delete(schemas)
       .where(eq(schemas.id, id))
