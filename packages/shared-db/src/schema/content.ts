@@ -149,6 +149,8 @@ export const contentEntries = pgTable('content_entries', {
     onDelete: 'set null',
   }),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  updatedBy: varchar('updated_by', { length: 255 }),
+  collaborators: text('collaborators'),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
