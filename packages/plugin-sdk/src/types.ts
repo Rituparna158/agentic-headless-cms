@@ -11,6 +11,7 @@ export interface ContentBeforeCreateEvent {
   data: Record<string, unknown>;
   userId: string;
   locale: string;
+  applicationId?: string;
 }
 
 export type ContentBeforeCreateHook = (
@@ -23,6 +24,7 @@ export interface ContentBeforeUpdateEvent {
   userId: string;
   locale: string;
   beforeState: ContentEntryRecord | null;
+  applicationId?: string;
 }
 
 export type ContentBeforeUpdateHook = (
@@ -34,6 +36,7 @@ export interface ContentAfterCreateEvent {
   entry: ContentEntryRecord;
   userId: string;
   locale: string;
+  applicationId?: string;
 }
 
 export type ContentAfterCreateHook = (
@@ -46,6 +49,7 @@ export interface ContentAfterUpdateEvent {
   userId: string;
   locale: string;
   beforeState: ContentEntryRecord | null;
+  applicationId?: string;
 }
 
 export type ContentAfterUpdateHook = (
@@ -55,6 +59,7 @@ export type ContentAfterUpdateHook = (
 export interface ContentBeforeDeleteEvent {
   entryId: string;
   beforeState: ContentEntryRecord | null;
+  applicationId?: string;
 }
 
 export type ContentBeforeDeleteHook = (
@@ -64,14 +69,64 @@ export type ContentBeforeDeleteHook = (
 export interface ContentAfterDeleteEvent {
   entryId: string;
   beforeState: ContentEntryRecord | null;
+  applicationId?: string;
 }
 
 export type ContentAfterDeleteHook = (
   event: ContentAfterDeleteEvent,
 ) => Promise<void> | void;
 
+export interface ContentBeforePublishEvent {
+  entryId: string;
+  userId: string;
+  locale: string;
+  beforeState: ContentEntryRecord | null;
+  applicationId?: string;
+}
+
+export type ContentBeforePublishHook = (
+  event: ContentBeforePublishEvent,
+) => Promise<void> | void;
+
+export interface ContentAfterPublishEvent {
+  entryId: string;
+  entry: ContentEntryRecord;
+  userId: string;
+  locale: string;
+  applicationId?: string;
+}
+
+export type ContentAfterPublishHook = (
+  event: ContentAfterPublishEvent,
+) => Promise<void> | void;
+
+export interface ContentBeforeUnpublishEvent {
+  entryId: string;
+  userId: string;
+  locale: string;
+  beforeState: ContentEntryRecord | null;
+  applicationId?: string;
+}
+
+export type ContentBeforeUnpublishHook = (
+  event: ContentBeforeUnpublishEvent,
+) => Promise<void> | void;
+
+export interface ContentAfterUnpublishEvent {
+  entryId: string;
+  entry: ContentEntryRecord;
+  userId: string;
+  locale: string;
+  applicationId?: string;
+}
+
+export type ContentAfterUnpublishHook = (
+  event: ContentAfterUnpublishEvent,
+) => Promise<void> | void;
+
 export interface SchemaBeforeCreateEvent {
   input: CreateSchemaInput;
+  applicationId?: string;
 }
 
 export type SchemaBeforeCreateHook = (
@@ -80,6 +135,7 @@ export type SchemaBeforeCreateHook = (
 
 export interface SchemaAfterCreateEvent {
   schema: SchemaRecord;
+  applicationId?: string;
 }
 
 export type SchemaAfterCreateHook = (
@@ -90,6 +146,7 @@ export interface SchemaBeforeUpdateEvent {
   schemaId: string;
   input: UpdateSchemaInput;
   beforeState: SchemaRecord | null;
+  applicationId?: string;
 }
 
 export type SchemaBeforeUpdateHook = (
@@ -100,6 +157,7 @@ export interface SchemaAfterUpdateEvent {
   schemaId: string;
   schema: SchemaRecord;
   beforeState: SchemaRecord | null;
+  applicationId?: string;
 }
 
 export type SchemaAfterUpdateHook = (
@@ -109,6 +167,7 @@ export type SchemaAfterUpdateHook = (
 export interface SchemaBeforeDeleteEvent {
   schemaId: string;
   beforeState: SchemaRecord | null;
+  applicationId?: string;
 }
 
 export type SchemaBeforeDeleteHook = (
@@ -118,6 +177,7 @@ export type SchemaBeforeDeleteHook = (
 export interface SchemaAfterDeleteEvent {
   schemaId: string;
   beforeState: SchemaRecord | null;
+  applicationId?: string;
 }
 
 export type SchemaAfterDeleteHook = (
@@ -131,6 +191,10 @@ export interface PluginHooks {
   'content.afterUpdate'?: ContentAfterUpdateHook;
   'content.beforeDelete'?: ContentBeforeDeleteHook;
   'content.afterDelete'?: ContentAfterDeleteHook;
+  'content.beforePublish'?: ContentBeforePublishHook;
+  'content.afterPublish'?: ContentAfterPublishHook;
+  'content.beforeUnpublish'?: ContentBeforeUnpublishHook;
+  'content.afterUnpublish'?: ContentAfterUnpublishHook;
 
   'schema.beforeCreate'?: SchemaBeforeCreateHook;
   'schema.afterCreate'?: SchemaAfterCreateHook;
@@ -153,6 +217,7 @@ export interface PluginRoute {
   middlewares?: Array<
     (req: Request, res: Response, next: NextFunction) => Promise<void> | void
   >;
+  auth?: boolean;
 }
 
 export interface AdminUiMenuExtension {

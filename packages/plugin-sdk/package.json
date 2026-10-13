@@ -3,17 +3,25 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "check-types": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
