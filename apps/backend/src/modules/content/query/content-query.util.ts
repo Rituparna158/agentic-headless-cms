@@ -284,7 +284,19 @@ function parseSort(
         apiId && apiId in SORTABLE_BASE_COLUMNS
           ? SORTABLE_BASE_COLUMNS[apiId as keyof typeof SORTABLE_BASE_COLUMNS]
           : undefined;
-      const expr = baseColumn ?? jsonFieldExpr(findField(fields, apiId!));
+
+      const expr =
+        baseColumn ??
+        (() => {
+          const fieldKey = apiId === 'name' ? 'title' : apiId;
+          const matchingField = fields.find(
+            (f) => f.apiId === fieldKey || f.apiId === apiId,
+          );
+          if (matchingField) {
+            return jsonFieldExpr(matchingField);
+          }
+          return jsonFieldExpr(findField(fields, apiId!));
+        })();
 
       return direction === 'desc' ? desc(expr) : asc(expr);
     });
@@ -353,8 +365,10 @@ export function parseContentQuery(
     where = where ? and(where, statusSql) : statusSql;
   }
 
-  if (search) {
-    const searchSql = sql`jsonb_to_tsvector('english', ${entryLocalizations.data}, '["string"]') @@ plainto_tsquery('english', ${search})`;
+  if (search && search.trim()) {
+    const term = search.trim();
+    const pattern = `%${term}%`;
+    const searchSql = sql`(jsonb_to_tsvector('english', ${entryLocalizations.data}, '["string"]') @@ plainto_tsquery('english', ${term}) OR (${entryLocalizations.data}->>'title') ILIKE ${pattern} OR (${entryLocalizations.data}->>'slug') ILIKE ${pattern})`;
     where = where ? and(where, searchSql) : searchSql;
   }
 
