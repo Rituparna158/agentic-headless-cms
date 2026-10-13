@@ -62,6 +62,7 @@ export function CreatePageDialog({
     },
     onSuccess: (entry) => {
       queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
+      queryClient.invalidateQueries({ queryKey: ['pagesStats', schemaSlug] });
       setTitle('');
       handleClose();
       navigate(`/collections/${schemaSlug}/${entry.id}`);

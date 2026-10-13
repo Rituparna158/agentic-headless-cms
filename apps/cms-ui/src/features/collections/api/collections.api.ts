@@ -26,6 +26,8 @@ export interface PageEntry {
     body?: unknown;
     [key: string]: unknown;
   };
+  updatedBy?: string | null;
+  collaborators?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -139,11 +141,28 @@ export const collectionsApi = {
   // Content Operations (Pages inside a Collection)
   listPages: async (
     schemaSlug: string,
-    page = 1,
-    pageSize = 20,
+    params?: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    },
   ): Promise<PaginatedResponse<PageEntry>> => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('status', 'all');
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.pageSize)
+      searchParams.set('pageSize', params.pageSize.toString());
+    if (params?.search && params.search.trim()) {
+      searchParams.set('search', params.search.trim());
+    }
+    if (params?.sortBy) {
+      const order = params.sortOrder || 'asc';
+      searchParams.set('sort', `${params.sortBy}:${order}`);
+    }
     const res = await requestHandler.get<PaginatedResponse<PageEntry>>(
-      `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}?page=${page}&pageSize=${pageSize}`,
+      `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}?${searchParams.toString()}`,
     );
     return res.data;
   },
@@ -182,13 +201,42 @@ export const collectionsApi = {
     await requestHandler.delete(ENDPOINTS.CONTENT.ENTRY(schemaSlug, entryId));
   },
 
+  publishPage: async (
+    schemaSlug: string,
+    entryId: string,
+  ): Promise<PageEntry> => {
+    const res = await requestHandler.post<PageEntry>(
+      `${ENDPOINTS.CONTENT.ENTRY(schemaSlug, entryId)}/publish`,
+      {},
+    );
+    return res.data;
+  },
+
+  unpublishPage: async (
+    schemaSlug: string,
+    entryId: string,
+  ): Promise<PageEntry> => {
+    const res = await requestHandler.post<PageEntry>(
+      `${ENDPOINTS.CONTENT.ENTRY(schemaSlug, entryId)}/unpublish`,
+      {},
+    );
+    return res.data;
+  },
+
+  getSchemaBySlug: async (schemaSlug: string): Promise<SchemaEntry> => {
+    const res = await requestHandler.get<SchemaEntry>(
+      ENDPOINTS.SCHEMAS.BY_SLUG(schemaSlug),
+    );
+    return res.data;
+  },
+
   getPageBySlug: async (
     schemaSlug: string,
     slug: string,
   ): Promise<PageEntry> => {
     const formattedSlug = slug.startsWith('/') ? slug : `/${slug}`;
     const res = await requestHandler.get<PaginatedResponse<PageEntry>>(
-      `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}?filters[slug][$eq]=${formattedSlug}`,
+      `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}?filters[slug][$eq]=${formattedSlug}&status=all`,
     );
     if (!res.data.data.length) {
       throw new Error(`Page with slug ${slug} not found in ${schemaSlug}`);
