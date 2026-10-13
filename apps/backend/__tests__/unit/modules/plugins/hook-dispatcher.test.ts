@@ -192,6 +192,7 @@ describe('HookDispatcherService', () => {
       dispatcher.registerHooks('schema-plugin', {
         'schema.beforeCreate': (event) => {
           return {
+            ...event.input,
             slug: `prefix-${event.input.slug}`,
           };
         },
