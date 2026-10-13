@@ -37,7 +37,10 @@ export const listSchemas: RequestHandler = asyncHandler(
     logger.info('SchemaController: listSchemas start');
     logger.debug('SchemaController: fetching schemas');
     const options = parseQueryOptions(req.query);
-    const [schemas, total] = await schemaService.list(options);
+    const [schemas, total] = await schemaService.list(
+      options,
+      req.context?.applicationId,
+    );
     logger.info('SchemaController: listSchemas end');
     res
       .status(200)
@@ -64,7 +67,10 @@ export const getSchemaBySlug: RequestHandler = asyncHandler(
       throw new ApiError(401, ERROR_MESSAGES.AUTH.NOT_AUTHENTICATED);
     }
     logger.debug({ slug }, 'SchemaController: fetching schema by slug');
-    const schema = await schemaService.getBySlug(slug as string);
+    const schema = await schemaService.getBySlug(
+      slug as string,
+      req.context?.applicationId,
+    );
     logger.info({ slug }, 'SchemaController: getSchemaBySlug end');
     res
       .status(200)
@@ -81,7 +87,12 @@ export const updateSchema: RequestHandler = asyncHandler(
     }
     const input = req.body as UpdateSchemaInput;
     logger.debug({ id }, 'SchemaController: updating schema');
-    const schema = await schemaService.update(id as string, input, req.user.id);
+    const schema = await schemaService.update(
+      id as string,
+      input,
+      req.user.id,
+      req.context?.applicationId,
+    );
     logger.info({ id }, 'SchemaController: updateSchema end');
     res
       .status(200)
@@ -98,7 +109,7 @@ export const deleteSchema: RequestHandler = asyncHandler(
     }
     const force = req.query.force === 'true';
     logger.debug({ id, force }, 'SchemaController: deleting schema');
-    await schemaService.delete(id as string, force);
+    await schemaService.delete(id as string, force, req.context?.applicationId);
     logger.info({ id }, 'SchemaController: deleteSchema end');
     res
       .status(200)

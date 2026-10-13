@@ -255,6 +255,7 @@ describe('Schemas Module', () => {
           name: 'Updated Article',
           createdByUserId: 'user-1',
         }),
+        'app-1',
       );
     });
   });
