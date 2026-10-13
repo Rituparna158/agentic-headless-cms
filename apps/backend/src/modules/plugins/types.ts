@@ -1,4 +1,5 @@
 import type { PluginDefinition, AdminUiExtensions } from '@repo/plugin-sdk';
+import type { Router } from 'express';
 
 export type PluginStatus = 'active' | 'error' | 'disabled';
 
@@ -9,6 +10,7 @@ export interface LoadedPlugin {
   error?: string;
   routesCount: number;
   hooksCount: number;
+  router?: Router;
 }
 
 export interface PluginSummary {

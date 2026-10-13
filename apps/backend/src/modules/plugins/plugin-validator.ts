@@ -11,6 +11,10 @@ const VALID_HOOK_NAMES = new Set([
   'content.afterUpdate',
   'content.beforeDelete',
   'content.afterDelete',
+  'content.beforePublish',
+  'content.afterPublish',
+  'content.beforeUnpublish',
+  'content.afterUnpublish',
   'schema.beforeCreate',
   'schema.afterCreate',
   'schema.beforeUpdate',
@@ -107,6 +111,13 @@ export function validatePluginDefinition(input: unknown): PluginDefinition {
             );
           }
         }
+      }
+
+      if (route.auth !== undefined && typeof route.auth !== 'boolean') {
+        throw new ApiError(
+          400,
+          `Route at index ${index} auth must be a boolean if provided`,
+        );
       }
     }
   }

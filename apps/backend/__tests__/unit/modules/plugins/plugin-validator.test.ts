@@ -15,12 +15,15 @@ describe('validatePluginDefinition', () => {
       hooks: {
         'content.beforeCreate': () => {},
         'content.afterCreate': () => {},
+        'content.beforePublish': () => {},
+        'content.afterPublish': () => {},
       },
       routes: [
         {
           path: '/analyze',
-          method: 'post',
+          method: 'post' as HttpMethod,
           handler: () => {},
+          auth: true,
         },
       ],
     };
@@ -81,7 +84,7 @@ describe('validatePluginDefinition', () => {
         routes: [
           {
             path: 'no-leading-slash',
-            method: 'get',
+            method: 'get' as HttpMethod,
             handler: () => {},
           },
         ],
@@ -111,12 +114,28 @@ describe('validatePluginDefinition', () => {
         routes: [
           {
             path: '/test',
-            method: 'get',
+            method: 'get' as HttpMethod,
             handler: 'not-a-function' as unknown as PluginRoute['handler'],
           },
         ],
       }),
     ).toThrow('Route at index 0 handler must be a function');
+  });
+
+  it('should reject non-boolean route auth property', () => {
+    expect(() =>
+      validatePluginDefinition({
+        config: { id: 'test-plugin', name: 'Test', version: '1.0.0' },
+        routes: [
+          {
+            path: '/test',
+            method: 'get' as HttpMethod,
+            handler: () => {},
+            auth: 'invalid' as unknown as boolean,
+          },
+        ],
+      }),
+    ).toThrow('Route at index 0 auth must be a boolean if provided');
   });
 
   it('should reject unknown hook event names', () => {

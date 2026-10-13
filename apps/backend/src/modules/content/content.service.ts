@@ -8,6 +8,22 @@ import { ApiError } from '@repo/utils';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 import { hookDispatcher } from '../plugins/index.js';
+
+function handlePluginOrServiceError(
+  error: unknown,
+  fallbackMessage: string,
+): never {
+  if (error instanceof ApiError) throw error;
+  if (error && typeof error === 'object' && 'isPluginError' in error) {
+    const errObj = error as { statusCode?: number; message?: string };
+    throw new ApiError(
+      errObj.statusCode || 400,
+      errObj.message || fallbackMessage,
+    );
+  }
+  throw new ApiError(500, fallbackMessage);
+}
+
 export class ContentService {
   private repository: ContentRepository;
   constructor() {
@@ -69,6 +85,7 @@ export class ContentService {
         data,
         userId,
         locale,
+        applicationId,
       });
       const result = await this.repository.createEntry(
         schemaId,
@@ -82,6 +99,7 @@ export class ContentService {
         entry: result as unknown as ContentEntryRecord,
         userId,
         locale,
+        applicationId,
       });
       logger.debug(
         { id: result.id },
@@ -100,9 +118,8 @@ export class ContentService {
       });
       return result;
     } catch (error) {
-      if (error instanceof ApiError) throw error;
       logger.error({ err: error }, 'ContentService Error in createDraft:');
-      throw new ApiError(500, SERVICE_ERRORS.CREATE_DRAFT_FAILED);
+      handlePluginOrServiceError(error, SERVICE_ERRORS.CREATE_DRAFT_FAILED);
     }
   }
   async updateDraft(
@@ -110,6 +127,7 @@ export class ContentService {
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    applicationId?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: updateDraft start');
@@ -122,6 +140,7 @@ export class ContentService {
         userId,
         locale,
         beforeState: beforeState as unknown as ContentEntryRecord | null,
+        applicationId,
       });
       // Perform mutation
       logger.debug({ entryId }, 'ContentService: mutating data');
@@ -137,6 +156,7 @@ export class ContentService {
         userId,
         locale,
         beforeState: beforeState as unknown as ContentEntryRecord | null,
+        applicationId,
       });
       // Emit audit event
       logger.debug({ entryId }, 'ContentService: emitting audit log');
@@ -153,9 +173,8 @@ export class ContentService {
       });
       return result;
     } catch (error) {
-      if (error instanceof ApiError) throw error;
       logger.error({ err: error }, 'ContentService Error in updateDraft:');
-      throw new ApiError(500, SERVICE_ERRORS.UPDATE_DRAFT_FAILED);
+      handlePluginOrServiceError(error, SERVICE_ERRORS.UPDATE_DRAFT_FAILED);
     }
   }
   async updatePartial(
@@ -163,6 +182,7 @@ export class ContentService {
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    applicationId?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: updatePartial start');
@@ -177,6 +197,7 @@ export class ContentService {
         userId,
         locale,
         beforeState: beforeState as unknown as ContentEntryRecord | null,
+        applicationId,
       });
       const result = await this.repository.updateEntryDraft(
         entryId,
@@ -190,6 +211,7 @@ export class ContentService {
         userId,
         locale,
         beforeState: beforeState as unknown as ContentEntryRecord | null,
+        applicationId,
       });
       const { actorUserId, actorAgentId, context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
@@ -204,21 +226,28 @@ export class ContentService {
       });
       return result;
     } catch (error) {
-      if (error instanceof ApiError) throw error;
       logger.error({ err: error }, 'ContentService Error in updatePartial:');
-      throw new ApiError(500, 'Failed to partially update entry.');
+      handlePluginOrServiceError(error, 'Failed to partially update entry.');
     }
   }
   async publishEntry(
     entryId: string,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    applicationId?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: publishEntry start');
       // Capture BEFORE state
       logger.debug({ entryId }, 'ContentService: fetching beforeState');
       const beforeState = await this.repository.getEntryById(entryId, locale);
+      await hookDispatcher.dispatchContentBeforePublish({
+        entryId,
+        userId,
+        locale,
+        beforeState: beforeState as unknown as ContentEntryRecord | null,
+        applicationId,
+      });
       // Perform mutation
       logger.debug({ entryId }, 'ContentService: mutating data');
       const result = await this.repository.publishEntry(
@@ -226,6 +255,13 @@ export class ContentService {
         userId,
         locale,
       );
+      await hookDispatcher.dispatchContentAfterPublish({
+        entryId,
+        entry: result as unknown as ContentEntryRecord,
+        userId,
+        locale,
+        applicationId,
+      });
       // Emit audit event
       logger.debug({ entryId }, 'ContentService: emitting audit log');
       const { actorUserId, actorAgentId, context } = getAuditContext();
@@ -242,22 +278,37 @@ export class ContentService {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'ContentService Error in publishEntry:');
-      throw new ApiError(500, SERVICE_ERRORS.PUBLISH_ENTRY_FAILED);
+      handlePluginOrServiceError(error, SERVICE_ERRORS.PUBLISH_ENTRY_FAILED);
     }
   }
   async unpublishEntry(
     entryId: string,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    applicationId?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: unpublishEntry start');
       const beforeState = await this.repository.getEntryById(entryId, locale);
+      await hookDispatcher.dispatchContentBeforeUnpublish({
+        entryId,
+        userId,
+        locale,
+        beforeState: beforeState as unknown as ContentEntryRecord | null,
+        applicationId,
+      });
       const result = await this.repository.unpublishEntry(
         entryId,
         userId,
         locale,
       );
+      await hookDispatcher.dispatchContentAfterUnpublish({
+        entryId,
+        entry: result as unknown as ContentEntryRecord,
+        userId,
+        locale,
+        applicationId,
+      });
       const { actorUserId, actorAgentId, context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.UNPUBLISH,
@@ -272,8 +323,7 @@ export class ContentService {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'ContentService Error in unpublishEntry:');
-      if (error instanceof ApiError) throw error;
-      throw new ApiError(500, SERVICE_ERRORS.UNPUBLISH_ENTRY_FAILED);
+      handlePluginOrServiceError(error, SERVICE_ERRORS.UNPUBLISH_ENTRY_FAILED);
     }
   }
 
@@ -330,7 +380,7 @@ export class ContentService {
       throw new ApiError(500, SERVICE_ERRORS.LIST_ENTRY_VERSIONS_FAILED);
     }
   }
-  async deleteEntry(entryId: string) {
+  async deleteEntry(entryId: string, applicationId?: string) {
     try {
       logger.info({ entryId }, 'ContentService: deleteEntry start');
       // Capture BEFORE state
@@ -339,6 +389,7 @@ export class ContentService {
       await hookDispatcher.dispatchContentBeforeDelete({
         entryId,
         beforeState: beforeState as unknown as ContentEntryRecord | null,
+        applicationId,
       });
       // Perform mutation
       logger.debug({ entryId }, 'ContentService: mutating data');
@@ -346,6 +397,7 @@ export class ContentService {
       await hookDispatcher.dispatchContentAfterDelete({
         entryId,
         beforeState: beforeState as unknown as ContentEntryRecord | null,
+        applicationId,
       });
       // Emit audit event
       logger.debug({ entryId }, 'ContentService: emitting audit log');
@@ -362,9 +414,8 @@ export class ContentService {
       });
       return result;
     } catch (error) {
-      if (error instanceof ApiError) throw error;
       logger.error({ err: error }, 'ContentService Error in deleteEntry:');
-      throw new ApiError(500, SERVICE_ERRORS.DELETE_ENTRY_FAILED);
+      handlePluginOrServiceError(error, SERVICE_ERRORS.DELETE_ENTRY_FAILED);
     }
   }
 }

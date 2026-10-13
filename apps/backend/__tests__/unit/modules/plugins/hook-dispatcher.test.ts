@@ -45,6 +45,27 @@ describe('HookDispatcherService', () => {
       });
     });
 
+    it('should merge partial modifications in content.beforeCreate without wiping other fields', async () => {
+      dispatcher.registerHooks('partial-mutator', {
+        'content.beforeCreate': () => {
+          return { slug: 'only-slug' };
+        },
+      });
+
+      const finalData = await dispatcher.dispatchContentBeforeCreate({
+        schemaId: 'schema-1',
+        data: { title: 'Keep Me', author: 'Alice' },
+        userId: 'user-1',
+        locale: 'en',
+      });
+
+      expect(finalData).toEqual({
+        title: 'Keep Me',
+        author: 'Alice',
+        slug: 'only-slug',
+      });
+    });
+
     it('should abort content.beforeCreate when a plugin throws an error', async () => {
       dispatcher.registerHooks('strict-validator', {
         'content.beforeCreate': (event) => {
@@ -96,14 +117,81 @@ describe('HookDispatcherService', () => {
       expect(errorPlugin).toHaveBeenCalled();
       expect(safePlugin).toHaveBeenCalled();
     });
+
+    it('should dispatch content.beforePublish and content.afterPublish hooks', async () => {
+      const beforePublishMock = vi.fn();
+      const afterPublishMock = vi.fn();
+
+      dispatcher.registerHooks('publisher-plugin', {
+        'content.beforePublish': beforePublishMock,
+        'content.afterPublish': afterPublishMock,
+      });
+
+      await dispatcher.dispatchContentBeforePublish({
+        entryId: 'e-1',
+        userId: 'u-1',
+        locale: 'en',
+        beforeState: null,
+      });
+
+      const mockEntry: ContentEntryRecord = {
+        id: 'e-1',
+        status: 'published',
+        data: {},
+        publishedData: {},
+      };
+
+      await dispatcher.dispatchContentAfterPublish({
+        entryId: 'e-1',
+        entry: mockEntry,
+        userId: 'u-1',
+        locale: 'en',
+      });
+
+      expect(beforePublishMock).toHaveBeenCalled();
+      expect(afterPublishMock).toHaveBeenCalled();
+    });
+
+    it('should dispatch content.beforeUnpublish and content.afterUnpublish hooks', async () => {
+      const beforeUnpublishMock = vi.fn();
+      const afterUnpublishMock = vi.fn();
+
+      dispatcher.registerHooks('unpublisher-plugin', {
+        'content.beforeUnpublish': beforeUnpublishMock,
+        'content.afterUnpublish': afterUnpublishMock,
+      });
+
+      await dispatcher.dispatchContentBeforeUnpublish({
+        entryId: 'e-1',
+        userId: 'u-1',
+        locale: 'en',
+        beforeState: null,
+      });
+
+      const mockEntry: ContentEntryRecord = {
+        id: 'e-1',
+        status: 'draft',
+        data: {},
+        publishedData: {},
+      };
+
+      await dispatcher.dispatchContentAfterUnpublish({
+        entryId: 'e-1',
+        entry: mockEntry,
+        userId: 'u-1',
+        locale: 'en',
+      });
+
+      expect(beforeUnpublishMock).toHaveBeenCalled();
+      expect(afterUnpublishMock).toHaveBeenCalled();
+    });
   });
 
   describe('Schema Hooks', () => {
-    it('should allow schema.beforeCreate to transform schema input', async () => {
+    it('should allow schema.beforeCreate to transform schema input and merge changes', async () => {
       dispatcher.registerHooks('schema-plugin', {
         'schema.beforeCreate': (event) => {
           return {
-            ...event.input,
             slug: `prefix-${event.input.slug}`,
           };
         },
@@ -119,6 +207,7 @@ describe('HookDispatcherService', () => {
       });
 
       expect(transformed.slug).toBe('prefix-blog-post');
+      expect(transformed.name).toBe('Blog Post');
     });
 
     it('should dispatch schema.beforeDelete and allow cancellation via throw', async () => {

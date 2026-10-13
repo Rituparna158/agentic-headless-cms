@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PluginLoaderService } from '../../../../src/modules/plugins/plugin-loader.service.js';
 import { HookDispatcherService } from '../../../../src/modules/plugins/hook-dispatcher.service.js';
 import { ApiError } from '@repo/utils';
+import type { Request, Response } from 'express';
 
 describe('PluginLoaderService', () => {
   let dispatcher: HookDispatcherService;
@@ -96,6 +97,47 @@ describe('PluginLoaderService', () => {
     expect(summary?.id).toBe('slug-gen');
     expect(summary?.routes[0]?.path).toBe('/api/v1/plugins/slug-gen/preview');
     expect(summary?.hooks).toEqual(['content.beforeCreate']);
+  });
+
+  it('should initialize an isolated Express router supporting route parameters', () => {
+    let capturedParam = '';
+    loader.registerPlugin({
+      config: {
+        id: 'param-plugin',
+        name: 'Param Plugin',
+        version: '1.0.0',
+      },
+      routes: [
+        {
+          path: '/items/:id',
+          method: 'get',
+          handler: (req: Request, res: Response) => {
+            capturedParam = (req.params as Record<string, string>).id || '';
+            res.status(200).json({ id: capturedParam });
+          },
+        },
+      ],
+    });
+
+    const router = loader.getRouter('param-plugin');
+    expect(router).toBeDefined();
+
+    const mockReq = {
+      method: 'GET',
+      url: '/items/item-456',
+      params: {},
+    } as unknown as Request;
+    const mockRes = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as unknown as Response;
+    const next = vi.fn();
+
+    router!(mockReq, mockRes, next);
+
+    expect(capturedParam).toBe('item-456');
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({ id: 'item-456' });
   });
 
   it('should gracefully handle non-existent plugins directory', async () => {

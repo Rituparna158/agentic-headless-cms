@@ -1,5 +1,6 @@
 import { ApiError } from '@repo/utils';
 import { logger } from '@repo/logger';
+import { Router } from 'express';
 import { validatePluginDefinition } from './plugin-validator.js';
 import {
   hookDispatcher,
@@ -32,12 +33,28 @@ export class PluginLoaderService {
     try {
       this.dispatcher.registerHooks(id, definition.hooks);
 
+      let pluginRouter: Router | undefined;
+      if (definition.routes && definition.routes.length > 0) {
+        pluginRouter = Router();
+        for (const route of definition.routes) {
+          const middlewares = route.middlewares ?? [];
+          const method = route.method.toLowerCase() as
+            | 'get'
+            | 'post'
+            | 'put'
+            | 'delete'
+            | 'patch';
+          pluginRouter[method](route.path, ...middlewares, route.handler);
+        }
+      }
+
       const loadedPlugin: LoadedPlugin = {
         definition,
         status: 'active',
         loadedAt: new Date(),
         routesCount: definition.routes?.length ?? 0,
         hooksCount: definition.hooks ? Object.keys(definition.hooks).length : 0,
+        router: pluginRouter,
       };
 
       this.plugins.set(id, loadedPlugin);
@@ -88,6 +105,10 @@ export class PluginLoaderService {
 
   public getPlugin(id: string): LoadedPlugin | undefined {
     return this.plugins.get(id);
+  }
+
+  public getRouter(id: string): Router | undefined {
+    return this.plugins.get(id)?.router;
   }
 
   public getAllPlugins(): LoadedPlugin[] {

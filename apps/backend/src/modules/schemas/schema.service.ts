@@ -12,6 +12,22 @@ import { ApiError } from '@repo/utils';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 import { hookDispatcher } from '../plugins/index.js';
+
+function handlePluginOrSchemaError(
+  error: unknown,
+  fallbackMessage: string,
+): never {
+  if (error instanceof ApiError) throw error;
+  if (error && typeof error === 'object' && 'isPluginError' in error) {
+    const errObj = error as { statusCode?: number; message?: string };
+    throw new ApiError(
+      errObj.statusCode || 400,
+      errObj.message || fallbackMessage,
+    );
+  }
+  throw new ApiError(500, fallbackMessage);
+}
+
 export class SchemaService {
   private repository: SchemaRepository;
   constructor() {
@@ -29,6 +45,7 @@ export class SchemaService {
       );
       const interceptedInput = await hookDispatcher.dispatchSchemaBeforeCreate({
         input,
+        applicationId,
       });
       const result = await this.repository.create(
         { ...interceptedInput, actorUserId },
@@ -36,6 +53,7 @@ export class SchemaService {
       );
       await hookDispatcher.dispatchSchemaAfterCreate({
         schema: result as unknown as SchemaRecord,
+        applicationId,
       });
       logger.debug(
         { schemaId: result.id },
@@ -59,7 +77,7 @@ export class SchemaService {
       return result;
     } catch (error) {
       logger.error({ err: error }, 'SchemaService Error in create:');
-      throw new ApiError(500, SERVICE_ERRORS.CREATE_SCHEMA_FAILED);
+      handlePluginOrSchemaError(error, SERVICE_ERRORS.CREATE_SCHEMA_FAILED);
     }
   }
   async list(options: BaseQueryOptions = {}) {
@@ -131,9 +149,8 @@ export class SchemaService {
       });
       return result;
     } catch (error) {
-      if (error instanceof ApiError) throw error;
       logger.error({ err: error }, 'SchemaService Error in update:');
-      throw new ApiError(500, SERVICE_ERRORS.UPDATE_SCHEMA_FAILED);
+      handlePluginOrSchemaError(error, SERVICE_ERRORS.UPDATE_SCHEMA_FAILED);
     }
   }
   async delete(id: string, force: boolean = false) {
@@ -168,11 +185,8 @@ export class SchemaService {
       });
       return result;
     } catch (error) {
-      if (error instanceof ApiError) {
-        throw error;
-      }
       logger.error({ err: error }, 'SchemaService Error in delete:');
-      throw new ApiError(500, SERVICE_ERRORS.DELETE_SCHEMA_FAILED);
+      handlePluginOrSchemaError(error, SERVICE_ERRORS.DELETE_SCHEMA_FAILED);
     }
   }
 }

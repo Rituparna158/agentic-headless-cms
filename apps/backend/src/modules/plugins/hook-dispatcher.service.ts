@@ -6,6 +6,10 @@ import type {
   ContentAfterUpdateEvent,
   ContentBeforeDeleteEvent,
   ContentAfterDeleteEvent,
+  ContentBeforePublishEvent,
+  ContentAfterPublishEvent,
+  ContentBeforeUnpublishEvent,
+  ContentAfterUnpublishEvent,
   SchemaBeforeCreateEvent,
   SchemaAfterCreateEvent,
   SchemaBeforeUpdateEvent,
@@ -74,7 +78,7 @@ export class HookDispatcherService {
       try {
         const result = await handler({ ...event, data: currentData });
         if (result && typeof result === 'object') {
-          currentData = result;
+          currentData = { ...currentData, ...result };
         }
       } catch (error) {
         logger.error(
@@ -106,7 +110,7 @@ export class HookDispatcherService {
       try {
         const result = await handler({ ...event, data: currentData });
         if (result && typeof result === 'object') {
-          currentData = result;
+          currentData = { ...currentData, ...result };
         }
       } catch (error) {
         logger.error(
@@ -141,6 +145,92 @@ export class HookDispatcherService {
     }
   }
 
+  public async dispatchContentBeforePublish(
+    event: ContentBeforePublishEvent,
+  ): Promise<void> {
+    const handlers =
+      (this.hooksMap.get('content.beforePublish') as
+        | RegisteredHook<(e: ContentBeforePublishEvent) => Promise<void>>[]
+        | undefined) ?? [];
+
+    for (const { pluginId, handler } of handlers) {
+      try {
+        await handler(event);
+      } catch (error) {
+        logger.error(
+          { pluginId, hook: 'content.beforePublish', err: error },
+          `Plugin "${pluginId}" aborted content.beforePublish`,
+        );
+        throw error;
+      }
+    }
+  }
+
+  public async dispatchContentAfterPublish(
+    event: ContentAfterPublishEvent,
+  ): Promise<void> {
+    const handlers =
+      (this.hooksMap.get('content.afterPublish') as
+        | RegisteredHook<(e: ContentAfterPublishEvent) => Promise<void>>[]
+        | undefined) ?? [];
+
+    await Promise.allSettled(
+      handlers.map(async ({ pluginId, handler }) => {
+        try {
+          await handler(event);
+        } catch (error) {
+          logger.error(
+            { pluginId, hook: 'content.afterPublish', err: error },
+            `Plugin "${pluginId}" error in content.afterPublish`,
+          );
+        }
+      }),
+    );
+  }
+
+  public async dispatchContentBeforeUnpublish(
+    event: ContentBeforeUnpublishEvent,
+  ): Promise<void> {
+    const handlers =
+      (this.hooksMap.get('content.beforeUnpublish') as
+        | RegisteredHook<(e: ContentBeforeUnpublishEvent) => Promise<void>>[]
+        | undefined) ?? [];
+
+    for (const { pluginId, handler } of handlers) {
+      try {
+        await handler(event);
+      } catch (error) {
+        logger.error(
+          { pluginId, hook: 'content.beforeUnpublish', err: error },
+          `Plugin "${pluginId}" aborted content.beforeUnpublish`,
+        );
+        throw error;
+      }
+    }
+  }
+
+  public async dispatchContentAfterUnpublish(
+    event: ContentAfterUnpublishEvent,
+  ): Promise<void> {
+    const handlers =
+      (this.hooksMap.get('content.afterUnpublish') as
+        | RegisteredHook<(e: ContentAfterUnpublishEvent) => Promise<void>>[]
+        | undefined) ?? [];
+
+    await Promise.allSettled(
+      handlers.map(async ({ pluginId, handler }) => {
+        try {
+          await handler(event);
+        } catch (error) {
+          logger.error(
+            { pluginId, hook: 'content.afterUnpublish', err: error },
+            `Plugin "${pluginId}" error in content.afterUnpublish`,
+          );
+        }
+      }),
+    );
+  }
+
   public async dispatchContentAfterCreate(
     event: ContentAfterCreateEvent,
   ): Promise<void> {
@@ -149,16 +239,18 @@ export class HookDispatcherService {
         | RegisteredHook<(e: ContentAfterCreateEvent) => Promise<void>>[]
         | undefined) ?? [];
 
-    for (const { pluginId, handler } of handlers) {
-      try {
-        await handler(event);
-      } catch (error) {
-        logger.error(
-          { pluginId, hook: 'content.afterCreate', err: error },
-          `Plugin "${pluginId}" error in content.afterCreate`,
-        );
-      }
-    }
+    await Promise.allSettled(
+      handlers.map(async ({ pluginId, handler }) => {
+        try {
+          await handler(event);
+        } catch (error) {
+          logger.error(
+            { pluginId, hook: 'content.afterCreate', err: error },
+            `Plugin "${pluginId}" error in content.afterCreate`,
+          );
+        }
+      }),
+    );
   }
 
   public async dispatchContentAfterUpdate(
@@ -169,16 +261,18 @@ export class HookDispatcherService {
         | RegisteredHook<(e: ContentAfterUpdateEvent) => Promise<void>>[]
         | undefined) ?? [];
 
-    for (const { pluginId, handler } of handlers) {
-      try {
-        await handler(event);
-      } catch (error) {
-        logger.error(
-          { pluginId, hook: 'content.afterUpdate', err: error },
-          `Plugin "${pluginId}" error in content.afterUpdate`,
-        );
-      }
-    }
+    await Promise.allSettled(
+      handlers.map(async ({ pluginId, handler }) => {
+        try {
+          await handler(event);
+        } catch (error) {
+          logger.error(
+            { pluginId, hook: 'content.afterUpdate', err: error },
+            `Plugin "${pluginId}" error in content.afterUpdate`,
+          );
+        }
+      }),
+    );
   }
 
   public async dispatchContentAfterDelete(
@@ -189,16 +283,18 @@ export class HookDispatcherService {
         | RegisteredHook<(e: ContentAfterDeleteEvent) => Promise<void>>[]
         | undefined) ?? [];
 
-    for (const { pluginId, handler } of handlers) {
-      try {
-        await handler(event);
-      } catch (error) {
-        logger.error(
-          { pluginId, hook: 'content.afterDelete', err: error },
-          `Plugin "${pluginId}" error in content.afterDelete`,
-        );
-      }
-    }
+    await Promise.allSettled(
+      handlers.map(async ({ pluginId, handler }) => {
+        try {
+          await handler(event);
+        } catch (error) {
+          logger.error(
+            { pluginId, hook: 'content.afterDelete', err: error },
+            `Plugin "${pluginId}" error in content.afterDelete`,
+          );
+        }
+      }),
+    );
   }
 
   public async dispatchSchemaBeforeCreate(
@@ -217,7 +313,7 @@ export class HookDispatcherService {
       try {
         const result = await handler({ ...event, input: currentInput });
         if (result && typeof result === 'object') {
-          currentInput = result;
+          currentInput = { ...currentInput, ...result };
         }
       } catch (error) {
         logger.error(
@@ -247,7 +343,7 @@ export class HookDispatcherService {
       try {
         const result = await handler({ ...event, input: currentInput });
         if (result && typeof result === 'object') {
-          currentInput = result;
+          currentInput = { ...currentInput, ...result };
         }
       } catch (error) {
         logger.error(
@@ -290,16 +386,18 @@ export class HookDispatcherService {
         | RegisteredHook<(e: SchemaAfterCreateEvent) => Promise<void>>[]
         | undefined) ?? [];
 
-    for (const { pluginId, handler } of handlers) {
-      try {
-        await handler(event);
-      } catch (error) {
-        logger.error(
-          { pluginId, hook: 'schema.afterCreate', err: error },
-          `Plugin "${pluginId}" error in schema.afterCreate`,
-        );
-      }
-    }
+    await Promise.allSettled(
+      handlers.map(async ({ pluginId, handler }) => {
+        try {
+          await handler(event);
+        } catch (error) {
+          logger.error(
+            { pluginId, hook: 'schema.afterCreate', err: error },
+            `Plugin "${pluginId}" error in schema.afterCreate`,
+          );
+        }
+      }),
+    );
   }
 
   public async dispatchSchemaAfterUpdate(
@@ -310,16 +408,18 @@ export class HookDispatcherService {
         | RegisteredHook<(e: SchemaAfterUpdateEvent) => Promise<void>>[]
         | undefined) ?? [];
 
-    for (const { pluginId, handler } of handlers) {
-      try {
-        await handler(event);
-      } catch (error) {
-        logger.error(
-          { pluginId, hook: 'schema.afterUpdate', err: error },
-          `Plugin "${pluginId}" error in schema.afterUpdate`,
-        );
-      }
-    }
+    await Promise.allSettled(
+      handlers.map(async ({ pluginId, handler }) => {
+        try {
+          await handler(event);
+        } catch (error) {
+          logger.error(
+            { pluginId, hook: 'schema.afterUpdate', err: error },
+            `Plugin "${pluginId}" error in schema.afterUpdate`,
+          );
+        }
+      }),
+    );
   }
 
   public async dispatchSchemaAfterDelete(
@@ -330,16 +430,18 @@ export class HookDispatcherService {
         | RegisteredHook<(e: SchemaAfterDeleteEvent) => Promise<void>>[]
         | undefined) ?? [];
 
-    for (const { pluginId, handler } of handlers) {
-      try {
-        await handler(event);
-      } catch (error) {
-        logger.error(
-          { pluginId, hook: 'schema.afterDelete', err: error },
-          `Plugin "${pluginId}" error in schema.afterDelete`,
-        );
-      }
-    }
+    await Promise.allSettled(
+      handlers.map(async ({ pluginId, handler }) => {
+        try {
+          await handler(event);
+        } catch (error) {
+          logger.error(
+            { pluginId, hook: 'schema.afterDelete', err: error },
+            `Plugin "${pluginId}" error in schema.afterDelete`,
+          );
+        }
+      }),
+    );
   }
 }
 
