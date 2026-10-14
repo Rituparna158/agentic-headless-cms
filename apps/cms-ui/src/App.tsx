@@ -61,6 +61,11 @@ const SecurityPage = React.lazy(() =>
     default: m.SecurityPage,
   })),
 );
+const AuditLogPage = React.lazy(() =>
+  import('./features/audit/pages/AuditLogPage').then((m) => ({
+    default: m.AuditLogPage,
+  })),
+);
 const RequestAccessPage = React.lazy(() =>
   import('./pages/RequestAccess/RequestAccessPage').then((m) => ({
     default: m.RequestAccessPage,
@@ -175,6 +180,8 @@ export const App = () => {
                           />
                         </Route>
                         <Route path="security" element={<SecurityPage />} />
+                        <Route path="audit-logs" element={<AuditLogPage />} />
+                        <Route path="audit-log" element={<AuditLogPage />} />
                         <Route
                           element={
                             <RoleGuard requiredCapability="manage_content" />
