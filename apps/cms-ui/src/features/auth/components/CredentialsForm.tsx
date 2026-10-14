@@ -15,6 +15,7 @@ import {
 
 import { useLoginMutation } from '../hooks/useAuthMutations';
 import { authApi } from '../api/auth.api';
+import { DEFAULT_LOGIN_VALUES } from '../constants/auth.constants';
 
 export function CredentialsForm() {
   const { mutate: login, isPending, error } = useLoginMutation();
@@ -22,7 +23,7 @@ export function CredentialsForm() {
   const form = useForm<LoginInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(loginSchema) as any,
-    defaultValues: { email: '', password: '', rememberMe: false },
+    defaultValues: DEFAULT_LOGIN_VALUES,
   });
 
   const onSubmit = (values: LoginInput) => {
