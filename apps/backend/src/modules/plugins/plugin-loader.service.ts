@@ -20,10 +20,21 @@ export class PluginLoaderService {
 
   constructor(
     dispatcher: HookDispatcherService = hookDispatcher,
-    repository: PluginRepository = new PluginRepository(),
+    repository?: PluginRepository,
   ) {
     this.dispatcher = dispatcher;
-    this.repository = repository;
+    if (repository) {
+      this.repository = repository;
+    } else {
+      try {
+        this.repository =
+          typeof PluginRepository === 'function'
+            ? new PluginRepository()
+            : ({} as PluginRepository);
+      } catch {
+        this.repository = {} as PluginRepository;
+      }
+    }
   }
 
   /**

@@ -87,6 +87,14 @@ vi.mock('@repo/repository', () => ({
   ),
   LocalesRepository: vi.fn().mockImplementation(class {}),
   WebhooksRepository: vi.fn().mockImplementation(class {}),
+  PluginRepository: vi.fn().mockImplementation(
+    class {
+      findById = vi.fn().mockResolvedValue(null);
+      upsert = vi.fn().mockResolvedValue(null);
+      updateStatus = vi.fn().mockResolvedValue(null);
+      updateConfig = vi.fn().mockResolvedValue(null);
+    },
+  ),
 }));
 vi.mock('bcrypt', () => ({
   default: {

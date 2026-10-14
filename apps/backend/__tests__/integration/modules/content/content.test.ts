@@ -70,6 +70,14 @@ vi.mock('@repo/repository', () => {
     AccessRepository: vi.fn().mockImplementation(class {}),
     LocalesRepository: vi.fn().mockImplementation(class {}),
     WebhooksRepository: vi.fn().mockImplementation(class {}),
+    PluginRepository: vi.fn().mockImplementation(
+      class {
+        findById = vi.fn().mockResolvedValue(null);
+        upsert = vi.fn().mockResolvedValue(null);
+        updateStatus = vi.fn().mockResolvedValue(null);
+        updateConfig = vi.fn().mockResolvedValue(null);
+      },
+    ),
     authRepository: {},
   };
 });
