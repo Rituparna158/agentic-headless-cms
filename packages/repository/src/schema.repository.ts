@@ -39,6 +39,7 @@ export class SchemaRepository {
         {
           name: input.name,
           slug: input.slug,
+          description: input.description,
           type: input.type,
           fields: input.fields,
           actorType: 'user',
@@ -104,6 +105,7 @@ export class SchemaRepository {
       const db = this.getDb();
       const result = await updateSchemaRecord(db, id, {
         name: input.name,
+        description: input.description,
         fields: input.fields,
         migrationNotes: input.migrationNotes,
         actorType: 'user',

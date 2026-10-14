@@ -44,12 +44,14 @@ export interface SchemaRecord {
 export interface CreateSchemaInput {
   name: string;
   slug: string;
+  description?: string | null;
   type: 'collection' | 'single_type' | 'component';
   fields: SchemaField[];
 }
 
 export interface UpdateSchemaInput {
   name?: string;
+  description?: string | null;
   fields?: SchemaField[];
   migrationNotes?: string;
 }

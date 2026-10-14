@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import FeatureGridSettings from '../../../../src/features/pages/components/page-builder/settings/FeatureGridSettings';
-import { usePageBuilderStore } from '../../../../src/features/pages/components/page-builder/stores/pageBuilderStore';
+import FeatureGridSettings from '../../../../src/features/collections/components/page-builder/settings/FeatureGridSettings';
+import { usePageBuilderStore } from '../../../../src/features/collections/components/page-builder/stores/pageBuilderStore';
 
 describe('FeatureGridSettings', () => {
   beforeEach(() => {

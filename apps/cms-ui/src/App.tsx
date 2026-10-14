@@ -81,18 +81,23 @@ const GeneralErrorPage = React.lazy(() =>
     default: m.GeneralErrorPage,
   })),
 );
-const PagesListPage = React.lazy(() =>
-  import('./features/pages/pages/PagesListPage').then((m) => ({
-    default: m.PagesListPage,
+const CollectionsListPage = React.lazy(() =>
+  import('./features/collections/pages/CollectionsListPage').then((m) => ({
+    default: m.CollectionsListPage,
+  })),
+);
+const CollectionEntriesPage = React.lazy(() =>
+  import('./features/collections/pages/CollectionEntriesPage').then((m) => ({
+    default: m.CollectionEntriesPage,
   })),
 );
 const PageEditorPage = React.lazy(() =>
-  import('./features/pages/pages/editors/PageEditorPage').then((m) => ({
+  import('./features/collections/pages/editors/PageEditorPage').then((m) => ({
     default: m.PageEditorPage,
   })),
 );
 const PagePreviewPage = React.lazy(() =>
-  import('./features/pages/pages/PagePreviewPage').then((m) => ({
+  import('./features/collections/pages/PagePreviewPage').then((m) => ({
     default: m.PagePreviewPage,
   })),
 );
@@ -175,21 +180,36 @@ export const App = () => {
                             <RoleGuard requiredCapability="manage_content" />
                           }
                         >
-                          <Route path="pages" element={<PagesListPage />} />
                           <Route
-                            path="pages/:id"
+                            path="collections"
+                            element={<CollectionsListPage />}
+                          />
+                          <Route
+                            path="collections/:schemaSlug"
+                            element={<CollectionEntriesPage />}
+                          />
+                          <Route
+                            path="collections/:schemaSlug/:pageId"
                             element={<PageEditorPage />}
                           />
                         </Route>
                         <Route path="*" element={<NotFoundPage />} />
                       </Route>
+
+                      {/* Standalone Protected Routes (No Dashboard UI) */}
+                      <Route
+                        element={
+                          <RoleGuard requiredCapability="manage_content" />
+                        }
+                      >
+                        <Route
+                          path="/collections/:schemaSlug/preview/:slug"
+                          element={<PagePreviewPage />}
+                        />
+                      </Route>
                     </Route>
                     {/* Error Pages */}
                     <Route path="/error" element={<GeneralErrorPage />} />
-                    <Route
-                      path="/preview/:slug"
-                      element={<PagePreviewPage />}
-                    />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </Suspense>

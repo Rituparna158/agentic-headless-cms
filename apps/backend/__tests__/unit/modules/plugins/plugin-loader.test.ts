@@ -219,7 +219,10 @@ describe('PluginLoaderService', () => {
       apiKey: 'secret-123',
     });
 
-    expect(summary.config).toEqual({ apiKey: 'secret-123' });
+    expect(summary.config).toEqual({ apiKey: 'secr...-123' });
+    expect(loader.getPlugin('config-plugin')?.config).toEqual({
+      apiKey: 'secret-123',
+    });
     expect(mockRepo.updateConfig).toHaveBeenCalledWith('config-plugin', {
       apiKey: 'secret-123',
     });

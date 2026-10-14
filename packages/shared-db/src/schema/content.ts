@@ -26,6 +26,7 @@ export const schemas = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }).notNull(), // unique per-app, enforced by table constraint below
+    description: text('description'),
     type: schemaTypeEnum('type').notNull(),
     definition: jsonb('definition').notNull(),
     status: schemaStatusEnum('status').notNull().default('draft'),

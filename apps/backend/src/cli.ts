@@ -98,165 +98,225 @@ async function startMfaVerificationServer(
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const db = drizzle(pool);
 const cli = cac('agentic-cms-cli');
+
 cli
   .command('setup', 'Interactive wizard to set up the CMS')
-  .action(async () => {
-    try {
-      const appName = await input({
-        message: 'What application do you want to build?',
-        default: 'CMS_UI',
-      });
-      const adminEmail = await input({ message: 'Enter the admin email:' });
-      const adminPassword = await password({
-        message: 'Enter the admin password:',
-      });
-      logger.info(`Starting setup for application: ${appName}...`);
-      let appId: string;
-      const existingApp = await db
-        .select()
-        .from(applications)
-        .where(eq(applications.name, appName))
-        .limit(1);
-      const apiKey = crypto.randomBytes(32).toString('hex');
-      const apiKeyHash = await bcrypt.hash(apiKey, 10);
-      if (existingApp.length > 0) {
-        appId = existingApp[0]!.id;
-        logger.info(
-          `Application ${appName} already exists. Updating API key...`,
-        );
-        await db
-          .update(applications)
-          .set({ apiKeyHash })
-          .where(eq(applications.id, appId));
-      } else {
-        const newApp = await db
-          .insert(applications)
-          .values({ name: appName, apiKeyHash })
-          .returning({ id: applications.id });
-        appId = newApp[0]!.id;
-        logger.info(`Created application: ${appName}`);
-      }
-      // Create admin role
-      let roleId: string;
-      const existingRole = await db
-        .select()
-        .from(roles)
-        .where(and(eq(roles.name, 'admin'), eq(roles.applicationId, appId)))
-        .limit(1);
-      if (existingRole.length > 0) {
-        roleId = existingRole[0]!.id;
-        logger.info('Admin role already exists.');
-      } else {
-        const newRole = await db
-          .insert(roles)
-          .values({
-            name: 'admin',
-            applicationId: appId,
-            description: 'Super administrator with full access',
-          })
-          .returning({ id: roles.id });
-        roleId = newRole[0]!.id;
-        await db.insert(permissions).values({
-          roleId,
-          applicationId: appId,
-          action: '*',
-          effect: 'allow',
-        });
-        logger.info('Created admin role with wildcard (*) permissions.');
-      }
-      // Create admin user
-      let userId: string;
-      const existingUser = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, adminEmail))
-        .limit(1);
-      if (existingUser.length > 0) {
-        userId = existingUser[0]!.id;
-        logger.info(
-          `User with email ${adminEmail} already exists. Linking to Admin role...`,
-        );
-        // If MFA is not enabled, let's enable it now for the CLI user
-        if (!existingUser[0]!.mfaEnabled) {
-          const secret = authenticator.generateSecret();
-          await db
-            .update(users)
-            .set({ mfaEnabled: true, mfaSecret: secret })
-            .where(eq(users.id, userId));
-          await startMfaVerificationServer(adminEmail, secret);
+  .option('--auto', 'Run in non-interactive mode')
+  .option('--app-name <name>', 'Application name for non-interactive mode')
+  .option('--email <email>', 'Admin email for non-interactive mode')
+  .option('--password <password>', 'Admin password for non-interactive mode')
+  .action(
+    async (options: {
+      auto?: boolean;
+      appName?: string;
+      email?: string;
+      password?: string;
+    }) => {
+      try {
+        let setups: { appName: string; email: string; password: string }[] = [];
+
+        if (!options.auto) {
+          const appName = await input({
+            message: 'What application do you want to build?',
+            default: 'HEADLESS_CMS',
+          });
+          const adminEmail = await input({ message: 'Enter the admin email:' });
+          const adminPassword = await password({
+            message: 'Enter the admin password:',
+          });
+          setups = [{ appName, email: adminEmail, password: adminPassword }];
+        } else {
+          if (options.appName || options.email || options.password) {
+            setups = [
+              {
+                appName: options.appName || 'HEADLESS_CMS',
+                email: options.email || 'admin@agentic-cms.com',
+                password: options.password || 'admin',
+              },
+            ];
+          } else {
+            setups = [
+              {
+                appName: 'CMS_UI',
+                email: 'cmsui-admin@agentic-cms.com',
+                password: 'admin',
+              },
+              {
+                appName: 'HEADLESS_CMS',
+                email: 'headless-admin@agentic-cms.com',
+                password: 'admin',
+              },
+            ];
+          }
         }
-      } else {
-        const passwordHash = await bcrypt.hash(adminPassword, 10);
-        const secret = authenticator.generateSecret();
-        const newUser = await db
-          .insert(users)
-          .values({
-            email: adminEmail,
-            firstName: 'Admin',
-            lastName: 'User',
-            passwordHash,
-            status: 'active',
-            mfaEnabled: true,
-            mfaSecret: secret,
-          })
-          .returning({ id: users.id });
-        userId = newUser[0]!.id;
-        logger.info(`Created new Admin user: ${adminEmail}`);
-        await startMfaVerificationServer(adminEmail, secret);
+
+        logger.info('--- Setup Starting ---');
+        for (const setup of setups) {
+          const { appName, email: adminEmail, password: adminPassword } = setup;
+          logger.info(`\n========================================`);
+          logger.info(`Setting up application: ${appName}`);
+          logger.info(`Admin Email: ${adminEmail}`);
+          logger.info(`========================================`);
+
+          // 1. Create admin user
+          let userId: string;
+          const existingUser = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, adminEmail))
+            .limit(1);
+
+          if (existingUser.length > 0) {
+            userId = existingUser[0]!.id;
+            logger.info(
+              `User with email ${adminEmail} already exists. Linking to Admin roles...`,
+            );
+            if (!existingUser[0]!.mfaEnabled && !options.auto) {
+              const secret = authenticator.generateSecret();
+              await db
+                .update(users)
+                .set({ mfaEnabled: true, mfaSecret: secret })
+                .where(eq(users.id, userId));
+              await startMfaVerificationServer(adminEmail, secret);
+            }
+          } else {
+            const passwordHash = await bcrypt.hash(adminPassword, 10);
+            const secret = authenticator.generateSecret();
+            const newUser = await db
+              .insert(users)
+              .values({
+                email: adminEmail,
+                firstName: 'Admin',
+                lastName: 'User',
+                passwordHash,
+                status: 'active',
+                mfaEnabled: !options.auto,
+                mfaSecret: secret,
+              })
+              .returning({ id: users.id });
+            userId = newUser[0]!.id;
+            logger.info(`Created new Admin user: ${adminEmail}`);
+            if (!options.auto) {
+              await startMfaVerificationServer(adminEmail, secret);
+            }
+          }
+
+          // 2. Create Application
+          let appId: string;
+          const existingApp = await db
+            .select()
+            .from(applications)
+            .where(eq(applications.name, appName))
+            .limit(1);
+
+          const apiKey = crypto.randomBytes(32).toString('hex');
+          const apiKeyHash = await bcrypt.hash(apiKey, 10);
+
+          if (existingApp.length > 0) {
+            appId = existingApp[0]!.id;
+            logger.info(
+              `Application ${appName} already exists. Updating API key...`,
+            );
+            await db
+              .update(applications)
+              .set({ apiKeyHash })
+              .where(eq(applications.id, appId));
+          } else {
+            const newApp = await db
+              .insert(applications)
+              .values({ name: appName, apiKeyHash })
+              .returning({ id: applications.id });
+            appId = newApp[0]!.id;
+            logger.info(`Created application: ${appName}`);
+          }
+
+          // 3. Create admin role
+          let roleId: string;
+          const existingRole = await db
+            .select()
+            .from(roles)
+            .where(and(eq(roles.name, 'admin'), eq(roles.applicationId, appId)))
+            .limit(1);
+
+          if (existingRole.length > 0) {
+            roleId = existingRole[0]!.id;
+            logger.info('Admin role already exists.');
+          } else {
+            const newRole = await db
+              .insert(roles)
+              .values({
+                name: 'admin',
+                applicationId: appId,
+                description: 'Super administrator with full access',
+              })
+              .returning({ id: roles.id });
+            roleId = newRole[0]!.id;
+            await db.insert(permissions).values({
+              roleId,
+              applicationId: appId,
+              action: '*',
+              effect: 'allow',
+            });
+            logger.info('Created admin role with wildcard (*) permissions.');
+          }
+
+          // 4. Link user to application
+          let userAppId: string;
+          const existingUserApp = await db
+            .select()
+            .from(userApplications)
+            .where(
+              and(
+                eq(userApplications.userId, userId),
+                eq(userApplications.applicationId, appId),
+              ),
+            )
+            .limit(1);
+
+          if (existingUserApp.length > 0) {
+            userAppId = existingUserApp[0]!.id;
+          } else {
+            const newUserApp = await db
+              .insert(userApplications)
+              .values({
+                userId,
+                applicationId: appId,
+                status: 'active',
+              })
+              .returning({ id: userApplications.id });
+            userAppId = newUserApp[0]!.id;
+          }
+
+          // 5. Link user application to role
+          const existingUserRole = await db
+            .select()
+            .from(userRoles)
+            .where(eq(userRoles.userApplicationId, userAppId))
+            .limit(1);
+
+          if (existingUserRole.length === 0) {
+            await db.insert(userRoles).values({
+              userApplicationId: userAppId,
+              roleId,
+            });
+          }
+
+          logger.info(`API Key for ${appName}: ${apiKey}`);
+          if (appName === 'CMS_UI') {
+            logger.info(`VITE_APP_ID=CMS_UI (For your CMS UI .env)`);
+          }
+        }
+
+        logger.info(
+          `\nWARNING: Store these API Keys safely. They will not be shown again.`,
+        );
+        process.exit(0);
+      } catch (error) {
+        logger.error({ err: error }, 'Failed during setup wizard');
+        process.exit(1);
       }
-      // Link user to application
-      let userAppId: string;
-      const existingUserApp = await db
-        .select()
-        .from(userApplications)
-        .where(
-          and(
-            eq(userApplications.userId, userId),
-            eq(userApplications.applicationId, appId),
-          ),
-        )
-        .limit(1);
-      if (existingUserApp.length > 0) {
-        userAppId = existingUserApp[0]!.id;
-      } else {
-        const newUserApp = await db
-          .insert(userApplications)
-          .values({
-            userId,
-            applicationId: appId,
-            status: 'active',
-          })
-          .returning({ id: userApplications.id });
-        userAppId = newUserApp[0]!.id;
-      }
-      // Link user application to role
-      const existingUserRole = await db
-        .select()
-        .from(userRoles)
-        .where(eq(userRoles.userApplicationId, userAppId))
-        .limit(1);
-      if (existingUserRole.length === 0) {
-        await db.insert(userRoles).values({
-          userApplicationId: userAppId,
-          roleId,
-        });
-      }
-      logger.info('--- Setup Complete ---');
-      logger.info(`Application Name: ${appName}`);
-      logger.info(`API Key: ${apiKey}`);
-      logger.info(
-        `WARNING: Store this API Key safely. It will not be shown again.`,
-      );
-      logger.info(
-        `\nTo log into the CMS UI, please add the following to apps/cms-ui/.env:`,
-      );
-      logger.info(`VITE_APP_ID=${appName}\n`);
-      process.exit(0);
-    } catch (error) {
-      logger.error({ err: error }, 'Failed during setup wizard');
-      process.exit(1);
-    }
-  });
+    },
+  );
 cli
   .command(
     'create-app <name>',

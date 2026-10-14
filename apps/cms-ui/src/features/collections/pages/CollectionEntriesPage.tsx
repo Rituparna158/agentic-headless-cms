@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, FileText, Trash2 } from 'lucide-react';
 import {
-  pagesApi,
+  Link,
+  useSearchParams,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, FileText, Trash2, ArrowLeft } from 'lucide-react';
+import {
+  collectionsApi,
   type PageEntry,
   type PaginatedResponse,
-} from '../api/pages.api';
-import { usePageSchema } from '../hooks/usePageSchema';
+} from '../api/collections.api';
 import { CreatePageDialog } from '../components/CreatePageDialog';
 import { useToast } from '@repo/shared-ui';
 
-export function PagesListPage() {
+export function CollectionEntriesPage() {
+  const { schemaSlug } = useParams<{ schemaSlug: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const [isCreateOpen, setIsCreateOpen] = useState(
     () => searchParams.get('create') === 'true',
   );
@@ -25,26 +31,24 @@ export function PagesListPage() {
   const toast = useToast();
 
   useEffect(() => {
-    if (searchParams.get('create') === 'true') {
+    if (searchParams.get('create') === 'true' && schemaSlug) {
       setIsCreateOpen(true);
-      navigate('/pages', { replace: true });
+      navigate(`/collections/${schemaSlug}`, { replace: true });
     }
-  }, [searchParams, navigate]);
-
-  const schemaQuery = usePageSchema();
+  }, [searchParams, navigate, schemaSlug]);
 
   const pagesQuery = useQuery({
-    queryKey: ['pages'],
-    queryFn: () => pagesApi.listPages(),
-    enabled: !!schemaQuery.data,
+    queryKey: ['pages', schemaSlug],
+    queryFn: () => collectionsApi.listPages(schemaSlug!),
+    enabled: !!schemaSlug,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => pagesApi.deletePage(id),
+    mutationFn: (id: string) => collectionsApi.deletePage(schemaSlug!, id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pages'] });
+      queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
       setPageToDelete(null);
-      toast.error('Page deleted successfully');
+      toast.success('Page deleted successfully');
     },
     onError: () => {
       toast.error('Failed to delete page. Please try again.');
@@ -60,19 +64,30 @@ export function PagesListPage() {
   const pages =
     (pagesQuery.data as PaginatedResponse<PageEntry> | undefined)?.data ?? [];
 
+  if (!schemaSlug) return null;
+
   return (
     <div className="p-6 max-w-5xl mx-auto relative">
+      <div className="mb-4">
+        <Link
+          to="/collections"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" /> Back to Collections
+        </Link>
+      </div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Pages</h1>
+          <h1 className="text-2xl font-bold text-foreground capitalize">
+            {schemaSlug.replace(/-/g, ' ')} Pages
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your website pages
+            Manage your pages for this collection
           </p>
         </div>
         <button
           onClick={() => setIsCreateOpen(true)}
-          disabled={!schemaQuery.data}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Create New Page
@@ -96,8 +111,7 @@ export function PagesListPage() {
           </p>
           <button
             onClick={() => setIsCreateOpen(true)}
-            disabled={!schemaQuery.data}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-4 w-4" />
             Create New Page
@@ -132,15 +146,15 @@ export function PagesListPage() {
                 >
                   <td className="px-4 py-3">
                     <Link
-                      to={`/pages/${page.id}`}
+                      to={`/collections/${schemaSlug}/${page.id}`}
                       className="text-foreground font-medium hover:text-primary transition-colors"
                     >
-                      {page.data.title}
+                      {page.data?.title || 'Untitled'}
                     </Link>
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-sm text-muted-foreground font-mono">
-                      {page.data.slug}
+                      {page.data?.slug || '-'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -157,7 +171,7 @@ export function PagesListPage() {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
                       <Link
-                        to={`/pages/${page.id}`}
+                        to={`/collections/${schemaSlug}/${page.id}`}
                         className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
                       >
                         Edit
@@ -166,12 +180,12 @@ export function PagesListPage() {
                         onClick={() =>
                           setPageToDelete({
                             id: page.id,
-                            title: page.data.title,
+                            title: page.data?.title || 'Untitled',
                           })
                         }
                         className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                         title="Delete Page"
-                        aria-label={`Delete ${page.data.title}`}
+                        aria-label={`Delete ${page.data?.title || 'Untitled'}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -184,10 +198,13 @@ export function PagesListPage() {
         </div>
       )}
 
-      <CreatePageDialog
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-      />
+      {schemaSlug && (
+        <CreatePageDialog
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          schemaSlug={schemaSlug}
+        />
+      )}
 
       {/* Clean Minimalistic Delete Modal */}
       {pageToDelete && (

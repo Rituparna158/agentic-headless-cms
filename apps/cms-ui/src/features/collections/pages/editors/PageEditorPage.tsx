@@ -10,8 +10,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save, Eye } from 'lucide-react';
 
-import { pagesApi } from '../../api/pages.api';
-import { usePageSchema } from '../../hooks/usePageSchema';
+import { collectionsApi } from '../../api/collections.api';
 import { GrapesJSData } from './types';
 import { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
 
@@ -20,6 +19,7 @@ const CustomBuilderEditor = lazy(
 );
 import { usePageBuilderStore } from '../../components/page-builder/stores/pageBuilderStore';
 import { GrapesJSEditor } from './GrapesJSEditor';
+import { useToast } from '@repo/shared-ui';
 
 function slugify(text: string): string {
   return (
@@ -35,23 +35,25 @@ function slugify(text: string): string {
 }
 
 export function PageEditorPage() {
-  const { id } = useParams<{ id: string }>();
+  const { schemaSlug, pageId } = useParams<{
+    schemaSlug: string;
+    pageId: string;
+  }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  const schemaQuery = usePageSchema();
+  const toast = useToast();
 
   const pageQuery = useQuery({
-    queryKey: ['page', id],
-    queryFn: () => pagesApi.getPage(id!),
-    enabled: !!id && !!schemaQuery.data,
+    queryKey: ['page', schemaSlug, pageId],
+    queryFn: () => collectionsApi.getPage(schemaSlug!, pageId!),
+    enabled: !!schemaSlug && !!pageId,
   });
 
   (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ = false;
 
   useEffect(() => {
     usePageBuilderStore.getState().resetStore();
-  }, [id]);
+  }, [pageId]);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -66,8 +68,8 @@ export function PageEditorPage() {
 
   useEffect(() => {
     if (pageQuery.data) {
-      setTitle(pageQuery.data.data.title);
-      setSlug(pageQuery.data.data.slug);
+      setTitle(pageQuery.data.data.title || '');
+      setSlug(pageQuery.data.data.slug || '');
 
       const bodyData = pageQuery.data.data.body as
         | Record<string, unknown>
@@ -112,19 +114,21 @@ export function PageEditorPage() {
 
   const updateMutation = useMutation({
     mutationFn: () =>
-      pagesApi.updatePage(id!, {
+      collectionsApi.updatePage(schemaSlug!, pageId!, {
         title: title.trim(),
         slug: slug.trim() || slugify(title),
         body: bodyRef.current ?? [],
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pages'] });
-      queryClient.invalidateQueries({ queryKey: ['page', id] });
-      alert('Page saved successfully!');
+      queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
+      queryClient.invalidateQueries({ queryKey: ['page', schemaSlug, pageId] });
+      toast.success('Page saved successfully!');
     },
     onError: (error) => {
       console.error('Save failed:', error);
-      alert('Failed to save page. Please check your connection or try again.');
+      toast.error(
+        'Failed to save page. Please check your connection or try again.',
+      );
     },
   });
 
@@ -145,13 +149,8 @@ export function PageEditorPage() {
     bodyRef.current = newDesign;
   }, []);
 
-  useEffect(() => {
-    // Left intentionally blank if we need future initialization,
-    // otherwise the hook could be removed entirely.
-  }, []);
-
   const handleSave = () => {
-    if (!title.trim()) return;
+    if (!title.trim() || !schemaSlug || !pageId) return;
     updateMutation.mutate();
   };
 
@@ -168,7 +167,7 @@ export function PageEditorPage() {
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <p className="text-muted-foreground">Page not found</p>
         <button
-          onClick={() => navigate('/pages')}
+          onClick={() => navigate(`/collections/${schemaSlug}`)}
           className="text-primary hover:text-primary/80 font-medium"
         >
           Back to Pages
@@ -183,7 +182,7 @@ export function PageEditorPage() {
       <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-background">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/pages')}
+            onClick={() => navigate(`/collections/${schemaSlug}`)}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -209,7 +208,7 @@ export function PageEditorPage() {
           <button
             onClick={() =>
               window.open(
-                `/preview${slug.startsWith('/') ? '' : '/'}${slug}`,
+                `/collections/${schemaSlug}/preview${slug.startsWith('/') ? '' : '/'}${slug}`,
                 '_blank',
               )
             }
@@ -248,7 +247,7 @@ export function PageEditorPage() {
             }
           >
             <CustomBuilderEditor
-              id={id!}
+              id={pageId!}
               initialDesign={initialBody as PageBuilderDesign}
               onChange={handleDesignChange}
               title={title}

@@ -2,7 +2,7 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
-import { pagesApi } from '../api/pages.api';
+import { collectionsApi } from '../api/collections.api';
 
 const CustomBuilderPreview = lazy(
   () => import('../components/CustomBuilderPreview'),
@@ -11,13 +11,16 @@ import DOMPurify from 'dompurify';
 import { usePageBuilderStore } from '../components/page-builder/stores/pageBuilderStore';
 
 export function PagePreviewPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { schemaSlug, slug } = useParams<{
+    schemaSlug: string;
+    slug: string;
+  }>();
   const navigate = useNavigate();
 
   const pageQuery = useQuery({
-    queryKey: ['pageBySlug', slug],
-    queryFn: () => pagesApi.getPageBySlug(slug!),
-    enabled: !!slug,
+    queryKey: ['pageBySlug', schemaSlug, slug],
+    queryFn: () => collectionsApi.getPageBySlug(schemaSlug!, slug!),
+    enabled: !!schemaSlug && !!slug,
   });
 
   (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ = true;
@@ -38,25 +41,55 @@ export function PagePreviewPage() {
   }, [pageQuery.data]);
 
   useEffect(() => {
-    // Some browsers prevent input focus if an ancestor has contenteditable="false".
-    // Since this is the live preview, we strip all contenteditable attributes.
-    const canvas = document.getElementById('canvas');
-    if (!canvas) return;
+    const container = document.getElementById('preview-container');
+    if (!container) return;
+
+    const processElements = () => {
+      // 1. Remove contenteditable to ensure interactivity
+      const editableElements = container.querySelectorAll('[contenteditable]');
+      editableElements.forEach((el) => {
+        el.removeAttribute('contenteditable');
+      });
+
+      // 2. Rewrite internal links so browser hover shows the correct URL
+      const links = container.querySelectorAll('a');
+      links.forEach((a) => {
+        const href = a.getAttribute('href');
+        if (
+          href &&
+          href.startsWith('/') &&
+          !href.startsWith('//') &&
+          !href.startsWith(`/collections/${schemaSlug}/preview/`)
+        ) {
+          a.setAttribute('data-original-href', href);
+          a.setAttribute('href', `/collections/${schemaSlug}/preview${href}`);
+        }
+      });
+    };
 
     const observer = new MutationObserver(() => {
       observer.disconnect();
-      const elements = canvas.querySelectorAll('[contenteditable]');
-      elements.forEach((el) => {
-        el.removeAttribute('contenteditable');
+      processElements();
+      observer.observe(container, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['href', 'contenteditable'],
       });
-      observer.observe(canvas, { childList: true, subtree: true });
     });
 
-    observer.observe(canvas, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [initialBody]);
+    processElements();
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['href', 'contenteditable'],
+    });
 
-  // Intercept internal link clicks in Preview mode to route seamlessly
+    return () => observer.disconnect();
+  }, [initialBody, schemaSlug]);
+
+  // Intercept internal link clicks in Preview mode to route seamlessly (SPA navigation)
   useEffect(() => {
     const handleLinkClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -65,10 +98,10 @@ export function PagePreviewPage() {
         const href = anchor.getAttribute('href');
         if (href && href.startsWith('/') && !href.startsWith('//')) {
           e.preventDefault();
-          if (href.startsWith('/preview/')) {
+          if (href.startsWith(`/collections/${schemaSlug}/preview/`)) {
             navigate(href);
           } else {
-            navigate(`/preview${href}`);
+            navigate(`/collections/${schemaSlug}/preview${href}`);
           }
         }
       }
@@ -76,7 +109,7 @@ export function PagePreviewPage() {
 
     document.addEventListener('click', handleLinkClick);
     return () => document.removeEventListener('click', handleLinkClick);
-  }, [navigate]);
+  }, [navigate, schemaSlug]);
 
   if (pageQuery.isLoading)
     return <div className="p-8 text-center">Loading...</div>;
@@ -97,7 +130,10 @@ export function PagePreviewPage() {
     const cleanHtml = DOMPurify.sanitize(bodyData.html || '');
     const cleanCss = DOMPurify.sanitize(bodyData.css || '');
     return (
-      <div className="flex-1 w-full h-full min-h-screen bg-background text-foreground">
+      <div
+        id="preview-container"
+        className="flex-1 w-full h-full min-h-screen bg-background text-foreground"
+      >
         <style dangerouslySetInnerHTML={{ __html: cleanCss }} />
         <div dangerouslySetInnerHTML={{ __html: cleanHtml }} />
       </div>
@@ -105,7 +141,10 @@ export function PagePreviewPage() {
   }
 
   return (
-    <div className="flex-1 overflow-x-hidden min-h-screen bg-background text-foreground">
+    <div
+      id="preview-container"
+      className="flex-1 overflow-x-hidden min-h-screen bg-background text-foreground"
+    >
       <style>{`
         /* Override custom builder's global html/body overflow hidden */
         html, body {

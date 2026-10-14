@@ -220,6 +220,7 @@ export class PluginLoaderService {
   public async updatePluginConfig(
     id: string,
     config: Record<string, unknown>,
+    options?: { maskSecrets?: boolean },
   ): Promise<PluginSummary> {
     const plugin = this.plugins.get(id);
     if (!plugin) {
@@ -251,7 +252,7 @@ export class PluginLoaderService {
     this.dispatcher.updatePluginConfig(id, config);
     logger.info({ pluginId: id }, `Plugin "${id}" config updated`);
 
-    return this.getSummary(id)!;
+    return this.getSummary(id, options)!;
   }
 
   /**
