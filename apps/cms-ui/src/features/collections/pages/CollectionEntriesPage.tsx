@@ -34,6 +34,17 @@ import { useToast, AdvancedTable } from '@repo/shared-ui';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { normalizeCollaborator } from '../utils/collaborator.util';
+import {
+  ViewMode,
+  PageToDelete,
+  EntriesTableState,
+} from '../types/collections.types';
+import {
+  ENTRIES_VIEW_MODE_STORAGE_KEY,
+  DEFAULT_COLLECTION_PAGE,
+  DEFAULT_PAGE_SIZE,
+  DEFAULT_STATS_PAGE_SIZE,
+} from '../constants/collections.constants';
 
 export function CollectionEntriesPage() {
   const { schemaSlug } = useParams<{ schemaSlug: string }>();
@@ -46,22 +57,19 @@ export function CollectionEntriesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(
     () => searchParams.get('create') === 'true',
   );
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (
-      (localStorage.getItem('cms:entries:viewMode') as 'grid' | 'list') ||
+      (localStorage.getItem(ENTRIES_VIEW_MODE_STORAGE_KEY) as ViewMode) ||
       'grid'
     );
   });
 
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
+  const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
-    localStorage.setItem('cms:entries:viewMode', mode);
+    localStorage.setItem(ENTRIES_VIEW_MODE_STORAGE_KEY, mode);
   };
 
-  const [pageToDelete, setPageToDelete] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
+  const [pageToDelete, setPageToDelete] = useState<PageToDelete | null>(null);
 
   useEffect(() => {
     if (searchParams.get('create') === 'true' && schemaSlug) {
@@ -70,12 +78,12 @@ export function CollectionEntriesPage() {
     }
   }, [searchParams, navigate, schemaSlug]);
 
-  const [tableState, setTableState] = useState({
-    page: 1,
-    pageSize: 10,
+  const [tableState, setTableState] = useState<EntriesTableState>({
+    page: DEFAULT_COLLECTION_PAGE,
+    pageSize: DEFAULT_PAGE_SIZE,
     search: '',
     sortBy: 'updatedAt',
-    sortOrder: 'desc' as 'asc' | 'desc',
+    sortOrder: 'desc',
   });
 
   const debouncedSearch = useDebouncedValue(tableState.search);
@@ -99,7 +107,10 @@ export function CollectionEntriesPage() {
   const statsQuery = useQuery({
     queryKey: ['pagesStats', schemaSlug],
     queryFn: () =>
-      collectionsApi.listPages(schemaSlug!, { page: 1, pageSize: 100 }),
+      collectionsApi.listPages(schemaSlug!, {
+        page: DEFAULT_COLLECTION_PAGE,
+        pageSize: DEFAULT_STATS_PAGE_SIZE,
+      }),
     enabled: !!schemaSlug,
   });
 

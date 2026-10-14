@@ -20,19 +20,7 @@ const CustomBuilderEditor = lazy(
 import { usePageBuilderStore } from '../../components/page-builder/stores/pageBuilderStore';
 import { GrapesJSEditor } from './GrapesJSEditor';
 import { useToast } from '@repo/shared-ui';
-
-function slugify(text: string): string {
-  return (
-    '/' +
-    text
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/[\s]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-  );
-}
+import { slugify } from '../../utils/slugify.util';
 
 export function PageEditorPage() {
   const { schemaSlug, pageId } = useParams<{
