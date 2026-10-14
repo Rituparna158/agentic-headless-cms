@@ -1,10 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import grapesjs, { Editor } from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import basicBlocksPlugin from 'grapesjs-blocks-basic';
 import formsPlugin from 'grapesjs-plugin-forms';
 import { CustomBlocksPlugin } from '../../components/grapesjs-plugins/CustomBlocksPlugin';
-import { GrapesJSEditorProps } from './types';
+import { GrapesJSEditorProps, GrapesJSEditorHandle } from './types';
 import './GrapesJSTheme.css';
 import {
   Undo,
@@ -18,11 +24,17 @@ import {
 } from 'lucide-react';
 import { setupLayerIcons } from './components/LayerIconPlugin';
 
-export function GrapesJSEditor({ initialData, onChange }: GrapesJSEditorProps) {
+export const GrapesJSEditor = forwardRef<
+  GrapesJSEditorHandle,
+  GrapesJSEditorProps
+>(function GrapesJSEditor({ initialData, onChange }, ref) {
   const editorRef = useRef<Editor | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isReadyRef = useRef(false);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const initialDataRef = useRef(initialData);
 
   const [leftTab, setLeftTab] = useState<'blocks' | 'layers'>('blocks');
   const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
@@ -83,17 +95,18 @@ export function GrapesJSEditor({ initialData, onChange }: GrapesJSEditorProps) {
     editorRef.current = editor;
 
     // Load initial data
-    if (initialData && initialData.builder === 'grapesjs') {
+    const initialConfig = initialDataRef.current;
+    if (initialConfig && initialConfig.builder === 'grapesjs') {
       try {
-        if (initialData.projectData) {
-          editor.loadProjectData(initialData.projectData);
+        if (initialConfig.projectData) {
+          editor.loadProjectData(initialConfig.projectData);
         } else {
           // Fallback for old data format
-          if (initialData.components) {
-            editor.setComponents(initialData.components);
+          if (initialConfig.components) {
+            editor.setComponents(initialConfig.components);
           }
-          if (initialData.styles) {
-            editor.setStyle(initialData.styles);
+          if (initialConfig.styles) {
+            editor.setStyle(initialConfig.styles);
           }
         }
       } catch (e) {
@@ -103,7 +116,7 @@ export function GrapesJSEditor({ initialData, onChange }: GrapesJSEditorProps) {
 
     const handleChange = () => {
       if (!isReadyRef.current) return;
-      onChange({
+      onChangeRef.current({
         builder: 'grapesjs',
         projectData: editor.getProjectData(),
         // Keep HTML/CSS for external use if needed, but not required for saving
@@ -134,6 +147,74 @@ export function GrapesJSEditor({ initialData, onChange }: GrapesJSEditorProps) {
       editorRef.current = null;
     };
   }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      loadTemplate: (result, action) => {
+        if (!editorRef.current) return;
+        const editor = editorRef.current;
+
+        if (action === 'replace') {
+          if (result.projectData) {
+            editor.loadProjectData(result.projectData);
+          } else if (result.html) {
+            editor.setComponents(result.html);
+            if (result.css) {
+              editor.setStyle(result.css);
+            }
+          }
+        } else {
+          // append
+          if (result.projectData) {
+            const pages = result.projectData.pages as
+              | Array<{ component?: { components?: unknown[] } }>
+              | undefined;
+            const comps =
+              pages?.[0]?.component?.components ||
+              (result.projectData.components as unknown[]);
+            if (comps) {
+              editor.addComponents(comps);
+            }
+          } else if (result.html) {
+            editor.addComponents(result.html);
+            if (result.css) {
+              editor.addStyle(result.css);
+            }
+          }
+        }
+      },
+
+      loadRawData: (data) => {
+        if (!editorRef.current) return;
+        const editor = editorRef.current;
+        if (data.projectData) {
+          editor.loadProjectData(data.projectData);
+        } else if (data.components) {
+          editor.setComponents(data.components);
+          if (data.styles) {
+            editor.setStyle(data.styles);
+          }
+        } else if (data.html) {
+          editor.setComponents(data.html);
+          if (data.css) {
+            editor.setStyle(data.css);
+          }
+        }
+      },
+
+      isCanvasEmpty: () => {
+        if (!editorRef.current) return true;
+        const wrapper = editorRef.current.getWrapper();
+        if (!wrapper) return true;
+        const comps = wrapper.components();
+        return !comps || comps.length === 0;
+      },
+
+      getEditor: () => editorRef.current,
+    }),
+    [],
+  );
 
   return (
     <div
@@ -316,4 +397,4 @@ export function GrapesJSEditor({ initialData, onChange }: GrapesJSEditorProps) {
       </div>
     </div>
   );
-}
+});

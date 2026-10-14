@@ -1,5 +1,6 @@
 import { requestHandler } from '../../../api/requestHandler';
 import { ENDPOINTS } from '../../../api/endpoints';
+import type { ContentVersionRecord } from '../types/template.types';
 
 export interface SchemaEntry {
   id: string;
@@ -242,5 +243,27 @@ export const collectionsApi = {
       throw new Error(`Page with slug ${slug} not found in ${schemaSlug}`);
     }
     return res.data.data[0] as PageEntry;
+  },
+
+  getVersions: async (
+    schemaSlug: string,
+    entryId: string,
+  ): Promise<ContentVersionRecord[]> => {
+    const res = await requestHandler.get<ContentVersionRecord[]>(
+      ENDPOINTS.CONTENT.VERSIONS(schemaSlug, entryId),
+    );
+    return res.data;
+  },
+
+  revertVersion: async (
+    schemaSlug: string,
+    entryId: string,
+    versionNo: number,
+  ): Promise<PageEntry> => {
+    const res = await requestHandler.post<PageEntry>(
+      ENDPOINTS.CONTENT.REVERT(schemaSlug, entryId),
+      { versionNo },
+    );
+    return res.data;
   },
 };
