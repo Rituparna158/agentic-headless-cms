@@ -7,4 +7,5 @@ export * from './access.repository.js';
 export * from './auth.repository.js';
 export * from './locales.repository.js';
 export * from './webhooks.repository.js';
+export * from './plugin.repository.js';
 export * from './error-constants.js';
