@@ -91,7 +91,10 @@ export const AuditLogPage: React.FC = () => {
     refetch,
   } = useAuditLogs(queryFilters);
 
-  const rawLogs: AuditLogRecord[] = response?.data?.data || [];
+  const rawLogs: AuditLogRecord[] = useMemo(
+    () => response?.data?.data || [],
+    [response?.data?.data],
+  );
   const totalRecords: number = response?.data?.total || 0;
   const totalPages: number = response?.data?.totalPages || 1;
 
