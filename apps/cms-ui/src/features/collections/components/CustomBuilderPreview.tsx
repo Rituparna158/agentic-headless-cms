@@ -45,13 +45,7 @@ import { MapEmbedSettings } from './page-builder/settings/MapEmbedSettings';
 import { FAQ } from './page-builder/components/FAQ';
 import { FAQSettings } from './page-builder/settings/FAQSettings';
 
-import { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
-
-interface CustomBuilderPreviewProps {
-  slug: string;
-  initialDesign: PageBuilderDesign | undefined;
-  title: string;
-}
+import { CustomBuilderPreviewProps } from '../types/collections.types';
 
 export default function CustomBuilderPreview({
   slug,
