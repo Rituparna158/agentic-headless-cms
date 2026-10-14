@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { logger } from '@repo/logger';
 import { HTTP_STATUS } from '@repo/constants';
 import crypto from 'crypto';
+import { pluginLoader } from '../modules/plugins/index.js';
 export const globalAuthMiddleware = async (
   req: Request & { context?: { applicationId?: string } },
   res: Response,
@@ -14,7 +15,8 @@ export const globalAuthMiddleware = async (
   if (
     req.originalUrl &&
     (req.originalUrl.includes('/media/file/') ||
-      req.originalUrl.includes('/auth/sso'))
+      req.originalUrl.includes('/auth/sso') ||
+      pluginLoader.isPublicPluginRoute(req.method, req.originalUrl))
   ) {
     return next();
   }

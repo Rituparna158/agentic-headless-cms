@@ -11,6 +11,8 @@ export interface LoadedPlugin {
   routesCount: number;
   hooksCount: number;
   router?: Router;
+  config?: Record<string, unknown>;
+  isEnabled?: boolean;
 }
 
 export interface PluginSummary {
@@ -20,6 +22,8 @@ export interface PluginSummary {
   description?: string;
   author?: string;
   status: PluginStatus;
+  isEnabled: boolean;
+  config: Record<string, unknown>;
   loadedAt: string;
   error?: string;
   routes: Array<{

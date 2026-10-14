@@ -27,8 +27,16 @@ interface RegisteredHook<T> {
 
 export class HookDispatcherService {
   private hooksMap = new Map<keyof PluginHooks, RegisteredHook<unknown>[]>();
+  private pluginConfigs = new Map<string, Record<string, unknown>>();
 
-  public registerHooks(pluginId: string, hooks?: PluginHooks): void {
+  public registerHooks(
+    pluginId: string,
+    hooks?: PluginHooks,
+    config?: Record<string, unknown>,
+  ): void {
+    if (config) {
+      this.pluginConfigs.set(pluginId, config);
+    }
     if (!hooks) return;
 
     for (const [key, handler] of Object.entries(hooks)) {
@@ -41,7 +49,15 @@ export class HookDispatcherService {
     }
   }
 
+  public updatePluginConfig(
+    pluginId: string,
+    config: Record<string, unknown>,
+  ): void {
+    this.pluginConfigs.set(pluginId, config);
+  }
+
   public unregisterHooks(pluginId: string): void {
+    this.pluginConfigs.delete(pluginId);
     for (const [hookName, list] of this.hooksMap.entries()) {
       const filtered = list.filter((item) => item.pluginId !== pluginId);
       if (filtered.length === 0) {
@@ -54,6 +70,7 @@ export class HookDispatcherService {
 
   public clear(): void {
     this.hooksMap.clear();
+    this.pluginConfigs.clear();
   }
 
   public getRegisteredHookNames(): string[] {
@@ -76,7 +93,12 @@ export class HookDispatcherService {
 
     for (const { pluginId, handler } of handlers) {
       try {
-        const result = await handler({ ...event, data: currentData });
+        const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+        const result = await handler({
+          ...event,
+          data: currentData,
+          pluginConfig,
+        });
         if (result && typeof result === 'object') {
           currentData = { ...currentData, ...result };
         }
@@ -108,7 +130,12 @@ export class HookDispatcherService {
 
     for (const { pluginId, handler } of handlers) {
       try {
-        const result = await handler({ ...event, data: currentData });
+        const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+        const result = await handler({
+          ...event,
+          data: currentData,
+          pluginConfig,
+        });
         if (result && typeof result === 'object') {
           currentData = { ...currentData, ...result };
         }
@@ -134,7 +161,8 @@ export class HookDispatcherService {
 
     for (const { pluginId, handler } of handlers) {
       try {
-        await handler(event);
+        const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+        await handler({ ...event, pluginConfig });
       } catch (error) {
         logger.error(
           { pluginId, hook: 'content.beforeDelete', err: error },
@@ -155,7 +183,8 @@ export class HookDispatcherService {
 
     for (const { pluginId, handler } of handlers) {
       try {
-        await handler(event);
+        const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+        await handler({ ...event, pluginConfig });
       } catch (error) {
         logger.error(
           { pluginId, hook: 'content.beforePublish', err: error },
@@ -177,7 +206,8 @@ export class HookDispatcherService {
     await Promise.allSettled(
       handlers.map(async ({ pluginId, handler }) => {
         try {
-          await handler(event);
+          const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+          await handler({ ...event, pluginConfig });
         } catch (error) {
           logger.error(
             { pluginId, hook: 'content.afterPublish', err: error },
@@ -198,7 +228,8 @@ export class HookDispatcherService {
 
     for (const { pluginId, handler } of handlers) {
       try {
-        await handler(event);
+        const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+        await handler({ ...event, pluginConfig });
       } catch (error) {
         logger.error(
           { pluginId, hook: 'content.beforeUnpublish', err: error },
@@ -220,7 +251,8 @@ export class HookDispatcherService {
     await Promise.allSettled(
       handlers.map(async ({ pluginId, handler }) => {
         try {
-          await handler(event);
+          const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+          await handler({ ...event, pluginConfig });
         } catch (error) {
           logger.error(
             { pluginId, hook: 'content.afterUnpublish', err: error },
@@ -242,7 +274,8 @@ export class HookDispatcherService {
     await Promise.allSettled(
       handlers.map(async ({ pluginId, handler }) => {
         try {
-          await handler(event);
+          const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+          await handler({ ...event, pluginConfig });
         } catch (error) {
           logger.error(
             { pluginId, hook: 'content.afterCreate', err: error },
@@ -264,7 +297,8 @@ export class HookDispatcherService {
     await Promise.allSettled(
       handlers.map(async ({ pluginId, handler }) => {
         try {
-          await handler(event);
+          const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+          await handler({ ...event, pluginConfig });
         } catch (error) {
           logger.error(
             { pluginId, hook: 'content.afterUpdate', err: error },
@@ -286,7 +320,8 @@ export class HookDispatcherService {
     await Promise.allSettled(
       handlers.map(async ({ pluginId, handler }) => {
         try {
-          await handler(event);
+          const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+          await handler({ ...event, pluginConfig });
         } catch (error) {
           logger.error(
             { pluginId, hook: 'content.afterDelete', err: error },
@@ -311,7 +346,12 @@ export class HookDispatcherService {
 
     for (const { pluginId, handler } of handlers) {
       try {
-        const result = await handler({ ...event, input: currentInput });
+        const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+        const result = await handler({
+          ...event,
+          input: currentInput,
+          pluginConfig,
+        });
         if (result && typeof result === 'object') {
           currentInput = { ...currentInput, ...result };
         }
@@ -341,7 +381,12 @@ export class HookDispatcherService {
 
     for (const { pluginId, handler } of handlers) {
       try {
-        const result = await handler({ ...event, input: currentInput });
+        const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+        const result = await handler({
+          ...event,
+          input: currentInput,
+          pluginConfig,
+        });
         if (result && typeof result === 'object') {
           currentInput = { ...currentInput, ...result };
         }
@@ -367,7 +412,8 @@ export class HookDispatcherService {
 
     for (const { pluginId, handler } of handlers) {
       try {
-        await handler(event);
+        const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+        await handler({ ...event, pluginConfig });
       } catch (error) {
         logger.error(
           { pluginId, hook: 'schema.beforeDelete', err: error },
@@ -389,7 +435,8 @@ export class HookDispatcherService {
     await Promise.allSettled(
       handlers.map(async ({ pluginId, handler }) => {
         try {
-          await handler(event);
+          const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+          await handler({ ...event, pluginConfig });
         } catch (error) {
           logger.error(
             { pluginId, hook: 'schema.afterCreate', err: error },
@@ -411,7 +458,8 @@ export class HookDispatcherService {
     await Promise.allSettled(
       handlers.map(async ({ pluginId, handler }) => {
         try {
-          await handler(event);
+          const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+          await handler({ ...event, pluginConfig });
         } catch (error) {
           logger.error(
             { pluginId, hook: 'schema.afterUpdate', err: error },
@@ -433,7 +481,8 @@ export class HookDispatcherService {
     await Promise.allSettled(
       handlers.map(async ({ pluginId, handler }) => {
         try {
-          await handler(event);
+          const pluginConfig = this.pluginConfigs.get(pluginId) ?? {};
+          await handler({ ...event, pluginConfig });
         } catch (error) {
           logger.error(
             { pluginId, hook: 'schema.afterDelete', err: error },
