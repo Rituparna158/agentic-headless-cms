@@ -1,8 +1,5 @@
 import { usePageBuilderStore } from '../stores/pageBuilderStore';
-
-interface SearchBarSettingsProps {
-  targetComponentId: string;
-}
+import { PageBuilderSettingProps } from '../../../types/collections.types';
 
 const DEFAULT_SEARCH_BAR_STATE = {
   placeholder: 'Search for anything...',
@@ -20,7 +17,7 @@ const DEFAULT_SEARCH_BAR_STATE = {
 
 export default function SearchBarSettings({
   targetComponentId,
-}: SearchBarSettingsProps) {
+}: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
     (state) => state.searchBar[targetComponentId] ?? DEFAULT_SEARCH_BAR_STATE,
   );

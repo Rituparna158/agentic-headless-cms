@@ -11,16 +11,10 @@ import {
   LayoutTemplate,
   LayoutDashboard,
   History,
-  LucideIcon,
 } from 'lucide-react';
-export interface NavItem {
-  title: string;
-  href: string;
-  icon?: LucideIcon;
-  subItems?: { title: string; href: string }[];
-  requiredCapability?: string;
-  requiredRoles?: string[];
-}
+import type { NavItem } from '../../types/navigation.types';
+
+export type { NavItem };
 export const sidebarNavConfig: NavItem[] = [
   {
     title: 'Dashboard',

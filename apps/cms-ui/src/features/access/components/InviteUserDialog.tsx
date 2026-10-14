@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { accessApi } from '../api/access.api';
-import { InviteUserPayload, Role } from '../types/access.types';
+import {
+  InviteUserPayload,
+  Role,
+  InviteUserDialogProps,
+} from '../types/access.types';
 import { Button, FormField, Typography } from '@repo/shared-ui';
 import { X, Copy, Check } from 'lucide-react';
-interface InviteUserDialogProps {
-  onClose: () => void;
-}
+
 export const InviteUserDialog = ({ onClose }: InviteUserDialogProps) => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<InviteUserPayload>({

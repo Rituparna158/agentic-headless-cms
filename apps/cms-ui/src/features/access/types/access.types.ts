@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 export type ApplicationType = 'CMS_UI' | 'HEADLESS_CMS';
 export type PermissionAction =
   | 'create'
@@ -92,4 +93,28 @@ export interface MfaRequestRecord {
     firstName: string | null;
     lastName: string | null;
   };
+}
+
+export interface InviteUserDialogProps {
+  onClose: () => void;
+}
+
+export interface RoleDetailPanelProps {
+  role: Role | 'new';
+  onClose: () => void;
+}
+
+export type MfaTabId = 'pending' | 'history';
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface MfaSummaryCardProps {
+  icon: ReactNode;
+  label: string;
+  value: number;
+  className?: string;
+}
+
+export interface MfaStatusBadgeProps {
+  status: MfaRequestStatus;
 }

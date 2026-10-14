@@ -1,8 +1,5 @@
 import { usePageBuilderStore } from '../stores/pageBuilderStore';
-
-interface HeroSectionSettingsProps {
-  targetComponentId: string;
-}
+import { PageBuilderSettingProps } from '../../../types/collections.types';
 
 // Fixed: Moving fallback outside prevents reference mutations
 const DEFAULT_HERO_STATE = {
@@ -22,7 +19,7 @@ const DEFAULT_HERO_STATE = {
 
 export default function HeroSectionSettings({
   targetComponentId,
-}: HeroSectionSettingsProps) {
+}: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
     (state) => state.hero[targetComponentId] ?? DEFAULT_HERO_STATE,
   );

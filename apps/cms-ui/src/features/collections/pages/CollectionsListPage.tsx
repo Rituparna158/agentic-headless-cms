@@ -24,6 +24,18 @@ import { useToast, AdvancedTable } from '@repo/shared-ui';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { normalizeCollaborator } from '../utils/collaborator.util';
+import {
+  ViewMode,
+  DeleteMode,
+  CollectionToDelete,
+  CollectionToEdit,
+  CollectionsTableState,
+} from '../types/collections.types';
+import {
+  COLLECTIONS_VIEW_MODE_STORAGE_KEY,
+  DEFAULT_COLLECTION_PAGE,
+  DEFAULT_PAGE_SIZE,
+} from '../constants/collections.constants';
 
 export function CollectionsListPage() {
   const queryClient = useQueryClient();
@@ -31,38 +43,30 @@ export function CollectionsListPage() {
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionSlug, setNewCollectionSlug] = useState('');
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>(
+  const [viewMode, setViewMode] = useState<ViewMode>(
     () =>
-      (localStorage.getItem('cms:collections:viewMode') as 'grid' | 'list') ||
+      (localStorage.getItem(COLLECTIONS_VIEW_MODE_STORAGE_KEY) as ViewMode) ||
       'grid',
   );
 
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
+  const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
-    localStorage.setItem('cms:collections:viewMode', mode);
+    localStorage.setItem(COLLECTIONS_VIEW_MODE_STORAGE_KEY, mode);
   };
 
-  const [collectionToDelete, setCollectionToDelete] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [deleteMode, setDeleteMode] = useState<'normal' | 'conflict' | 'force'>(
-    'normal',
-  );
+  const [collectionToDelete, setCollectionToDelete] =
+    useState<CollectionToDelete | null>(null);
+  const [deleteMode, setDeleteMode] = useState<DeleteMode>('normal');
   const [forceDeleteConfirmName, setForceDeleteConfirmName] = useState('');
-  const [collectionToEdit, setCollectionToEdit] = useState<{
-    id: string;
-    name: string;
-    slug: string;
-    description?: string | null;
-  } | null>(null);
+  const [collectionToEdit, setCollectionToEdit] =
+    useState<CollectionToEdit | null>(null);
 
-  const [tableState, setTableState] = useState({
-    page: 1,
-    pageSize: 10,
+  const [tableState, setTableState] = useState<CollectionsTableState>({
+    page: DEFAULT_COLLECTION_PAGE,
+    pageSize: DEFAULT_PAGE_SIZE,
     search: '',
     sortBy: 'name',
-    sortOrder: 'asc' as 'asc' | 'desc',
+    sortOrder: 'asc',
   });
 
   const toast = useToast();
@@ -167,8 +171,11 @@ export function CollectionsListPage() {
 
   const currentUser = useAuthStore((state) => state.user);
 
-  const collections =
-    collectionsQuery.data?.data?.filter((c) => c.type === 'collection') ?? [];
+  const collections = useMemo(
+    () =>
+      collectionsQuery.data?.data?.filter((c) => c.type === 'collection') ?? [],
+    [collectionsQuery.data?.data],
+  );
   const totalCount = collectionsQuery.data?.meta?.pagination?.total ?? 0;
   const pageCount = collectionsQuery.data?.meta?.pagination?.pageCount ?? 1;
 

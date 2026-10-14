@@ -3,25 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, FileText } from 'lucide-react';
 import { collectionsApi } from '../api/collections.api';
-
-function slugify(text: string): string {
-  return (
-    '/' +
-    text
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/[\s]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-  );
-}
-
-interface CreatePageDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  schemaSlug: string;
-}
+import { CreatePageDialogProps } from '../types/collections.types';
+import { slugify } from '../utils/slugify.util';
 
 export function CreatePageDialog({
   isOpen,
