@@ -8,11 +8,19 @@ import {
 } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Upload, History } from 'lucide-react';
 
 import { collectionsApi } from '../../api/collections.api';
-import { GrapesJSData } from './types';
+import { GrapesJSData, GrapesJSEditorHandle } from './types';
 import { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
+import { TemplateImportModal } from '../../components/template/TemplateImportModal';
+import { ExistingContentDialog } from '../../components/template/ExistingContentDialog';
+import { VersionHistoryDrawer } from '../../components/template/VersionHistoryDrawer';
+import {
+  TemplateValidationResult,
+  ImportActionChoice,
+  ContentVersionRecord,
+} from '../../types/template.types';
 
 const CustomBuilderEditor = lazy(
   () => import('../../components/CustomBuilderEditor'),
@@ -52,7 +60,51 @@ export function PageEditorPage() {
     'grapesjs',
   );
 
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isExistingDialogOpen, setIsExistingDialogOpen] = useState(false);
+  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
+  const pendingTemplateResult = useRef<TemplateValidationResult | null>(null);
+  const grapesEditorRef = useRef<GrapesJSEditorHandle>(null);
+
   const bodyRef = useRef<unknown>([]);
+
+  const handleTemplateImport = (result: TemplateValidationResult) => {
+    const isEmpty = grapesEditorRef.current?.isCanvasEmpty() ?? true;
+    if (isEmpty) {
+      grapesEditorRef.current?.loadTemplate(result, 'replace');
+      toast.success('Template imported successfully!');
+    } else {
+      pendingTemplateResult.current = result;
+      setIsExistingDialogOpen(true);
+    }
+  };
+
+  const handleExistingContentConfirm = (choice: ImportActionChoice) => {
+    if (pendingTemplateResult.current) {
+      grapesEditorRef.current?.loadTemplate(
+        pendingTemplateResult.current,
+        choice,
+      );
+      if (choice === 'replace') {
+        toast.success(
+          'Template replaced canvas. You can press Ctrl+Z to undo.',
+        );
+      } else {
+        toast.success('Template appended below existing content.');
+      }
+      pendingTemplateResult.current = null;
+    }
+  };
+
+  const handleRevertSuccess = (revertedData: ContentVersionRecord['data']) => {
+    if (revertedData.title) setTitle(revertedData.title);
+    if (revertedData.slug) setSlug(revertedData.slug);
+    if (revertedData.body) {
+      grapesEditorRef.current?.loadRawData(
+        revertedData.body as Partial<GrapesJSData>,
+      );
+    }
+  };
 
   useEffect(() => {
     if (pageQuery.data) {
@@ -193,6 +245,28 @@ export function PageEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {activeBuilder === 'grapesjs' && (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs"
+                title="Import dynamic JSON template"
+              >
+                <Upload className="h-3.5 w-3.5 text-indigo-400" />
+                Template
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsHistoryDrawerOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs"
+                title="View version snapshots and rollback"
+              >
+                <History className="h-3.5 w-3.5 text-amber-400" />
+                History
+              </button>
+            </>
+          )}
           <button
             onClick={() =>
               window.open(
@@ -244,12 +318,38 @@ export function PageEditorPage() {
         )}
         {isBuilderReady && activeBuilder === 'grapesjs' && (
           <GrapesJSEditor
+            ref={grapesEditorRef}
             initialData={initialBody as Partial<GrapesJSData>}
             onChange={handleDesignChange}
             brandTitle={title || 'Page Builder'}
           />
         )}
       </div>
+
+      <TemplateImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleTemplateImport}
+      />
+      <ExistingContentDialog
+        isOpen={isExistingDialogOpen}
+        onClose={() => setIsExistingDialogOpen(false)}
+        onConfirm={handleExistingContentConfirm}
+      />
+      {schemaSlug && pageId && (
+        <VersionHistoryDrawer
+          isOpen={isHistoryDrawerOpen}
+          onClose={() => setIsHistoryDrawerOpen(false)}
+          schemaSlug={schemaSlug}
+          pageId={pageId}
+          currentPageData={{
+            title,
+            slug,
+            body: bodyRef.current,
+          }}
+          onRevertSuccess={handleRevertSuccess}
+        />
+      )}
     </div>
   );
 }
