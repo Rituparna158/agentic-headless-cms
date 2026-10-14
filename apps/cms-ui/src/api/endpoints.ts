@@ -36,4 +36,8 @@ export const ENDPOINTS = {
     ENTRY: (schemaSlug: string, entryId: string) =>
       `/content/${schemaSlug}/${entryId}`,
   },
+  AUDIT_LOGS: {
+    BASE: '/audit-logs',
+    BY_ID: (id: string) => `/audit-logs/${id}`,
+  },
 } as const;
