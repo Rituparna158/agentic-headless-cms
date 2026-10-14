@@ -35,6 +35,10 @@ export const ENDPOINTS = {
     BY_SCHEMA: (schemaSlug: string) => `/content/${schemaSlug}`,
     ENTRY: (schemaSlug: string, entryId: string) =>
       `/content/${schemaSlug}/${entryId}`,
+    VERSIONS: (schemaSlug: string, entryId: string) =>
+      `/content/${schemaSlug}/${entryId}/versions`,
+    REVERT: (schemaSlug: string, entryId: string) =>
+      `/content/${schemaSlug}/${entryId}/revert`,
   },
   AUDIT_LOGS: {
     BASE: '/audit-logs',
