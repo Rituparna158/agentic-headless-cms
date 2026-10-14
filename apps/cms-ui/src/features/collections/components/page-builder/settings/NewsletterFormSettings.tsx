@@ -1,8 +1,5 @@
 import { usePageBuilderStore } from '../stores/pageBuilderStore';
-
-interface NewsletterFormSettingsProps {
-  targetComponentId: string;
-}
+import { PageBuilderSettingProps } from '../../../types/collections.types';
 
 const DEFAULT_STATE = {
   title: 'Subscribe to our Newsletter',
@@ -21,7 +18,7 @@ const DEFAULT_STATE = {
 
 export default function NewsletterFormSettings({
   targetComponentId,
-}: NewsletterFormSettingsProps) {
+}: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
     (state) => state.newsletterForm[targetComponentId] ?? DEFAULT_STATE,
   );

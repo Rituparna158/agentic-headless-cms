@@ -4,10 +4,7 @@ import {
   usePageBuilderStore,
   DynamicFormField,
 } from '../stores/pageBuilderStore';
-
-interface DynamicFormSettingsProps {
-  targetComponentId: string;
-}
+import { PageBuilderSettingProps } from '../../../types/collections.types';
 
 const DEFAULT_STATE = {
   title: 'Custom Form',
@@ -25,7 +22,7 @@ const DEFAULT_STATE = {
 
 export default function DynamicFormSettings({
   targetComponentId,
-}: DynamicFormSettingsProps) {
+}: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
     (state) => state.dynamicForm[targetComponentId] ?? DEFAULT_STATE,
   );
