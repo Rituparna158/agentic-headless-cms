@@ -2,6 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HookDispatcherService } from '../../../../src/modules/plugins/hook-dispatcher.service.js';
 import { ApiError } from '@repo/utils';
 import type { ContentEntryRecord } from '@repo/types';
+import type {
+  ContentBeforeCreateEvent,
+  SchemaBeforeCreateEvent,
+  SchemaBeforeDeleteEvent,
+} from '@repo/plugin-sdk';
 
 describe('HookDispatcherService', () => {
   let dispatcher: HookDispatcherService;
@@ -14,7 +19,7 @@ describe('HookDispatcherService', () => {
     it('should sequentially mutate data in content.beforeCreate pipeline', async () => {
       // Plugin A adds a slug
       dispatcher.registerHooks('plugin-a', {
-        'content.beforeCreate': (event) => {
+        'content.beforeCreate': (event: ContentBeforeCreateEvent) => {
           return {
             ...event.data,
             slug: 'auto-generated-slug',
@@ -24,7 +29,7 @@ describe('HookDispatcherService', () => {
 
       // Plugin B uppercases title and receives mutated slug from Plugin A
       dispatcher.registerHooks('plugin-b', {
-        'content.beforeCreate': (event) => {
+        'content.beforeCreate': (event: ContentBeforeCreateEvent) => {
           return {
             ...event.data,
             title: String(event.data.title).toUpperCase(),
@@ -66,9 +71,36 @@ describe('HookDispatcherService', () => {
       });
     });
 
+    it('should inject persisted pluginConfig into hook execution context', async () => {
+      let receivedConfig: Record<string, unknown> | undefined;
+
+      dispatcher.registerHooks(
+        'configured-plugin',
+        {
+          'content.beforeCreate': (event: ContentBeforeCreateEvent) => {
+            receivedConfig = event.pluginConfig;
+            return event.data;
+          },
+        },
+        { apiKey: 'sk-test-12345', maxRetries: 3 },
+      );
+
+      await dispatcher.dispatchContentBeforeCreate({
+        schemaId: 'schema-1',
+        data: { title: 'Test' },
+        userId: 'user-1',
+        locale: 'en',
+      });
+
+      expect(receivedConfig).toEqual({
+        apiKey: 'sk-test-12345',
+        maxRetries: 3,
+      });
+    });
+
     it('should abort content.beforeCreate when a plugin throws an error', async () => {
       dispatcher.registerHooks('strict-validator', {
-        'content.beforeCreate': (event) => {
+        'content.beforeCreate': (event: ContentBeforeCreateEvent) => {
           if (!event.data.title) {
             throw new ApiError(400, 'Title is strictly required by plugin');
           }
@@ -190,7 +222,7 @@ describe('HookDispatcherService', () => {
   describe('Schema Hooks', () => {
     it('should allow schema.beforeCreate to transform schema input and merge changes', async () => {
       dispatcher.registerHooks('schema-plugin', {
-        'schema.beforeCreate': (event) => {
+        'schema.beforeCreate': (event: SchemaBeforeCreateEvent) => {
           return {
             ...event.input,
             slug: `prefix-${event.input.slug}`,
@@ -213,7 +245,7 @@ describe('HookDispatcherService', () => {
 
     it('should dispatch schema.beforeDelete and allow cancellation via throw', async () => {
       dispatcher.registerHooks('lock-plugin', {
-        'schema.beforeDelete': (event) => {
+        'schema.beforeDelete': (event: SchemaBeforeDeleteEvent) => {
           if (event.schemaId === 'locked-schema') {
             throw new ApiError(403, 'Cannot delete locked system schema');
           }

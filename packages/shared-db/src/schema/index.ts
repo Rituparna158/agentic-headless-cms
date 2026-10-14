@@ -4,3 +4,4 @@ export * from './content.js';
 export * from './access-control.js';
 export * from './media.js';
 export * from './governance.js';
+export * from './plugins.js';

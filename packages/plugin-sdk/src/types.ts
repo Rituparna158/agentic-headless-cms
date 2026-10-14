@@ -12,6 +12,7 @@ export interface ContentBeforeCreateEvent {
   userId: string;
   locale: string;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentBeforeCreateHook = (
@@ -25,6 +26,7 @@ export interface ContentBeforeUpdateEvent {
   locale: string;
   beforeState: ContentEntryRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentBeforeUpdateHook = (
@@ -37,6 +39,7 @@ export interface ContentAfterCreateEvent {
   userId: string;
   locale: string;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentAfterCreateHook = (
@@ -50,6 +53,7 @@ export interface ContentAfterUpdateEvent {
   locale: string;
   beforeState: ContentEntryRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentAfterUpdateHook = (
@@ -60,6 +64,7 @@ export interface ContentBeforeDeleteEvent {
   entryId: string;
   beforeState: ContentEntryRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentBeforeDeleteHook = (
@@ -70,6 +75,7 @@ export interface ContentAfterDeleteEvent {
   entryId: string;
   beforeState: ContentEntryRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentAfterDeleteHook = (
@@ -82,6 +88,7 @@ export interface ContentBeforePublishEvent {
   locale: string;
   beforeState: ContentEntryRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentBeforePublishHook = (
@@ -94,6 +101,7 @@ export interface ContentAfterPublishEvent {
   userId: string;
   locale: string;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentAfterPublishHook = (
@@ -106,6 +114,7 @@ export interface ContentBeforeUnpublishEvent {
   locale: string;
   beforeState: ContentEntryRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentBeforeUnpublishHook = (
@@ -118,6 +127,7 @@ export interface ContentAfterUnpublishEvent {
   userId: string;
   locale: string;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type ContentAfterUnpublishHook = (
@@ -127,6 +137,7 @@ export type ContentAfterUnpublishHook = (
 export interface SchemaBeforeCreateEvent {
   input: CreateSchemaInput;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type SchemaBeforeCreateHook = (
@@ -136,6 +147,7 @@ export type SchemaBeforeCreateHook = (
 export interface SchemaAfterCreateEvent {
   schema: SchemaRecord;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type SchemaAfterCreateHook = (
@@ -147,6 +159,7 @@ export interface SchemaBeforeUpdateEvent {
   input: UpdateSchemaInput;
   beforeState: SchemaRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type SchemaBeforeUpdateHook = (
@@ -158,6 +171,7 @@ export interface SchemaAfterUpdateEvent {
   schema: SchemaRecord;
   beforeState: SchemaRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type SchemaAfterUpdateHook = (
@@ -168,6 +182,7 @@ export interface SchemaBeforeDeleteEvent {
   schemaId: string;
   beforeState: SchemaRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type SchemaBeforeDeleteHook = (
@@ -178,6 +193,7 @@ export interface SchemaAfterDeleteEvent {
   schemaId: string;
   beforeState: SchemaRecord | null;
   applicationId?: string;
+  pluginConfig?: Record<string, unknown>;
 }
 
 export type SchemaAfterDeleteHook = (
