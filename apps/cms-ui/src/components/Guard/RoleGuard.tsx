@@ -1,9 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../../features/auth/store/auth.store';
-interface RoleGuardProps {
-  requiredCapability?: string;
-  redirectTo?: string;
-}
+import { RoleGuardProps } from './types';
 export const RoleGuard = ({
   requiredCapability,
   redirectTo = '/',

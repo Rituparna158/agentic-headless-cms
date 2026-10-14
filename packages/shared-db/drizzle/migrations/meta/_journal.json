@@ -138,8 +138,15 @@
     {
       "idx": 19,
       "version": "7",
-      "when": 1789455374721,
-      "tag": "0019_create_plugins_table",
+      "when": 1791876749235,
+      "tag": "0019_exotic_fixer",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791876749236,
+      "tag": "0020_create_plugins_table",
       "breakpoints": true
     }
   ]

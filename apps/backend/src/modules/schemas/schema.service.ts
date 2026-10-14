@@ -80,40 +80,53 @@ export class SchemaService {
       handlePluginOrSchemaError(error, SERVICE_ERRORS.CREATE_SCHEMA_FAILED);
     }
   }
-  async list(options: BaseQueryOptions = {}) {
+  async list(options: BaseQueryOptions = {}, applicationId?: string) {
     try {
       logger.info('SchemaService: list');
-      return await this.repository.list(options);
+      return applicationId
+        ? await this.repository.list(options, applicationId)
+        : await this.repository.list(options);
     } catch (error) {
       logger.error({ err: error }, 'SchemaService Error in list:');
       throw new ApiError(500, SERVICE_ERRORS.LIST_SCHEMAS_FAILED);
     }
   }
-  async getById(id: string) {
+  async getById(id: string, applicationId?: string) {
     try {
       logger.info({ id }, 'SchemaService: getById');
-      return await this.repository.getById(id);
+      return applicationId
+        ? await this.repository.getById(id, applicationId)
+        : await this.repository.getById(id);
     } catch (error) {
       logger.error({ err: error }, 'SchemaService Error in getById:');
       throw new ApiError(500, SERVICE_ERRORS.FETCH_SCHEMA_FAILED);
     }
   }
-  async getBySlug(slug: string) {
+  async getBySlug(slug: string, applicationId?: string) {
     try {
       logger.info({ slug }, 'SchemaService: getBySlug');
-      return await this.repository.getBySlug(slug);
+      return applicationId
+        ? await this.repository.getBySlug(slug, applicationId)
+        : await this.repository.getBySlug(slug);
     } catch (error) {
       if (error instanceof ApiError) throw error;
       logger.error({ err: error }, 'SchemaService Error in getBySlug:');
       throw new ApiError(500, SERVICE_ERRORS.FETCH_SCHEMA_FAILED);
     }
   }
-  async update(id: string, input: UpdateSchemaInput, actorUserId: string) {
+  async update(
+    id: string,
+    input: UpdateSchemaInput,
+    actorUserId: string,
+    applicationId?: string,
+  ) {
     try {
       logger.info({ id, actorUserId }, 'SchemaService: update start');
       // Fetch beforeState
       logger.debug({ id }, 'SchemaService: fetching beforeState');
-      const beforeState = await this.repository.getById(id);
+      const beforeState = applicationId
+        ? await this.repository.getById(id, applicationId)
+        : await this.repository.getById(id);
       const interceptedInput = await hookDispatcher.dispatchSchemaBeforeUpdate({
         schemaId: id,
         input,
@@ -121,10 +134,19 @@ export class SchemaService {
       });
       // Perform mutation
       logger.debug({ id }, 'SchemaService: mutating schema');
-      const result = await this.repository.update(id, {
-        ...interceptedInput,
-        actorUserId,
-      });
+      const result = applicationId
+        ? await this.repository.update(
+            id,
+            {
+              ...interceptedInput,
+              actorUserId,
+            },
+            applicationId,
+          )
+        : await this.repository.update(id, {
+            ...interceptedInput,
+            actorUserId,
+          });
       await hookDispatcher.dispatchSchemaAfterUpdate({
         schemaId: id,
         schema: result as unknown as SchemaRecord,
@@ -153,19 +175,23 @@ export class SchemaService {
       handlePluginOrSchemaError(error, SERVICE_ERRORS.UPDATE_SCHEMA_FAILED);
     }
   }
-  async delete(id: string, force: boolean = false) {
+  async delete(id: string, force: boolean = false, applicationId?: string) {
     try {
       logger.info({ id, force }, 'SchemaService: delete start');
       // Fetch beforeState
       logger.debug({ id }, 'SchemaService: fetching beforeState');
-      const beforeState = await this.repository.getById(id);
+      const beforeState = applicationId
+        ? await this.repository.getById(id, applicationId)
+        : await this.repository.getById(id);
       await hookDispatcher.dispatchSchemaBeforeDelete({
         schemaId: id,
         beforeState: beforeState as unknown as SchemaRecord | null,
       });
       // Perform mutation
       logger.debug({ id }, 'SchemaService: mutating data');
-      const result = await this.repository.delete(id, force);
+      const result = applicationId
+        ? await this.repository.delete(id, force, applicationId)
+        : await this.repository.delete(id, force);
       await hookDispatcher.dispatchSchemaAfterDelete({
         schemaId: id,
         beforeState: beforeState as unknown as SchemaRecord | null,

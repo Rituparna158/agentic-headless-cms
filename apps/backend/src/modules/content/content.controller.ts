@@ -61,8 +61,18 @@ export const listEntries: RequestHandler = asyncHandler(
       'ContentController: fetching entries and count',
     );
     const [entries, total] = await Promise.all([
-      contentService.listEntries(schemaId, locale, contentQuery),
-      contentService.countEntries(schemaId, locale, contentQuery),
+      contentService.listEntries(
+        schemaId,
+        locale,
+        contentQuery,
+        req.context?.applicationId,
+      ),
+      contentService.countEntries(
+        schemaId,
+        locale,
+        contentQuery,
+        req.context?.applicationId,
+      ),
     ]);
     logger.info({ schemaId }, 'ContentController: listEntries end');
     res.status(200).json(
@@ -98,6 +108,7 @@ export const getEntry: RequestHandler = asyncHandler(
       entryId as string,
       locale,
       req.schemaId,
+      req.context?.applicationId,
     );
     if (!entry) {
       logger.error({ entryId }, 'ContentController: entry not found');
@@ -151,6 +162,7 @@ export const createDraft: RequestHandler = asyncHandler(
     const locale =
       typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
     const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
     logger.debug({ schemaId, userId }, 'ContentController: creating draft');
     const entry = await contentService.createDraft(
       schemaId,
@@ -158,6 +170,7 @@ export const createDraft: RequestHandler = asyncHandler(
       userId,
       locale,
       req.context?.applicationId,
+      userEmail,
     );
     logger.info(
       { schemaId, entryId: entry.id },
@@ -175,12 +188,14 @@ export const updateDraft: RequestHandler = asyncHandler(
     const locale =
       typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
     const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
     logger.debug({ entryId, userId }, 'ContentController: updating draft');
     const entry = await contentService.updateDraft(
       entryId as string,
       req.body as Record<string, unknown>,
       userId,
       locale,
+      userEmail,
     );
     logger.info({ entryId }, 'ContentController: updateDraft end');
     void webhookDispatcher.dispatch(
@@ -205,6 +220,7 @@ export const updatePartialEntry: RequestHandler = asyncHandler(
     const locale =
       typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
     const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
     logger.debug(
       { entryId, userId },
       'ContentController: partially updating entry',
@@ -214,6 +230,7 @@ export const updatePartialEntry: RequestHandler = asyncHandler(
       req.body as Record<string, unknown>,
       userId,
       locale,
+      userEmail,
     );
     logger.info({ entryId }, 'ContentController: updatePartialEntry end');
     void webhookDispatcher.dispatch(
@@ -240,11 +257,13 @@ export const publishEntry: RequestHandler = asyncHandler(
     const locale =
       typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
     const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
     logger.debug({ entryId, userId }, 'ContentController: publishing entry');
     const entry = await contentService.publishEntry(
       entryId as string,
       userId,
       locale,
+      userEmail,
     );
     logger.info({ entryId }, 'ContentController: publishEntry end');
     void webhookDispatcher.dispatch(
@@ -269,11 +288,13 @@ export const unpublishEntry: RequestHandler = asyncHandler(
     const locale =
       typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
     const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
     logger.debug({ entryId, userId }, 'ContentController: unpublishing entry');
     const entry = await contentService.unpublishEntry(
       entryId as string,
       userId,
       locale,
+      userEmail,
     );
     logger.info({ entryId }, 'ContentController: unpublishEntry end');
     void webhookDispatcher.dispatch(
@@ -330,7 +351,10 @@ export const deleteEntry: RequestHandler = asyncHandler(
     const { entryId } = req.params;
     logger.info({ entryId }, 'ContentController: deleteEntry start');
     logger.debug({ entryId }, 'ContentController: deleting entry');
-    await contentService.deleteEntry(entryId as string);
+    await contentService.deleteEntry(
+      entryId as string,
+      req.context?.applicationId,
+    );
     logger.info({ entryId }, 'ContentController: deleteEntry end');
     void webhookDispatcher.dispatch(
       'content.deleted',

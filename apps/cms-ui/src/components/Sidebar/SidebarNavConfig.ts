@@ -10,16 +10,11 @@ import {
   Puzzle,
   LayoutTemplate,
   LayoutDashboard,
-  LucideIcon,
+  History,
 } from 'lucide-react';
-export interface NavItem {
-  title: string;
-  href: string;
-  icon?: LucideIcon;
-  subItems?: { title: string; href: string }[];
-  requiredCapability?: string;
-  requiredRoles?: string[];
-}
+import type { NavItem } from '../../types/navigation.types';
+
+export type { NavItem };
 export const sidebarNavConfig: NavItem[] = [
   {
     title: 'Dashboard',
@@ -112,5 +107,10 @@ export const sidebarNavConfig: NavItem[] = [
     href: '/security',
     icon: ShieldCheck,
     subItems: [{ title: 'MFA Integration', href: '/security' }],
+  },
+  {
+    title: 'Audit Logs',
+    href: '/audit-logs',
+    icon: History,
   },
 ];

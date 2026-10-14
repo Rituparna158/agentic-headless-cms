@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   useQuery,
@@ -14,10 +14,28 @@ import {
   AlertTriangle,
   LayoutGrid,
   List,
+  CheckCircle2,
+  Clock,
+  Users,
+  FolderKanban,
 } from 'lucide-react';
 import { collectionsApi } from '../api/collections.api';
 import { useToast, AdvancedTable } from '@repo/shared-ui';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
+import { useAuthStore } from '../../auth/store/auth.store';
+import { normalizeCollaborator } from '../utils/collaborator.util';
+import {
+  ViewMode,
+  DeleteMode,
+  CollectionToDelete,
+  CollectionToEdit,
+  CollectionsTableState,
+} from '../types/collections.types';
+import {
+  COLLECTIONS_VIEW_MODE_STORAGE_KEY,
+  DEFAULT_COLLECTION_PAGE,
+  DEFAULT_PAGE_SIZE,
+} from '../constants/collections.constants';
 
 export function CollectionsListPage() {
   const queryClient = useQueryClient();
@@ -25,38 +43,30 @@ export function CollectionsListPage() {
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionSlug, setNewCollectionSlug] = useState('');
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>(
+  const [viewMode, setViewMode] = useState<ViewMode>(
     () =>
-      (localStorage.getItem('cms:collections:viewMode') as 'grid' | 'list') ||
+      (localStorage.getItem(COLLECTIONS_VIEW_MODE_STORAGE_KEY) as ViewMode) ||
       'grid',
   );
 
-  const handleViewModeChange = (mode: 'grid' | 'list') => {
+  const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
-    localStorage.setItem('cms:collections:viewMode', mode);
+    localStorage.setItem(COLLECTIONS_VIEW_MODE_STORAGE_KEY, mode);
   };
 
-  const [collectionToDelete, setCollectionToDelete] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [deleteMode, setDeleteMode] = useState<'normal' | 'conflict' | 'force'>(
-    'normal',
-  );
+  const [collectionToDelete, setCollectionToDelete] =
+    useState<CollectionToDelete | null>(null);
+  const [deleteMode, setDeleteMode] = useState<DeleteMode>('normal');
   const [forceDeleteConfirmName, setForceDeleteConfirmName] = useState('');
-  const [collectionToEdit, setCollectionToEdit] = useState<{
-    id: string;
-    name: string;
-    slug: string;
-    description?: string | null;
-  } | null>(null);
+  const [collectionToEdit, setCollectionToEdit] =
+    useState<CollectionToEdit | null>(null);
 
-  const [tableState, setTableState] = useState({
-    page: 1,
-    pageSize: 10,
+  const [tableState, setTableState] = useState<CollectionsTableState>({
+    page: DEFAULT_COLLECTION_PAGE,
+    pageSize: DEFAULT_PAGE_SIZE,
     search: '',
     sortBy: 'name',
-    sortOrder: 'asc' as 'asc' | 'desc',
+    sortOrder: 'asc',
   });
 
   const toast = useToast();
@@ -159,10 +169,95 @@ export function CollectionsListPage() {
     deleteMutation.reset();
   };
 
-  const collections =
-    collectionsQuery.data?.data?.filter((c) => c.type === 'collection') ?? [];
+  const currentUser = useAuthStore((state) => state.user);
+
+  const collections = useMemo(
+    () =>
+      collectionsQuery.data?.data?.filter((c) => c.type === 'collection') ?? [],
+    [collectionsQuery.data?.data],
+  );
   const totalCount = collectionsQuery.data?.meta?.pagination?.total ?? 0;
   const pageCount = collectionsQuery.data?.meta?.pagination?.pageCount ?? 1;
+
+  const stats = useMemo(() => {
+    const total = collections.length;
+    const totalEntries = collections.reduce(
+      (acc, c) => acc + (c.entryCount || 0),
+      0,
+    );
+    const published = collections.filter(
+      (c) => c.status === 'published',
+    ).length;
+    const drafts = total - published;
+    const publishRate = total > 0 ? Math.round((published / total) * 100) : 0;
+
+    // Discover collaborators across collections
+    const collabMap = new Map<
+      string,
+      { id: string; name: string; initials: string }
+    >();
+
+    for (const c of collections) {
+      if (c.lastUpdatedBy) {
+        const norm = normalizeCollaborator(c.lastUpdatedBy, currentUser);
+        if (!collabMap.has(norm.key)) {
+          collabMap.set(norm.key, {
+            id: norm.key,
+            name: norm.displayName,
+            initials: norm.initials,
+          });
+        }
+      }
+    }
+
+    // Only fallback to currentUser if no collaborator was found across collections
+    if (collabMap.size === 0 && currentUser?.email) {
+      const norm = normalizeCollaborator(currentUser.email, currentUser);
+      collabMap.set(norm.key, {
+        id: norm.key,
+        name: norm.displayName,
+        initials: norm.initials,
+      });
+    }
+
+    const recentUpdated = collections.reduce<string | null>(
+      (latest, current) => {
+        if (!current.updatedAt) return latest;
+        if (!latest) return current.updatedAt;
+        return new Date(current.updatedAt) > new Date(latest)
+          ? current.updatedAt
+          : latest;
+      },
+      null,
+    );
+
+    const latestCollection = [...collections].sort((a, b) => {
+      const da = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const db = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return db - da;
+    })[0];
+
+    const rawActor =
+      latestCollection?.lastUpdatedBy ||
+      currentUser?.firstName ||
+      currentUser?.email ||
+      'Admin';
+    const latestActor = normalizeCollaborator(
+      rawActor,
+      currentUser,
+    ).displayName;
+
+    return {
+      total,
+      totalEntries,
+      published,
+      drafts,
+      publishRate,
+      collaborators: Array.from(collabMap.values()),
+      recentUpdated,
+      latestActor,
+    };
+  }, [collections, currentUser]);
 
   const tableColumns = [
     { key: 'name', label: 'Name', sortable: true },
@@ -218,7 +313,10 @@ export function CollectionsListPage() {
     ),
     updatedBy: (
       <span className="text-xs text-muted-foreground">
-        {collection.lastUpdatedBy || 'N/A'}
+        {
+          normalizeCollaborator(collection.lastUpdatedBy, currentUser)
+            .displayName
+        }
       </span>
     ),
     actions: (
@@ -294,6 +392,102 @@ export function CollectionsListPage() {
         </div>
       </div>
 
+      {/* Analytics & Collaboration Stat Cards */}
+      {!collectionsQuery.isLoading && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+          {/* Total Collections */}
+          <div className="p-4 rounded-[5px] bg-card border border-border flex items-center justify-between shadow-xs">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Total Collections
+              </p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.total}
+                </p>
+                <span className="text-xs font-medium text-muted-foreground">
+                  ({stats.totalEntries} entries)
+                </span>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+              <FolderKanban className="w-5 h-5" />
+            </div>
+          </div>
+
+          {/* Published */}
+          <div className="p-4 rounded-[5px] bg-card border border-border flex items-center justify-between shadow-xs">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Published
+              </p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-[#2d6a4f] dark:text-emerald-400">
+                  {stats.published}
+                </p>
+                {stats.total > 0 && (
+                  <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-[#d8f3dc] text-[#1b4332] dark:bg-emerald-950/60 dark:text-emerald-400">
+                    {stats.publishRate}%
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+          </div>
+
+          {/* Drafts */}
+          <div className="p-4 rounded-[5px] bg-card border border-border flex items-center justify-between shadow-xs">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Drafts
+              </p>
+              <p className="text-2xl font-bold text-[#8e6c1d] dark:text-amber-400">
+                {stats.drafts}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <Clock className="w-5 h-5" />
+            </div>
+          </div>
+
+          {/* Contributors */}
+          <div className="p-4 rounded-[5px] bg-card border border-border flex items-center justify-between shadow-xs">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Contributors
+              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.collaborators.length}
+                </p>
+                {/* Avatars Stack */}
+                <div className="flex -space-x-1.5 overflow-hidden">
+                  {stats.collaborators.slice(0, 3).map((c) => (
+                    <div
+                      key={c.id}
+                      className="w-6 h-6 rounded-full bg-primary/20 border-2 border-card flex items-center justify-center text-[10px] font-bold text-primary shadow-xs"
+                      title={c.name}
+                    >
+                      {c.initials}
+                    </div>
+                  ))}
+                  {stats.collaborators.length > 3 && (
+                    <div className="w-6 h-6 rounded-full bg-muted border-2 border-card flex items-center justify-center text-[9px] font-bold text-muted-foreground">
+                      +{stats.collaborators.length - 3}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+              <Users className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {collectionsQuery.isLoading && (
         <div className="flex items-center justify-center py-20">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -301,7 +495,7 @@ export function CollectionsListPage() {
       )}
 
       {!collectionsQuery.isLoading && collections.length === 0 && (
-        <div className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-card/50">
+        <div className="text-center py-16 border-2 border-dashed border-border rounded-[5px] bg-card/50">
           <Files className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
           <h3 className="text-xl font-semibold text-foreground mb-2">
             No collections yet
@@ -327,7 +521,7 @@ export function CollectionsListPage() {
             {collections.map((collection) => (
               <div
                 key={collection.id}
-                className="group flex flex-col bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 p-5"
+                className="group flex flex-col bg-card rounded-[5px] border border-border overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 p-5"
               >
                 {/* Header: Icon + Title + Status */}
                 <div className="flex gap-4 items-start mb-3">
@@ -385,7 +579,12 @@ export function CollectionsListPage() {
                           <span>
                             by{' '}
                             <span className="font-medium text-foreground">
-                              {collection.lastUpdatedBy}
+                              {
+                                normalizeCollaborator(
+                                  collection.lastUpdatedBy,
+                                  currentUser,
+                                ).displayName
+                              }
                             </span>
                           </span>
                         </>

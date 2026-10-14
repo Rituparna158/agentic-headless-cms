@@ -3,14 +3,11 @@ import {
   FEATURE_GRID_DEFAULTS,
   type FeatureItem,
 } from '../stores/pageBuilderStore';
-
-interface FeatureGridSettingsProps {
-  targetComponentId: string;
-}
+import { PageBuilderSettingProps } from '../../../types/collections.types';
 
 export default function FeatureGridSettings({
   targetComponentId,
-}: FeatureGridSettingsProps) {
+}: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
     (state) => state.featureGrid[targetComponentId] ?? FEATURE_GRID_DEFAULTS,
   );

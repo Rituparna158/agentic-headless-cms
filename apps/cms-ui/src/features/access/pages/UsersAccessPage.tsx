@@ -12,9 +12,10 @@ import { Plus, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
 import { InviteUserDialog } from '../components/InviteUserDialog';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
-
-const SORTABLE_COLUMNS = ['email', 'status', 'createdAt'] as const;
-const SEARCHABLE_LABEL = 'Search users...';
+import {
+  USER_SORTABLE_COLUMNS,
+  USER_SEARCHABLE_LABEL,
+} from '../constants/access.constants';
 
 export const UsersAccessPage = () => {
   const currentUser = useAuthStore((state) => state.user);
@@ -271,8 +272,8 @@ export const UsersAccessPage = () => {
               defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
               onSortChange={(key, direction) => {
                 if (
-                  SORTABLE_COLUMNS.includes(
-                    key as (typeof SORTABLE_COLUMNS)[number],
+                  USER_SORTABLE_COLUMNS.includes(
+                    key as (typeof USER_SORTABLE_COLUMNS)[number],
                   )
                 ) {
                   setSort(`${String(key)}:${direction}`);
@@ -281,7 +282,7 @@ export const UsersAccessPage = () => {
               }}
               enableFiltering
               manualFiltering
-              filterPlaceholder={SEARCHABLE_LABEL}
+              filterPlaceholder={USER_SEARCHABLE_LABEL}
               onSearchChange={(value) => {
                 setSearch(value);
                 setPage(1);

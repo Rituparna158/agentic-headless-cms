@@ -33,10 +33,19 @@ export class ContentService {
     schemaId: string,
     locale: string = DEFAULT_LOCALE,
     query?: ContentQueryOptions,
+    applicationId?: string,
   ) {
     try {
-      logger.info({ schemaId, locale }, 'ContentService: listEntries');
-      return await this.repository.listEntries(schemaId, locale, query);
+      logger.info(
+        { schemaId, locale, applicationId },
+        'ContentService: listEntries',
+      );
+      return await this.repository.listEntries(
+        schemaId,
+        locale,
+        query,
+        applicationId,
+      );
     } catch (error) {
       logger.error({ err: error }, 'ContentService Error in listEntries:');
       throw new ApiError(500, SERVICE_ERRORS.LIST_ENTRIES_FAILED);
@@ -46,10 +55,19 @@ export class ContentService {
     schemaId: string,
     locale: string = DEFAULT_LOCALE,
     query?: ContentQueryOptions,
+    applicationId?: string,
   ) {
     try {
-      logger.info({ schemaId, locale }, 'ContentService: countEntries');
-      return await this.repository.countEntries(schemaId, locale, query?.where);
+      logger.info(
+        { schemaId, locale, applicationId },
+        'ContentService: countEntries',
+      );
+      return await this.repository.countEntries(
+        schemaId,
+        locale,
+        query?.where,
+        applicationId,
+      );
     } catch (error) {
       logger.error({ err: error }, 'ContentService Error in countEntries:');
       throw new ApiError(500, SERVICE_ERRORS.COUNT_ENTRIES_FAILED);
@@ -59,13 +77,19 @@ export class ContentService {
     entryId: string,
     locale: string = DEFAULT_LOCALE,
     schemaId?: string,
+    applicationId?: string,
   ) {
     try {
       logger.info(
-        { entryId, locale, schemaId },
+        { entryId, locale, schemaId, applicationId },
         'ContentService: getEntryById',
       );
-      return await this.repository.getEntryById(entryId, locale, schemaId);
+      return await this.repository.getEntryById(
+        entryId,
+        locale,
+        schemaId,
+        applicationId,
+      );
     } catch (error) {
       logger.error({ err: error }, 'ContentService Error in getEntryById:');
       throw new ApiError(500, SERVICE_ERRORS.FETCH_ENTRY_FAILED);
@@ -77,6 +101,7 @@ export class ContentService {
     userId: string,
     locale: string = DEFAULT_LOCALE,
     applicationId?: string,
+    userEmail?: string,
   ) {
     try {
       logger.info({ schemaId, userId }, 'ContentService: createDraft start');
@@ -92,7 +117,7 @@ export class ContentService {
         interceptedData,
         userId,
         locale,
-        { applicationId },
+        { applicationId, userEmail },
       );
       await hookDispatcher.dispatchContentAfterCreate({
         schemaId,
@@ -127,6 +152,7 @@ export class ContentService {
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
     applicationId?: string,
   ) {
     try {
@@ -149,6 +175,7 @@ export class ContentService {
         interceptedData,
         userId,
         locale,
+        userEmail,
       );
       await hookDispatcher.dispatchContentAfterUpdate({
         entryId,
@@ -182,6 +209,7 @@ export class ContentService {
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
     applicationId?: string,
   ) {
     try {
@@ -204,6 +232,7 @@ export class ContentService {
         interceptedData,
         userId,
         locale,
+        userEmail,
       );
       await hookDispatcher.dispatchContentAfterUpdate({
         entryId,
@@ -234,6 +263,7 @@ export class ContentService {
     entryId: string,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
     applicationId?: string,
   ) {
     try {
@@ -254,6 +284,7 @@ export class ContentService {
         entryId,
         userId,
         locale,
+        userEmail,
       );
       await hookDispatcher.dispatchContentAfterPublish({
         entryId,
@@ -285,6 +316,7 @@ export class ContentService {
     entryId: string,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
     applicationId?: string,
   ) {
     try {
@@ -301,6 +333,7 @@ export class ContentService {
         entryId,
         userId,
         locale,
+        userEmail,
       );
       await hookDispatcher.dispatchContentAfterUnpublish({
         entryId,
@@ -382,10 +415,18 @@ export class ContentService {
   }
   async deleteEntry(entryId: string, applicationId?: string) {
     try {
-      logger.info({ entryId }, 'ContentService: deleteEntry start');
+      logger.info(
+        { entryId, applicationId },
+        'ContentService: deleteEntry start',
+      );
       // Capture BEFORE state
       logger.debug({ entryId }, 'ContentService: fetching beforeState');
-      const beforeState = await this.repository.getEntryById(entryId);
+      const beforeState = await this.repository.getEntryById(
+        entryId,
+        DEFAULT_LOCALE,
+        undefined,
+        applicationId,
+      );
       await hookDispatcher.dispatchContentBeforeDelete({
         entryId,
         beforeState: beforeState as unknown as ContentEntryRecord | null,
@@ -393,7 +434,7 @@ export class ContentService {
       });
       // Perform mutation
       logger.debug({ entryId }, 'ContentService: mutating data');
-      const result = await this.repository.deleteEntry(entryId);
+      const result = await this.repository.deleteEntry(entryId, applicationId);
       await hookDispatcher.dispatchContentAfterDelete({
         entryId,
         beforeState: beforeState as unknown as ContentEntryRecord | null,

@@ -1,8 +1,5 @@
 import { usePageBuilderStore } from '../stores/pageBuilderStore';
-
-interface ContactFormSettingsProps {
-  targetComponentId: string;
-}
+import { PageBuilderSettingProps } from '../../../types/collections.types';
 
 const DEFAULT_STATE = {
   title: 'Contact Us',
@@ -22,7 +19,7 @@ const DEFAULT_STATE = {
 
 export default function ContactFormSettings({
   targetComponentId,
-}: ContactFormSettingsProps) {
+}: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
     (state) => state.contactForm[targetComponentId] ?? DEFAULT_STATE,
   );

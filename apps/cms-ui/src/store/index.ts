@@ -1,9 +1,5 @@
 import { create } from 'zustand';
-
-interface AppState {
-  theme: 'light' | 'dark';
-  setTheme: (theme: 'light' | 'dark') => void;
-}
+import type { AppState } from '../types/store.types';
 
 export const useAppStore = create<AppState>((set) => ({
   theme: 'light',

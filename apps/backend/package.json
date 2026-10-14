@@ -15,7 +15,8 @@
     "check-types": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "cli": "tsx --env-file=../../.env src/cli.ts"
+    "cli": "tsx --env-file=../../.env src/cli.ts",
+    "seed:admin": "pnpm --filter @repo/shared-db run seed:admin"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",
