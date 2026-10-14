@@ -11,28 +11,26 @@ import {
   GitCompare,
   Terminal,
 } from 'lucide-react';
-import type { AuditLogRecord } from '../types/audit.types';
+import type {
+  AuditDetailDrawerProps,
+  DrawerTabType,
+  DiffViewMode,
+} from '../types/audit.types';
+import { CLIPBOARD_COPY_TIMEOUT_MS } from '../constants/audit.constants';
 import {
   generateHumanReadableSummary,
   computeStateDiff,
 } from '../utils/audit-formatters';
-
-interface AuditDetailDrawerProps {
-  log: AuditLogRecord | null;
-  isOpen: boolean;
-  onClose: () => void;
-}
 
 export const AuditDetailDrawer: React.FC<AuditDetailDrawerProps> = ({
   log,
   isOpen,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<'diff' | 'tech' | 'raw'>('diff');
+  const [activeTab, setActiveTab] = useState<DrawerTabType>('diff');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [diffViewMode, setDiffViewMode] = useState<'changes-only' | 'full'>(
-    'changes-only',
-  );
+  const [diffViewMode, setDiffViewMode] =
+    useState<DiffViewMode>('changes-only');
 
   if (!isOpen || !log) return null;
 
@@ -55,7 +53,7 @@ export const AuditDetailDrawer: React.FC<AuditDetailDrawerProps> = ({
   const copyText = (text: string, keyName: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(keyName);
-    setTimeout(() => setCopiedKey(null), 2000);
+    setTimeout(() => setCopiedKey(null), CLIPBOARD_COPY_TIMEOUT_MS);
   };
 
   const downloadJson = () => {

@@ -1,11 +1,9 @@
 import React from 'react';
 import { Activity, FileText, Shield, Bot } from 'lucide-react';
-import type { AuditLogRecord } from '../types/audit.types';
-
-interface AuditSummaryCardsProps {
-  logs: AuditLogRecord[];
-  totalCount: number;
-}
+import type {
+  AuditSummaryCardsProps,
+  SummaryMetricCard,
+} from '../types/audit.types';
 
 export const AuditSummaryCards: React.FC<AuditSummaryCardsProps> = ({
   logs,
@@ -30,7 +28,7 @@ export const AuditSummaryCards: React.FC<AuditSummaryCardsProps> = ({
     (l) => l.actorType === 'agent' || l.actorType === 'system',
   ).length;
 
-  const cards = [
+  const cards: SummaryMetricCard[] = [
     {
       title: 'Total Recorded Events',
       value: totalCount.toLocaleString(),

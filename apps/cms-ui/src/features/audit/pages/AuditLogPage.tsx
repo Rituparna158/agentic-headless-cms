@@ -11,49 +11,30 @@ import {
 } from 'lucide-react';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { useAuditLogs } from '../api/audit.api';
-import type { AuditLogRecord, AuditFilters } from '../types/audit.types';
+import type {
+  AuditLogRecord,
+  AuditFilters,
+  ActorFilterType,
+} from '../types/audit.types';
+import {
+  ACTION_OPTIONS,
+  RESOURCE_OPTIONS,
+  ACTOR_TYPE_OPTIONS,
+  PAGE_SIZE_OPTIONS,
+  DEFAULT_AUDIT_PAGE,
+  DEFAULT_AUDIT_PAGE_SIZE,
+} from '../constants/audit.constants';
 import { AuditSummaryCards } from '../components/AuditSummaryCards';
 import { AuditTableView } from '../components/AuditTableView';
 import { AuditDetailDrawer } from '../components/AuditDetailDrawer';
 
-const ACTION_OPTIONS = [
-  { value: '', label: 'All Actions' },
-  { value: 'create', label: 'Created' },
-  { value: 'update', label: 'Updated' },
-  { value: 'publish', label: 'Published' },
-  { value: 'unpublish', label: 'Unpublished' },
-  { value: 'delete', label: 'Deleted' },
-  { value: 'rollback', label: 'Rolled Back' },
-  { value: 'login', label: 'Logged In' },
-  { value: 'schema_change', label: 'Schema Change' },
-];
-
-const RESOURCE_OPTIONS = [
-  { value: '', label: 'All Resources' },
-  { value: 'content', label: 'Content Entries' },
-  { value: 'schema', label: 'Schemas' },
-  { value: 'user', label: 'Users' },
-  { value: 'role', label: 'Roles' },
-  { value: 'media', label: 'Media Assets' },
-  { value: 'webhook', label: 'Webhooks' },
-  { value: 'locale', label: 'Locales' },
-];
-
-const ACTOR_TYPE_OPTIONS = [
-  { value: 'all', label: 'All Actors' },
-  { value: 'user', label: 'Human Users' },
-  { value: 'agent', label: 'AI Agents' },
-  { value: 'system', label: 'Automated System' },
-];
-
 export const AuditLogPage: React.FC = () => {
-  const [page, setPage] = useState<number>(1);
-  const [limit, setLimit] = useState<number>(15);
+  const [page, setPage] = useState<number>(DEFAULT_AUDIT_PAGE);
+  const [limit, setLimit] = useState<number>(DEFAULT_AUDIT_PAGE_SIZE);
   const [actionFilter, setActionFilter] = useState<string>('');
   const [resourceFilter, setResourceFilter] = useState<string>('');
-  const [actorTypeFilter, setActorTypeFilter] = useState<
-    'all' | 'user' | 'agent' | 'system'
-  >('all');
+  const [actorTypeFilter, setActorTypeFilter] =
+    useState<ActorFilterType>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [search, setSearch] = useState<string>('');
@@ -377,11 +358,11 @@ export const AuditLogPage: React.FC = () => {
                       }}
                       className="px-2 py-1 rounded border border-border bg-background text-xs text-foreground focus:outline-none"
                     >
-                      <option value={10}>10</option>
-                      <option value={15}>15</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <option key={size} value={size}>
+                          {size}
+                        </option>
+                      ))}
                     </select>
                   </div>
 

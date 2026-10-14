@@ -3,6 +3,10 @@ import type {
   HumanReadableSummary,
   DiffEntry,
 } from '../types/audit.types';
+import {
+  RESOURCE_TYPE_LABELS,
+  IGNORED_DIFF_KEYS,
+} from '../constants/audit.constants';
 
 export function getActorDisplayName(log: AuditLogRecord): string {
   if (log.actorType === 'agent') {
@@ -34,18 +38,8 @@ export function getActorInitials(name: string): string {
 }
 
 export function getResourceTypeDisplayName(resourceType: string): string {
-  const map: Record<string, string> = {
-    content: 'Content Entry',
-    schema: 'Content Schema',
-    role: 'Access Role',
-    user: 'User Profile',
-    locale: 'Language / Locale',
-    webhook: 'Webhook Endpoint',
-    media: 'Media Asset',
-    auth: 'Authentication',
-  };
   return (
-    map[resourceType.toLowerCase()] ||
+    RESOURCE_TYPE_LABELS[resourceType.toLowerCase()] ||
     resourceType.charAt(0).toUpperCase() + resourceType.slice(1)
   );
 }
@@ -201,14 +195,7 @@ export function extractKeyChanges(
   }
 
   const allKeys = Array.from(new Set([...Object.keys(b), ...Object.keys(a)]));
-  const ignoredKeys = new Set([
-    'updatedAt',
-    'createdAt',
-    'version',
-    'id',
-    'applicationId',
-  ]);
-  const relevantKeys = allKeys.filter((k) => !ignoredKeys.has(k));
+  const relevantKeys = allKeys.filter((k) => !IGNORED_DIFF_KEYS.has(k));
 
   const addedKeys = relevantKeys.filter((k) => !(k in b) && k in a);
   const removedKeys = relevantKeys.filter((k) => k in b && !(k in a));

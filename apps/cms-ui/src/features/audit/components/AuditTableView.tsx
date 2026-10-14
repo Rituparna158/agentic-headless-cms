@@ -10,16 +10,12 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react';
-import type { AuditLogRecord } from '../types/audit.types';
+import type { AuditTableViewProps } from '../types/audit.types';
+import { CLIPBOARD_COPY_TIMEOUT_MS } from '../constants/audit.constants';
 import {
   generateHumanReadableSummary,
   computeStateDiff,
 } from '../utils/audit-formatters';
-
-interface AuditTableViewProps {
-  logs: AuditLogRecord[];
-  onSelectLog: (log: AuditLogRecord) => void;
-}
 
 export const AuditTableView: React.FC<AuditTableViewProps> = ({
   logs,
@@ -31,7 +27,7 @@ export const AuditTableView: React.FC<AuditTableViewProps> = ({
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopiedId(text);
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => setCopiedId(null), CLIPBOARD_COPY_TIMEOUT_MS);
   };
 
   if (logs.length === 0) {
