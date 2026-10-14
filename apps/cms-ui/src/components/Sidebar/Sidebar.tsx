@@ -58,17 +58,19 @@ export const Sidebar = () => {
       }`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-zinc-800">
-        {!isCollapsed && (
-          <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-            <div className="w-8 h-8 bg-zinc-100 rounded-md flex items-center justify-center shrink-0">
-              <span className="text-zinc-950 font-bold text-lg">A</span>
-            </div>
-            <span className="font-semibold text-zinc-100 text-lg tracking-tight">
-              Agentic
-            </span>
+      <div className="flex items-center justify-between h-16 px-4 border-b border-zinc-800 overflow-hidden">
+        <div
+          className={`flex items-center gap-2 overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${
+            isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'
+          }`}
+        >
+          <div className="w-8 h-8 bg-zinc-100 rounded-md flex items-center justify-center shrink-0">
+            <span className="text-zinc-950 font-bold text-lg">A</span>
           </div>
-        )}
+          <span className="font-semibold text-zinc-100 text-lg tracking-tight">
+            Agentic
+          </span>
+        </div>
         <button
           onClick={toggleCollapse}
           className="p-2 rounded-md hover:bg-zinc-800 transition-colors focus:outline-none ml-auto shrink-0"
@@ -95,30 +97,40 @@ export const Sidebar = () => {
                           : 'hover:bg-zinc-800/50 hover:text-zinc-100'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 overflow-hidden">
                         {item.icon && (
                           <item.icon
                             size={20}
                             className={`shrink-0 ${active ? 'text-zinc-100' : 'text-zinc-400'}`}
                           />
                         )}
-                        {!isCollapsed && (
-                          <span className="truncate">{item.title}</span>
-                        )}
-                      </div>
-                      {!isCollapsed && (
-                        <span className="shrink-0 text-zinc-500">
-                          {isExpanded ? (
-                            <ChevronDown size={16} />
-                          ) : (
-                            <ChevronRight size={16} />
-                          )}
+                        <span
+                          className={`truncate transition-all duration-300 ease-in-out ${
+                            isCollapsed
+                              ? 'max-w-0 opacity-0 pointer-events-none'
+                              : 'max-w-xs opacity-100'
+                          }`}
+                        >
+                          {item.title}
                         </span>
-                      )}
+                      </div>
+                      <span
+                        className={`shrink-0 text-zinc-500 transition-all duration-300 ease-in-out ${
+                          isCollapsed
+                            ? 'max-w-0 opacity-0 pointer-events-none'
+                            : 'max-w-xs opacity-100'
+                        }`}
+                      >
+                        {isExpanded ? (
+                          <ChevronDown size={16} />
+                        ) : (
+                          <ChevronRight size={16} />
+                        )}
+                      </span>
                     </button>
                     {/* Submenu */}
                     {!isCollapsed && isExpanded && (
-                      <ul className="mt-1 mb-2 space-y-1">
+                      <ul className="mt-1 mb-2 space-y-1 animate-fade-in">
                         {item.subItems.map((subItem) => {
                           const [path, search] = subItem.href.split('?');
                           const isSubActive = search
@@ -150,7 +162,7 @@ export const Sidebar = () => {
                   <NavLink
                     to={item.href}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                      `flex items-center gap-3 px-3 py-2 rounded-md transition-colors overflow-hidden ${
                         isActive
                           ? 'bg-zinc-800 text-zinc-100 font-medium'
                           : 'hover:bg-zinc-800/50 hover:text-zinc-100'
@@ -163,9 +175,15 @@ export const Sidebar = () => {
                         className={`shrink-0 ${isActive(item.href) ? 'text-zinc-100' : 'text-zinc-400'}`}
                       />
                     )}
-                    {!isCollapsed && (
-                      <span className="truncate">{item.title}</span>
-                    )}
+                    <span
+                      className={`truncate transition-all duration-300 ease-in-out ${
+                        isCollapsed
+                          ? 'max-w-0 opacity-0 pointer-events-none'
+                          : 'max-w-xs opacity-100'
+                      }`}
+                    >
+                      {item.title}
+                    </span>
                   </NavLink>
                 )}
               </li>
@@ -174,11 +192,11 @@ export const Sidebar = () => {
         </ul>
       </nav>
       {/* Footer / User Area */}
-      <div className="p-4 border-t border-zinc-800">
+      <div className="p-4 border-t border-zinc-800 overflow-hidden">
         <button
           onClick={() => logout()}
           disabled={isPending}
-          className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors disabled:opacity-50 ${
+          className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors disabled:opacity-50 overflow-hidden ${
             isCollapsed ? 'justify-center px-0' : ''
           }`}
         >
@@ -187,9 +205,15 @@ export const Sidebar = () => {
           ) : (
             <LogOut size={20} className="shrink-0" />
           )}
-          {!isCollapsed && (
-            <span>{isPending ? 'Logging out...' : 'Logout'}</span>
-          )}
+          <span
+            className={`transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden ${
+              isCollapsed
+                ? 'max-w-0 opacity-0 pointer-events-none'
+                : 'max-w-xs opacity-100'
+            }`}
+          >
+            {isPending ? 'Logging out...' : 'Logout'}
+          </span>
         </button>
       </div>
     </aside>
