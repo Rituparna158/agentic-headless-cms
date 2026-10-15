@@ -134,6 +134,10 @@ export class PluginLoaderService {
     const definition = validatePluginDefinition(definitionInput);
     const { id, name, version } = definition.config;
 
+    if (this.plugins.has(id)) {
+      return this.plugins.get(id)!;
+    }
+
     let isEnabled = true;
     let config: Record<string, unknown> = {};
 

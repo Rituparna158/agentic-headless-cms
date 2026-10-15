@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+import path from 'node:path';
+import fs from 'node:fs';
 import { pluginLoader } from './plugin-loader.service.js';
 import { ApiError } from '@repo/utils';
 import { eventBus } from '@repo/events';
@@ -7,7 +9,21 @@ import { getAuditContext } from '../../utils/audit.js';
 import { maskConfigSecrets } from './mask-secrets.js';
 
 export class PluginController {
-  public listPlugins = (req: Request, res: Response): void => {
+  public listPlugins = async (req: Request, res: Response): Promise<void> => {
+    if (pluginLoader.getAllPlugins().length === 0) {
+      const candidateDirs = [
+        path.resolve(process.cwd(), 'plugins'),
+        path.resolve(process.cwd(), 'apps', 'backend', 'plugins'),
+        path.resolve(process.cwd(), '..', '..', 'plugins'),
+        path.resolve(process.cwd(), '..', 'plugins'),
+      ];
+      for (const dir of candidateDirs) {
+        if (fs.existsSync(dir)) {
+          await pluginLoader.loadFromDirectory(dir);
+        }
+      }
+    }
+
     const unmask = req.query.unmask === 'true';
     const plugins = pluginLoader.getSummaries({ maskSecrets: !unmask });
     res.json({
