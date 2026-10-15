@@ -1,0 +1,701 @@
+import * as React from 'react';
+import {
+  motion,
+  type HTMLMotionProps,
+  useMotionValue,
+  useTransform,
+  useSpring,
+  useReducedMotion,
+} from 'framer-motion';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../../utils/cn';
+import { Button } from '../../components/ui/button';
+import { Typography } from '../../components/ui/typography';
+import {
+  PlusIcon,
+  QuestionMarkCircledIcon,
+  UploadIcon,
+  FileTextIcon,
+} from '@radix-ui/react-icons';
+
+// Interfaces
+
+export interface EmptyStateProps
+  extends
+    Omit<HTMLMotionProps<'div'>, 'ref'>,
+    VariantProps<typeof emptyStateVariants> {
+  children?: React.ReactNode;
+  tilt?: boolean;
+}
+
+export interface EmptyStateIllustrationProps extends Omit<
+  HTMLMotionProps<'div'>,
+  'ref'
+> {
+  icon?: React.ElementType;
+  illustration?: React.ReactNode | string;
+  iconSize?: number;
+  accent?: 'primary' | 'teal' | 'amber';
+}
+
+export interface EmptyStateHeadingProps extends Omit<
+  React.HTMLAttributes<HTMLHeadingElement>,
+  'color'
+> {
+  title?: string;
+  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+}
+
+export interface EmptyStateDescProps extends Omit<
+  React.HTMLAttributes<HTMLParagraphElement>,
+  'color'
+> {
+  description?: string;
+  color?:
+    | 'inherit'
+    | 'default'
+    | 'primary'
+    | 'muted'
+    | 'secondary'
+    | 'error'
+    | 'success'
+    | 'warning';
+}
+
+export interface EmptyStateActionsProps extends Omit<
+  HTMLMotionProps<'div'>,
+  'ref'
+> {
+  children?: React.ReactNode;
+}
+
+export interface EmptyStateBadgeProps extends Omit<
+  HTMLMotionProps<'div'>,
+  'ref'
+> {
+  label: string;
+  dot?: boolean;
+}
+
+export interface EmptyStateHelpProps extends Omit<
+  HTMLMotionProps<'div'>,
+  'ref'
+> {
+  linkText?: string;
+  href?: string;
+  icon?: React.ElementType;
+}
+
+export interface EmptyStateDefaultProps {
+  onCreateProject?: () => void;
+  onImport?: () => void;
+  helpHref?: string;
+}
+
+export interface EmptyStateMinimalProps {
+  onClearFilters?: () => void;
+}
+
+// CVA Variants
+
+const emptyStateVariants = cva(
+  [
+    'relative flex flex-col items-center justify-center w-full min-h-[460px] p-12 text-center',
+    'rounded-[3rem] border transition-all duration-700 ease-out',
+    'transform-style-3d group/card',
+  ].join(' '),
+  {
+    variants: {
+      variant: {
+        default:
+          'bg-background/80 backdrop-blur-xl border-border/50 ' +
+          'shadow-[0_15px_35px_rgba(0,0,0,0.03),0_5px_15px_rgba(0,0,0,0.02)] ' +
+          'dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] ' +
+          'before:absolute before:inset-0 before:rounded-[inherit] ' +
+          'before:bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/0.06),transparent_70%)] ' +
+          'before:pointer-events-none',
+
+        card:
+          'bg-card backdrop-blur-2xl border-border/40 ' +
+          'shadow-[0_20px_50px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.02)] ' +
+          'dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] ' +
+          'before:absolute before:inset-0 before:rounded-[inherit] ' +
+          'before:bg-[conic-gradient(from_0deg_at_50%_0%,transparent,hsl(var(--primary)/0.02),transparent)] ' +
+          'before:animate-spin-slow before:pointer-events-none',
+
+        minimal:
+          'bg-white dark:bg-white/5 dark:backdrop-blur-md shadow-2xl shadow-black/[0.03] dark:shadow-black/20 ' +
+          'border-2 border-dashed border-border dark:border-white/15 min-h-[360px] ' +
+          'hover:bg-slate-50 dark:hover:bg-white/10 hover:border-solid hover:border-primary/50 dark:hover:border-primary/40 ' +
+          'hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 ease-in-out',
+
+        gradient:
+          'bg-gradient-to-tr from-[hsl(var(--primary)/0.04)] via-background to-[hsl(var(--primary)/0.02)] ' +
+          'dark:from-[hsl(var(--primary)/0.12)] dark:to-[hsl(var(--primary)/0.05)] dark:via-background ' +
+          'border-primary/10 dark:border-primary/20 shadow-sm',
+      },
+    },
+    defaultVariants: { variant: 'default' },
+  },
+);
+
+//  Animation configs
+
+const containerVariants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { staggerChildren: 0.09, delayChildren: 0.05 },
+  },
+};
+
+const itemVariants = {
+  initial: { opacity: 0, y: 18 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: [0.23, 1, 0.32, 1] },
+  },
+} as const;
+
+const iconVariants = {
+  initial: { scale: 0.75, opacity: 0, rotateX: 20 },
+  animate: {
+    scale: 1,
+    opacity: 1,
+    rotateX: 0,
+    transition: { type: 'spring', stiffness: 220, damping: 18, delay: 0.06 },
+  },
+} as const;
+
+//  Particle system
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  tx: number;
+  ty: number;
+  dur: number;
+  del: number;
+  size: number;
+}
+
+function useParticles(count = 12): Particle[] {
+  const [particles, setParticles] = React.useState<Particle[]>([]);
+
+  React.useEffect(() => {
+    setParticles(
+      Array.from({ length: count }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: 30 + Math.random() * 55,
+        tx: (Math.random() - 0.5) * 44,
+        ty: -(28 + Math.random() * 52),
+        dur: 3.2 + Math.random() * 3.8,
+        del: Math.random() * 5,
+        size: Math.random() > 0.5 ? 2 : 3,
+      })),
+    );
+  }, [count]);
+
+  return particles;
+}
+
+const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
+  ({ className, variant, children, tilt = true, style, ...props }, ref) => {
+    const shouldReduceMotion = useReducedMotion();
+    const wrapRef = React.useRef<HTMLDivElement>(null);
+
+    const rawX = useMotionValue(0);
+    const rawY = useMotionValue(0);
+    const springConfig = { stiffness: 200, damping: 30 };
+    const rotateX = useSpring(
+      useTransform(rawY, [-0.5, 0.5], [8, -8]),
+      springConfig,
+    );
+    const rotateY = useSpring(
+      useTransform(rawX, [-0.5, 0.5], [-8, 8]),
+      springConfig,
+    );
+    const translateZ = useSpring(useMotionValue(0), {
+      stiffness: 200,
+      damping: 20,
+    });
+
+    const handleMouseMove = React.useCallback(
+      (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!tilt || shouldReduceMotion || !wrapRef.current) return;
+        const r = wrapRef.current.getBoundingClientRect();
+        rawX.set((e.clientX - r.left) / r.width - 0.5);
+        rawY.set((e.clientY - r.top) / r.height - 0.5);
+        translateZ.set(6);
+      },
+      [tilt, shouldReduceMotion, rawX, rawY, translateZ],
+    );
+
+    const handleMouseLeave = React.useCallback(() => {
+      rawX.set(0);
+      rawY.set(0);
+      translateZ.set(0);
+    }, [rawX, rawY, translateZ]);
+
+    return (
+      <div
+        ref={wrapRef}
+        style={{ perspective: '900px' }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
+        <motion.div
+          ref={ref}
+          className={cn(emptyStateVariants({ variant }), className)}
+          variants={containerVariants}
+          initial="initial"
+          animate="animate"
+          style={{
+            rotateX: tilt && !shouldReduceMotion ? rotateX : 0,
+            rotateY: tilt && !shouldReduceMotion ? rotateY : 0,
+            translateZ: tilt && !shouldReduceMotion ? translateZ : 0,
+            transformStyle: 'preserve-3d',
+            ...style,
+          }}
+          {...props}
+        >
+          {/* Noise Texture Overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+            }}
+          />
+
+          <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit]">
+            <div className="absolute -top-[20%] left-1/2 -translate-x-1/2 w-[1px] h-[140%] bg-gradient-to-b from-transparent via-primary/10 dark:via-primary/20 to-transparent blur-[60px]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[100px] bg-primary/5 dark:bg-primary/10 blur-[80px] rounded-full" />
+          </div>
+
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
+            style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1.5px, transparent 0)`,
+              backgroundSize: '44px 44px',
+            }}
+          />
+
+          <div className="relative z-10 flex flex-col items-center max-w-sm w-full">
+            {children}
+          </div>
+        </motion.div>
+      </div>
+    );
+  },
+);
+EmptyState.displayName = 'EmptyState';
+
+//  Illustration / Icon
+
+const accentTokens = {
+  primary: {
+    ring: 'border-primary/20 dark:border-primary/40',
+    ringInner: 'border-primary/10 dark:border-primary/25',
+    dot: 'bg-primary shadow-primary/50 shadow-md',
+    core: 'bg-background dark:bg-primary/10 border-primary/10 dark:border-primary/30 backdrop-blur-md shadow-sm',
+    float: 'drop-shadow-md',
+    iconColor: 'text-primary',
+    glow: 'bg-primary/10 dark:bg-primary/25 blur-[40px]',
+  },
+  teal: {
+    ring: 'border-teal-500/20 dark:border-teal-500/40',
+    ringInner: 'border-teal-500/10 dark:border-teal-500/25',
+    dot: 'bg-teal-500 shadow-teal-500/50 shadow-md',
+    core: 'bg-background dark:bg-teal-950 border-teal-500/10 dark:border-teal-500/30 backdrop-blur-md shadow-sm',
+    float: 'drop-shadow-md',
+    iconColor: 'text-teal-600 dark:text-teal-400',
+    glow: 'bg-teal-500/10 dark:bg-teal-500/25 blur-[40px]',
+  },
+  amber: {
+    ring: 'border-amber-500/20 dark:border-amber-500/40',
+    ringInner: 'border-amber-500/10 dark:border-amber-500/25',
+    dot: 'bg-amber-500 shadow-amber-500/50 shadow-md',
+    core: 'bg-background dark:bg-amber-950 border-amber-500/10 dark:border-amber-500/30 backdrop-blur-md shadow-sm',
+    float: 'drop-shadow-md',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    glow: 'bg-amber-500/10 dark:bg-amber-500/25 blur-[40px]',
+  },
+} as const;
+
+const EmptyStateIllustration = React.forwardRef<
+  HTMLDivElement,
+  EmptyStateIllustrationProps
+>(
+  (
+    {
+      className,
+      icon: Icon,
+      illustration,
+      iconSize = 22,
+      accent = 'primary',
+      ...props
+    },
+    ref,
+  ) => {
+    const shouldReduceMotion = useReducedMotion();
+    const tk = accentTokens[accent];
+    const particles = useParticles(10);
+
+    return (
+      <motion.div
+        ref={ref}
+        variants={iconVariants}
+        className={cn(
+          'relative mb-6 flex items-center justify-center',
+          className,
+        )}
+        {...props}
+      >
+        {illustration ? (
+          typeof illustration === 'string' ? (
+            <img
+              src={illustration}
+              alt="Empty state illustration"
+              className="max-w-[140px]"
+            />
+          ) : (
+            <div className="max-w-[140px]">{illustration}</div>
+          )
+        ) : (
+          <div
+            className="relative w-[120px] h-[120px]"
+            style={{ transformStyle: 'preserve-3d' }}
+          >
+            <div
+              className={cn(
+                'absolute inset-0 rounded-full opacity-30',
+                tk.glow,
+              )}
+              aria-hidden
+            />
+
+            {/* Floating particles */}
+            <div
+              className="absolute inset-[-20px] pointer-events-none overflow-hidden rounded-full"
+              aria-hidden
+            >
+              {particles.map((p) => (
+                <motion.div
+                  key={p.id}
+                  className={cn(
+                    'absolute rounded-full opacity-0',
+                    tk.dot.split(' ')[0],
+                  )}
+                  style={{
+                    width: p.size,
+                    height: p.size,
+                    left: `${p.x}%`,
+                    top: `${p.y}%`,
+                  }}
+                  animate={
+                    shouldReduceMotion
+                      ? { opacity: 0 }
+                      : {
+                          y: [0, p.ty],
+                          x: [0, p.tx],
+                          opacity: [0, 0.8, 0.4, 0],
+                          scale: [0.3, 1.4, 1, 0.2],
+                        }
+                  }
+                  transition={
+                    shouldReduceMotion
+                      ? {}
+                      : {
+                          duration: p.dur,
+                          delay: p.del,
+                          repeat: Infinity,
+                          ease: 'circOut',
+                        }
+                  }
+                />
+              ))}
+            </div>
+
+            {/* Outer spinning ring */}
+            <motion.div
+              aria-hidden
+              className={cn('absolute inset-0 rounded-full border-2', tk.ring)}
+              animate={shouldReduceMotion ? {} : { rotate: 360 }}
+              transition={
+                shouldReduceMotion
+                  ? {}
+                  : { duration: 15, repeat: Infinity, ease: 'linear' }
+              }
+            >
+              <div
+                className={cn(
+                  'absolute -top-[5px] left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full',
+                  tk.dot,
+                )}
+              />
+              <div
+                className={cn(
+                  'absolute -bottom-[5px] left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full opacity-50',
+                  tk.dot,
+                )}
+              />
+            </motion.div>
+
+            {/* Middle dashed ring */}
+            <motion.div
+              aria-hidden
+              className={cn(
+                'absolute inset-[10px] rounded-full border border-dashed opacity-40',
+                tk.ringInner,
+              )}
+              animate={shouldReduceMotion ? {} : { rotate: -360 }}
+              transition={
+                shouldReduceMotion
+                  ? {}
+                  : { duration: 25, repeat: Infinity, ease: 'linear' }
+              }
+            />
+
+            {/* Inner counter-rotating ring */}
+            <motion.div
+              aria-hidden
+              className={cn(
+                'absolute inset-[20px] rounded-full border',
+                tk.ringInner,
+              )}
+              animate={shouldReduceMotion ? {} : { rotate: 360 }}
+              transition={
+                shouldReduceMotion
+                  ? {}
+                  : { duration: 10, repeat: Infinity, ease: 'linear' }
+              }
+            />
+
+            {/* Icon core */}
+            <motion.div
+              className={cn(
+                'absolute inset-[28px] rounded-full border flex items-center justify-center shadow-2xl',
+                tk.core,
+                tk.float,
+              )}
+              animate={
+                shouldReduceMotion
+                  ? {}
+                  : {
+                      y: [0, -10, 0],
+                      rotateY: [0, 15, 0],
+                      rotateX: [0, -10, 0],
+                      scale: [1, 1.08, 1],
+                    }
+              }
+              transition={
+                shouldReduceMotion
+                  ? {}
+                  : { duration: 5, repeat: Infinity, ease: 'easeInOut' }
+              }
+              style={{ transformStyle: 'preserve-3d' }}
+            >
+              {Icon ? (
+                <Icon
+                  width={iconSize + 4}
+                  height={iconSize + 4}
+                  className={cn(tk.iconColor, 'drop-shadow-lg')}
+                />
+              ) : (
+                <FileTextIcon
+                  width={iconSize + 4}
+                  height={iconSize + 4}
+                  className="text-muted-foreground/60"
+                />
+              )}
+              <div className="absolute inset-0 rounded-full bg-primary/5 blur-lg -z-10 animate-pulse" />
+            </motion.div>
+          </div>
+        )}
+      </motion.div>
+    );
+  },
+);
+EmptyStateIllustration.displayName = 'EmptyStateIllustration';
+
+const EmptyStateBadge = React.forwardRef<HTMLDivElement, EmptyStateBadgeProps>(
+  ({ className, label, dot = true, ...props }, ref) => (
+    <motion.div
+      ref={ref}
+      variants={itemVariants}
+      className={cn(
+        'mb-6 inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border',
+        'text-[10px] font-bold tracking-[0.1em] uppercase',
+        'bg-primary/10 dark:bg-primary/15 border-primary/20 dark:border-primary/20 text-primary',
+        'shadow-sm backdrop-blur-md',
+        className,
+      )}
+      {...props}
+    >
+      {dot && (
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+        </span>
+      )}
+      {label}
+    </motion.div>
+  ),
+);
+EmptyStateBadge.displayName = 'EmptyStateBadge';
+
+const EmptyStateHeading = React.forwardRef<
+  HTMLHeadingElement,
+  EmptyStateHeadingProps
+>(({ className, title, children, variant = 'h3', ...props }, ref) => (
+  <motion.div variants={itemVariants} className="w-full">
+    <Typography
+      ref={ref}
+      variant={variant}
+      className={cn(
+        'mb-4 font-bold tracking-tight text-foreground text-4xl sm:text-5xl',
+        className,
+      )}
+      {...props}
+    >
+      {children || title || 'No data available'}
+    </Typography>
+  </motion.div>
+));
+EmptyStateHeading.displayName = 'EmptyStateHeading';
+
+const EmptyStateDesc = React.forwardRef<
+  HTMLParagraphElement,
+  EmptyStateDescProps
+>(({ className, description, children, color = 'muted', ...props }, ref) => (
+  <motion.div variants={itemVariants} className="w-full">
+    <Typography
+      ref={ref}
+      variant="body"
+      color={color}
+      className={cn(
+        'mb-10 max-w-[360px] mx-auto text-muted-foreground text-lg leading-relaxed text-balance font-medium',
+        className,
+      )}
+      {...props}
+    >
+      {children || description || 'There is no data to show right now.'}
+    </Typography>
+  </motion.div>
+));
+EmptyStateDesc.displayName = 'EmptyStateDesc';
+
+const EmptyStateActions = React.forwardRef<
+  HTMLDivElement,
+  EmptyStateActionsProps
+>(({ className, children, ...props }, ref) => (
+  <motion.div
+    ref={ref}
+    variants={itemVariants}
+    className={cn(
+      'mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 w-full',
+      className,
+    )}
+    {...props}
+  >
+    {children}
+  </motion.div>
+));
+EmptyStateActions.displayName = 'EmptyStateActions';
+
+const EmptyStateHelp = React.forwardRef<HTMLDivElement, EmptyStateHelpProps>(
+  (
+    {
+      className,
+      linkText = 'Learn more',
+      href = '#',
+      icon: Icon = QuestionMarkCircledIcon,
+      ...props
+    },
+    ref,
+  ) => (
+    <motion.div
+      ref={ref}
+      variants={itemVariants}
+      className={cn(
+        'mt-8 pt-5 border-t border-border w-full flex items-center justify-center text-sm',
+        className,
+      )}
+      {...props}
+    >
+      <Typography variant="muted" className="flex items-center gap-1.5">
+        <Icon width={14} height={14} />
+        <span>Need help?</span>{' '}
+        <a
+          href={href}
+          className="font-medium text-primary hover:underline hover:text-primary/80 transition-colors"
+        >
+          {linkText}
+        </a>
+      </Typography>
+    </motion.div>
+  ),
+);
+EmptyStateHelp.displayName = 'EmptyStateHelp';
+
+// Preset compositions
+
+const EmptyStateDefault = ({
+  onCreateProject,
+  onImport,
+  helpHref = '#',
+}: EmptyStateDefaultProps): React.JSX.Element => (
+  <EmptyState>
+    <EmptyStateIllustration icon={FileTextIcon} accent="primary" />
+    <EmptyStateHeading>No projects yet</EmptyStateHeading>
+    <EmptyStateDesc>
+      Get started by creating a new project. You can also import an existing
+      one.
+    </EmptyStateDesc>
+    <EmptyStateActions>
+      <Button
+        variant="default"
+        animationVariant="pulse"
+        onClick={onCreateProject}
+      >
+        <PlusIcon className="mr-2" /> Create project
+      </Button>
+      <Button variant="outline" onClick={onImport}>
+        <UploadIcon className="mr-2" /> Import
+      </Button>
+    </EmptyStateActions>
+    <EmptyStateHelp linkText="Read our documentation" href={helpHref} />
+  </EmptyState>
+);
+
+const EmptyStateMinimal = ({
+  onClearFilters,
+}: EmptyStateMinimalProps): React.JSX.Element => (
+  <EmptyState variant="minimal" tilt={false}>
+    <EmptyStateIllustration icon={FileTextIcon} accent="teal" />
+    <EmptyStateBadge label="0 results" />
+    <EmptyStateHeading title="Nothing found" />
+    <EmptyStateDesc description="We couldn't find anything matching your search. Try adjusting your filters." />
+    <EmptyStateActions>
+      <Button variant="outline" onClick={onClearFilters}>
+        Clear filters
+      </Button>
+    </EmptyStateActions>
+  </EmptyState>
+);
+
+export {
+  EmptyState,
+  EmptyStateIllustration,
+  EmptyStateBadge,
+  EmptyStateHeading,
+  EmptyStateDesc,
+  EmptyStateActions,
+  EmptyStateHelp,
+  EmptyStateDefault,
+  EmptyStateMinimal,
+};
