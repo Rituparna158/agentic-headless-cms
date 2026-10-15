@@ -67,4 +67,11 @@ export const API_PATHS = {
     BASE: '/api/v1/audit-logs',
     BY_ID: (id: string) => `/api/v1/audit-logs/${id}`,
   },
+  PLUGINS: {
+    BASE: (qs?: string) => `/api/v1/plugins${qs ? `?${qs}` : ''}`,
+    BY_ID: (id: string, qs?: string) =>
+      `/api/v1/plugins/${id}${qs ? `?${qs}` : ''}`,
+    STATUS: (id: string) => `/api/v1/plugins/${id}/status`,
+    CONFIG: (id: string) => `/api/v1/plugins/${id}/config`,
+  },
 } as const;
