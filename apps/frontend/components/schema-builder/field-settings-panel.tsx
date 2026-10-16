@@ -35,6 +35,14 @@ export function FieldSettingsPanel({
 }: FieldSettingsPanelProps<SchemaBuilderFieldValues>) {
   // useWatch is called unconditionally with a fallback index of 0 to comply with hooks rules.
   const dataType = useWatch({ control, name: `fields.${index ?? 0}.dataType` });
+  const isRelation = dataType === 'relation' && index !== null;
+
+  const { data: schemasData, isLoading: isLoadingSchemas } = useQuery({
+    queryKey: ['schemas'],
+    queryFn: () => listSchemas({ pageSize: 100 }),
+    enabled: isRelation,
+  });
+  const schemas: SchemaRecord[] = schemasData?.data ?? [];
 
   if (index === null) {
     return (
@@ -48,14 +56,6 @@ export function FieldSettingsPanel({
 
   const showLengthLimits = LENGTH_VALIDATED_TYPES.has(dataType);
   const showRegex = REGEX_VALIDATED_TYPES.has(dataType);
-  const isRelation = dataType === 'relation';
-
-  const { data: schemasData, isLoading: isLoadingSchemas } = useQuery({
-    queryKey: ['schemas'],
-    queryFn: () => listSchemas({ pageSize: 100 }),
-    enabled: isRelation,
-  });
-  const schemas: SchemaRecord[] = schemasData?.data ?? [];
 
   return (
     <Card>
