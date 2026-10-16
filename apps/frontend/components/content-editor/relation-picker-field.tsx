@@ -41,6 +41,19 @@ function getEntryTitle(entry: ContentEntryRecord): string {
   return entry.id;
 }
 
+function isSchemaMatch(candidate: string, target: string): boolean {
+  if (!candidate || !target) return false;
+  const c = candidate.toLowerCase();
+  const t = target.toLowerCase();
+  if (c === t) return true;
+  if (`${c}s` === t || `${t}s` === c) return true;
+  if (c.endsWith('y') && `${c.slice(0, -1)}ies` === t) return true;
+  if (t.endsWith('y') && `${t.slice(0, -1)}ies` === c) return true;
+  const stemC = c.endsWith('ies') ? c.slice(0, -3) : c.replace(/[sy]$/, '');
+  const stemT = t.endsWith('ies') ? t.slice(0, -3) : t.replace(/[sy]$/, '');
+  return stemC.length >= 3 && stemC === stemT;
+}
+
 export function RelationPickerField({
   field,
   value,
@@ -73,17 +86,39 @@ export function RelationPickerField({
     (field.config?.schemaSlug as string) ||
     '';
 
-  const [selectedSchemaSlug, setSelectedSchemaSlug] =
-    React.useState<string>(configuredSchemaSlug);
+  // Smart heuristic: If not explicitly configured, try to match field name/apiId with existing schemas
+  // (e.g. field named "Category" / apiId "category" -> schema slug "categories" or "category")
+  const inferredSchemaSlug = React.useMemo(() => {
+    if (configuredSchemaSlug) return configuredSchemaSlug;
+    const nameCandidate = (field.apiId || field.displayName || '')
+      .toLowerCase()
+      .trim();
+    if (!nameCandidate || schemas.length === 0) return '';
+    const match = schemas.find((s) => {
+      return (
+        isSchemaMatch(nameCandidate, s.slug) ||
+        isSchemaMatch(nameCandidate, s.name)
+      );
+    });
+    return match?.slug || '';
+  }, [configuredSchemaSlug, field.apiId, field.displayName, schemas]);
 
-  // If no configured schema, pick the first schema once loaded
+  const effectiveTargetSchema = configuredSchemaSlug || inferredSchemaSlug;
+
+  const [selectedSchemaSlug, setSelectedSchemaSlug] = React.useState<string>(
+    effectiveTargetSchema,
+  );
+
+  // Keep selectedSchemaSlug in sync with configured/inferred schema
   React.useEffect(() => {
-    if (!selectedSchemaSlug && schemas.length > 0) {
-      setSelectedSchemaSlug(configuredSchemaSlug || schemas[0]?.slug || '');
+    if (effectiveTargetSchema) {
+      setSelectedSchemaSlug(effectiveTargetSchema);
+    } else if (!selectedSchemaSlug && schemas.length > 0) {
+      setSelectedSchemaSlug(schemas[0]?.slug || '');
     }
-  }, [configuredSchemaSlug, schemas, selectedSchemaSlug]);
+  }, [effectiveTargetSchema, schemas, selectedSchemaSlug]);
 
-  const activeSchemaSlug = configuredSchemaSlug || selectedSchemaSlug;
+  const activeSchemaSlug = effectiveTargetSchema || selectedSchemaSlug;
 
   // 2. Fetch entries for the active target schema
   const { data: entriesData, isLoading: isEntriesLoading } = useQuery({
@@ -265,13 +300,14 @@ export function RelationPickerField({
         showFooter={false}
       >
         <div className="flex flex-col gap-4 py-2">
-          {/* Schema Selector if multiple schemas available and none hardcoded */}
-          {!configuredSchemaSlug && schemas.length > 1 && (
+          {/* Schema Selector only if no target schema could be configured or inferred */}
+          {!effectiveTargetSchema && schemas.length > 1 && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">
                 Target schema:
               </span>
               <select
+                aria-label="Target schema"
                 className="h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs outline-none focus:ring-2 focus:ring-ring"
                 value={activeSchemaSlug}
                 onChange={(e) => setSelectedSchemaSlug(e.target.value)}
