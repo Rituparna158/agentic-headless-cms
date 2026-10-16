@@ -2,6 +2,9 @@
 
 import { schemaFieldDataTypes } from '@repo/validation';
 import { Controller, useWatch } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
+import { listSchemas } from '@/lib/api/schemas';
+import type { SchemaRecord } from '@repo/types';
 import {
   Button,
   Card,
@@ -45,6 +48,14 @@ export function FieldSettingsPanel({
 
   const showLengthLimits = LENGTH_VALIDATED_TYPES.has(dataType);
   const showRegex = REGEX_VALIDATED_TYPES.has(dataType);
+  const isRelation = dataType === 'relation';
+
+  const { data: schemasData, isLoading: isLoadingSchemas } = useQuery({
+    queryKey: ['schemas'],
+    queryFn: () => listSchemas({ pageSize: 100 }),
+    enabled: isRelation,
+  });
+  const schemas: SchemaRecord[] = schemasData?.data ?? [];
 
   return (
     <Card>
@@ -147,6 +158,49 @@ export function FieldSettingsPanel({
             </div>
           )}
         />
+
+        {isRelation && (
+          <Controller
+            control={control}
+            name={`fields.${index}.config.targetSchemaSlug`}
+            render={({ field, fieldState }) => (
+              <div className="grid gap-2">
+                <label htmlFor={`target-schema-${index}`}>
+                  <Typography as="span" variant="label">
+                    Target Content Type
+                  </Typography>
+                </label>
+                <select
+                  id={`target-schema-${index}`}
+                  aria-label="Target Content Type"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={(field.value as string) ?? ''}
+                  onChange={(e) => field.onChange(e.target.value || undefined)}
+                >
+                  <option value="">
+                    {isLoadingSchemas
+                      ? 'Loading content types…'
+                      : 'Select target content type…'}
+                  </option>
+                  {schemas.map((s) => (
+                    <option key={s.id} value={s.slug}>
+                      {s.name} ({s.slug})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Restricts this relation to entries belonging to this content
+                  type.
+                </p>
+                {fieldState.error?.message ? (
+                  <p className="text-sm font-medium text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          />
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <Controller

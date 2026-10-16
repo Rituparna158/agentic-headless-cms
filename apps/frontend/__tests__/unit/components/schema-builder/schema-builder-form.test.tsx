@@ -28,6 +28,7 @@ vi.mock('sonner', () => ({
 vi.mock('@/lib/api/schemas', () => ({
   createSchema: mockCreateSchema,
   updateSchema: mockUpdateSchema,
+  listSchemas: vi.fn(() => Promise.resolve({ data: [] })),
 }));
 
 function renderForm(schema?: SchemaRecord) {
