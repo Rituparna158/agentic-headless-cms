@@ -72,6 +72,7 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_cms}
       - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-super_secret_jwt_key_at_least_32_characters_long}
       - STORAGE_ADAPTER=${STORAGE_ADAPTER:-local}
       - STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
     volumes:
