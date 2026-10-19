@@ -33,8 +33,12 @@ export function createNodeClient<
     );
   }
 
+  const appId = config?.appId || process.env.CMS_APP_ID || 'HEADLESS_CMS';
+
   return new AgenticCmsNodeClient<TMap>({
+    ...config,
     baseUrl: apiUrl,
     apiToken,
+    appId,
   });
 }

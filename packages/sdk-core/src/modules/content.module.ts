@@ -8,7 +8,9 @@ import type {
 } from '@repo/types';
 
 type InferEntryType<TMap, TSlug extends string> = TSlug extends keyof TMap
-  ? TMap[TSlug]
+  ? unknown extends TMap[TSlug]
+    ? ContentEntryRecord
+    : TMap[TSlug]
   : ContentEntryRecord;
 
 export class ContentModule<
