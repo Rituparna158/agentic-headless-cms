@@ -23,7 +23,10 @@ export class AgenticCmsClient<
     // Remove trailing slash if user included one
     const baseUrl = config.baseUrl.replace(/\/$/, '');
     this.transport = new HttpTransport(baseUrl, this.auth, {
-      appId: config.appId,
+      appId:
+        config.appId ||
+        (typeof process !== 'undefined' && process.env?.CMS_APP_ID) ||
+        'HEADLESS_CMS',
       apiKey: config.apiKey,
       headers: config.headers,
     });
