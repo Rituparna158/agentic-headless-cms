@@ -106,6 +106,11 @@ const PagePreviewPage = React.lazy(() =>
     default: m.PagePreviewPage,
   })),
 );
+const PostsManagementPage = React.lazy(() =>
+  import('./features/posts/pages/PostsManagementPage').then((m) => ({
+    default: m.PostsManagementPage,
+  })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -188,6 +193,14 @@ export const App = () => {
                           }
                         >
                           <Route
+                            path="posts"
+                            element={<PostsManagementPage />}
+                          />
+                          <Route
+                            path="posts/*"
+                            element={<PostsManagementPage />}
+                          />
+                          <Route
                             path="collections"
                             element={<CollectionsListPage />}
                           />
@@ -209,6 +222,10 @@ export const App = () => {
                           <RoleGuard requiredCapability="manage_content" />
                         }
                       >
+                        <Route
+                          path="/collections/:schemaSlug/preview"
+                          element={<PagePreviewPage />}
+                        />
                         <Route
                           path="/collections/:schemaSlug/preview/:slug"
                           element={<PagePreviewPage />}

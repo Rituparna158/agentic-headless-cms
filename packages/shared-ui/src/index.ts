@@ -25,3 +25,4 @@ export * from './components/ui/scroll-area';
 export * from './components/ui/split';
 export * from './templates/errorpage';
 export * from './templates/maintenance-page';
+export * from './tokens/colorTokens';

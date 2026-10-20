@@ -35,7 +35,7 @@ export function compileZodSchema(
     shape[field.apiId] = fieldSchema;
   }
 
-  return z.object(shape).strict();
+  return z.object(shape).passthrough();
 }
 
 function getBaseType(field: SchemaField): z.ZodTypeAny {
@@ -44,19 +44,31 @@ function getBaseType(field: SchemaField): z.ZodTypeAny {
     case 'richtext':
       return z.string();
     case 'number':
-      return z.number();
+      return z
+        .union([
+          z.number(),
+          z
+            .string()
+            .regex(/^-?\d+(\.\d+)?$/)
+            .transform(Number),
+          z.literal('').transform(() => undefined),
+        ])
+        .optional();
     case 'boolean':
-      return z.boolean();
+      return z.union([
+        z.boolean(),
+        z.string().transform((v) => v === 'true' || v === '1'),
+      ]);
     case 'date':
     case 'datetime':
-      return z.string().datetime();
+      return z.string();
     case 'media':
     case 'relation':
-      return z.string().uuid();
+      return z.string();
     case 'email':
-      return z.string().email();
+      return z.union([z.string().email(), z.literal('')]).optional();
     case 'url':
-      return z.string().url();
+      return z.union([z.string().url(), z.literal('')]).optional();
     case 'enum': {
       const options = (field.config as { options?: unknown } | null)?.options;
       return Array.isArray(options) &&

@@ -35,26 +35,24 @@ export const register_pricing_table_clean = (editor: Editor) => {
             <div class="pricing-card">
               <h3 class="pc-title">Starter</h3>
               <div class="pc-price">$19<span class="pc-period">/mo</span></div>
-              <p class="pc-desc">Perfect for individuals and small side projects.</p>
-              <ul class="pc-features">
-                <li>✔️ Up to 5 projects</li>
-                <li>✔️ Basic analytics</li>
-                <li>✔️ 24-hour support response</li>
-              </ul>
-              <a href="#" class="pc-btn">Start Free Trial</a>
+              <p class="pc-desc">Great for personal projects and small teams.</p>
+              <div class="pc-features">
+                <p>✔️ Up to 3 projects</p>
+                <p>✔️ Core features</p>
+                <p>✔️ Community support</p>
+              </div>
+              <a href="#" class="pc-btn">Get Started</a>
             </div>
-            
             <div class="pricing-card pc-featured">
               <div class="pc-badge">Most Popular</div>
               <h3 class="pc-title">Professional</h3>
               <div class="pc-price">$49<span class="pc-period">/mo</span></div>
               <p class="pc-desc">Ideal for growing teams and startups.</p>
-              <ul class="pc-features">
-                <li>✔️ Unlimited projects</li>
-                <li>✔️ Advanced analytics</li>
-                <li>✔️ 1-hour support response</li>
-                <li>✔️ Custom domains</li>
-              </ul>
+              <div class="pc-features">
+                <p>✔️ Unlimited projects</p>
+                <p>✔️ Advanced analytics</p>
+                <p>✔️ 1-hour support response</p>
+              </div>
               <a href="#" class="pc-btn pc-btn-featured">Get Started</a>
             </div>
           </div>

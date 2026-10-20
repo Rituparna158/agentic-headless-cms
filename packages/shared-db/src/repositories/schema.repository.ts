@@ -31,6 +31,7 @@ export interface CreateSchemaInput {
   description?: string | null;
   type: (typeof schemaTypeEnum.enumValues)[number];
   fields: SchemaFieldInput[];
+  metadata?: Record<string, unknown>;
   actorType: (typeof actorTypeEnum.enumValues)[number];
   createdByUserId?: string | null;
   createdByAgentId?: string | null;
@@ -41,6 +42,7 @@ export interface UpdateSchemaInput {
   name?: string;
   description?: string | null;
   fields?: SchemaFieldInput[];
+  metadata?: Record<string, unknown>;
   migrationNotes?: string | null;
   actorType: (typeof actorTypeEnum.enumValues)[number];
   createdByUserId?: string | null;
@@ -86,7 +88,10 @@ export async function createSchema(
   return withTransaction(
     db,
     async (tx) => {
-      const definition = { fields: input.fields };
+      const definition = {
+        fields: input.fields,
+        metadata: input.metadata || {},
+      };
 
       const [schema] = await tx
         .insert(schemas)
@@ -268,11 +273,16 @@ export async function updateSchema(
     if (!existing) {
       throw new RecordNotFoundError(`Schema ${id} does not exist.`);
     }
-    const existingDefinition = existing.definition as {
+    const existingDefinition = (existing.definition as {
       fields: SchemaFieldInput[];
-    };
+      metadata?: Record<string, unknown>;
+    }) || { fields: [] };
     const nextFields = input.fields ?? existingDefinition.fields;
-    const definition = { fields: nextFields };
+    const nextMetadata =
+      input.metadata !== undefined
+        ? input.metadata
+        : (existingDefinition.metadata ?? {});
+    const definition = { fields: nextFields, metadata: nextMetadata };
     const nextVersion = existing.version + 1;
     const [updated] = await tx
       .update(schemas)

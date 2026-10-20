@@ -3,14 +3,17 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
   Suspense,
   lazy,
 } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save, Eye, Upload, History } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Upload, History, Boxes } from 'lucide-react';
 
 import { collectionsApi } from '../../api/collections.api';
+import { PageSideDrawer } from '../../../posts/components/PageSideDrawer';
+import { ContentCollectionMeta } from '../../../posts/types/posts.types';
 import { GrapesJSData, GrapesJSEditorHandle } from './types';
 import { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
 import { TemplateImportModal } from '../../components/template/TemplateImportModal';
@@ -45,11 +48,117 @@ export function PageEditorPage() {
     enabled: !!schemaSlug && !!pageId,
   });
 
+  const collectionQuery = useQuery({
+    queryKey: ['schema', schemaSlug],
+    queryFn: () => collectionsApi.getSchemaBySlug(schemaSlug!),
+    enabled: !!schemaSlug,
+  });
+  const activeCollection = (collectionQuery.data ||
+    null) as unknown as ContentCollectionMeta;
+
+  const [isSchemaDrawerOpen, setIsSchemaDrawerOpen] = useState(false);
+
   (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ = false;
 
   useEffect(() => {
     usePageBuilderStore.getState().resetStore();
   }, [pageId]);
+
+  // Extract custom page-level schemas created by the user
+  const pageCustomSchemas = useMemo(() => {
+    const raw = (pageQuery.data?.data as Record<string, unknown>)?._schemas;
+    if (Array.isArray(raw)) {
+      return (raw as Array<Record<string, unknown>>)
+        .filter((s) => s && typeof s === 'object' && (s.slug || s.name || s.id))
+        .map((s) => ({
+          id: String(s.id || s.slug || 'schema'),
+          name: String(s.name || s.slug || 'Custom Schema'),
+          slug: String(s.slug || s.id || 'schema'),
+          fields: Array.isArray(s.fields)
+            ? (s.fields as Array<Record<string, unknown>>)
+                .filter((f) => f && typeof f === 'object' && f.apiId)
+                .map((f) => ({
+                  apiId: String(f.apiId),
+                  displayName:
+                    typeof f.displayName === 'string'
+                      ? f.displayName
+                      : undefined,
+                  name: typeof f.name === 'string' ? f.name : undefined,
+                  dataType:
+                    typeof f.dataType === 'string' ? f.dataType : undefined,
+                }))
+            : [],
+        }));
+    }
+    return [];
+  }, [pageQuery.data]);
+
+  /**
+   * Build schema fields for the canvas CMS traits panel.
+   * These come ONLY from the current page's custom schemas (_schemas),
+   * NOT from the global collection schema definition.
+   * This keeps the canvas Dynamic Slot dropdown clean and page-specific.
+   */
+  const schemaFields = useMemo(() => {
+    const seen = new Set<string>();
+    const fieldsList: Array<{
+      id: string;
+      name: string;
+      apiId: string;
+      dataType?: string;
+    }> = [];
+
+    for (const schema of pageCustomSchemas) {
+      for (const f of schema.fields || []) {
+        if (f?.apiId && !seen.has(f.apiId)) {
+          seen.add(f.apiId);
+          fieldsList.push({
+            id: f.apiId,
+            name: `${schema.name}: ${f.displayName || f.name || f.apiId}`,
+            apiId: f.apiId,
+            dataType: f.dataType,
+          });
+        }
+      }
+    }
+
+    return fieldsList;
+  }, [pageCustomSchemas]);
+
+  /**
+   * Build available schemas list for the canvas 'Schema Section' dropdown.
+   * Only includes schemas defined on THIS specific page.
+   */
+  const availableSchemas = useMemo(() => {
+    return pageCustomSchemas.map((s) => ({
+      id: s.id || s.slug,
+      name: s.name,
+      slug: s.slug,
+      fields: (s.fields || []).map((f) => ({
+        id: f.apiId,
+        name: f.displayName || f.apiId,
+        apiId: f.apiId,
+        dataType: f.dataType,
+      })),
+    }));
+  }, [pageCustomSchemas]);
+
+  /**
+   * Extract actual key-value pairs from page custom schemas
+   * so canvas elements can live-hydrate when bound to dynamic slots.
+   */
+  const schemaValues = useMemo(() => {
+    const values: Record<string, unknown> = {};
+    const raw = (pageQuery.data?.data as Record<string, unknown>)?._schemas;
+    if (Array.isArray(raw)) {
+      for (const s of raw as Array<{ values?: Record<string, unknown> }>) {
+        if (s && s.values && typeof s.values === 'object') {
+          Object.assign(values, s.values);
+        }
+      }
+    }
+    return values;
+  }, [pageQuery.data]);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -108,12 +217,12 @@ export function PageEditorPage() {
 
   useEffect(() => {
     if (pageQuery.data) {
-      setTitle(pageQuery.data.data.title || '');
-      setSlug(pageQuery.data.data.slug || '');
+      const pageData = (pageQuery.data.data || {}) as Record<string, unknown>;
+      setTitle(typeof pageData.title === 'string' ? pageData.title : '');
+      setSlug(typeof pageData.slug === 'string' ? pageData.slug : '');
 
-      const bodyData = pageQuery.data.data.body as
-        | Record<string, unknown>
-        | unknown[];
+      const bodyData =
+        (pageData.body as Record<string, unknown> | unknown[]) ?? undefined;
 
       // Determine initial builder if not yet set (on first load)
       let currentBuilder = activeBuilder;
@@ -153,12 +262,28 @@ export function PageEditorPage() {
   }, [pageQuery.data, activeBuilder, isBuilderReady]);
 
   const updateMutation = useMutation({
-    mutationFn: () =>
-      collectionsApi.updatePage(schemaSlug!, pageId!, {
+    mutationFn: () => {
+      const pageData = (pageQuery.data?.data as Record<string, unknown>) || {};
+      const schemaValues: Record<string, unknown> = {};
+      const rawSchemas = pageData._schemas;
+      if (Array.isArray(rawSchemas)) {
+        for (const s of rawSchemas as Array<{
+          values?: Record<string, unknown>;
+        }>) {
+          if (s && s.values && typeof s.values === 'object') {
+            Object.assign(schemaValues, s.values);
+          }
+        }
+      }
+
+      return collectionsApi.updatePage(schemaSlug!, pageId!, {
+        ...schemaValues,
+        ...pageData,
         title: title.trim(),
         slug: slug.trim() || slugify(title),
         body: bodyRef.current ?? [],
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
       queryClient.invalidateQueries({ queryKey: ['page', schemaSlug, pageId] });
@@ -249,6 +374,18 @@ export function PageEditorPage() {
             <>
               <button
                 type="button"
+                onClick={() => setIsSchemaDrawerOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 font-medium hover:bg-indigo-500/20 transition-colors text-xs"
+                title="Manage custom schemas and content fields for this page"
+              >
+                <Boxes className="h-3.5 w-3.5 text-indigo-400" />
+                <span>Schemas</span>
+                <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-[10px] font-mono">
+                  {availableSchemas.length}
+                </span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setIsImportModalOpen(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs"
                 title="Import dynamic JSON template"
@@ -322,6 +459,9 @@ export function PageEditorPage() {
             initialData={initialBody as Partial<GrapesJSData>}
             onChange={handleDesignChange}
             brandTitle={title || 'Page Builder'}
+            schemaFields={schemaFields}
+            availableSchemas={availableSchemas}
+            schemaValues={schemaValues}
           />
         )}
       </div>
@@ -350,6 +490,34 @@ export function PageEditorPage() {
           onRevertSuccess={handleRevertSuccess}
         />
       )}
+      <PageSideDrawer
+        isOpen={isSchemaDrawerOpen}
+        onClose={() => setIsSchemaDrawerOpen(false)}
+        collection={activeCollection}
+        page={pageQuery.data}
+        onSavePage={async (pId, data, publishImmediately) => {
+          await collectionsApi.updatePage(schemaSlug!, pId, {
+            ...data,
+            title: typeof data.title === 'string' ? data.title : title,
+            slug: typeof data.slug === 'string' ? data.slug : slug,
+          });
+          if (publishImmediately) {
+            await collectionsApi.publishPage(schemaSlug!, pId);
+          }
+          queryClient.invalidateQueries({
+            queryKey: ['page', schemaSlug, pId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['pages', schemaSlug],
+          });
+          toast.success(
+            publishImmediately
+              ? 'Page published live!'
+              : 'Page schemas saved successfully!',
+          );
+        }}
+        isSaving={updateMutation.isPending}
+      />
     </div>
   );
 }

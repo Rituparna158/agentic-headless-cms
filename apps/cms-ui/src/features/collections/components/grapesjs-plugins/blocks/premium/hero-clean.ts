@@ -28,9 +28,9 @@ export const register_hero_clean = (editor: Editor) => {
         classes: ['hero-clean'],
         components: `
           <div class="hero-container" data-gjs-type="hero-clean-component">
-            <span class="hero-badge">✨ New Feature Release</span>
-            <h1 class="hero-title">Build Beautiful Interfaces Faster</h1>
-            <p class="hero-subtitle">Create stunning websites in minutes with our drag-and-drop page builder. No coding required, just pure aesthetic.</p>
+            <span class="hero-badge">✨ Next-Generation Platform</span>
+            <h1 class="hero-title">Build Stunning Digital Experiences</h1>
+            <p class="hero-subtitle">Design, manage, and scale your modern web applications effortlessly with intuitive dynamic controls.</p>
             <div class="hero-actions">
               <a href="#" class="btn-primary">Get Started</a>
               <a href="#" class="btn-secondary">Learn More</a>

@@ -22,8 +22,17 @@
     --destructive: hsl(0, 84.2%, 60.2%);
     --destructive-foreground: hsl(0, 0%, 98%);
     --border: hsl(240, 5.9%, 90%);
+    --border-subtle: hsla(240, 5.9%, 90%, 0.4);
     --input: hsl(240, 5.9%, 90%);
     --ring: hsl(240, 10%, 3.9%);
+    --sidebar-surface: hsl(240, 4.8%, 97.5%);
+    --sidebar-border: hsla(240, 5.9%, 90%, 0.4);
+    --status-live-bg: rgba(16, 185, 129, 0.1);
+    --status-live-text: #059669;
+    --status-live-border: rgba(16, 185, 129, 0.2);
+    --status-draft-bg: rgba(245, 158, 11, 0.1);
+    --status-draft-text: #d97706;
+    --status-draft-border: rgba(245, 158, 11, 0.2);
   }
 
   .dark {
@@ -44,8 +53,17 @@
     --destructive: hsl(0, 62.8%, 30.6%);
     --destructive-foreground: hsl(0, 0%, 98%);
     --border: hsl(240, 3.7%, 15.9%);
+    --border-subtle: hsla(240, 3.7%, 15.9%, 0.4);
     --input: hsl(240, 3.7%, 15.9%);
     --ring: hsl(240, 4.9%, 83.9%);
+    --sidebar-surface: hsl(240, 5%, 7%);
+    --sidebar-border: hsla(240, 3.7%, 15.9%, 0.4);
+    --status-live-bg: rgba(16, 185, 129, 0.1);
+    --status-live-text: #34d399;
+    --status-live-border: rgba(16, 185, 129, 0.2);
+    --status-draft-bg: rgba(245, 158, 11, 0.1);
+    --status-draft-text: #fbbf24;
+    --status-draft-border: rgba(245, 158, 11, 0.2);
   }
 
   * {

@@ -1,6 +1,6 @@
 import {
   FileText,
-  Files,
+  FolderKanban,
   MessageSquare,
   Tags,
   Image as ImageIcon,
@@ -35,7 +35,7 @@ export const sidebarNavConfig: NavItem[] = [
   {
     title: 'Collections',
     href: '/collections',
-    icon: Files,
+    icon: FolderKanban,
     requiredCapability: 'manage_content',
     // subItems: [
     //   { title: 'All Collections', href: '/collections' },

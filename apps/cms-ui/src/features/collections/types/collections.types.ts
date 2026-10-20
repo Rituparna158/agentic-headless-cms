@@ -59,3 +59,55 @@ export interface CustomBuilderPreviewProps {
 export interface PageBuilderSettingProps {
   targetComponentId: string;
 }
+
+export type PreviewDeviceType = 'desktop' | 'tablet' | 'mobile';
+
+export interface CmsSchemaField {
+  id?: string;
+  name?: string;
+  apiId: string;
+  dataType?: string;
+}
+
+export interface CmsPageSchema {
+  id: string;
+  name: string;
+  slug: string;
+  fields?: CmsSchemaField[];
+}
+
+export interface CustomBlocksPluginOptions {
+  schemaFields?: CmsSchemaField[];
+  availableSchemas?: CmsPageSchema[];
+  schemaValues?: Record<string, unknown>;
+}
+
+export interface GrapesJSData {
+  builder: 'grapesjs';
+  projectData?: Record<string, unknown>;
+  html?: string;
+  css?: string;
+  components?: unknown;
+  styles?: unknown;
+}
+
+export interface GrapesJSEditorHandle {
+  loadTemplate: (result: unknown, action: 'replace' | 'append') => void;
+  loadRawData: (data: Partial<GrapesJSData>) => void;
+  isCanvasEmpty: () => boolean;
+  getEditor: () => unknown;
+}
+
+export interface GrapesJSEditorProps {
+  initialData?: Partial<GrapesJSData>;
+  onChange: (data: GrapesJSData) => void;
+  brandTitle?: string;
+  schemaFields?: CmsSchemaField[];
+  availableSchemas?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    fields?: unknown[];
+  }>;
+  schemaValues?: Record<string, unknown>;
+}

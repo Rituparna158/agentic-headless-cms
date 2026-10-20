@@ -21,14 +21,21 @@ import {
   Eye,
   CheckCircle2,
   Clock,
-  Users,
   Search,
+  Palette,
+  Boxes,
 } from 'lucide-react';
 import {
   collectionsApi,
   type PageEntry,
   type PaginatedResponse,
 } from '../api/collections.api';
+import { postsApi } from '../../posts/api/posts.api';
+import { PageSideDrawer } from '../../posts/components/PageSideDrawer';
+import {
+  DynamicFieldDefinition,
+  ContentCollectionMeta,
+} from '../../posts/types/posts.types';
 import { CreatePageDialog } from '../components/CreatePageDialog';
 import { useToast, AdvancedTable } from '@repo/shared-ui';
 import { useAuthStore } from '../../auth/store/auth.store';
@@ -54,13 +61,100 @@ export function CollectionEntriesPage() {
   const toast = useToast();
   const currentUser = useAuthStore((state) => state.user);
 
+  const collectionsQuery = useQuery({
+    queryKey: ['post-collections'],
+    queryFn: () => postsApi.listCollections(),
+  });
+  const collections = useMemo(
+    () => collectionsQuery.data || [],
+    [collectionsQuery.data],
+  );
+
+  const schemaQuery = useQuery({
+    queryKey: ['schema', schemaSlug],
+    queryFn: () => collectionsApi.getSchemaBySlug(schemaSlug!),
+    enabled: !!schemaSlug,
+  });
+
+  const activeCollection: ContentCollectionMeta | null = useMemo(() => {
+    const fromList = collections.find((c) => c.slug === schemaSlug);
+    if (fromList) return fromList;
+    if (schemaQuery.data) {
+      const s = schemaQuery.data;
+      const raw = s as unknown as Record<string, unknown>;
+      const def = raw.definition as { fields?: unknown[] } | undefined;
+      const fields = (
+        Array.isArray(raw.fields)
+          ? raw.fields
+          : Array.isArray(def?.fields)
+            ? def?.fields
+            : []
+      ) as DynamicFieldDefinition[];
+      return {
+        id: s.id,
+        name: s.name,
+        slug: s.slug,
+        description: s.description || undefined,
+        type: s.type || 'collection',
+        entryCount: 0,
+        linkedPagesCount: 0,
+        fields,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+      };
+    }
+    return null;
+  }, [collections, schemaSlug, schemaQuery.data]);
+
+  const [drawerPage, setDrawerPage] = useState<PageEntry | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const updatePageMutation = useMutation({
+    mutationFn: async ({
+      pageId,
+      data,
+      publishImmediately,
+    }: {
+      pageId: string;
+      data: Record<string, unknown>;
+      publishImmediately: boolean;
+    }) => {
+      let updated = await collectionsApi.updatePage(schemaSlug!, pageId, {
+        title: typeof data.title === 'string' ? data.title : 'Untitled',
+        slug: typeof data.slug === 'string' ? data.slug : 'page',
+        ...data,
+      });
+
+      if (publishImmediately) {
+        updated = await collectionsApi.publishPage(schemaSlug!, pageId);
+      }
+
+      return { updated, publishImmediately };
+    },
+    onSuccess: ({ updated, publishImmediately }) => {
+      queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
+      queryClient.invalidateQueries({ queryKey: ['pagesStats', schemaSlug] });
+      if (updated) {
+        setDrawerPage(updated);
+      }
+      toast.success(
+        publishImmediately
+          ? 'Page published live!'
+          : 'Page draft saved successfully!',
+      );
+    },
+    onError: () => {
+      toast.error('Failed to save page data.');
+    },
+  });
+
   const [isCreateOpen, setIsCreateOpen] = useState(
     () => searchParams.get('create') === 'true',
   );
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (
       (localStorage.getItem(ENTRIES_VIEW_MODE_STORAGE_KEY) as ViewMode) ||
-      'grid'
+      'list'
     );
   });
 
@@ -133,8 +227,11 @@ export function CollectionEntriesPage() {
     }
   };
 
-  const pages =
-    (pagesQuery.data as PaginatedResponse<PageEntry> | undefined)?.data ?? [];
+  const pages = useMemo(
+    () =>
+      (pagesQuery.data as PaginatedResponse<PageEntry> | undefined)?.data ?? [],
+    [pagesQuery.data],
+  );
   const totalCount = pagesQuery.data?.meta?.pagination?.total ?? 0;
   const pageCount = pagesQuery.data?.meta?.pagination?.pageCount ?? 1;
 
@@ -142,26 +239,27 @@ export function CollectionEntriesPage() {
     (statsQuery.data as PaginatedResponse<PageEntry> | undefined)?.data ??
     pages;
 
-  // Discover collaborators and actors directly from the database columns on pages
-  const { pageAuthorMap, collaborators, latestActivity } = useMemo(() => {
+  // Keep drawerPage synchronized when pages list updates
+  useEffect(() => {
+    if (!drawerPage) return;
+    const fresh = pages.find((p) => p.id === drawerPage.id);
+    if (fresh && fresh !== drawerPage) {
+      if (
+        fresh.updatedAt !== drawerPage.updatedAt ||
+        JSON.stringify(fresh.data) !== JSON.stringify(drawerPage.data)
+      ) {
+        setDrawerPage(fresh);
+      }
+    }
+  }, [pages, drawerPage]);
+
+  const { pageAuthorMap } = useMemo(() => {
     // Map each pageId to its most recent actor
     const authorMap = new Map<
       string,
       { name: string; email: string; time: string; action: string }
     >();
 
-    const collabMap = new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        email: string;
-        initials: string;
-        lastSeen: string;
-      }
-    >();
-
-    // 1. First populate directly from the database columns on pages
     for (const page of statPages) {
       if (page.updatedBy) {
         const norm = normalizeCollaborator(page.updatedBy, currentUser);
@@ -172,75 +270,10 @@ export function CollectionEntriesPage() {
           action: page.status === 'published' ? 'publish' : 'update',
         });
       }
-
-      let parsedCollabs: string[] = [];
-      if (page.collaborators) {
-        try {
-          parsedCollabs =
-            typeof page.collaborators === 'string'
-              ? JSON.parse(page.collaborators)
-              : page.collaborators;
-        } catch {
-          parsedCollabs = [page.collaborators];
-        }
-      }
-      if (page.updatedBy) {
-        parsedCollabs.push(page.updatedBy);
-      }
-
-      for (const actor of parsedCollabs) {
-        if (!actor) continue;
-        const norm = normalizeCollaborator(actor, currentUser);
-        if (!collabMap.has(norm.key)) {
-          collabMap.set(norm.key, {
-            id: norm.key,
-            name: norm.displayName,
-            email: norm.email,
-            initials: norm.initials,
-            lastSeen: page.updatedAt || new Date().toISOString(),
-          });
-        }
-      }
-    }
-
-    // Fallback to current authenticated user ONLY if no collaborator found yet
-    if (collabMap.size === 0 && currentUser?.email) {
-      const norm = normalizeCollaborator(currentUser.email, currentUser);
-      collabMap.set(norm.key, {
-        id: norm.key,
-        name: norm.displayName,
-        email: norm.email,
-        initials: norm.initials,
-        lastSeen: new Date().toISOString(),
-      });
-    }
-
-    // Find latest activity from newest updatedAt
-    let latestActivityItem: { name: string; time: string } | null = null;
-    if (statPages.length > 0) {
-      const sorted = [...statPages].sort((a, b) => {
-        const da = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-        const db = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-        return db - da;
-      });
-      if (sorted[0]?.updatedAt) {
-        const rawActor =
-          sorted[0].updatedBy ||
-          currentUser?.firstName ||
-          currentUser?.email ||
-          'Admin';
-        const norm = normalizeCollaborator(rawActor, currentUser);
-        latestActivityItem = {
-          name: norm.displayName,
-          time: sorted[0].updatedAt,
-        };
-      }
     }
 
     return {
       pageAuthorMap: authorMap,
-      collaborators: Array.from(collabMap.values()),
-      latestActivity: latestActivityItem,
     };
   }, [statPages, currentUser]);
 
@@ -265,12 +298,11 @@ export function CollectionEntriesPage() {
   const collectionDisplayName = schemaSlug.replace(/-/g, ' ');
 
   const tableColumns = [
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'slug', label: 'Slug', sortable: true },
+    { key: 'name', label: 'Page Title & Slug', sortable: true },
+    { key: 'schema', label: 'Schema Slots', sortable: false },
     { key: 'status', label: 'Status', sortable: false },
     { key: 'updatedAt', label: 'Last Updated', sortable: true },
-    { key: 'updatedBy', label: 'Updated By', sortable: false },
-    { key: 'createdAt', label: 'Created At', sortable: true },
+    { key: 'updatedBy', label: 'Author', sortable: false },
     {
       key: 'actions',
       label: 'Actions',
@@ -304,31 +336,73 @@ export function CollectionEntriesPage() {
               {title.charAt(0).toUpperCase()}
             </span>
           </div>
-          <Link
-            to={`/collections/${schemaSlug}/${page.id}`}
-            className="font-bold text-foreground hover:text-primary transition-colors"
-          >
-            {title}
-          </Link>
+          <div className="flex flex-col min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                setDrawerPage(page);
+                setIsDrawerOpen(true);
+              }}
+              className="font-bold text-foreground hover:text-primary transition-colors text-left truncate max-w-sm"
+            >
+              {title}
+            </button>
+            <span className="font-mono text-[11px] text-muted-foreground truncate">
+              /{cleanSlug}
+            </span>
+          </div>
         </div>
       ),
-      slug: (
-        <span className="font-mono text-xs text-muted-foreground">{slug}</span>
-      ),
+      schema: (() => {
+        const pageSchemas = (
+          Array.isArray(page.data?._schemas) ? page.data._schemas : []
+        ) as Array<{
+          id?: string;
+          name?: string;
+          slug?: string;
+          fields?: unknown[];
+        }>;
+        if (pageSchemas.length > 0) {
+          const names = pageSchemas
+            .map((s) => s.name || s.slug)
+            .filter(Boolean)
+            .join(', ');
+          return (
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/25 text-[11px] text-indigo-300 font-mono"
+              title={names}
+            >
+              <Boxes className="w-3 h-3 text-indigo-400 shrink-0" />
+              <span className="font-semibold">
+                {pageSchemas.length}{' '}
+                {pageSchemas.length === 1 ? 'Schema' : 'Schemas'}
+              </span>
+              <span className="text-zinc-500 max-w-[120px] truncate hidden md:inline">
+                ({names})
+              </span>
+            </span>
+          );
+        }
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] text-zinc-500 bg-zinc-900 border border-zinc-800">
+            No Schemas
+          </span>
+        );
+      })(),
       status: (
         <span
-          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold border flex-shrink-0 uppercase tracking-wide ${
+          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border flex-shrink-0 tracking-wide ${
             page.status === 'published'
-              ? 'bg-[#d8f3dc] text-[#1b4332] border-[#b7e4c7]'
-              : 'bg-[#fbf3d0] text-[#8e6c1d] border-[#f3e3a8]'
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
           }`}
         >
           <span
             className={`w-1.5 h-1.5 rounded-full ${
-              page.status === 'published' ? 'bg-[#2d6a4f]' : 'bg-[#d4a83b]'
+              page.status === 'published' ? 'bg-emerald-400' : 'bg-amber-400'
             }`}
           />
-          {page.status === 'published' ? 'Published' : 'Draft'}
+          {page.status === 'published' ? 'Live' : 'Draft'}
         </span>
       ),
       updatedAt: (
@@ -360,11 +434,22 @@ export function CollectionEntriesPage() {
       ),
       actions: (
         <div className="flex items-center justify-end gap-2">
-          <Link
-            to={`/collections/${schemaSlug}/${page.id}`}
-            className="px-3 py-1.5 bg-[#4273b8] hover:bg-[#345c93] text-white rounded text-xs font-semibold transition-colors"
+          <button
+            type="button"
+            onClick={() => {
+              setDrawerPage(page);
+              setIsDrawerOpen(true);
+            }}
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm shadow-indigo-600/20 transition-all"
           >
             Edit
+          </button>
+          <Link
+            to={`/collections/${schemaSlug}/${page.id}`}
+            className="p-1.5 rounded border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            title="Visual Page Builder"
+          >
+            <Palette className="w-3.5 h-3.5 text-indigo-400" />
           </Link>
           <Link
             to={`/collections/${schemaSlug}/preview/${cleanSlug || page.id}`}
@@ -451,7 +536,7 @@ export function CollectionEntriesPage() {
       {!pagesQuery.isLoading && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
           {/* Total Pages */}
-          <div className="p-4 rounded-[5px] bg-card border border-border flex items-center justify-between shadow-xs">
+          <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between shadow-xs">
             <div className="space-y-1">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Total Pages
@@ -466,81 +551,65 @@ export function CollectionEntriesPage() {
           </div>
 
           {/* Published */}
-          <div className="p-4 rounded-[5px] bg-card border border-border flex items-center justify-between shadow-xs">
+          <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between shadow-xs">
             <div className="space-y-1">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Published
               </p>
               <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-[#2d6a4f] dark:text-emerald-400">
+                <p className="text-2xl font-bold text-emerald-400">
                   {stats.published}
                 </p>
                 {stats.total > 0 && (
-                  <span className="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-[#d8f3dc] text-[#1b4332] dark:bg-emerald-950/60 dark:text-emerald-400">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     {stats.publishRate}%
                   </span>
                 )}
               </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
 
           {/* Drafts */}
-          <div className="p-4 rounded-[5px] bg-card border border-border flex items-center justify-between shadow-xs">
+          <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between shadow-xs">
             <div className="space-y-1">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Drafts
               </p>
-              <p className="text-2xl font-bold text-[#8e6c1d] dark:text-amber-400">
+              <p className="text-2xl font-bold text-amber-400">
                 {stats.drafts}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20">
               <Clock className="w-5 h-5" />
             </div>
           </div>
 
-          {/* People Working on this Collection */}
-          <div className="p-4 rounded-[5px] bg-card border border-border flex items-center justify-between shadow-xs">
+          {/* Schemas Configured */}
+          <div className="p-4 rounded-xl bg-card border border-border flex items-center justify-between shadow-xs">
             <div className="space-y-1">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Contributors
+                Pages with Schemas
               </p>
-              <div className="flex items-center gap-2">
-                <p className="text-2xl font-bold text-foreground">
-                  {collaborators.length}
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-indigo-400">
+                  {
+                    statPages.filter(
+                      (p) =>
+                        Array.isArray(p.data?._schemas) &&
+                        p.data._schemas.length > 0,
+                    ).length
+                  }
                 </p>
-                {/* Avatars Stack */}
-                <div className="flex -space-x-1.5 overflow-hidden">
-                  {collaborators.slice(0, 3).map((c) => (
-                    <div
-                      key={c.id}
-                      className="w-6 h-6 rounded-full bg-primary/20 border-2 border-card flex items-center justify-center text-[10px] font-bold text-primary shadow-xs"
-                      title={c.name}
-                    >
-                      {c.initials}
-                    </div>
-                  ))}
-                  {collaborators.length > 3 && (
-                    <div className="w-6 h-6 rounded-full bg-muted border-2 border-card flex items-center justify-center text-[9px] font-bold text-muted-foreground">
-                      +{collaborators.length - 3}
-                    </div>
-                  )}
-                </div>
+                <span className="text-xs font-mono text-zinc-500">
+                  / {stats.total}
+                </span>
               </div>
-              {latestActivity && (
-                <p
-                  className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[130px]"
-                  title={`Last edit by ${latestActivity.name}`}
-                >
-                  Latest by {latestActivity.name}
-                </p>
-              )}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-              <Users className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
+              <Boxes className="w-5 h-5" />
             </div>
           </div>
         </div>
@@ -553,7 +622,7 @@ export function CollectionEntriesPage() {
       )}
 
       {!pagesQuery.isLoading && pages.length === 0 && !tableState.search && (
-        <div className="text-center py-16 border-2 border-dashed border-border rounded-[5px] bg-card/50">
+        <div className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-card/50">
           <Files className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
           <h3 className="text-xl font-semibold text-foreground mb-2">
             No pages yet
@@ -592,7 +661,7 @@ export function CollectionEntriesPage() {
                     }))
                   }
                   placeholder="Search pages..."
-                  className="w-full pl-9 pr-4 py-2 text-sm bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-xs"
+                  className="w-full pl-9 pr-4 py-2 text-sm bg-background border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-xs"
                 />
               </div>
               {totalCount > 0 && (
@@ -605,7 +674,7 @@ export function CollectionEntriesPage() {
             </div>
 
             {pages.length === 0 && tableState.search ? (
-              <div className="text-center py-12 border border-border rounded-[5px] bg-card/40">
+              <div className="text-center py-12 border border-border rounded-2xl bg-card/40">
                 <p className="text-sm font-medium text-muted-foreground">
                   No pages matching &quot;{tableState.search}&quot;
                 </p>
@@ -627,10 +696,14 @@ export function CollectionEntriesPage() {
                     currentUser,
                   ).displayName;
 
+                  const pageSchemas = (
+                    Array.isArray(page.data?._schemas) ? page.data._schemas : []
+                  ) as Array<{ name?: string; slug?: string }>;
+
                   return (
                     <div
                       key={page.id}
-                      className="group flex flex-col bg-card rounded-[5px] border border-border overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 p-5"
+                      className="group flex flex-col bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 p-5"
                     >
                       {/* Header: Icon + Title + Status */}
                       <div className="flex gap-4 items-start mb-3">
@@ -642,39 +715,64 @@ export function CollectionEntriesPage() {
 
                         <div className="flex-1 min-w-0 pt-0.5">
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <h3
-                              className="text-lg font-bold text-foreground truncate tracking-tight"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDrawerPage(page);
+                                setIsDrawerOpen(true);
+                              }}
+                              className="text-lg font-bold text-foreground hover:text-primary transition-colors truncate tracking-tight text-left"
                               title={title}
                             >
                               {title}
-                            </h3>
+                            </button>
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold border flex-shrink-0 uppercase tracking-wide ${
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border flex-shrink-0 tracking-wide ${
                                 page.status === 'published'
-                                  ? 'bg-[#d8f3dc] text-[#1b4332] border-[#b7e4c7]'
-                                  : 'bg-[#fbf3d0] text-[#8e6c1d] border-[#f3e3a8]'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                               }`}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full ${
                                   page.status === 'published'
-                                    ? 'bg-[#2d6a4f]'
-                                    : 'bg-[#d4a83b]'
+                                    ? 'bg-emerald-400'
+                                    : 'bg-amber-400'
                                 }`}
                               />
-                              {page.status === 'published'
-                                ? 'Published'
-                                : 'Draft'}
+                              {page.status === 'published' ? 'Live' : 'Draft'}
                             </span>
                           </div>
                           <p className="text-sm font-mono text-muted-foreground truncate">
-                            {slug}
+                            /{cleanSlug}
                           </p>
                         </div>
                       </div>
 
                       {/* Meta Info */}
-                      <div className="bg-muted/30 rounded-lg p-3 mb-5 border border-border/40 space-y-2">
+                      <div className="bg-muted/30 rounded-xl p-3 mb-5 border border-border/40 space-y-2">
+                        {/* Custom Schemas indicator */}
+                        <div className="flex items-center justify-between text-[12px]">
+                          <span className="font-medium text-muted-foreground">
+                            Schemas:
+                          </span>
+                          {pageSchemas.length > 0 ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[11px] font-mono"
+                              title={pageSchemas
+                                .map((s) => s.name || s.slug)
+                                .join(', ')}
+                            >
+                              <Boxes className="w-3 h-3 text-indigo-400" />
+                              {pageSchemas.length}{' '}
+                              {pageSchemas.length === 1 ? 'Schema' : 'Schemas'}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-zinc-500 font-mono">
+                              No Schemas
+                            </span>
+                          )}
+                        </div>
                         {page.createdAt && (
                           <div className="flex justify-between items-center text-[12px] text-muted-foreground">
                             <span className="font-medium">Created:</span>
@@ -708,17 +806,28 @@ export function CollectionEntriesPage() {
 
                       {/* Bottom Actions */}
                       <div className="mt-auto flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDrawerPage(page);
+                            setIsDrawerOpen(true);
+                          }}
+                          className="flex-1 flex justify-center items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition-all shadow-sm shadow-indigo-600/20"
+                        >
+                          Edit Details & Schema
+                        </button>
                         <Link
                           to={`/collections/${schemaSlug}/${page.id}`}
-                          className="flex-1 flex justify-center items-center px-4 py-2.5 bg-[#4273b8] hover:bg-[#345c93] text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
+                          className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-background hover:bg-muted text-muted-foreground hover:text-indigo-400 transition-colors"
+                          title="Visual Page Builder"
                         >
-                          Edit Page
+                          <Palette className="w-4 h-4 text-indigo-400" />
                         </Link>
                         <Link
                           to={`/collections/${schemaSlug}/preview/${cleanSlug || page.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground transition-colors"
+                          className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-background hover:bg-muted text-muted-foreground transition-colors"
                           title="Preview Page"
                         >
                           <Eye className="w-4 h-4" />
@@ -730,7 +839,7 @@ export function CollectionEntriesPage() {
                               title,
                             })
                           }
-                          className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-destructive/10 text-destructive transition-colors"
+                          className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-background hover:bg-destructive/10 text-destructive transition-colors"
                           title="Delete Page"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -868,6 +977,28 @@ export function CollectionEntriesPage() {
           </div>
         </div>
       )}
+
+      {/* Page Side Drawer */}
+      <PageSideDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setDrawerPage(null);
+        }}
+        collection={activeCollection}
+        page={drawerPage}
+        onSavePage={async (pageId, data, publishImmediately) => {
+          const res = await updatePageMutation.mutateAsync({
+            pageId,
+            data,
+            publishImmediately,
+          });
+          if (res?.updated) {
+            setDrawerPage(res.updated);
+          }
+        }}
+        isSaving={updatePageMutation.isPending}
+      />
     </div>
   );
 }

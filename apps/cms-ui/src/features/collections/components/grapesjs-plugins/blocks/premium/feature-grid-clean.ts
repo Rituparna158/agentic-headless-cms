@@ -38,7 +38,7 @@ export const register_feature_grid_clean = (editor: Editor) => {
             <div class="fg-card">
               <div class="fg-icon">🚀</div>
               <h3 class="fg-card-title">Lightning Fast</h3>
-              <p class="fg-card-desc">Optimized for speed and performance, ensuring your site loads in milliseconds.</p>
+              <p class="fg-card-desc">Optimized performance delivering sub-second response times globally.</p>
             </div>
             <div class="fg-card">
               <div class="fg-icon">🛡️</div>
