@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { loginSchema } from '@repo/validation';
-import type { LoginInput } from '@repo/types';
 
 import {
   Button,
@@ -16,17 +15,19 @@ import {
 import { useLoginMutation } from '../hooks/useAuthMutations';
 import { authApi } from '../api/auth.api';
 import { DEFAULT_LOGIN_VALUES } from '../constants/auth.constants';
+import type { LoginInputValues, LoginOutputValues } from '../types/auth.types';
+
+export type { LoginInputValues, LoginOutputValues };
 
 export function CredentialsForm() {
   const { mutate: login, isPending, error } = useLoginMutation();
 
-  const form = useForm<LoginInput>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(loginSchema) as any,
+  const form = useForm<LoginInputValues, unknown, LoginOutputValues>({
+    resolver: zodResolver(loginSchema),
     defaultValues: DEFAULT_LOGIN_VALUES,
   });
 
-  const onSubmit = (values: LoginInput) => {
+  const onSubmit = (values: LoginOutputValues) => {
     login(values);
   };
 

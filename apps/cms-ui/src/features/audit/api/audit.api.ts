@@ -1,6 +1,6 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { requestHandler } from '../../../api/requestHandler';
-import { ENDPOINTS } from '../../../api/endpoints';
+import { requestHandler } from '@/api/requestHandler';
+import { ENDPOINTS } from '@/api/endpoints';
 import type {
   AuditLogRecord,
   PaginatedAuditLogsResponse,

@@ -1,4 +1,4 @@
-import type { PageEntry } from '../../collections/api/collections.api';
+import type { PageEntry } from '@/types/content.types';
 
 export type DynamicFieldDataType =
   | 'text'
@@ -25,6 +25,16 @@ export interface DynamicFieldConfig {
   default?: unknown;
   unit?: string;
   [key: string]: unknown;
+}
+
+export interface FieldTypeCategoryOption {
+  type: DynamicFieldDataType;
+  label: string;
+}
+
+export interface FieldTypeCategoryGroup {
+  groupLabel: string;
+  options: FieldTypeCategoryOption[];
 }
 
 export interface DynamicFieldValidation {
@@ -147,6 +157,8 @@ export interface DynamicContentEntry {
   schemaSlug: string;
   locale: string;
   status: 'draft' | 'published';
+  title: string;
+  slug?: string;
   data: {
     title: string;
     slug?: string;
@@ -245,3 +257,12 @@ export interface PageSideDrawerProps {
   ) => Promise<void>;
   isSaving: boolean;
 }
+
+export type {
+  PageMetaDrawerHeaderProps,
+  PageSchemaListProps,
+  FieldEditorModalProps,
+  PageSchemaBuilderProps,
+  PageSchemaFormProps,
+  PageDrawerFooterProps,
+} from './drawer.types';

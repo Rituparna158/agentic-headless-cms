@@ -1,6 +1,18 @@
 export const USER_SORTABLE_COLUMNS = ['email', 'status', 'createdAt'] as const;
 export const USER_SEARCHABLE_LABEL = 'Search users...';
 
+export const CANONICAL_ADMIN_ROLES = ['admin', 'super_admin'] as const;
+export type CanonicalAdminRole = (typeof CANONICAL_ADMIN_ROLES)[number];
+
+export function isUserAdmin(roles?: string[] | null): boolean {
+  if (!roles || !Array.isArray(roles)) return false;
+  return roles.some((role) =>
+    CANONICAL_ADMIN_ROLES.includes(
+      role.toLowerCase().trim() as CanonicalAdminRole,
+    ),
+  );
+}
+
 export const MFA_SORTABLE_COLUMNS = ['email', 'createdAt', 'status'] as const;
 
 export const CMS_CAPABILITIES = [

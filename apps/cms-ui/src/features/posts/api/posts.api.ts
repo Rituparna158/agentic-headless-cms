@@ -1,9 +1,6 @@
-import { requestHandler } from '../../../api/requestHandler';
-import { ENDPOINTS } from '../../../api/endpoints';
-import {
-  collectionsApi,
-  PageEntry,
-} from '../../collections/api/collections.api';
+import { requestHandler } from '@/api/requestHandler';
+import { ENDPOINTS } from '@/api/endpoints';
+import type { PageEntry } from '@/types/content.types';
 import {
   DynamicSchemaDefinition,
   ContentCollectionMeta,
@@ -15,11 +12,53 @@ import {
 } from '../types/posts.types';
 import { FORKABLE_SHARED_TEMPLATES } from '../constants/posts.constants';
 
+export function extractArrayPayload<T>(payload: unknown): T[] {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload as T[];
+  if (typeof payload === 'object' && payload !== null) {
+    const record = payload as Record<string, unknown>;
+    if (Array.isArray(record.data)) return record.data as T[];
+    if (
+      record.data &&
+      typeof record.data === 'object' &&
+      record.data !== null
+    ) {
+      const nested = record.data as Record<string, unknown>;
+      if (Array.isArray(nested.data)) return nested.data as T[];
+    }
+    if (Array.isArray(record.items)) return record.items as T[];
+    if (Array.isArray(record.entries)) return record.entries as T[];
+  }
+  return [];
+}
+
 export const postsApi = {
   // Collections & Schema Explorer
   listCollections: async (): Promise<ContentCollectionMeta[]> => {
-    const res = await collectionsApi.listSchemas({ pageSize: 50 });
-    const schemas = (res.data || []) as Array<
+    const res = await requestHandler.get<{
+      data: Array<
+        Record<string, unknown> & {
+          id: string;
+          name: string;
+          slug: string;
+          description?: string;
+          type: 'collection' | 'single_type' | 'component';
+          status?: string;
+          entryCount?: number;
+          fields?: unknown[];
+          definition?: {
+            fields?: unknown[];
+            metadata?: SchemaMetadata;
+          };
+          metadata?: SchemaMetadata;
+          createdAt: string;
+          updatedAt: string;
+        }
+      >;
+      meta?: { pagination?: { total?: number } };
+    }>(ENDPOINTS.SCHEMAS.BASE, { params: { pageSize: 100 } });
+
+    const rawSchemas = extractArrayPayload<
       Record<string, unknown> & {
         id: string;
         name: string;
@@ -37,25 +76,42 @@ export const postsApi = {
         createdAt: string;
         updatedAt: string;
       }
-    >;
+    >(res.data ?? res);
+
+    const schemas = rawSchemas.filter(
+      (s) => !s.type || s.type === 'collection',
+    );
 
     const collectionsWithStats: ContentCollectionMeta[] = await Promise.all(
       schemas.map(async (s) => {
         let entryCount = s.entryCount || 0;
         let linkedPagesCount = 0;
         try {
-          const entriesRes = await collectionsApi.listPages(s.slug, {
-            pageSize: 1,
+          const entriesRes = await requestHandler.get<{
+            data?: unknown[];
+            meta?: { pagination?: { total?: number } };
+          }>(ENDPOINTS.CONTENT.BY_SCHEMA(s.slug), {
+            params: { pageSize: 1, status: 'all' },
           });
-          entryCount = entriesRes.meta?.pagination?.total ?? entryCount;
+          const rawEntriesData = (entriesRes.data ?? entriesRes) as {
+            meta?: { pagination?: { total?: number } };
+          };
+          const totalFromMeta = rawEntriesData?.meta?.pagination?.total;
+          if (typeof totalFromMeta === 'number') {
+            entryCount = totalFromMeta;
+          }
           linkedPagesCount = entryCount;
         } catch {
           // Fallback if content query fails
         }
 
-        const def = s.definition || {};
+        const def =
+          (s.definition as {
+            fields?: unknown[];
+            metadata?: SchemaMetadata;
+          }) || {};
         const schemaFields = (
-          Array.isArray(s.fields)
+          Array.isArray(s.fields) && s.fields.length > 0
             ? s.fields
             : Array.isArray(def.fields)
               ? def.fields
@@ -84,7 +140,7 @@ export const postsApi = {
           name: s.name,
           slug: s.slug,
           description: s.description,
-          type: s.type,
+          type: s.type || 'collection',
           status: s.status,
           entryCount,
           linkedPagesCount,
@@ -104,8 +160,29 @@ export const postsApi = {
   // List Pages / Layouts under a Collection
   listPagesForCollection: async (schemaSlug: string): Promise<PageEntry[]> => {
     try {
-      const res = await collectionsApi.listPages(schemaSlug, { pageSize: 50 });
-      return res.data || [];
+      const res = await requestHandler.get<{ data: PageEntry[] }>(
+        ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug),
+        { params: { pageSize: 100, status: 'all' } },
+      );
+      const rawEntries = extractArrayPayload<PageEntry>(res.data ?? res);
+      return rawEntries.map((entry) => {
+        const title =
+          entry.title ||
+          (entry.data?.title as string) ||
+          (entry.data?.name as string) ||
+          'Untitled Page';
+        const slug = entry.slug || (entry.data?.slug as string) || entry.id;
+        return {
+          ...entry,
+          title,
+          slug,
+          data: {
+            ...entry.data,
+            title: (entry.data?.title as string) || title,
+            slug: (entry.data?.slug as string) || slug,
+          },
+        };
+      });
     } catch {
       return [];
     }
@@ -165,7 +242,24 @@ export const postsApi = {
       metadata: meta,
     });
 
-    const data = res.data;
+    const rawCreated = res.data ?? res;
+    const data = ((rawCreated as { data?: typeof res.data })?.data ||
+      rawCreated) as {
+      id: string;
+      name: string;
+      slug: string;
+      description?: string;
+      type: 'collection';
+      fields: DynamicFieldDefinition[];
+      definition?: {
+        fields: DynamicFieldDefinition[];
+        metadata?: SchemaMetadata;
+      };
+      metadata?: SchemaMetadata;
+      createdAt: string;
+      updatedAt: string;
+    };
+
     return {
       id: data.id,
       name: data.name,
@@ -203,31 +297,62 @@ export const postsApi = {
   // List Entries for any Schema
   listEntries: async (
     schemaSlug: string,
-    params?: { page?: number; pageSize?: number; search?: string },
+    params?: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+      status?: string;
+    },
   ): Promise<{
     entries: DynamicContentEntry[];
     total: number;
     page: number;
     pageSize: number;
   }> => {
-    const res = await collectionsApi.listPages(schemaSlug, params);
-    const entries: DynamicContentEntry[] = (res.data || []).map((p) => ({
-      id: p.id,
-      schemaId: p.schemaId,
-      schemaSlug,
-      locale: p.locale,
-      status: p.status,
-      data: p.data,
-      updatedBy: p.updatedBy,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-    }));
+    const res = await requestHandler.get<{
+      data: PageEntry[];
+      meta?: {
+        pagination?: { total?: number; page?: number; pageSize?: number };
+      };
+    }>(ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug), {
+      params: { status: 'all', ...params },
+    });
+    const rawList = extractArrayPayload<PageEntry>(res.data ?? res);
+    const entries: DynamicContentEntry[] = rawList.map((p) => {
+      const title = p.title || (p.data?.title as string) || 'Untitled';
+      const slug = p.slug || (p.data?.slug as string) || '';
+      return {
+        id: p.id,
+        schemaId: p.schemaId || '',
+        schemaSlug,
+        locale: p.locale || 'en',
+        status: (p.status === 'published' ? 'published' : 'draft') as
+          | 'draft'
+          | 'published',
+        title,
+        slug,
+        data: {
+          title,
+          slug,
+          ...p.data,
+        },
+        updatedBy: p.updatedBy,
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
+      };
+    });
+
+    const metaObj = (res.data ?? res) as {
+      meta?: {
+        pagination?: { total?: number; page?: number; pageSize?: number };
+      };
+    };
 
     return {
       entries,
-      total: res.meta?.pagination?.total ?? entries.length,
-      page: res.meta?.pagination?.page ?? 1,
-      pageSize: res.meta?.pagination?.pageSize ?? 20,
+      total: metaObj?.meta?.pagination?.total ?? entries.length,
+      page: metaObj?.meta?.pagination?.page ?? 1,
+      pageSize: metaObj?.meta?.pagination?.pageSize ?? 20,
     };
   },
 
@@ -236,25 +361,50 @@ export const postsApi = {
     schemaSlug: string,
     data: Record<string, unknown>,
   ): Promise<DynamicContentEntry> => {
-    const res = await collectionsApi.createPage(schemaSlug, {
-      title: typeof data.title === 'string' ? data.title : 'Untitled',
-      slug:
-        typeof data.slug === 'string' && data.slug
-          ? data.slug
-          : `entry-${Math.random().toString(36).substring(2, 8)}`,
-      ...data,
-    });
+    const { title: rawTitle, slug: rawSlug, ...rest } = data;
+    const title =
+      typeof rawTitle === 'string' && rawTitle.trim()
+        ? rawTitle.trim()
+        : 'Untitled';
+    const slug =
+      typeof rawSlug === 'string' && rawSlug.trim()
+        ? rawSlug.trim()
+        : `entry-${Math.random().toString(36).substring(2, 8)}`;
+    const payload = {
+      ...rest,
+      title,
+      slug,
+    };
 
+    const res = await requestHandler.post<PageEntry>(
+      ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug),
+      payload,
+    );
+
+    const rawCreated = res.data ?? res;
+    const created = ((rawCreated as { data?: PageEntry })?.data ||
+      rawCreated) as PageEntry;
+    const entryTitle =
+      created.title || (created.data?.title as string) || title;
+    const entrySlug = created.slug || (created.data?.slug as string) || slug;
     return {
-      id: res.id,
-      schemaId: res.schemaId,
+      id: created.id,
+      schemaId: created.schemaId || '',
       schemaSlug,
-      locale: res.locale,
-      status: res.status,
-      data: res.data,
-      updatedBy: res.updatedBy,
-      createdAt: res.createdAt,
-      updatedAt: res.updatedAt,
+      locale: created.locale || 'en',
+      status: (created.status === 'published' ? 'published' : 'draft') as
+        | 'draft'
+        | 'published',
+      title: entryTitle,
+      slug: entrySlug,
+      data: {
+        title: entryTitle,
+        slug: entrySlug,
+        ...created.data,
+      },
+      updatedBy: created.updatedBy,
+      createdAt: created.createdAt || new Date().toISOString(),
+      updatedAt: created.updatedAt || new Date().toISOString(),
     };
   },
 
@@ -264,33 +414,61 @@ export const postsApi = {
     entryId: string,
     data: Record<string, unknown>,
   ): Promise<DynamicContentEntry> => {
-    const res = await collectionsApi.updatePage(schemaSlug, entryId, {
-      title: typeof data.title === 'string' ? data.title : 'Untitled',
-      slug: typeof data.slug === 'string' && data.slug ? data.slug : 'entry',
-      ...data,
-    });
+    const { title: rawTitle, slug: rawSlug, ...rest } = data;
+    const title =
+      typeof rawTitle === 'string' && rawTitle.trim()
+        ? rawTitle.trim()
+        : 'Untitled';
+    const slug =
+      typeof rawSlug === 'string' && rawSlug.trim() ? rawSlug.trim() : 'entry';
+    const payload = {
+      ...rest,
+      title,
+      slug,
+    };
 
+    const res = await requestHandler.put<PageEntry>(
+      ENDPOINTS.CONTENT.ENTRY(schemaSlug, entryId),
+      payload,
+    );
+
+    const rawUpdated = res.data ?? res;
+    const updated = ((rawUpdated as { data?: PageEntry })?.data ||
+      rawUpdated) as PageEntry;
+    const entryTitle =
+      updated.title || (updated.data?.title as string) || title;
+    const entrySlug = updated.slug || (updated.data?.slug as string) || slug;
     return {
-      id: res.id,
-      schemaId: res.schemaId,
+      id: updated.id,
+      schemaId: updated.schemaId || '',
       schemaSlug,
-      locale: res.locale,
-      status: res.status,
-      data: res.data,
-      updatedBy: res.updatedBy,
-      createdAt: res.createdAt,
-      updatedAt: res.updatedAt,
+      locale: updated.locale || 'en',
+      status: (updated.status === 'published' ? 'published' : 'draft') as
+        | 'draft'
+        | 'published',
+      title: entryTitle,
+      slug: entrySlug,
+      data: {
+        title: entryTitle,
+        slug: entrySlug,
+        ...updated.data,
+      },
+      updatedBy: updated.updatedBy,
+      createdAt: updated.createdAt || new Date().toISOString(),
+      updatedAt: updated.updatedAt || new Date().toISOString(),
     };
   },
 
   // Delete Content Entry
   deleteEntry: async (schemaSlug: string, entryId: string): Promise<void> => {
-    await collectionsApi.deletePage(schemaSlug, entryId);
+    await requestHandler.delete(ENDPOINTS.CONTENT.ENTRY(schemaSlug, entryId));
   },
 
   // Publish Content Entry
   publishEntry: async (schemaSlug: string, entryId: string): Promise<void> => {
-    await collectionsApi.publishPage(schemaSlug, entryId);
+    await requestHandler.post(
+      `${ENDPOINTS.CONTENT.ENTRY(schemaSlug, entryId)}/publish`,
+    );
   },
 
   // Batch Import Entries

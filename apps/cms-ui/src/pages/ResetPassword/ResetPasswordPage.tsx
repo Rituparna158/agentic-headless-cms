@@ -11,8 +11,7 @@ export const ResetPasswordPage = () => {
   const token = searchParams.get('token');
   const [error, setError] = useState<string | null>(null);
   const form = useForm({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(resetPasswordSchema) as any,
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: { token: token || '', password: '' },
   });
   const onSubmit = async (values: { password: string }) => {

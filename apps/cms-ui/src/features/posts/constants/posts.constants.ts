@@ -2,6 +2,7 @@ import {
   DynamicFieldDataType,
   DynamicSchemaDefinition,
   CrossSiteSharedTemplate,
+  FieldTypeCategoryGroup,
 } from '../types/posts.types';
 
 export const FIELD_DATA_TYPES_META: Array<{
@@ -95,14 +96,6 @@ export const FIELD_DATA_TYPES_META: Array<{
     description: 'Contact emails or notification recipients',
   },
 ];
-
-export interface FieldTypeCategoryGroup {
-  groupLabel: string;
-  options: Array<{
-    type: DynamicFieldDataType;
-    label: string;
-  }>;
-}
 
 export const FIELD_TYPE_GROUPS: FieldTypeCategoryGroup[] = [
   {
