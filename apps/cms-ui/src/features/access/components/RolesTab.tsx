@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { browserLogger } from '@repo/logger/browser';
 import { accessApi } from '../api/access.api';
 import {
   Role,
@@ -11,7 +12,6 @@ import {
 } from '../types/access.types';
 import { CMS_CAPABILITIES } from '../constants/access.constants';
 import { Plus } from 'lucide-react';
-import { useEffect } from 'react';
 export const RolesTab = () => {
   const { data: rolesResponse, isLoading: rolesLoading } = useQuery({
     queryKey: ['roles'],
@@ -146,7 +146,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
       onClose();
     },
     onError: (error) => {
-      console.error('Failed to create role', error);
+      browserLogger.error('Failed to create role', error);
       alert('Failed to create role');
     },
   });
@@ -174,7 +174,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
       onClose();
     },
     onError: (error) => {
-      console.error('Failed to update role', error);
+      browserLogger.error('Failed to update role', error);
       alert('Failed to update role');
     },
   });

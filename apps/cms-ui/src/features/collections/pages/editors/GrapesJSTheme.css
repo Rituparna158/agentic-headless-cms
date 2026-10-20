@@ -113,6 +113,12 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
 }
+.gjs-block:focus-visible {
+  outline: 2px solid #a855f7 !important;
+  outline-offset: 2px !important;
+  border-color: #a855f7 !important;
+  color: #a855f7 !important;
+}
 .gjs-block svg {
   width: 28px !important;
   height: 28px !important;

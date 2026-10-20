@@ -9,8 +9,7 @@ export const ForgotPasswordPage = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const form = useForm<{ email: string }>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(forgotPasswordSchema) as any,
+    resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: '' },
   });
   const onSubmit = async (values: { email: string }) => {

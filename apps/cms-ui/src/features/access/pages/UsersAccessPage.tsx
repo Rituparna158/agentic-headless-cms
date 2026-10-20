@@ -11,17 +11,16 @@ import { Button, Typography, DataTable } from '@repo/shared-ui';
 import { Plus, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
 import { InviteUserDialog } from '../components/InviteUserDialog';
 import { useAuthStore } from '../../auth/store/auth.store';
-import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
   USER_SORTABLE_COLUMNS,
   USER_SEARCHABLE_LABEL,
+  isUserAdmin,
 } from '../constants/access.constants';
 
 export const UsersAccessPage = () => {
   const currentUser = useAuthStore((state) => state.user);
-  const isSuperAdmin = currentUser?.roles?.some((roleName: string) =>
-    roleName.toLowerCase().includes('admin'),
-  );
+  const isSuperAdmin = isUserAdmin(currentUser?.roles);
   const queryClient = useQueryClient();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
@@ -80,7 +79,7 @@ export const UsersAccessPage = () => {
       .map((user: User & { roleId?: string }) => {
         const roleId = user.roleId || user.roles?.[0]?.id;
         const role = roles.find((r: Role) => r.id === roleId);
-        return role?.name?.toLowerCase().includes('admin') ? user.id : null;
+        return role?.name && isUserAdmin([role.name]) ? user.id : null;
       })
       .filter((id): id is string => Boolean(id)),
   );

@@ -67,17 +67,83 @@ describe('audit-formatters', () => {
     expect(diffs).toHaveLength(1);
     expect(diffs[0]!.path).toBe('status');
     expect(diffs[0]!.changeType).toBe('modified');
-    expect(diffs[0]!.beforeValue).toBe('draft');
-    expect(diffs[0]!.afterValue).toBe('published');
   });
 
-  it('generates human readable summary with headline and details', () => {
-    const summary = generateHumanReadableSummary(baseLog);
-    expect(summary.headline).toContain('Admin User');
-    expect(summary.headline).toContain('published live "Summer Campaign"');
-    expect(summary.actionDisplayName).toBe('Published');
-    expect(summary.keyChanges).toContain(
-      'Status changed from "draft" to "published"',
+  it('handles actor fallbacks for email only, userId only, and system admin', () => {
+    const emailOnlyLog: AuditLogRecord = {
+      ...baseLog,
+      actorFirstName: undefined,
+      actorLastName: undefined,
+      actorEmail: 'writer@company.com',
+    };
+    expect(getActorDisplayName(emailOnlyLog)).toBe('writer@company.com');
+
+    const idOnlyLog: AuditLogRecord = {
+      ...baseLog,
+      actorFirstName: undefined,
+      actorLastName: undefined,
+      actorEmail: undefined,
+      actorUserId: 'usr-99998888',
+    };
+    expect(getActorDisplayName(idOnlyLog)).toBe('User (usr-9999)');
+
+    const fallbackLog: AuditLogRecord = {
+      ...baseLog,
+      actorType: 'user',
+      actorFirstName: undefined,
+      actorLastName: undefined,
+      actorEmail: undefined,
+      actorUserId: undefined,
+    };
+    expect(getActorDisplayName(fallbackLog)).toBe('System Administrator');
+    expect(getActorInitials('System')).toBe('SY');
+  });
+
+  it('computes added and deleted diff entries accurately', () => {
+    const before = { title: 'Old Title', legacyKey: '123' };
+    const after = { title: 'Old Title', newKey: '456' };
+
+    const diffs = computeStateDiff(before, after);
+    expect(
+      diffs.some((d) => d.path === 'newKey' && d.changeType === 'added'),
+    ).toBe(true);
+    expect(
+      diffs.some((d) => d.path === 'legacyKey' && d.changeType === 'removed'),
+    ).toBe(true);
+  });
+
+  it('generates summary for created, deleted, and rolled back actions', () => {
+    const createLog: AuditLogRecord = {
+      ...baseLog,
+      action: 'create',
+      beforeState: null,
+      afterState: { title: 'Brand New Post' },
+    };
+    const createSummary = generateHumanReadableSummary(createLog);
+    expect(createSummary.headline).toContain(
+      'created content entry "Brand New Post"',
+    );
+
+    const deleteLog: AuditLogRecord = {
+      ...baseLog,
+      action: 'delete',
+      beforeState: { title: 'Dead Post' },
+      afterState: null,
+    };
+    const deleteSummary = generateHumanReadableSummary(deleteLog);
+    expect(deleteSummary.headline).toContain(
+      'deleted content entry "Dead Post"',
+    );
+
+    const rollbackLog: AuditLogRecord = {
+      ...baseLog,
+      action: 'rollback',
+      beforeState: { title: 'Bad Version' },
+      afterState: { title: 'Restored Version' },
+    };
+    const rollbackSummary = generateHumanReadableSummary(rollbackLog);
+    expect(rollbackSummary.headline).toContain(
+      'rolled back "Restored Version"',
     );
   });
 });

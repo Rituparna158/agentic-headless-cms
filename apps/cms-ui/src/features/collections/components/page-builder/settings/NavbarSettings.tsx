@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   NavbarLink,
   NAVBAR_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -19,7 +20,7 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.navbar[targetComponentId] ?? NAVBAR_DEFAULTS,
+    useShallow((state) => state.navbar[targetComponentId] ?? NAVBAR_DEFAULTS),
   );
   const setNavbar = usePageBuilderStore((state) => state.setNavbar);
 

@@ -6,15 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:analyze": "ANALYZE=true vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check-types": "tsc --noEmit"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "check-types": "tsc --noEmit",
+    "size-limit": "size-limit"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.4.0",
+    "@hookform/resolvers": "^6.0.0",
     "@mindfiredigital/page-builder-react": "^1.2.19",
+    "@repo/logger": "workspace:*",
     "@repo/shared-ui": "workspace:*",
     "@repo/types": "workspace:^",
     "@repo/validation": "workspace:^",
@@ -30,26 +35,37 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.81.0",
     "react-router-dom": "^7.1.5",
+    "web-vitals": "^6.2.3",
     "zod": "^4.4.3",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.14.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@size-limit/preset-app": "^14.2.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.2.0",
+    "@playwright/test": "^1.62.0",
     "@types/dompurify": "^3.2.0",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "4.1.10",
     "autoprefixer": "^10.4.20",
+    "axe-core": "^4.14.0",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-boundaries": "^7.2.0",
     "jsdom": "^26.0.0",
     "postcss": "^8.5.1",
+    "rollup-plugin-visualizer": "^7.1.1",
+    "size-limit": "^14.2.0",
     "tailwindcss": "^3.4.17",
     "typescript": "5.9.2",
     "vite": "^6.0.11",
     "vite-plugin-pwa": "^0.21.1",
-    "vitest": "^3.0.4"
+    "vitest": "4.1.10",
+    "vitest-axe": "^0.1.0"
   }
 }

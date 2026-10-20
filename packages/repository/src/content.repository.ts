@@ -78,6 +78,8 @@ export class ContentRepository {
       const rows = this.db
         .select({
           id: contentEntries.id,
+          schemaId: contentEntries.schemaId,
+          locale: entryLocalizations.locale,
           status: entryLocalizations.status,
           data: entryLocalizations.data,
           publishedData: entryLocalizations.publishedData,
@@ -199,10 +201,13 @@ export class ContentRepository {
           .select({
             id: contentEntries.id,
             schemaId: contentEntries.schemaId,
+            locale: entryLocalizations.locale,
             status: entryLocalizations.status,
             data: entryLocalizations.data,
             publishedData: entryLocalizations.publishedData,
             publishedAt: entryLocalizations.publishedAt,
+            createdAt: contentEntries.createdAt,
+            updatedAt: contentEntries.updatedAt,
             updatedBy: sql<
               string | null
             >`COALESCE(${contentEntries.updatedBy}, ${users.email}, 'Admin')`.as(
@@ -290,9 +295,12 @@ export class ContentRepository {
         return {
           id: newEntry.id,
           schemaId: newEntry.schemaId,
+          locale,
           status: versionResult.localization.status,
           data: versionResult.localization.data,
           publishedData: versionResult.localization.publishedData,
+          createdAt: newEntry.createdAt,
+          updatedAt: newEntry.updatedAt,
           updatedBy: newEntry.updatedBy,
           collaborators: newEntry.collaborators,
         };

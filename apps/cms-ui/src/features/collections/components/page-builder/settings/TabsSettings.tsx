@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Settings, Plus, X, FolderOpen, PaintBucket } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   TabItem,
   TABS_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -11,7 +12,7 @@ export const TabsSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.tabs[targetComponentId] ?? TABS_DEFAULTS,
+    useShallow((state) => state.tabs[targetComponentId] ?? TABS_DEFAULTS),
   );
   const setTabs = usePageBuilderStore((state) => state.setTabs);
 

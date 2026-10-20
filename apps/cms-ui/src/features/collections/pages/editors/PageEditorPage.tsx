@@ -9,13 +9,16 @@ import {
 } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save, Eye, Upload, History, Boxes } from 'lucide-react';
+import { browserLogger } from '@repo/logger/browser';
 
-import { collectionsApi } from '../../api/collections.api';
-import { PageSideDrawer } from '../../../posts/components/PageSideDrawer';
-import { ContentCollectionMeta } from '../../../posts/types/posts.types';
+import {
+  collectionsApi,
+  PageBodyData,
+} from '@/features/collections/api/collections.api';
+import type { PageEntry, ContentCollectionMeta } from '@/types/content.types';
+import { PageSideDrawer } from '@/components/PageSideDrawer';
 import { GrapesJSData, GrapesJSEditorHandle } from './types';
-import { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
+import type { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
 import { TemplateImportModal } from '../../components/template/TemplateImportModal';
 import { ExistingContentDialog } from '../../components/template/ExistingContentDialog';
 import { VersionHistoryDrawer } from '../../components/template/VersionHistoryDrawer';
@@ -24,14 +27,27 @@ import {
   ImportActionChoice,
   ContentVersionRecord,
 } from '../../types/template.types';
+import { PageEditorHeader } from './components/PageEditorHeader';
+import { DraftRecoveryBanner } from './components/DraftRecoveryBanner';
+import {
+  extractPageCustomSchemas,
+  buildSchemaFields,
+  buildAvailableSchemas,
+  extractSchemaValues,
+} from '../../utils/pageEditorSchema.util';
+import { usePageBuilderStore } from '../../components/page-builder/stores/pageBuilderStore';
+import { useCanvasAutoSave } from '../../hooks/useCanvasAutoSave';
+import { useToast } from '@repo/shared-ui';
+import { slugify } from '../../utils/slugify.util';
+import { InlineErrorAlert } from '@/components/ui/InlineErrorAlert';
+import { useLiveAnnouncer } from '@/components/ui/LiveAnnouncer';
 
 const CustomBuilderEditor = lazy(
   () => import('../../components/CustomBuilderEditor'),
 );
-import { usePageBuilderStore } from '../../components/page-builder/stores/pageBuilderStore';
-import { GrapesJSEditor } from './GrapesJSEditor';
-import { useToast } from '@repo/shared-ui';
-import { slugify } from '../../utils/slugify.util';
+const GrapesJSEditor = lazy(() =>
+  import('./GrapesJSEditor').then((m) => ({ default: m.GrapesJSEditor })),
+);
 
 export function PageEditorPage() {
   const { schemaSlug, pageId } = useParams<{
@@ -41,16 +57,19 @@ export function PageEditorPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { announce } = useLiveAnnouncer();
 
   const pageQuery = useQuery({
     queryKey: ['page', schemaSlug, pageId],
-    queryFn: () => collectionsApi.getPage(schemaSlug!, pageId!),
+    queryFn: ({ signal }) =>
+      collectionsApi.getPage(schemaSlug!, pageId!, { signal }),
     enabled: !!schemaSlug && !!pageId,
   });
 
   const collectionQuery = useQuery({
     queryKey: ['schema', schemaSlug],
-    queryFn: () => collectionsApi.getSchemaBySlug(schemaSlug!),
+    queryFn: ({ signal }) =>
+      collectionsApi.getSchemaBySlug(schemaSlug!, { signal }),
     enabled: !!schemaSlug,
   });
   const activeCollection = (collectionQuery.data ||
@@ -61,104 +80,29 @@ export function PageEditorPage() {
   (window as { __IS_CMS_PREVIEW__?: boolean }).__IS_CMS_PREVIEW__ = false;
 
   useEffect(() => {
-    usePageBuilderStore.getState().resetStore();
+    if (pageId) {
+      usePageBuilderStore.getState().resetStoreForPage(pageId);
+    }
   }, [pageId]);
 
-  // Extract custom page-level schemas created by the user
-  const pageCustomSchemas = useMemo(() => {
-    const raw = (pageQuery.data?.data as Record<string, unknown>)?._schemas;
-    if (Array.isArray(raw)) {
-      return (raw as Array<Record<string, unknown>>)
-        .filter((s) => s && typeof s === 'object' && (s.slug || s.name || s.id))
-        .map((s) => ({
-          id: String(s.id || s.slug || 'schema'),
-          name: String(s.name || s.slug || 'Custom Schema'),
-          slug: String(s.slug || s.id || 'schema'),
-          fields: Array.isArray(s.fields)
-            ? (s.fields as Array<Record<string, unknown>>)
-                .filter((f) => f && typeof f === 'object' && f.apiId)
-                .map((f) => ({
-                  apiId: String(f.apiId),
-                  displayName:
-                    typeof f.displayName === 'string'
-                      ? f.displayName
-                      : undefined,
-                  name: typeof f.name === 'string' ? f.name : undefined,
-                  dataType:
-                    typeof f.dataType === 'string' ? f.dataType : undefined,
-                }))
-            : [],
-        }));
-    }
-    return [];
-  }, [pageQuery.data]);
+  const pageData = pageQuery.data?.data as Record<string, unknown> | undefined;
 
-  /**
-   * Build schema fields for the canvas CMS traits panel.
-   * These come ONLY from the current page's custom schemas (_schemas),
-   * NOT from the global collection schema definition.
-   * This keeps the canvas Dynamic Slot dropdown clean and page-specific.
-   */
-  const schemaFields = useMemo(() => {
-    const seen = new Set<string>();
-    const fieldsList: Array<{
-      id: string;
-      name: string;
-      apiId: string;
-      dataType?: string;
-    }> = [];
+  const pageCustomSchemas = useMemo(
+    () => extractPageCustomSchemas(pageData),
+    [pageData],
+  );
 
-    for (const schema of pageCustomSchemas) {
-      for (const f of schema.fields || []) {
-        if (f?.apiId && !seen.has(f.apiId)) {
-          seen.add(f.apiId);
-          fieldsList.push({
-            id: f.apiId,
-            name: `${schema.name}: ${f.displayName || f.name || f.apiId}`,
-            apiId: f.apiId,
-            dataType: f.dataType,
-          });
-        }
-      }
-    }
+  const schemaFields = useMemo(
+    () => buildSchemaFields(pageCustomSchemas),
+    [pageCustomSchemas],
+  );
 
-    return fieldsList;
-  }, [pageCustomSchemas]);
+  const availableSchemas = useMemo(
+    () => buildAvailableSchemas(pageCustomSchemas),
+    [pageCustomSchemas],
+  );
 
-  /**
-   * Build available schemas list for the canvas 'Schema Section' dropdown.
-   * Only includes schemas defined on THIS specific page.
-   */
-  const availableSchemas = useMemo(() => {
-    return pageCustomSchemas.map((s) => ({
-      id: s.id || s.slug,
-      name: s.name,
-      slug: s.slug,
-      fields: (s.fields || []).map((f) => ({
-        id: f.apiId,
-        name: f.displayName || f.apiId,
-        apiId: f.apiId,
-        dataType: f.dataType,
-      })),
-    }));
-  }, [pageCustomSchemas]);
-
-  /**
-   * Extract actual key-value pairs from page custom schemas
-   * so canvas elements can live-hydrate when bound to dynamic slots.
-   */
-  const schemaValues = useMemo(() => {
-    const values: Record<string, unknown> = {};
-    const raw = (pageQuery.data?.data as Record<string, unknown>)?._schemas;
-    if (Array.isArray(raw)) {
-      for (const s of raw as Array<{ values?: Record<string, unknown> }>) {
-        if (s && s.values && typeof s.values === 'object') {
-          Object.assign(values, s.values);
-        }
-      }
-    }
-    return values;
-  }, [pageQuery.data]);
+  const schemaValues = useMemo(() => extractSchemaValues(pageData), [pageData]);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -174,7 +118,6 @@ export function PageEditorPage() {
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
   const pendingTemplateResult = useRef<TemplateValidationResult | null>(null);
   const grapesEditorRef = useRef<GrapesJSEditorHandle>(null);
-
   const bodyRef = useRef<unknown>([]);
 
   const handleTemplateImport = (result: TemplateValidationResult) => {
@@ -217,14 +160,13 @@ export function PageEditorPage() {
 
   useEffect(() => {
     if (pageQuery.data) {
-      const pageData = (pageQuery.data.data || {}) as Record<string, unknown>;
-      setTitle(typeof pageData.title === 'string' ? pageData.title : '');
-      setSlug(typeof pageData.slug === 'string' ? pageData.slug : '');
+      const pData = (pageQuery.data.data || {}) as Record<string, unknown>;
+      setTitle(typeof pData.title === 'string' ? pData.title : '');
+      setSlug(typeof pData.slug === 'string' ? pData.slug : '');
 
       const bodyData =
-        (pageData.body as Record<string, unknown> | unknown[]) ?? undefined;
+        (pData.body as Record<string, unknown> | unknown[]) ?? undefined;
 
-      // Determine initial builder if not yet set (on first load)
       let currentBuilder = activeBuilder;
       if (!isBuilderReady) {
         if (Array.isArray(bodyData) && bodyData.length > 0) {
@@ -261,36 +203,128 @@ export function PageEditorPage() {
     }
   }, [pageQuery.data, activeBuilder, isBuilderReady]);
 
+  const {
+    isDirty,
+    lastAutoSavedAt,
+    hasRecoverableDraft,
+    recoveredDraft,
+    restoreDraft,
+    discardDraft,
+    clearLocalDraft,
+  } = useCanvasAutoSave({
+    pageId,
+    schemaSlug,
+    title,
+    slug,
+    bodyRef,
+    activeBuilder,
+    enabled: isBuilderReady,
+    serverUpdatedAt: pageQuery.data?.updatedAt,
+    onRestoreDraft: (draft) => {
+      if (draft.title) setTitle(draft.title);
+      if (draft.slug) setSlug(draft.slug);
+      if (draft.body) {
+        bodyRef.current = draft.body;
+        if (draft.builderType === 'grapesjs') {
+          grapesEditorRef.current?.loadRawData(
+            draft.body as Partial<GrapesJSData>,
+          );
+        } else {
+          setInitialBody(draft.body);
+        }
+      }
+      announce('Recovered unsaved local draft onto canvas', 'polite');
+      toast.success('Recovered unsaved local draft!');
+    },
+  });
+
+  // Announce canvas hydration readiness
+  useEffect(() => {
+    if (isBuilderReady) {
+      announce('Visual page builder hydrated and ready for editing', 'polite');
+    }
+  }, [isBuilderReady, announce]);
+
+  // Announce recoverable draft detection
+  useEffect(() => {
+    if (hasRecoverableDraft) {
+      announce(
+        'Unsaved local draft detected from a previous session',
+        'polite',
+      );
+    }
+  }, [hasRecoverableDraft, announce]);
+
   const updateMutation = useMutation({
     mutationFn: () => {
-      const pageData = (pageQuery.data?.data as Record<string, unknown>) || {};
-      const schemaValues: Record<string, unknown> = {};
-      const rawSchemas = pageData._schemas;
+      const pData = (pageQuery.data?.data as Record<string, unknown>) || {};
+      const sValues: Record<string, unknown> = {};
+      const rawSchemas = pData._schemas;
       if (Array.isArray(rawSchemas)) {
         for (const s of rawSchemas as Array<{
           values?: Record<string, unknown>;
         }>) {
           if (s && s.values && typeof s.values === 'object') {
-            Object.assign(schemaValues, s.values);
+            Object.assign(sValues, s.values);
           }
         }
       }
 
       return collectionsApi.updatePage(schemaSlug!, pageId!, {
-        ...schemaValues,
-        ...pageData,
+        ...sValues,
+        ...pData,
         title: title.trim(),
         slug: slug.trim() || slugify(title),
         body: bodyRef.current ?? [],
       });
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      announce('Saving page changes to cloud...', 'polite');
+      await queryClient.cancelQueries({
+        queryKey: ['page', schemaSlug, pageId],
+      });
+      const previousPage = queryClient.getQueryData<PageEntry>([
+        'page',
+        schemaSlug,
+        pageId,
+      ]);
+
+      queryClient.setQueryData<PageEntry>(
+        ['page', schemaSlug, pageId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              title: title.trim(),
+              slug: slug.trim() || slugify(title),
+              body: bodyRef.current as PageBodyData,
+            },
+            updatedAt: new Date().toISOString(),
+          };
+        },
+      );
+
+      return { previousPage };
+    },
+    onSuccess: async () => {
+      await clearLocalDraft();
+      usePageBuilderStore.getState().markClean(pageId!);
       queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
       queryClient.invalidateQueries({ queryKey: ['page', schemaSlug, pageId] });
+      announce('Page saved successfully to cloud', 'polite');
       toast.success('Page saved successfully!');
     },
-    onError: (error) => {
-      console.error('Save failed:', error);
+    onError: (error, _variables, context) => {
+      if (context?.previousPage) {
+        queryClient.setQueryData(
+          ['page', schemaSlug, pageId],
+          context.previousPage,
+        );
+      }
+      browserLogger.error('Save failed:', error);
+      announce('Failed to save page changes to cloud', 'assertive');
       toast.error(
         'Failed to save page. Please check your connection or try again.',
       );
@@ -300,6 +334,7 @@ export function PageEditorPage() {
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
+    usePageBuilderStore.getState().markDirty(true);
     if (!slugManuallyEdited) {
       setSlug(slugify(newTitle));
     }
@@ -308,10 +343,12 @@ export function PageEditorPage() {
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSlug(e.target.value);
     setSlugManuallyEdited(true);
+    usePageBuilderStore.getState().markDirty(true);
   };
 
   const handleDesignChange = useCallback((newDesign: unknown) => {
     bodyRef.current = newDesign;
+    usePageBuilderStore.getState().markDirty(true);
   }, []);
 
   const handleSave = () => {
@@ -327,13 +364,29 @@ export function PageEditorPage() {
     );
   }
 
-  if (pageQuery.isError || !pageQuery.data) {
+  if (pageQuery.isError) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
-        <p className="text-muted-foreground">Page not found</p>
+      <div className="flex items-center justify-center min-h-[60vh] p-6">
+        <InlineErrorAlert
+          title="Failed to load page"
+          message={pageQuery.error}
+          onRetry={() => pageQuery.refetch()}
+          isRetrying={pageQuery.isFetching}
+          onBack={() => navigate(`/collections/${schemaSlug}`)}
+          backText="Back to Pages"
+          className="max-w-xl w-full"
+        />
+      </div>
+    );
+  }
+
+  if (!pageQuery.data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="text-muted-foreground text-base">Page not found</p>
         <button
           onClick={() => navigate(`/collections/${schemaSlug}`)}
-          className="text-primary hover:text-primary/80 font-medium"
+          className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 text-sm shadow-sm"
         >
           Back to Pages
         </button>
@@ -343,92 +396,32 @@ export function PageEditorPage() {
 
   return (
     <div className="flex flex-col h-[100vh]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-background">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate(`/collections/${schemaSlug}`)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="flex flex-col gap-1">
-            <input
-              type="text"
-              value={title}
-              onChange={handleTitleChange}
-              placeholder="Page Title"
-              className="text-lg font-semibold bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
-            />
-            <input
-              type="text"
-              value={slug}
-              onChange={handleSlugChange}
-              placeholder="/page-slug"
-              className="text-sm font-mono bg-transparent border-none outline-none text-muted-foreground placeholder:text-muted-foreground/50"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {activeBuilder === 'grapesjs' && (
-            <>
-              <button
-                type="button"
-                onClick={() => setIsSchemaDrawerOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 font-medium hover:bg-indigo-500/20 transition-colors text-xs"
-                title="Manage custom schemas and content fields for this page"
-              >
-                <Boxes className="h-3.5 w-3.5 text-indigo-400" />
-                <span>Schemas</span>
-                <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-[10px] font-mono">
-                  {availableSchemas.length}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsImportModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs"
-                title="Import dynamic JSON template"
-              >
-                <Upload className="h-3.5 w-3.5 text-indigo-400" />
-                Template
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsHistoryDrawerOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs"
-                title="View version snapshots and rollback"
-              >
-                <History className="h-3.5 w-3.5 text-amber-400" />
-                History
-              </button>
-            </>
-          )}
-          <button
-            onClick={() =>
-              window.open(
-                `/collections/${schemaSlug}/preview${slug.startsWith('/') ? '' : '/'}${slug}`,
-                '_blank',
-              )
-            }
-            disabled={!slug}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors disabled:opacity-50"
-          >
-            <Eye className="h-4 w-4" />
-            Preview
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!title.trim() || updateMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            {updateMutation.isPending ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </div>
+      <PageEditorHeader
+        schemaSlug={schemaSlug!}
+        slug={slug}
+        title={title}
+        onTitleChange={handleTitleChange}
+        onSlugChange={handleSlugChange}
+        activeBuilder={activeBuilder}
+        availableSchemasCount={availableSchemas.length}
+        onOpenSchemaDrawer={() => setIsSchemaDrawerOpen(true)}
+        onOpenImportModal={() => setIsImportModalOpen(true)}
+        onOpenHistoryDrawer={() => setIsHistoryDrawerOpen(true)}
+        lastAutoSavedAt={lastAutoSavedAt}
+        isSaving={updateMutation.isPending}
+        isDirty={isDirty}
+        onSave={handleSave}
+        onNavigateBack={() => navigate(`/collections/${schemaSlug}`)}
+      />
 
-      {/* Page Builder Canvas */}
+      {hasRecoverableDraft && (
+        <DraftRecoveryBanner
+          draft={recoveredDraft}
+          onRestore={restoreDraft}
+          onDiscard={discardDraft}
+        />
+      )}
+
       <div className="flex-1 overflow-hidden relative flex flex-col min-h-0">
         <style>{`
           #functions-panel {
@@ -454,15 +447,23 @@ export function PageEditorPage() {
           </Suspense>
         )}
         {isBuilderReady && activeBuilder === 'grapesjs' && (
-          <GrapesJSEditor
-            ref={grapesEditorRef}
-            initialData={initialBody as Partial<GrapesJSData>}
-            onChange={handleDesignChange}
-            brandTitle={title || 'Page Builder'}
-            schemaFields={schemaFields}
-            availableSchemas={availableSchemas}
-            schemaValues={schemaValues}
-          />
+          <Suspense
+            fallback={
+              <div className="flex h-full w-full items-center justify-center bg-zinc-950 text-xs text-zinc-500">
+                Loading Canvas Editor...
+              </div>
+            }
+          >
+            <GrapesJSEditor
+              ref={grapesEditorRef}
+              initialData={initialBody as Partial<GrapesJSData>}
+              onChange={handleDesignChange}
+              brandTitle={title || 'Page Builder'}
+              schemaFields={schemaFields}
+              availableSchemas={availableSchemas}
+              schemaValues={schemaValues}
+            />
+          </Suspense>
         )}
       </div>
 

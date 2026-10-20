@@ -1,5 +1,6 @@
 import {
   usePageBuilderStore,
+  useShallow,
   CTA_BANNER_DEFAULTS,
 } from '../stores/pageBuilderStore';
 
@@ -9,7 +10,9 @@ export default function CtaBannerSettings(props: {
   console.log('CtaBannerSettings props:', props);
   const { targetComponentId } = props;
   const s = usePageBuilderStore(
-    (state) => state.ctaBanner[targetComponentId] ?? CTA_BANNER_DEFAULTS,
+    useShallow(
+      (state) => state.ctaBanner[targetComponentId] ?? CTA_BANNER_DEFAULTS,
+    ),
   );
   const set = usePageBuilderStore((state) => state.setCtaBanner);
   const u = (patch: Partial<typeof s>) => set(targetComponentId, patch);

@@ -3,31 +3,11 @@ import {
   usePageBuilderStore,
   VIDEO_SHOWCASE_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface VideoShowcaseProps {
-  componentId: string;
-  isPreview?: boolean;
-}
-
-const isYouTube = (url: string) => {
-  return url.includes('youtube.com') || url.includes('youtu.be');
-};
-
-const getYouTubeEmbedUrl = (url: string) => {
-  if (url.includes('embed')) return url;
-  try {
-    const urlObj = new URL(url);
-    let videoId = '';
-    if (url.includes('youtu.be')) {
-      videoId = urlObj.pathname.slice(1);
-    } else {
-      videoId = urlObj.searchParams.get('v') || '';
-    }
-    return `https://www.youtube.com/embed/${videoId}`;
-  } catch {
-    return url;
-  }
-};
+import type { VideoShowcaseProps } from '@/features/collections/types/page-builder.types';
+import {
+  isYouTube,
+  getYouTubeEmbedUrl,
+} from '@/features/collections/utils/video-embed.util';
 
 export const VideoShowcase = forwardRef<HTMLElement, VideoShowcaseProps>(
   (props, ref) => {

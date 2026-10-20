@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import {
   Settings,
@@ -10,6 +9,7 @@ import {
 } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   VideoItem,
   VIDEO_SHOWCASE_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -18,8 +18,10 @@ export const VideoShowcaseSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) =>
-      state.videoShowcase[targetComponentId] ?? VIDEO_SHOWCASE_DEFAULTS,
+    useShallow(
+      (state) =>
+        state.videoShowcase[targetComponentId] ?? VIDEO_SHOWCASE_DEFAULTS,
+    ),
   );
   const setVideoShowcase = usePageBuilderStore(
     (state) => state.setVideoShowcase,
@@ -30,7 +32,7 @@ export const VideoShowcaseSettings: React.FC<{ targetComponentId: string }> = ({
 
   const handleChange = (
     field: keyof typeof settings,
-    value: string | number | boolean | any[],
+    value: string | number | boolean | unknown[],
   ) => {
     setVideoShowcase(targetComponentId, { [field]: value });
   };

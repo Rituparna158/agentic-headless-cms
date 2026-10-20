@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { getMetrics } from './metrics.controller.js';
+import { getMetrics, recordWebVitals } from './metrics.controller.js';
 const router = Router();
 router.get('/', getMetrics);
+router.post('/vitals', recordWebVitals);
 export { router as metricsRouter };

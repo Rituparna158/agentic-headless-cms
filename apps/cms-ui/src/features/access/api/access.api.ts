@@ -1,6 +1,6 @@
-import { requestHandler } from '../../../api/requestHandler';
-import { ENDPOINTS } from '../../../api/endpoints';
-import { buildQueryString, TableQueryParams } from '../../../api/queryParams';
+import { requestHandler } from '@/api/requestHandler';
+import { ENDPOINTS } from '@/api/endpoints';
+import { buildQueryString, TableQueryParams } from '@/api/queryParams';
 import {
   Role,
   RoleWithPermissions,

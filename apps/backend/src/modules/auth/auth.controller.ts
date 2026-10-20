@@ -17,6 +17,13 @@ import {
 import { env } from '@repo/config';
 import { logger } from '@repo/logger';
 import { authService } from './auth.service.js';
+
+function isSecureCookie(req: Request): boolean {
+  if (process.env.COOKIE_SECURE === 'false') return false;
+  if (process.env.COOKIE_SECURE === 'true') return true;
+  return req.secure || req.headers['x-forwarded-proto'] === 'https';
+}
+
 export const login: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('AuthController: login start');
@@ -45,7 +52,7 @@ export const login: RequestHandler = asyncHandler(
     logger.debug({ email: input.email }, 'AuthController: setting auth cookie');
     res.cookie(cookieName, token, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
@@ -65,7 +72,7 @@ export const logout: RequestHandler = asyncHandler(
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
     res.clearCookie(cookieName, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       sameSite: 'lax',
     });
     logger.info('AuthController: logout success');
@@ -157,27 +164,27 @@ export const ssoLogin: RequestHandler = asyncHandler(
       throw new BadRequestError('appId query parameter is required');
     res.cookie('sso_redirect_url', redirectUrl, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       maxAge: 5 * 60 * 1000,
     });
     res.cookie('sso_app_id', requestedAppId, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       maxAge: 5 * 60 * 1000,
     });
     res.cookie('sso_state', state, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       maxAge: 5 * 60 * 1000,
     });
     res.cookie('sso_nonce', nonce, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       maxAge: 5 * 60 * 1000,
     });
     res.cookie('sso_code_verifier', codeVerifier, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       maxAge: 5 * 60 * 1000,
     });
     res.redirect(url);
@@ -220,7 +227,7 @@ export const ssoCallback: RequestHandler = asyncHandler(
       const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
       res.cookie(cookieName, token, {
         httpOnly: true,
-        secure: env.NODE_ENV === 'production',
+        secure: isSecureCookie(req),
         sameSite: 'lax',
         maxAge: AUTH_COOKIES.MAX_AGE_MS,
       });
@@ -270,7 +277,7 @@ export const verifyMfa: RequestHandler = asyncHandler(
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
     res.cookie(cookieName, token, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
@@ -295,7 +302,7 @@ export const disableMfa: RequestHandler = asyncHandler(
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
     res.cookie(cookieName, token, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });
@@ -322,7 +329,7 @@ export const verifyMfaChallenge: RequestHandler = asyncHandler(
     const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
     res.cookie(cookieName, token, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isSecureCookie(req),
       sameSite: 'lax',
       maxAge: AUTH_COOKIES.MAX_AGE_MS,
     });

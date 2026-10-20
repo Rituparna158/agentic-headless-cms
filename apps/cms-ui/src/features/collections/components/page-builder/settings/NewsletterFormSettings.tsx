@@ -1,26 +1,16 @@
-import { usePageBuilderStore } from '../stores/pageBuilderStore';
-import { PageBuilderSettingProps } from '../../../types/collections.types';
-
-const DEFAULT_STATE = {
-  title: 'Subscribe to our Newsletter',
-  subtitle: 'Get the latest news and updates right to your inbox.',
-  placeholder: 'Enter your email address',
-  buttonText: 'Subscribe',
-  backgroundColor: '#f7fafc',
-  textColor: '#1a202c',
-  inputBackgroundColor: '#ffffff',
-  inputBorderColor: '#e2e8f0',
-  buttonColor: '#667eea',
-  buttonTextColor: '#ffffff',
-  alignment: 'center' as const,
-  layout: 'inline' as const,
-};
+import { usePageBuilderStore, useShallow } from '../stores/pageBuilderStore';
+import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
+import { DEFAULT_NEWSLETTER_FORM_STATE } from '@/features/collections/constants/page-builder-settings.constants';
 
 export default function NewsletterFormSettings({
   targetComponentId,
 }: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
-    (state) => state.newsletterForm[targetComponentId] ?? DEFAULT_STATE,
+    useShallow(
+      (state) =>
+        state.newsletterForm[targetComponentId] ??
+        DEFAULT_NEWSLETTER_FORM_STATE,
+    ),
   );
   const set = usePageBuilderStore((state) => state.setNewsletterForm);
   const u = (patch: Partial<typeof s>) => set(targetComponentId, patch);

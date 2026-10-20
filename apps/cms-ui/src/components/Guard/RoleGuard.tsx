@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../../features/auth/store/auth.store';
+import { isUserAdmin } from '../../features/access/constants/access.constants';
 import { RoleGuardProps } from './types';
 export const RoleGuard = ({
   requiredCapability,
@@ -10,10 +11,8 @@ export const RoleGuard = ({
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  // Super admins bypass capability checks
-  const isSuperAdmin = user.roles?.some((roleName: string) =>
-    roleName.toLowerCase().includes('admin'),
-  );
+  // Super admins bypass capability checks via strict canonical role comparison
+  const isSuperAdmin = isUserAdmin(user.roles);
   if (isSuperAdmin) {
     return <Outlet />;
   }

@@ -30,7 +30,7 @@ import {
   MfaStatusBadgeProps,
 } from '../types/access.types';
 import { MFA_SORTABLE_COLUMNS } from '../constants/access.constants';
-import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 export const MfaRequestsPage = () => {
   const queryClient = useQueryClient();

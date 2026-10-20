@@ -1,19 +1,17 @@
 import { forwardRef, useLayoutEffect, useState } from 'react';
 import {
   usePageBuilderStore,
+  useShallow,
   TESTIMONIAL_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface TestimonialProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { TestimonialProps } from '@/features/collections/types/page-builder.types';
+import { getOptimizedImageUrl } from '@/utils/imageUrl';
 
 export const Testimonials = forwardRef<HTMLElement, TestimonialProps>(
   (props, ref) => {
     const id = props.componentId ?? 'preview';
     const s = usePageBuilderStore(
-      (state) => state.testimonials[id] ?? TESTIMONIAL_DEFAULTS,
+      useShallow((state) => state.testimonials[id] ?? TESTIMONIAL_DEFAULTS),
     );
     const [isBuilder] = useState(
       !(
@@ -98,8 +96,17 @@ export const Testimonials = forwardRef<HTMLElement, TestimonialProps>(
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {review.avatar && (
             <img
-              src={review.avatar}
+              src={getOptimizedImageUrl(review.avatar, {
+                width: 96,
+                height: 96,
+                format: 'webp',
+                quality: 80,
+              })}
               alt={review.name}
+              width={48}
+              height={48}
+              loading="lazy"
+              decoding="async"
               style={{
                 width: '48px',
                 height: '48px',

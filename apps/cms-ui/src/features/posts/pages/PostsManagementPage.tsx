@@ -14,15 +14,14 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react';
-import { postsApi } from '../api/posts.api';
-import {
-  collectionsApi,
-  PageEntry,
-} from '../../collections/api/collections.api';
-import { ContentCollectionMeta } from '../types/posts.types';
-import { PageSideDrawer } from '../components/PageSideDrawer';
-import { slugify } from '../../collections/utils/slugify.util';
+import { postsApi, extractArrayPayload } from '../api/posts.api';
+import type { PageEntry, ContentCollectionMeta } from '@/types/content.types';
+import { PageSideDrawer } from '@/components/PageSideDrawer';
+import { slugify } from '@/utils/slugify.util';
 import { useToast } from '@repo/shared-ui';
+import { InlineErrorAlert } from '@/components/ui/InlineErrorAlert';
+import { EmptyStateCard } from '@/components/ui/EmptyStateCard';
+import { DeletePageModal } from '@/components/modals/DeletePageModal';
 
 export const PostsManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -50,6 +49,12 @@ export const PostsManagementPage: React.FC = () => {
   const [newPageTitle, setNewPageTitle] = useState('');
   const [newPageSlug, setNewPageSlug] = useState('');
 
+  // Delete Page Modal State
+  const [pageToDelete, setPageToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
   // 1. Fetch Collections
   const collectionsQuery = useQuery({
     queryKey: ['post-collections'],
@@ -58,12 +63,16 @@ export const PostsManagementPage: React.FC = () => {
 
   // Sort collections chronologically (earliest created collection appears first)
   const collections: ContentCollectionMeta[] = useMemo(() => {
-    const list = [...(collectionsQuery.data || [])];
-    return list.sort((a, b) => {
-      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return timeA - timeB;
-    });
+    const list = extractArrayPayload<ContentCollectionMeta>(
+      collectionsQuery.data,
+    );
+    return list
+      .filter((c) => !c.type || c.type === 'collection')
+      .sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeA - timeB;
+      });
   }, [collectionsQuery.data]);
 
   // Filtered collections for master list
@@ -80,7 +89,8 @@ export const PostsManagementPage: React.FC = () => {
   const activeCollection = useMemo(() => {
     if (!collections.length) return null;
     if (selectedCollectionSlug) {
-      return collections.find((c) => c.slug === selectedCollectionSlug) || null;
+      const match = collections.find((c) => c.slug === selectedCollectionSlug);
+      if (match) return match;
     }
     // Default to first collection
     return collections[0] || null;
@@ -91,13 +101,13 @@ export const PostsManagementPage: React.FC = () => {
   // 2. Fetch Pages for active collection
   const pagesQuery = useQuery({
     queryKey: ['collection-pages', currentSlug],
-    queryFn: () => collectionsApi.listPages(currentSlug, { pageSize: 50 }),
+    queryFn: () => postsApi.listPagesForCollection(currentSlug),
     enabled: !!currentSlug,
   });
 
   const pages: PageEntry[] = useMemo(
-    () => pagesQuery.data?.data || [],
-    [pagesQuery.data?.data],
+    () => extractArrayPayload<PageEntry>(pagesQuery.data),
+    [pagesQuery.data],
   );
 
   // Determine active page for side drawer
@@ -110,7 +120,7 @@ export const PostsManagementPage: React.FC = () => {
   const createPageMutation = useMutation({
     mutationFn: async ({ title, slug }: { title: string; slug: string }) => {
       if (!currentSlug) throw new Error('No collection selected');
-      return await collectionsApi.createPage(currentSlug, {
+      return await postsApi.createEntry(currentSlug, {
         title,
         slug,
         body: [],
@@ -126,7 +136,7 @@ export const PostsManagementPage: React.FC = () => {
       setNewPageSlug('');
       setActivePageId(newPage.id);
       setIsDrawerOpen(true);
-      toast.success(`Page "${newPage.data.title}" created!`);
+      toast.success(`Page "${newPage.title}" created!`);
     },
     onError: () => {
       toast.error('Failed to create page.');
@@ -137,7 +147,7 @@ export const PostsManagementPage: React.FC = () => {
   const deletePageMutation = useMutation({
     mutationFn: async (pageId: string) => {
       if (!currentSlug) return;
-      await collectionsApi.deletePage(currentSlug, pageId);
+      await postsApi.deleteEntry(currentSlug, pageId);
     },
     onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({
@@ -167,14 +177,14 @@ export const PostsManagementPage: React.FC = () => {
       publishImmediately: boolean;
     }) => {
       if (!currentSlug) throw new Error('No collection selected');
-      const updated = await collectionsApi.updatePage(currentSlug, pageId, {
+      const updated = await postsApi.updateEntry(currentSlug, pageId, {
         title: typeof data.title === 'string' ? data.title : 'Untitled',
         slug: typeof data.slug === 'string' ? data.slug : 'page',
         ...data,
       });
 
       if (publishImmediately) {
-        await collectionsApi.publishPage(currentSlug, pageId);
+        await postsApi.publishEntry(currentSlug, pageId);
       }
 
       return { updated, publishImmediately };
@@ -200,8 +210,8 @@ export const PostsManagementPage: React.FC = () => {
     const q = search.toLowerCase().trim();
     return pages.filter(
       (p) =>
-        p.data.title?.toLowerCase().includes(q) ||
-        p.data.slug?.toLowerCase().includes(q),
+        (p.data?.title || p.title)?.toLowerCase().includes(q) ||
+        (p.data?.slug || p.slug)?.toLowerCase().includes(q),
     );
   }, [pages, search]);
 
@@ -248,7 +258,16 @@ export const PostsManagementPage: React.FC = () => {
 
           {/* Collections List */}
           <div className="flex-1 overflow-y-auto py-2">
-            {collectionsQuery.isLoading ? (
+            {collectionsQuery.isError ? (
+              <div className="p-3">
+                <InlineErrorAlert
+                  title="Failed to load"
+                  message={collectionsQuery.error}
+                  onRetry={() => collectionsQuery.refetch()}
+                  isRetrying={collectionsQuery.isFetching}
+                />
+              </div>
+            ) : collectionsQuery.isLoading ? (
               <div className="px-4 py-2 text-xs text-zinc-500">
                 Loading collections...
               </div>
@@ -347,34 +366,41 @@ export const PostsManagementPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Table or Empty State */}
+                {/* Table, Error, or Empty State */}
+                {pagesQuery.isError && (
+                  <InlineErrorAlert
+                    title="Failed to load collection pages"
+                    message={pagesQuery.error}
+                    onRetry={() => pagesQuery.refetch()}
+                    isRetrying={pagesQuery.isFetching}
+                  />
+                )}
+
                 {pagesQuery.isLoading ? (
                   <div className="py-24 flex flex-col items-center justify-center text-zinc-500 space-y-2">
                     <div className="size-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
                     <p className="text-xs">Loading collection pages...</p>
                   </div>
-                ) : filteredPages.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center py-20 px-4 rounded-2xl bg-zinc-900/30 border border-zinc-800 text-center">
-                    <div className="size-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3">
-                      <FileText className="size-6" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-zinc-200 mb-1">
-                      No pages found
-                    </h3>
-                    <p className="text-xs text-zinc-400 max-w-sm mb-4">
-                      {search
-                        ? `No pages match "${search}".`
-                        : `There are no pages in "${activeCollection.name}" yet. Click "New Page" to create one.`}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setIsCreatePageOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all"
-                    >
-                      <Plus className="size-3.5" />
-                      Create First Page
-                    </button>
-                  </div>
+                ) : !pagesQuery.isError && filteredPages.length === 0 ? (
+                  <EmptyStateCard
+                    icon={FileText}
+                    title={
+                      search
+                        ? 'No matching pages'
+                        : 'No pages in this collection yet'
+                    }
+                    description={
+                      search
+                        ? `No pages matched "${search}". Try adjusting your search term.`
+                        : `There are no pages created for "${activeCollection.name}" yet.`
+                    }
+                    actionLabel={search ? 'Clear Search' : 'Create First Page'}
+                    onAction={() => {
+                      if (search) setSearch('');
+                      else setIsCreatePageOpen(true);
+                    }}
+                    tip="Pages support dynamic schema slots, GrapesJS layouts, and instant previews"
+                  />
                 ) : (
                   <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 overflow-hidden shadow-xl">
                     <table className="w-full text-left text-xs">
@@ -390,10 +416,14 @@ export const PostsManagementPage: React.FC = () => {
                       <tbody className="divide-y divide-zinc-800/60">
                         {filteredPages.map((page) => {
                           const isPublished = page.status === 'published';
-                          const cleanSlug = (page.data.slug || page.id).replace(
-                            /^\/+/,
-                            '',
-                          );
+                          const cleanSlug = String(
+                            page.data?.slug || page.slug || page.id || '',
+                          ).replace(/^\/+/, '');
+                          const pageTitle =
+                            page.data?.title ||
+                            page.title ||
+                            (page.data?.name as string) ||
+                            'Untitled Page';
 
                           return (
                             <tr
@@ -405,13 +435,11 @@ export const PostsManagementPage: React.FC = () => {
                               <td className="py-3.5 px-4">
                                 <div className="flex items-center gap-3">
                                   <div className="size-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
-                                    {(page.data.title || 'P')
-                                      .charAt(0)
-                                      .toUpperCase()}
+                                    {pageTitle.charAt(0).toUpperCase()}
                                   </div>
                                   <div className="flex flex-col min-w-0">
                                     <span className="font-semibold text-zinc-200 group-hover:text-indigo-300 transition-colors truncate max-w-md">
-                                      {page.data.title || 'Untitled Page'}
+                                      {pageTitle}
                                     </span>
                                     <span className="text-[11px] font-mono text-zinc-500">
                                       /{cleanSlug}
@@ -461,9 +489,13 @@ export const PostsManagementPage: React.FC = () => {
 
                               {/* Updated Date */}
                               <td className="py-3.5 px-4 text-zinc-400 font-mono text-[11px]">
-                                {new Date(
-                                  page.updatedAt || page.createdAt,
-                                ).toLocaleDateString()}
+                                {(() => {
+                                  const dateVal =
+                                    page.updatedAt || page.createdAt;
+                                  return dateVal
+                                    ? new Date(dateVal).toLocaleDateString()
+                                    : '-';
+                                })()}
                               </td>
 
                               {/* Actions */}
@@ -509,15 +541,12 @@ export const PostsManagementPage: React.FC = () => {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      if (
-                                        confirm(
-                                          `Delete page "${page.data.title || page.id}"?`,
-                                        )
-                                      ) {
-                                        deletePageMutation.mutate(page.id);
-                                      }
-                                    }}
+                                    onClick={() =>
+                                      setPageToDelete({
+                                        id: page.id,
+                                        title: pageTitle,
+                                      })
+                                    }
                                     className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors"
                                     title="Delete Page"
                                   >
@@ -650,6 +679,20 @@ export const PostsManagementPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Double-confirmation Destructive Page Delete Modal */}
+      <DeletePageModal
+        page={pageToDelete}
+        onClose={() => setPageToDelete(null)}
+        onConfirm={() => {
+          if (pageToDelete) {
+            deletePageMutation.mutate(pageToDelete.id);
+            setPageToDelete(null);
+          }
+        }}
+        isPending={deletePageMutation.isPending}
+        isError={deletePageMutation.isError}
+      />
     </div>
   );
 };

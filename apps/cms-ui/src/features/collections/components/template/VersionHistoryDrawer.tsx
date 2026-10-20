@@ -18,6 +18,7 @@ import {
   ContentVersionRecord,
 } from '../../types/template.types';
 import { useToast } from '@repo/shared-ui';
+import { browserLogger } from '@repo/logger/browser';
 import { SnapshotDetailDeck } from './SnapshotDetailDeck';
 
 export const VersionHistoryDrawer: React.FC<VersionHistoryDrawerProps> = ({
@@ -66,7 +67,7 @@ export const VersionHistoryDrawer: React.FC<VersionHistoryDrawerProps> = ({
       onClose();
     },
     onError: (err) => {
-      console.error('Revert failed:', err);
+      browserLogger.error('Revert failed:', err);
       toast.error('Failed to restore version snapshot. Please try again.');
     },
   });

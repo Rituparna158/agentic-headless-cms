@@ -1,8 +1,3 @@
-/**
- * Centralized API Endpoints
- * All backend routes should be mapped here to avoid hardcoded strings.
- */
-
 export const ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',

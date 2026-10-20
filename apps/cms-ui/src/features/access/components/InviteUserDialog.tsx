@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { browserLogger } from '@repo/logger/browser';
 import { accessApi } from '../api/access.api';
 import {
   InviteUserPayload,
@@ -35,7 +36,7 @@ export const InviteUserDialog = ({ onClose }: InviteUserDialogProps) => {
       }
     },
     onError: (error) => {
-      console.error('Failed to invite user', error);
+      browserLogger.error('Failed to invite user', error);
       alert('Failed to invite user');
     },
   });

@@ -9,7 +9,7 @@ import {
   Loader2,
   Calendar,
 } from 'lucide-react';
-import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useAuditLogs } from '../api/audit.api';
 import type {
   AuditLogRecord,

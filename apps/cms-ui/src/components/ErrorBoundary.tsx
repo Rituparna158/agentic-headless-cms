@@ -1,4 +1,5 @@
 import { Component, ErrorInfo } from 'react';
+import { browserLogger } from '@repo/logger/browser';
 import type {
   ErrorBoundaryProps,
   ErrorBoundaryState,
@@ -17,7 +18,7 @@ export class ErrorBoundary extends Component<
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    browserLogger.error('Uncaught error:', { error, errorInfo });
   }
 
   public render() {

@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   STAT_COUNTER_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface StatCounterProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { StatCounterProps } from '@/features/collections/types/page-builder.types';
 
 export const StatCounter = forwardRef<HTMLElement, StatCounterProps>(
   (props, ref) => {

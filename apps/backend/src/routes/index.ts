@@ -8,6 +8,11 @@ import { webhooksRouter } from '../modules/webhooks/webhooks.routes.js';
 import { localesRouter } from '../modules/locales/locales.routes.js';
 import { schemaRouter } from '../modules/schemas/schema.routes.js';
 import { auditRouter } from '../modules/audit/audit.routes.js';
+import { recordWebVitals } from '../modules/observability/metrics.controller.js';
+
+const telemetryRouter = Router();
+telemetryRouter.post('/vitals', recordWebVitals);
+
 // Versioned API router
 export const apiRouter = Router();
 apiRouter.use('/auth', authRouter);
@@ -19,3 +24,4 @@ apiRouter.use('/access', accessRouter);
 apiRouter.use('/webhooks', webhooksRouter);
 apiRouter.use('/locales', localesRouter);
 apiRouter.use('/audit-logs', auditRouter);
+apiRouter.use('/telemetry', telemetryRouter);

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   ImageItem,
   IMAGE_SHOWCASE_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -18,8 +19,10 @@ export const ImageShowcaseSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) =>
-      state.imageShowcase[targetComponentId] ?? IMAGE_SHOWCASE_DEFAULTS,
+    useShallow(
+      (state) =>
+        state.imageShowcase[targetComponentId] ?? IMAGE_SHOWCASE_DEFAULTS,
+    ),
   );
   const setImageShowcase = usePageBuilderStore(
     (state) => state.setImageShowcase,

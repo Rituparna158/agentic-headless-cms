@@ -3,6 +3,7 @@ import React from 'react';
 import { Settings, Clock, PaintBucket } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   COUNTDOWN_DEFAULTS,
 } from '../stores/pageBuilderStore';
 
@@ -10,7 +11,9 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.countdown[targetComponentId] ?? COUNTDOWN_DEFAULTS,
+    useShallow(
+      (state) => state.countdown[targetComponentId] ?? COUNTDOWN_DEFAULTS,
+    ),
   );
   const setCountdown = usePageBuilderStore((state) => state.setCountdown);
 

@@ -1,4 +1,9 @@
 import type { AuthenticatedUser } from '@repo/types';
+import type { loginSchema } from '@repo/validation';
+import type { z } from 'zod';
+
+export type LoginInputValues = z.input<typeof loginSchema>;
+export type LoginOutputValues = z.output<typeof loginSchema>;
 
 export type AuthStatus =
   | 'idle'
