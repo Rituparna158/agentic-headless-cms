@@ -26,17 +26,19 @@ details in via Secrets.
 
 ## 1. Build and push the images
 
-Both Dockerfiles build from the **monorepo root** as their context (a
+The Dockerfiles build from the **monorepo root** as their context (a
 pnpm/Turborepo workspace needs the whole workspace's `package.json` files to
 resolve `workspace:*` dependencies) — run these from the repo root, not from
-`apps/backend`/`apps/frontend`:
+`apps/backend`/`apps/frontend`/`apps/cms-ui`:
 
 ```sh
 docker build -f apps/backend/Dockerfile  -t <registry>/agentic-cms-backend:<tag>  .
 docker build -f apps/frontend/Dockerfile -t <registry>/agentic-cms-frontend:<tag> .
+docker build -f apps/cms-ui/Dockerfile   -t <registry>/agentic-cms-ui:<tag>       .
 
 docker push <registry>/agentic-cms-backend:<tag>
 docker push <registry>/agentic-cms-frontend:<tag>
+docker push <registry>/agentic-cms-ui:<tag>
 ```
 
 ## 2. Configure secrets
@@ -102,6 +104,8 @@ helm install agentic-cms ./helm/agentic-cms \
   --set backend.image.tag=<tag> \
   --set frontend.image.repository=<registry>/agentic-cms-frontend \
   --set frontend.image.tag=<tag> \
+  --set cmsUI.image.repository=<registry>/agentic-cms-ui \
+  --set cmsUI.image.tag=<tag> \
   --set ingress.host=cms.example.com \
   -f my-secrets-values.yaml   # the existingSecret block from step 2
 ```
@@ -128,15 +132,15 @@ helm upgrade agentic-cms ./helm/agentic-cms \
 
 ## What's included
 
-| Resource                                      | Backend                                | Frontend                                |
-| --------------------------------------------- | -------------------------------------- | --------------------------------------- |
-| Deployment                                    | ✓                                      | ✓                                       |
-| Service (ClusterIP)                           | ✓                                      | ✓                                       |
-| ConfigMap (non-sensitive env)                 | ✓                                      | ✓                                       |
-| Secret (sensitive env, generic key/value map) | ✓                                      | — (nothing sensitive today)             |
-| Liveness/readiness probes                     | `/health/live`, `/health/ready`        | `/login`                                |
-| HorizontalPodAutoscaler                       | ✓ (CPU-based, `backend.autoscaling.*`) | ✓ (CPU-based, `frontend.autoscaling.*`) |
-| Ingress (shared, path-based)                  | `/api`, `/health`                      | `/`                                     |
+| Resource                                      | Backend                                | Frontend                                | CMS UI                               |
+| --------------------------------------------- | -------------------------------------- | --------------------------------------- | ------------------------------------ |
+| Deployment                                    | ✓                                      | ✓                                       | ✓                                    |
+| Service (ClusterIP)                           | ✓                                      | ✓                                       | ✓                                    |
+| ConfigMap (non-sensitive env)                 | ✓                                      | ✓                                       | ✓                                    |
+| Secret (sensitive env, generic key/value map) | ✓                                      | — (nothing sensitive today)             | — (nothing sensitive today)          |
+| Liveness/readiness probes                     | `/health/live`, `/health/ready`        | `/login`                                | `/healthz`                           |
+| HorizontalPodAutoscaler                       | ✓ (CPU-based, `backend.autoscaling.*`) | ✓ (CPU-based, `frontend.autoscaling.*`) | ✓ (CPU-based, `cmsUI.autoscaling.*`) |
+| Ingress                                       | `/api`, `/health`                      | `/`                                     | `cms.example.com` / `cms-ui-ingress` |
 
 `backend.autoscaling.enabled`/`frontend.autoscaling.enabled` default to
 `true`. While enabled, the Deployment's `replicas` field is omitted entirely
