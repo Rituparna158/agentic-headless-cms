@@ -9,7 +9,12 @@ import grapesjs, { Editor } from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import basicBlocksPlugin from 'grapesjs-blocks-basic';
 import formsPlugin from 'grapesjs-plugin-forms';
-import { CustomBlocksPlugin } from '../../components/grapesjs-plugins/CustomBlocksPlugin';
+import {
+  CustomBlocksPlugin,
+  register_universal_cms_traits,
+  type CmsSchemaField,
+  type CmsPageSchema,
+} from '../../components/grapesjs-plugins/CustomBlocksPlugin';
 import { GrapesJSEditorProps, GrapesJSEditorHandle } from './types';
 import './GrapesJSTheme.css';
 import {
@@ -19,7 +24,7 @@ import {
   Smartphone,
   Code,
   Trash2,
-  Layers,
+  FolderTree,
   Maximize,
 } from 'lucide-react';
 import { setupLayerIcons } from './components/LayerIconPlugin';
@@ -27,7 +32,16 @@ import { setupLayerIcons } from './components/LayerIconPlugin';
 export const GrapesJSEditor = forwardRef<
   GrapesJSEditorHandle,
   GrapesJSEditorProps
->(function GrapesJSEditor({ initialData, onChange }, ref) {
+>(function GrapesJSEditor(
+  {
+    initialData,
+    onChange,
+    schemaFields = [],
+    availableSchemas = [],
+    schemaValues = {},
+  },
+  ref,
+) {
   const editorRef = useRef<Editor | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -51,6 +65,16 @@ export const GrapesJSEditor = forwardRef<
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  useEffect(() => {
+    if (editorRef.current) {
+      register_universal_cms_traits(editorRef.current, {
+        schemaFields: schemaFields as CmsSchemaField[],
+        availableSchemas: availableSchemas as CmsPageSchema[],
+        schemaValues,
+      });
+    }
+  }, [schemaFields, availableSchemas, schemaValues]);
 
   useEffect(() => {
     if (!containerRef.current || editorRef.current) return;
@@ -89,7 +113,16 @@ export const GrapesJSEditor = forwardRef<
       traitManager: {
         appendTo: '#gjs-traits',
       },
-      plugins: [basicBlocksPlugin, formsPlugin, CustomBlocksPlugin],
+      plugins: [
+        basicBlocksPlugin,
+        formsPlugin,
+        (ed: Editor) =>
+          CustomBlocksPlugin(ed, {
+            schemaFields: schemaFields as CmsSchemaField[],
+            availableSchemas: availableSchemas as CmsPageSchema[],
+            schemaValues,
+          }),
+      ],
     });
 
     editorRef.current = editor;
@@ -256,7 +289,7 @@ export const GrapesJSEditor = forwardRef<
             {/* Layers panel header */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800/50">
               <div className="flex items-center justify-center w-6 h-6 rounded-md bg-purple-500/15">
-                <Layers size={14} className="text-purple-400" />
+                <FolderTree size={14} className="text-purple-400" />
               </div>
               <span className="text-sm font-semibold text-zinc-200 tracking-wide">
                 Layers
