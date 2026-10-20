@@ -46,7 +46,7 @@ export function CollectionsListPage() {
   const [viewMode, setViewMode] = useState<ViewMode>(
     () =>
       (localStorage.getItem(COLLECTIONS_VIEW_MODE_STORAGE_KEY) as ViewMode) ||
-      'grid',
+      'list',
   );
 
   const handleViewModeChange = (mode: ViewMode) => {
@@ -283,7 +283,17 @@ export function CollectionsListPage() {
             {collection.name.charAt(0).toUpperCase()}
           </span>
         </div>
-        <span className="font-bold">{collection.name}</span>
+        <div className="flex flex-col min-w-0">
+          <Link
+            to={`/collections/${collection.slug}`}
+            className="font-bold text-foreground hover:text-primary transition-colors truncate"
+          >
+            {collection.name}
+          </Link>
+          <span className="font-mono text-[11px] text-muted-foreground truncate">
+            /{collection.slug}
+          </span>
+        </div>
       </div>
     ),
     description: (
@@ -382,13 +392,6 @@ export function CollectionsListPage() {
               <List className="w-4 h-4" />
             </button>
           </div>
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-background border border-border text-foreground font-medium hover:bg-muted transition-colors shadow-sm"
-          >
-            <Plus className="h-4 w-4" />
-            Create New Collection
-          </button>
         </div>
       </div>
 
