@@ -27,6 +27,7 @@ export interface SchemaField {
 
 export interface SchemaDefinition {
   fields: SchemaField[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface SchemaRecord {
@@ -47,11 +48,13 @@ export interface CreateSchemaInput {
   description?: string | null;
   type: 'collection' | 'single_type' | 'component';
   fields: SchemaField[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface UpdateSchemaInput {
   name?: string;
   description?: string | null;
   fields?: SchemaField[];
+  metadata?: Record<string, unknown>;
   migrationNotes?: string;
 }
