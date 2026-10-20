@@ -10,8 +10,36 @@ import {
   parseUploadedFileContent,
 } from '@/features/posts/utils/content-parser.util';
 import { DynamicFieldDefinition } from '@/features/posts/types/posts.types';
+import { extractArrayPayload } from '@/features/posts/api/posts.api';
 
 describe('Posts Utilities & Anti-Injection Sanitizer', () => {
+  describe('extractArrayPayload helper', () => {
+    it('returns empty array when given null or undefined', () => {
+      expect(extractArrayPayload(null)).toEqual([]);
+      expect(extractArrayPayload(undefined)).toEqual([]);
+    });
+
+    it('returns array directly when given an array', () => {
+      const items = [{ id: '1', title: 'Post 1' }];
+      expect(extractArrayPayload(items)).toEqual(items);
+    });
+
+    it('unwraps single-level { data: [...] } structure', () => {
+      const items = [{ id: '1', title: 'Post 1' }];
+      expect(extractArrayPayload({ data: items })).toEqual(items);
+    });
+
+    it('unwraps double-level { data: { data: [...] } } structure', () => {
+      const items = [{ id: '1', title: 'Post 1' }];
+      expect(extractArrayPayload({ data: { data: items } })).toEqual(items);
+    });
+
+    it('unwraps { items: [...] } or { entries: [...] } structures', () => {
+      const items = [{ id: '1', title: 'Post 1' }];
+      expect(extractArrayPayload({ items })).toEqual(items);
+      expect(extractArrayPayload({ entries: items })).toEqual(items);
+    });
+  });
   const sampleFields: DynamicFieldDefinition[] = [
     {
       apiId: 'title',
@@ -136,10 +164,104 @@ These headphones deliver **premium sound quality**.`;
       expect(res.failedCount).toBe(0);
     });
 
-    it('reports error on invalid file extension', () => {
-      const res = parseUploadedFileContent('file.exe', 'binary', sampleFields);
+    it('generates sample values for date, datetime, enum, json, and url field types', () => {
+      const advancedFields: DynamicFieldDefinition[] = [
+        {
+          apiId: 'published_at',
+          displayName: 'Published At',
+          dataType: 'datetime',
+          isRequired: false,
+          sortOrder: 0,
+        },
+        {
+          apiId: 'status',
+          displayName: 'Status',
+          dataType: 'enum',
+          config: { options: ['draft', 'published'] },
+          isRequired: false,
+          sortOrder: 1,
+        },
+        {
+          apiId: 'metadata',
+          displayName: 'Metadata',
+          dataType: 'json',
+          isRequired: false,
+          sortOrder: 2,
+        },
+        {
+          apiId: 'website',
+          displayName: 'Website',
+          dataType: 'url',
+          isRequired: false,
+          sortOrder: 3,
+        },
+      ];
+
+      const sample = generateSampleJsonFromSchema(advancedFields);
+      expect(sample).toHaveProperty('published_at');
+      expect(sample.status).toBe('draft');
+      expect(sample.metadata).toEqual({
+        specs: { featureA: 'Enabled', capacity: '128GB' },
+      });
+      expect(sample.website).toBe('https://example.com/reference');
+    });
+
+    it('warns on boolean type mismatch in validation', () => {
+      const issues = validateEntryAgainstSchema(
+        { in_stock: 'yes' },
+        sampleFields,
+      );
+      expect(
+        issues.some((i) => i.field === 'in_stock' && i.severity === 'warning'),
+      ).toBe(true);
+    });
+
+    it('parses markdown file with parseUploadedFileContent', () => {
+      const mdContent = `---
+title: "Parsed Markdown Post"
+price: 49.99
+---
+Markdown body text`;
+      const res = parseUploadedFileContent('post.md', mdContent, sampleFields);
+      expect(res.validEntries.length).toBe(1);
+      expect(res.validEntries[0]?.title).toBe('Parsed Markdown Post');
+      expect(res.successCount).toBe(1);
+    });
+
+    it('parses HTML file with h1 fallback and parseUploadedFileContent', () => {
+      const htmlContent =
+        '<div><h1>H1 Title Only</h1><p>Body copy here</p></div>';
+      const res = parseUploadedFileContent('post.html', htmlContent, [
+        {
+          apiId: 'title',
+          displayName: 'Title',
+          dataType: 'text',
+          isRequired: false,
+          sortOrder: 0,
+        },
+      ]);
+      expect(res.validEntries.length).toBe(1);
+      expect(res.validEntries[0]?.title).toBe('H1 Title Only');
+    });
+
+    it('records issue when uploaded JSON is malformed syntax', () => {
+      const res = parseUploadedFileContent(
+        'broken.json',
+        '{ bad json',
+        sampleFields,
+      );
       expect(res.issues.length).toBeGreaterThan(0);
-      expect(res.issues[0]?.message).toContain('Unsupported file extension');
+      expect(res.issues[0]?.message).toContain('JSON Syntax Error');
+    });
+
+    it('records issue when JSON array contains non-object element', () => {
+      const res = parseUploadedFileContent(
+        'array.json',
+        JSON.stringify([null, 123]),
+        sampleFields,
+      );
+      expect(res.issues.length).toBe(2);
+      expect(res.issues[0]?.message).toContain('not an object');
     });
   });
 });

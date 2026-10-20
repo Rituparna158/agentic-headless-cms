@@ -81,4 +81,57 @@ describe('CMS Template Hydration Utility', () => {
     expect(result).toContain('999');
     expect(result).toContain('1199');
   });
+
+  it('handles empty html and missing entries gracefully', () => {
+    expect(hydrateHtmlTemplate('')).toBe('');
+    expect(hydrateHtmlTemplate('<div>Static</div>', null, [])).toBe(
+      '<div>Static</div>',
+    );
+  });
+
+  it('hydrates markdown body and converts to formatted markup', () => {
+    const template = '<div data-cms-slot="body">Default</div>';
+    const entry = {
+      title: 'Markdown Entry',
+      body: {
+        markdown: '# Heading 1\nSome description',
+      },
+    };
+    const result = hydrateHtmlTemplate(template, entry);
+    expect(result).toContain('white-space: pre-wrap;');
+    expect(result).toContain('# Heading 1');
+  });
+
+  it('hydrates anchor links with data-cms-slot="url"', () => {
+    const template = '<a data-cms-slot="url" href="#">Link</a>';
+    const entry = {
+      title: 'Link Entry',
+      url: 'https://example.com/target',
+    };
+    const result = hydrateHtmlTemplate(template, entry);
+    expect(result).toContain('href="https://example.com/target"');
+  });
+
+  it('populates select[data-cms-dropdown] options', () => {
+    const template = '<select data-cms-dropdown="pages"></select>';
+    const entries = [
+      { id: 'p1', title: 'Home' },
+      { id: 'p2', title: 'About' },
+    ];
+    const result = hydrateHtmlTemplate(template, entries[0], entries);
+    expect(result).toContain('value="p1"');
+    expect(result).toContain('selected');
+    expect(result).toContain('Home');
+    expect(result).toContain('value="p2"');
+    expect(result).toContain('About');
+  });
+
+  it('stamps data-entry-id on .cms-active-post-container', () => {
+    const template =
+      '<div class="cms-active-post-container"><h1>{{title}}</h1></div>';
+    const entry = { id: 'post-99', title: 'My Post' };
+    const result = hydrateHtmlTemplate(template, entry);
+    expect(result).toContain('data-entry-id="post-99"');
+    expect(result).toContain('My Post');
+  });
 });
