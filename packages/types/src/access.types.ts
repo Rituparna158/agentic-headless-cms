@@ -69,7 +69,7 @@ export interface TokenRecord {
 export interface LoginInput {
   email: string;
   password: string;
-  rememberMe: boolean;
+  rememberMe?: boolean;
 }
 export interface AuthenticatedUser {
   id: string;
