@@ -95,7 +95,10 @@ export const PostsManagementPage: React.FC = () => {
     enabled: !!currentSlug,
   });
 
-  const pages: PageEntry[] = pagesQuery.data?.data || [];
+  const pages: PageEntry[] = useMemo(
+    () => pagesQuery.data?.data || [],
+    [pagesQuery.data?.data],
+  );
 
   // Determine active page for side drawer
   const activePage = useMemo(() => {

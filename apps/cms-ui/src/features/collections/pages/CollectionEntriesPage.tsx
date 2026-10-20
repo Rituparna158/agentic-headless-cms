@@ -65,7 +65,10 @@ export function CollectionEntriesPage() {
     queryKey: ['post-collections'],
     queryFn: () => postsApi.listCollections(),
   });
-  const collections = collectionsQuery.data || [];
+  const collections = useMemo(
+    () => collectionsQuery.data || [],
+    [collectionsQuery.data],
+  );
 
   const schemaQuery = useQuery({
     queryKey: ['schema', schemaSlug],
@@ -224,8 +227,11 @@ export function CollectionEntriesPage() {
     }
   };
 
-  const pages =
-    (pagesQuery.data as PaginatedResponse<PageEntry> | undefined)?.data ?? [];
+  const pages = useMemo(
+    () =>
+      (pagesQuery.data as PaginatedResponse<PageEntry> | undefined)?.data ?? [],
+    [pagesQuery.data],
+  );
   const totalCount = pagesQuery.data?.meta?.pagination?.total ?? 0;
   const pageCount = pagesQuery.data?.meta?.pagination?.pageCount ?? 1;
 

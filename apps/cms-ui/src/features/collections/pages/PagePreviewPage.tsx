@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -41,7 +41,10 @@ export function PagePreviewPage() {
     enabled: !!schemaSlug,
   });
 
-  const allEntries: PageEntry[] = entriesQuery.data?.data || [];
+  const allEntries: PageEntry[] = useMemo(
+    () => entriesQuery.data?.data || [],
+    [entriesQuery.data?.data],
+  );
   const cleanSlug = (slug || '').replace(/^\/+/, '');
 
   // Instant local lookup from allEntries

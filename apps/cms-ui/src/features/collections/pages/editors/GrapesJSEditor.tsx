@@ -49,6 +49,12 @@ export const GrapesJSEditor = forwardRef<
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const initialDataRef = useRef(initialData);
+  const schemaFieldsRef = useRef(schemaFields);
+  schemaFieldsRef.current = schemaFields;
+  const availableSchemasRef = useRef(availableSchemas);
+  availableSchemasRef.current = availableSchemas;
+  const schemaValuesRef = useRef(schemaValues);
+  schemaValuesRef.current = schemaValues;
 
   const [leftTab, setLeftTab] = useState<'blocks' | 'layers'>('blocks');
   const [rightTab, setRightTab] = useState<'styles' | 'traits'>('styles');
@@ -118,9 +124,9 @@ export const GrapesJSEditor = forwardRef<
         formsPlugin,
         (ed: Editor) =>
           CustomBlocksPlugin(ed, {
-            schemaFields: schemaFields as CmsSchemaField[],
-            availableSchemas: availableSchemas as CmsPageSchema[],
-            schemaValues,
+            schemaFields: schemaFieldsRef.current as CmsSchemaField[],
+            availableSchemas: availableSchemasRef.current as CmsPageSchema[],
+            schemaValues: schemaValuesRef.current,
           }),
       ],
     });
