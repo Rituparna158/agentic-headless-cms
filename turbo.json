@@ -21,7 +21,12 @@
     "NEXT_PUBLIC_API_URL",
     "SUPPORT_EMAIL",
     "MODE",
-    "DATABASE_URL"
+    "DATABASE_URL",
+    "VITE_API_URL",
+    "VITE_APP_ID",
+    "ANALYZE",
+    "CMS_UI_URL",
+    "COOKIE_SECURE"
   ],
   "tasks": {
     "build": {
