@@ -1,15 +1,18 @@
 import {
   usePageBuilderStore,
+  useShallow,
   FEATURE_GRID_DEFAULTS,
   type FeatureItem,
 } from '../stores/pageBuilderStore';
-import { PageBuilderSettingProps } from '../../../types/collections.types';
+import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
 
 export default function FeatureGridSettings({
   targetComponentId,
 }: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
-    (state) => state.featureGrid[targetComponentId] ?? FEATURE_GRID_DEFAULTS,
+    useShallow(
+      (state) => state.featureGrid[targetComponentId] ?? FEATURE_GRID_DEFAULTS,
+    ),
   );
   const set = usePageBuilderStore((state) => state.setFeatureGrid);
   const u = (patch: Partial<typeof s>) => set(targetComponentId, patch);

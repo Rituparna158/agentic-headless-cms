@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Settings, Plus, X, DollarSign, PaintBucket } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   PricingTier,
   PricingFeature,
   PRICING_DEFAULTS,
@@ -12,7 +13,7 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.pricing[targetComponentId] ?? PRICING_DEFAULTS,
+    useShallow((state) => state.pricing[targetComponentId] ?? PRICING_DEFAULTS),
   );
   const setPricing = usePageBuilderStore((state) => state.setPricing);
 

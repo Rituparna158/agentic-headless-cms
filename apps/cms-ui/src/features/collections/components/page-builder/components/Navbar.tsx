@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   NAVBAR_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface NavbarProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { NavbarProps } from '@/features/collections/types/page-builder.types';
 
 export const Navbar = forwardRef<HTMLElement, NavbarProps>((props, ref) => {
   const id = props.componentId ?? 'preview';

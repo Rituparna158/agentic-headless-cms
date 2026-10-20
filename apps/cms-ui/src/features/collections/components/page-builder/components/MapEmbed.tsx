@@ -4,11 +4,7 @@ import {
   usePageBuilderStore,
   MAP_EMBED_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface MapEmbedProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { MapEmbedProps } from '@/features/collections/types/page-builder.types';
 
 export const MapEmbed = forwardRef<HTMLElement, MapEmbedProps>((props, ref) => {
   const id = props.componentId ?? 'preview';

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Settings, Plus, X, BarChart, PaintBucket } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   StatItem,
   STAT_COUNTER_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -11,7 +12,9 @@ export const StatCounterSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.statCounter[targetComponentId] ?? STAT_COUNTER_DEFAULTS,
+    useShallow(
+      (state) => state.statCounter[targetComponentId] ?? STAT_COUNTER_DEFAULTS,
+    ),
   );
   const setStatCounter = usePageBuilderStore((state) => state.setStatCounter);
 

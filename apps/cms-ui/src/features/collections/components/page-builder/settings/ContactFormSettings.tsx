@@ -1,27 +1,15 @@
-import { usePageBuilderStore } from '../stores/pageBuilderStore';
-import { PageBuilderSettingProps } from '../../../types/collections.types';
-
-const DEFAULT_STATE = {
-  title: 'Contact Us',
-  subtitle: 'We would love to hear from you. Fill out the form below.',
-  showName: true,
-  showPhone: false,
-  showCompany: false,
-  buttonText: 'Send Message',
-  backgroundColor: '#ffffff',
-  textColor: '#1a202c',
-  inputBackgroundColor: '#f7fafc',
-  inputBorderColor: '#e2e8f0',
-  buttonColor: '#667eea',
-  buttonTextColor: '#ffffff',
-  alignment: 'center' as const,
-};
+import { usePageBuilderStore, useShallow } from '../stores/pageBuilderStore';
+import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
+import { DEFAULT_CONTACT_FORM_STATE } from '@/features/collections/constants/page-builder-settings.constants';
 
 export default function ContactFormSettings({
   targetComponentId,
 }: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
-    (state) => state.contactForm[targetComponentId] ?? DEFAULT_STATE,
+    useShallow(
+      (state) =>
+        state.contactForm[targetComponentId] ?? DEFAULT_CONTACT_FORM_STATE,
+    ),
   );
   const set = usePageBuilderStore((state) => state.setContactForm);
   const u = (patch: Partial<typeof s>) => set(targetComponentId, patch);

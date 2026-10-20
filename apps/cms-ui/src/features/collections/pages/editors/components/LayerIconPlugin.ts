@@ -101,9 +101,6 @@ const LAYER_ICONS: Record<string, { icon: string; color: string }> = {
   },
 };
 
-/**
- * Tag-name-based icon mapping for HTML elements that don't have explicit GrapesJS types.
- */
 const TAG_ICONS: Record<string, { icon: string; color: string }> = {
   h1: {
     icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="1" y="4" width="22" height="16" rx="3" fill="#7c3aed" opacity="0.2"/><text x="12" y="15.5" text-anchor="middle" font-size="10" font-weight="700" fill="#c4b5fd" font-family="system-ui">H1</text></svg>`,
@@ -187,9 +184,6 @@ const TAG_ICONS: Record<string, { icon: string; color: string }> = {
   },
 };
 
-/**
- * Gets the appropriate icon data for a layer element by analyzing its GrapesJS component.
- */
 function getIconForComponent(
   _editor: Editor,
   layerEl: Element,
@@ -243,9 +237,6 @@ function getIconForComponent(
   return LAYER_ICONS['default'] ?? null;
 }
 
-/**
- * Injects custom icons into all layer title elements in the layers panel.
- */
 function injectLayerIcons(editor: Editor, container: HTMLElement) {
   const layerElements = container.querySelectorAll('.gjs-layer');
 
@@ -285,9 +276,6 @@ function injectLayerIcons(editor: Editor, container: HTMLElement) {
   });
 }
 
-/**
- * Plugin that enhances the GrapesJS layers panel with custom type-specific icons.
- */
 export function setupLayerIcons(editor: Editor) {
   editor.on('load', () => {
     // Wait for layers to render

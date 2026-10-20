@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   SEARCH_BAR_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface SearchBarProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { SearchBarProps } from '@/features/collections/types/page-builder.types';
 
 const SearchBar = forwardRef<HTMLDivElement, SearchBarProps>((props, ref) => {
   const id = props.componentId ?? 'default';

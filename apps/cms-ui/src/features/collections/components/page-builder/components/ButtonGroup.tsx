@@ -4,11 +4,7 @@ import {
   usePageBuilderStore,
   BUTTON_GROUP_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface ButtonGroupProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { ButtonGroupProps } from '@/features/collections/types/page-builder.types';
 
 export const ButtonGroup = forwardRef<HTMLElement, ButtonGroupProps>(
   (props, ref) => {

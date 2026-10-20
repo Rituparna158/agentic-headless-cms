@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   NavbarLink,
   FOOTER_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -19,7 +20,7 @@ export const FooterSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.footer[targetComponentId] ?? FOOTER_DEFAULTS,
+    useShallow((state) => state.footer[targetComponentId] ?? FOOTER_DEFAULTS),
   );
   const setFooter = usePageBuilderStore((state) => state.setFooter);
 

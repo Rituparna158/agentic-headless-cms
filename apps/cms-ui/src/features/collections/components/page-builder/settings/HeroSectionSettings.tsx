@@ -1,27 +1,12 @@
-import { usePageBuilderStore } from '../stores/pageBuilderStore';
-import { PageBuilderSettingProps } from '../../../types/collections.types';
-
-// Fixed: Moving fallback outside prevents reference mutations
-const DEFAULT_HERO_STATE = {
-  title: '',
-  subtitle: '',
-  buttonText: '',
-  buttonUrl: '',
-  backgroundColor: '',
-  textColor: '',
-  titleColor: '',
-  subtitleColor: '',
-  buttonColor: '',
-  buttonTextColor: '',
-  showButton: true,
-  alignment: 'center' as const,
-};
+import { usePageBuilderStore, useShallow } from '../stores/pageBuilderStore';
+import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
+import { DEFAULT_HERO_STATE } from '@/features/collections/constants/page-builder-settings.constants';
 
 export default function HeroSectionSettings({
   targetComponentId,
 }: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
-    (state) => state.hero[targetComponentId] ?? DEFAULT_HERO_STATE,
+    useShallow((state) => state.hero[targetComponentId] ?? DEFAULT_HERO_STATE),
   );
   const set = usePageBuilderStore((state) => state.setHero);
   const u = (patch: Partial<typeof s>) => set(targetComponentId, patch);

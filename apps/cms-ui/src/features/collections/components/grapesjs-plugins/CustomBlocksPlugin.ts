@@ -94,14 +94,6 @@ export const CustomBlocksPlugin = (
   register_dynamic_cms_blocks(editor);
   register_universal_cms_traits(editor, opts);
 };
-
-/**
- * Registers CMS-binding traits on canvas elements.
- *
- * Dynamic Slot options are derived EXCLUSIVELY from the current page's custom
- * schemas (page.data._schemas). No global collection fields or hardcoded
- * fallback slots are mixed in. This keeps the dropdown clean and page-specific.
- */
 export function register_universal_cms_traits(
   editor: Editor,
   opts: CustomBlocksPluginOptions = {},

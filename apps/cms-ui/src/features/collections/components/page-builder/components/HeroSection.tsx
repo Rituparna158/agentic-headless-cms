@@ -1,10 +1,6 @@
 import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
 import { usePageBuilderStore, HERO_DEFAULTS } from '../stores/pageBuilderStore';
-
-interface HeroSectionProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { HeroSectionProps } from '@/features/collections/types/page-builder.types';
 
 const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
   (props, ref) => {

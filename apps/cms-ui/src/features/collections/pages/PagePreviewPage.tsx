@@ -22,6 +22,7 @@ const CustomBuilderPreview = lazy(
 );
 import DOMPurify from 'dompurify';
 import { usePageBuilderStore } from '../components/page-builder/stores/pageBuilderStore';
+import { OptimizedImage } from '@/components/ui/OptimizedImage/OptimizedImage';
 
 export function PagePreviewPage() {
   const { schemaSlug, slug } = useParams<{
@@ -37,7 +38,8 @@ export function PagePreviewPage() {
   // Fetch all entries for this collection for instant page & post switching
   const entriesQuery = useQuery({
     queryKey: ['collection-preview-entries', schemaSlug],
-    queryFn: () => collectionsApi.listPages(schemaSlug!, { pageSize: 50 }),
+    queryFn: ({ signal }) =>
+      collectionsApi.listPages(schemaSlug!, { pageSize: 50 }, { signal }),
     enabled: !!schemaSlug,
   });
 
@@ -60,14 +62,16 @@ export function PagePreviewPage() {
   // Fetch specific layout by slug if available (only if not already found in allEntries)
   const pageQuery = useQuery({
     queryKey: ['pageBySlug', schemaSlug, slug],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!schemaSlug || !slug) return null;
       try {
-        return await collectionsApi.getPageBySlug(schemaSlug, slug);
+        return await collectionsApi.getPageBySlug(schemaSlug, slug, { signal });
       } catch {
         if (paramEntryId) {
           try {
-            return await collectionsApi.getPage(schemaSlug, paramEntryId);
+            return await collectionsApi.getPage(schemaSlug, paramEntryId, {
+              signal,
+            });
           } catch {
             return null;
           }
@@ -219,6 +223,106 @@ export function PagePreviewPage() {
 
     processElements();
   }, [resolvedBody, schemaSlug, selectedEntryId]);
+
+  // Listen to messages from isolated preview iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'CMS_ENTRY_SELECT' && event.data.entryId) {
+        setSelectedEntryId(event.data.entryId);
+        setSearchParams({ entryId: event.data.entryId });
+      } else if (event.data?.type === 'CMS_NAVIGATE' && event.data.href) {
+        const href = event.data.href as string;
+        let targetSlug = '';
+        if (href.startsWith(`/collections/${schemaSlug}/preview/`)) {
+          targetSlug = href
+            .replace(`/collections/${schemaSlug}/preview/`, '')
+            .replace(/^\/+/, '');
+        } else if (href.startsWith('/')) {
+          targetSlug = href.replace(/^\/+/, '');
+        }
+        if (targetSlug && targetSlug !== cleanSlug) {
+          navigate(`/collections/${schemaSlug}/preview/${targetSlug}`);
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [schemaSlug, cleanSlug, navigate, setSearchParams]);
+
+  // Safely generate isolated document for sandboxed preview iframe
+  const previewSrcDoc = useMemo(() => {
+    if (!hasGrapesJs || !bodyData?.html) return '';
+    const sanitizedCss = DOMPurify.sanitize(bodyData.css || '');
+    const hydratedHtml = hydrateHtmlTemplate(
+      DOMPurify.sanitize(bodyData.html, {
+        ADD_ATTR: [
+          'data-cms-slot',
+          'data-cms-section',
+          'data-cms-repeat',
+          'data-cms-collection',
+          'data-cms-dropdown',
+          'data-entry-id',
+          'data-cms-action',
+        ],
+      }),
+      activeEntry as unknown as Record<string, unknown>,
+      allEntries as unknown as Array<Record<string, unknown>>,
+    );
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    ${sanitizedCss}
+  </style>
+</head>
+<body style="margin: 0; padding: 0;">
+  ${hydratedHtml}
+  <script>
+    document.addEventListener('click', function(e) {
+      var target = e.target.closest('[data-entry-id]');
+      if (target) {
+        var clickedId = target.getAttribute('data-entry-id');
+        if (clickedId) {
+          window.parent.postMessage({ type: 'CMS_ENTRY_SELECT', entryId: clickedId }, '*');
+        }
+      }
+      var linkTarget = e.target.closest('a');
+      if (linkTarget) {
+        var href = linkTarget.getAttribute('href');
+        var targetAttr = linkTarget.getAttribute('target');
+        if (targetAttr === '_blank') {
+          if (href) {
+            e.preventDefault();
+            window.open(href, '_blank', 'noopener,noreferrer');
+          }
+          return;
+        }
+        if (href && (href.startsWith('/collections/') || (href.startsWith('/') && !href.startsWith('//')))) {
+          e.preventDefault();
+          window.parent.postMessage({ type: 'CMS_NAVIGATE', href: href }, '*');
+        }
+      }
+    });
+
+    document.addEventListener('change', function(e) {
+      var target = e.target;
+      if (target && target.matches('select[data-cms-dropdown], [data-cms-selector]')) {
+        if (target.value) {
+          window.parent.postMessage({ type: 'CMS_ENTRY_SELECT', entryId: target.value }, '*');
+        }
+      }
+    });
+
+    document.querySelectorAll('[contenteditable]').forEach(function(el) {
+      el.removeAttribute('contenteditable');
+    });
+  </script>
+</body>
+</html>`;
+  }, [hasGrapesJs, bodyData?.html, bodyData?.css, activeEntry, allEntries]);
 
   const getDeviceWidthClass = () => {
     if (device === 'mobile')
@@ -469,94 +573,14 @@ export function PagePreviewPage() {
               </div>
             </div>
           ) : hasGrapesJs ? (
-            // Renders dynamic GrapesJS HTML and hydrates slots/tokens
-            <div
-              id="preview-container"
-              className="w-full min-h-screen bg-white text-zinc-900"
-              onClick={(e) => {
-                // 1. Check for card/entry click
-                const target = (e.target as HTMLElement).closest(
-                  '[data-entry-id]',
-                );
-                if (target) {
-                  const clickedId = target.getAttribute('data-entry-id');
-                  if (clickedId && clickedId !== selectedEntryId) {
-                    setSelectedEntryId(clickedId);
-                    setSearchParams({ entryId: clickedId });
-                  }
-                }
-
-                // 2. Intercept internal page navigation links
-                const linkTarget = (e.target as HTMLElement).closest('a');
-                if (linkTarget) {
-                  const href = linkTarget.getAttribute('href');
-                  const targetAttr = linkTarget.getAttribute('target');
-
-                  if (targetAttr === '_blank') {
-                    if (href) {
-                      e.preventDefault();
-                      window.open(href, '_blank', 'noopener,noreferrer');
-                    }
-                    return;
-                  }
-
-                  if (
-                    href &&
-                    href.startsWith(`/collections/${schemaSlug}/preview/`)
-                  ) {
-                    e.preventDefault();
-                    const targetSlug = href
-                      .replace(`/collections/${schemaSlug}/preview/`, '')
-                      .replace(/^\/+/, '');
-                    if (targetSlug && targetSlug !== cleanSlug) {
-                      navigate(
-                        `/collections/${schemaSlug}/preview/${targetSlug}`,
-                      );
-                    }
-                  }
-                }
-              }}
-              onChange={(e) => {
-                const target = e.target as HTMLSelectElement;
-                if (
-                  target &&
-                  target.matches(
-                    'select[data-cms-dropdown], [data-cms-selector]',
-                  )
-                ) {
-                  const selectedId = target.value;
-                  if (selectedId && selectedId !== selectedEntryId) {
-                    setSelectedEntryId(selectedId);
-                    setSearchParams({ entryId: selectedId });
-                  }
-                }
-              }}
-            >
-              <style
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(bodyData?.css || ''),
-                }}
-              />
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: hydrateHtmlTemplate(
-                    DOMPurify.sanitize(bodyData?.html || '', {
-                      ADD_ATTR: [
-                        'data-cms-slot',
-                        'data-cms-section',
-                        'data-cms-repeat',
-                        'data-cms-collection',
-                        'data-cms-dropdown',
-                        'data-entry-id',
-                        'data-cms-action',
-                      ],
-                    }),
-                    activeEntry as unknown as Record<string, unknown>,
-                    allEntries as unknown as Array<Record<string, unknown>>,
-                  ),
-                }}
-              />
-            </div>
+            // Renders dynamic GrapesJS HTML inside an isolated sandbox iframe to eliminate CSS bleed and DOM tampering
+            <iframe
+              id="preview-iframe"
+              title="Page Template Preview"
+              className="w-full min-h-screen border-0 bg-white block"
+              sandbox="allow-scripts allow-same-origin"
+              srcDoc={previewSrcDoc}
+            />
           ) : hasCustomBuilder ? (
             /* Custom reactive component layout preview */
             <div
@@ -609,10 +633,12 @@ export function PagePreviewPage() {
                 {/* Featured Cover Image */}
                 {imageUrl && (
                   <div className="w-full aspect-video rounded-2xl overflow-hidden mb-8 border border-zinc-200 bg-zinc-100 shadow-sm">
-                    <img
+                    <OptimizedImage
                       src={imageUrl}
                       alt={title}
                       className="w-full h-full object-cover"
+                      width={1200}
+                      height={675}
                     />
                   </div>
                 )}

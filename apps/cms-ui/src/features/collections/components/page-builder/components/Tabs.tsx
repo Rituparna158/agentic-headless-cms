@@ -1,10 +1,6 @@
 import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
 import { usePageBuilderStore, TABS_DEFAULTS } from '../stores/pageBuilderStore';
-
-interface TabsProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { TabsProps } from '@/features/collections/types/page-builder.types';
 
 export const Tabs = forwardRef<HTMLElement, TabsProps>((props, ref) => {
   const id = props.componentId ?? 'preview';

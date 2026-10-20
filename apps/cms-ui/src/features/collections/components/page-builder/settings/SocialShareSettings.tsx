@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   SOCIAL_SHARE_DEFAULTS,
 } from '../stores/pageBuilderStore';
 
@@ -18,7 +19,9 @@ export const SocialShareSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.socialShare[targetComponentId] ?? SOCIAL_SHARE_DEFAULTS,
+    useShallow(
+      (state) => state.socialShare[targetComponentId] ?? SOCIAL_SHARE_DEFAULTS,
+    ),
   );
   const setSocialShare = usePageBuilderStore((state) => state.setSocialShare);
 

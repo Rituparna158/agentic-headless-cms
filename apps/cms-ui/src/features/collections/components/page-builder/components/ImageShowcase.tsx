@@ -1,19 +1,17 @@
 import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
 import {
   usePageBuilderStore,
+  useShallow,
   IMAGE_SHOWCASE_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface ImageShowcaseProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { ImageShowcaseProps } from '@/features/collections/types/page-builder.types';
+import { getOptimizedImageUrl, getResponsiveSrcSet } from '@/utils/imageUrl';
 
 export const ImageShowcase = forwardRef<HTMLElement, ImageShowcaseProps>(
   (props, ref) => {
     const id = props.componentId ?? 'preview';
     const s = usePageBuilderStore(
-      (state) => state.imageShowcase[id] ?? IMAGE_SHOWCASE_DEFAULTS,
+      useShallow((state) => state.imageShowcase[id] ?? IMAGE_SHOWCASE_DEFAULTS),
     );
     const [isBuilder, setIsBuilder] = useState(
       !(
@@ -95,7 +93,18 @@ export const ImageShowcase = forwardRef<HTMLElement, ImageShowcaseProps>(
             }}
           >
             <img
-              src={img.url}
+              src={getOptimizedImageUrl(img.url, {
+                width: 800,
+                format: 'webp',
+                quality: 80,
+              })}
+              srcSet={
+                getResponsiveSrcSet(img.url, [320, 640, 960], {
+                  format: 'webp',
+                  quality: 80,
+                }) || undefined
+              }
+              sizes="(max-width: 768px) 100vw, 50vw"
               alt={img.alt}
               style={{
                 width: '100%',
@@ -104,6 +113,7 @@ export const ImageShowcase = forwardRef<HTMLElement, ImageShowcaseProps>(
                 display: 'block',
               }}
               loading="lazy"
+              decoding="async"
             />
           </div>
           {img.caption && (
@@ -155,7 +165,18 @@ export const ImageShowcase = forwardRef<HTMLElement, ImageShowcaseProps>(
           >
             {heroImage && (
               <img
-                src={heroImage.url}
+                src={getOptimizedImageUrl(heroImage.url, {
+                  width: 1600,
+                  format: 'webp',
+                  quality: 80,
+                })}
+                srcSet={
+                  getResponsiveSrcSet(heroImage.url, [640, 1024, 1600], {
+                    format: 'webp',
+                    quality: 80,
+                  }) || undefined
+                }
+                sizes="100vw"
                 alt={heroImage.alt}
                 style={{
                   width: '100%',
@@ -163,6 +184,8 @@ export const ImageShowcase = forwardRef<HTMLElement, ImageShowcaseProps>(
                   objectFit: 'cover',
                   display: 'block',
                 }}
+                loading="lazy"
+                decoding="async"
               />
             )}
           </div>

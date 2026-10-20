@@ -3,6 +3,7 @@ import React from 'react';
 import { Settings, MapPin, Maximize } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   MAP_EMBED_DEFAULTS,
 } from '../stores/pageBuilderStore';
 
@@ -10,7 +11,9 @@ export const MapEmbedSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.mapEmbed[targetComponentId] ?? MAP_EMBED_DEFAULTS,
+    useShallow(
+      (state) => state.mapEmbed[targetComponentId] ?? MAP_EMBED_DEFAULTS,
+    ),
   );
   const setMapEmbed = usePageBuilderStore((state) => state.setMapEmbed);
 

@@ -1,4 +1,5 @@
 import { DEFAULT_ENTRY_FALLBACK_IMAGE } from '../constants/collections.constants';
+import { getOptimizedImageUrl } from '@/utils/imageUrl';
 
 // Traverses an object using dot notation (e.g. 'body.specs.battery') to resolve nested property values.
 function getNestedValue(
@@ -169,14 +170,18 @@ function extractEntryContext(
     author,
     date: dateFormatted,
     image,
-    coverImage: image,
-    body: bodyContent,
-    html: bodyContent,
     excerpt,
     price,
     ...entryData,
     ...schemaValuesMap,
     ...body,
+    html: bodyContent,
+    content: bodyContent,
+    rawBody: body,
+    body:
+      typeof entryData.body === 'object' && entryData.body !== null
+        ? entryData.body
+        : bodyContent,
   };
 }
 
@@ -239,6 +244,7 @@ export function hydrateHtmlTemplate(
             String(ctx.id) === String(currentSelectedId)
           ) {
             opt.selected = true;
+            opt.setAttribute('selected', 'selected');
           }
           selectEl.appendChild(opt);
         });
@@ -301,13 +307,28 @@ export function hydrateHtmlTemplate(
             el.setAttribute('href', String(slotVal));
           } else if (slotKey === 'image' || slotKey === 'coverImage') {
             const childImg = el.querySelector('img');
+            const optimizedSrc = getOptimizedImageUrl(String(slotVal), {
+              width: 1200,
+              format: 'webp',
+              quality: 80,
+            });
             if (childImg) {
-              childImg.setAttribute('src', String(slotVal));
+              childImg.setAttribute('src', optimizedSrc);
+              childImg.setAttribute('loading', 'lazy');
+              childImg.setAttribute('decoding', 'async');
             } else {
-              el.innerHTML = `<img src="${slotVal}" alt="" style="width:100%;height:100%;object-fit:cover;" />`;
+              el.innerHTML = `<img src="${optimizedSrc}" loading="lazy" decoding="async" alt="" style="width:100%;height:100%;object-fit:cover;" />`;
             }
           } else {
-            el.innerHTML = String(slotVal);
+            let displayVal = slotVal;
+            if (typeof slotVal === 'object' && slotVal !== null) {
+              const obj = slotVal as Record<string, unknown>;
+              if (typeof obj.html === 'string') displayVal = obj.html;
+              else if (typeof obj.markdown === 'string')
+                displayVal = `<div style="white-space: pre-wrap;">${obj.markdown}</div>`;
+              else displayVal = JSON.stringify(slotVal);
+            }
+            el.innerHTML = String(displayVal);
           }
         }
       });

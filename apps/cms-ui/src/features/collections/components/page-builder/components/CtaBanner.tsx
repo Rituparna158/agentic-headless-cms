@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   CTA_BANNER_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface CtaBannerProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { CtaBannerProps } from '@/features/collections/types/page-builder.types';
 
 const CtaBanner = forwardRef<HTMLDivElement, CtaBannerProps>((props, ref) => {
   const id = props.componentId ?? 'default';

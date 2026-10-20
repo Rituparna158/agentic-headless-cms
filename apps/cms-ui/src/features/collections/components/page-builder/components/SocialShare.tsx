@@ -4,11 +4,7 @@ import {
   usePageBuilderStore,
   SOCIAL_SHARE_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface SocialShareProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { SocialShareProps } from '@/features/collections/types/page-builder.types';
 
 export const SocialShare = forwardRef<HTMLElement, SocialShareProps>(
   (props, ref) => {
