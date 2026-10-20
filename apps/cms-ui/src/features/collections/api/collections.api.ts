@@ -124,7 +124,12 @@ export const collectionsApi = {
 
   updateSchema: async (
     id: string,
-    data: { name?: string; description?: string },
+    data: {
+      name?: string;
+      description?: string;
+      fields?: unknown[];
+      metadata?: Record<string, unknown>;
+    },
   ): Promise<SchemaEntry> => {
     const res = await requestHandler.put<SchemaEntry>(
       `${ENDPOINTS.SCHEMAS.BASE}/${id}`,
@@ -189,7 +194,12 @@ export const collectionsApi = {
   updatePage: async (
     schemaSlug: string,
     entryId: string,
-    data: { title: string; slug: string; body?: unknown },
+    data: {
+      title: string;
+      slug: string;
+      body?: unknown;
+      [key: string]: unknown;
+    },
   ): Promise<PageEntry> => {
     const res = await requestHandler.put<PageEntry>(
       ENDPOINTS.CONTENT.ENTRY(schemaSlug, entryId),
@@ -235,14 +245,66 @@ export const collectionsApi = {
     schemaSlug: string,
     slug: string,
   ): Promise<PageEntry> => {
-    const formattedSlug = slug.startsWith('/') ? slug : `/${slug}`;
-    const res = await requestHandler.get<PaginatedResponse<PageEntry>>(
-      `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}?filters[slug][$eq]=${formattedSlug}&status=all`,
-    );
-    if (!res.data.data.length) {
-      throw new Error(`Page with slug ${slug} not found in ${schemaSlug}`);
+    const cleanSlug = slug.replace(/^\/+/, '');
+    const withSlash = `/${cleanSlug}`;
+
+    // 1. Try formatted with slash
+    try {
+      const res = await requestHandler.get<PaginatedResponse<PageEntry>>(
+        `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}?filters[slug][$eq]=${encodeURIComponent(withSlash)}&status=all`,
+      );
+      if (res.data?.data && res.data.data.length > 0) {
+        return res.data.data[0] as PageEntry;
+      }
+    } catch {
+      // Continue to next attempt
     }
-    return res.data.data[0] as PageEntry;
+
+    // 2. Try raw without slash
+    try {
+      const resRaw = await requestHandler.get<PaginatedResponse<PageEntry>>(
+        `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}?filters[slug][$eq]=${encodeURIComponent(cleanSlug)}&status=all`,
+      );
+      if (resRaw.data?.data && resRaw.data.data.length > 0) {
+        return resRaw.data.data[0] as PageEntry;
+      }
+    } catch {
+      // Continue to fallback search
+    }
+
+    // 3. Fallback: list all pages and match slug or id locally
+    try {
+      const listRes = await requestHandler.get<PaginatedResponse<PageEntry>>(
+        `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}?pageSize=50&status=all`,
+      );
+      const match = listRes.data?.data?.find(
+        (p) =>
+          p.id === slug ||
+          p.id === cleanSlug ||
+          p.data.slug === withSlash ||
+          p.data.slug === cleanSlug ||
+          p.data.slug?.replace(/^\/+/, '') === cleanSlug,
+      );
+      if (match) return match as PageEntry;
+    } catch {
+      // Fallback exhausted
+    }
+
+    // 4. Try fetching directly by entry ID
+    try {
+      const directRes = await requestHandler.get<PageEntry>(
+        `${ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug)}/${slug}`,
+      );
+      if (directRes.data && directRes.data.id) {
+        return directRes.data;
+      }
+    } catch {
+      // Not found by ID
+    }
+
+    throw new Error(
+      `Page with slug or ID "${slug}" not found in ${schemaSlug}`,
+    );
   },
 
   getVersions: async (
