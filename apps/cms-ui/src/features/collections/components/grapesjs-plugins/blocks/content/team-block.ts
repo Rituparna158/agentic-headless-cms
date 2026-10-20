@@ -33,30 +33,23 @@ export const register_team_block = (editor: Editor) => {
           </div>
           <div class="team-grid">
             <div class="team-card">
-              <div class="team-avatar" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);">AJ</div>
-              <h3 class="team-name">Alex Johnson</h3>
-              <p class="team-role">Founder & CEO</p>
-              <p class="team-bio">Visionary leader with 15+ years in tech innovation.</p>
+              <div class="team-avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" alt="Alex Chen" style="width:100%;height:100%;object-fit:cover;" />
+              </div>
+              <h3 class="team-name">Alex Chen</h3>
+              <p class="team-role">Chief Executive Officer</p>
+              <p class="team-bio">Passionate tech leader building tools for next-gen developers.</p>
             </div>
             <div class="team-card">
-              <div class="team-avatar" style="background: linear-gradient(135deg, #ec4899, #f97316);">SR</div>
+              <div class="team-avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200" alt="Sarah Roberts" style="width:100%;height:100%;object-fit:cover;" />
+              </div>
               <h3 class="team-name">Sarah Roberts</h3>
               <p class="team-role">Head of Design</p>
               <p class="team-bio">Award-winning designer passionate about user experiences.</p>
             </div>
-            <div class="team-card">
-              <div class="team-avatar" style="background: linear-gradient(135deg, #22d3ee, #3b82f6);">MC</div>
-              <h3 class="team-name">Mike Chen</h3>
-              <p class="team-role">Lead Engineer</p>
-              <p class="team-bio">Full-stack developer building scalable solutions.</p>
-            </div>
-            <div class="team-card">
-              <div class="team-avatar" style="background: linear-gradient(135deg, #fbbf24, #f97316);">EW</div>
-              <h3 class="team-name">Emily Wang</h3>
-              <p class="team-role">Marketing Director</p>
-              <p class="team-bio">Data-driven marketer growing brands worldwide.</p>
-            </div>
           </div>
+
         `,
         styles: `
           .team-section { font-family: var(--font-sans); padding: 80px 24px; background: var(--bg-white); }
