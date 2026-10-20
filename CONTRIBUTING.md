@@ -78,31 +78,64 @@ We require tests for all new features to maintain code quality.
 
 ### 7. Commit and Push Your Changes
 
-- **Stage and Commit:** Add your changes and write a clear, descriptive commit message that follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+- **Stage and Commit:** Add your changes and write a clear, descriptive commit message that follows the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification and the project scopes defined in `commitlint.config.cjs` (e.g. `cms-ui`, `backend`, `frontend`, `shared-ui`, `types`, `db`, `root`).
+
   ```bash
   git add .
-  git commit -m "feat(component): add new reader component with tests"
+  git commit -m "feat(cms-ui): add dynamic post management page"
   ```
+
+- **Signed Commits (Required by Branch Protection):**
+  We enforce signed commits on protected branches (`main`, `development`) to verify author authenticity.
+  1. Generate a GPG or SSH signing key:
+     ```bash
+     # For SSH signing:
+     git config --global gpg.format ssh
+     git config --global user.signingkey ~/.ssh/id_ed25519.pub
+     git config --global commit.gpgsign true
+     ```
+  2. Or sign individual commits using the `-S` flag:
+     ```bash
+     git commit -S -m "feat(cms-ui): add dynamic post management page"
+     ```
+
 - **Push to Your Fork:**
   ```bash
-  git push origin feature/add-avatar-component
+  git push origin feature/my-feature-name
   ```
 
 ### 8. Create a Pull Request
 
 - Go to your forked repository on GitHub and click "Compare & pull request".
-- Set the base branch to `development`.
-- Fill out the Pull Request (PR) template with all the required information.
+- Set the base branch to `development` (or `main` for hotfixes).
+- Fill out the Pull Request (PR) template with all the required DevSecOps, accessibility, and testing information.
 - Click "Create pull request" to submit it for review.
 
-- ## Pull Request Scope Guidelines
+---
+
+## Branch Protection & Required Status Checks
+
+To ensure stability and security, direct pushes to `main` and `development` are disabled. All merges require:
+
+1. **Pull Request with Review**: At least 1 approving review from code owners/maintainers.
+2. **Passing CI Pipeline**:
+   - `Commit & PR Title Lint` (commitlint validates conventional format and valid monorepo scopes)
+   - `Security & Secret Scan` (Gitleaks secret scanner & Trivy vulnerability scanner)
+   - `Build & Test` (Turbo build, type checking, ESLint, and Vitest test suite)
+   - `E2E Tests` (Playwright end-to-end tests against real database)
+3. **Signed Commits**: All commits in the PR must be cryptographically signed (`Verified` badge on GitHub).
+4. **Up-to-date Branch**: Branches must be rebased or merged with latest `development` before merging.
+
+---
+
+## Pull Request Scope Guidelines
 
 To keep reviews fast, focused, and fair for everyone, we enforce **small and scoped pull requests**.
 
 Please follow these rules strictly:
 
-- **One component per PR**
-  - A PR must introduce or modify **only one component**.
+- **One feature/component per PR**
+  - A PR must introduce or modify **only one feature or component**.
   - Do not bundle multiple components into a single PR.
 
 - **One fix per PR**
@@ -115,25 +148,16 @@ Please follow these rules strictly:
 
 PRs that modify multiple components, bundle multiple fixes, or include unrelated changes **will be requested to split or may be closed without review**.
 
-This rule helps maintain:
-
-- Faster reviews
-- Clear change history
-- Easier rollbacks
-- Higher-quality discussions
-
----
-
 ---
 
 ## Code Review Process
 
 - Once your PR is submitted, one or more maintainers will review it.
 - If changes are requested, simply make the updates on your branch and push them. Your PR will update automatically.
-- Once the PR is approved, a maintainer will merge it. Congratulations\! 🎉
+- Once the PR is approved and all CI checks pass, a maintainer will merge it. Congratulations! 🎉
 
 ---
 
 ## Licensing
 
-By contributing to Markdown Reader, you agree that your contributions will be licensed under the project's MIT License.
+By contributing to Agentic Headless CMS, you agree that your contributions will be licensed under the project's MIT License.

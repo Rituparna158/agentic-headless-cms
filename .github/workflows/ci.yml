@@ -15,6 +15,58 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  commitlint:
+    name: Commit & PR Title Lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate PR Commits
+        run: pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Validate PR Title
+        run: echo "${{ github.event.pull_request.title }}" | pnpm commitlint --verbose
+
+  security-scan:
+    name: Security & Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
@@ -48,6 +100,9 @@ jobs:
 
       - name: Build Packages
         run: pnpm run build
+
+      - name: Enforce Route Bundle Size Budgets
+        run: pnpm --filter cms-ui run size-limit
 
   e2e:
     name: E2E Tests
@@ -117,13 +172,18 @@ jobs:
       - name: Create root .env placeholder
         run: touch .env
 
-      - name: Run E2E Tests
+      - name: Run Frontend E2E Tests
         run: pnpm --filter frontend test:e2e
 
-      - name: Upload Playwright Report
+      - name: Run CMS-UI E2E Tests
+        run: pnpm --filter cms-ui test:e2e
+
+      - name: Upload Playwright Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
-          path: apps/frontend/playwright-report/
+          name: playwright-reports
+          path: |
+            apps/frontend/playwright-report/
+            apps/cms-ui/playwright-report/
           retention-days: 7
