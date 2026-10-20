@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ToastProvider, DialogProvider } from '@repo/shared-ui';
+import { LiveAnnouncerProvider } from './components/ui/LiveAnnouncer';
 import { AuthLayout } from './components/Layout/AuthLayout';
 import { AuthGuard } from './components/Guard/AuthGuard';
 import { AuthHydrator } from './components/Guard/AuthHydrator';
@@ -131,114 +132,116 @@ export const App = () => {
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <DialogProvider>
-            <BrowserRouter>
-              <AuthHydrator>
-                <Suspense fallback={<FullPageLoader />}>
-                  <Routes>
-                    {/* Auth Routes */}
-                    <Route element={<AuthLayout />}>
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route
-                        path="/access-denied"
-                        element={<AccessDeniedPage />}
-                      />
-                      <Route
-                        path="/forgot-password"
-                        element={<ForgotPasswordPage />}
-                      />
-                      <Route
-                        path="/reset-password"
-                        element={<ResetPasswordPage />}
-                      />
-                      <Route
-                        path="/accept-invite"
-                        element={<AcceptInvitePage />}
-                      />
-                      <Route
-                        path="/mfa-reset-complete"
-                        element={<MfaResetCompletePage />}
-                      />
-                      <Route
-                        path="/request-access"
-                        element={<RequestAccessPage />}
-                      />
-                    </Route>
-                    {/* Protected Routes */}
-                    <Route element={<AuthGuard />}>
-                      <Route path="/" element={<DashboardLayout />}>
-                        <Route index element={<DashboardHome />} />
+            <LiveAnnouncerProvider>
+              <BrowserRouter>
+                <AuthHydrator>
+                  <Suspense fallback={<FullPageLoader />}>
+                    <Routes>
+                      {/* Auth Routes */}
+                      <Route element={<AuthLayout />}>
+                        <Route path="/login" element={<LoginPage />} />
                         <Route
-                          element={
-                            <RoleGuard requiredCapability="manage_users" />
-                          }
-                        >
-                          <Route path="users" element={<UsersAccessPage />} />
+                          path="/access-denied"
+                          element={<AccessDeniedPage />}
+                        />
+                        <Route
+                          path="/forgot-password"
+                          element={<ForgotPasswordPage />}
+                        />
+                        <Route
+                          path="/reset-password"
+                          element={<ResetPasswordPage />}
+                        />
+                        <Route
+                          path="/accept-invite"
+                          element={<AcceptInvitePage />}
+                        />
+                        <Route
+                          path="/mfa-reset-complete"
+                          element={<MfaResetCompletePage />}
+                        />
+                        <Route
+                          path="/request-access"
+                          element={<RequestAccessPage />}
+                        />
+                      </Route>
+                      {/* Protected Routes */}
+                      <Route element={<AuthGuard />}>
+                        <Route path="/" element={<DashboardLayout />}>
+                          <Route index element={<DashboardHome />} />
                           <Route
-                            path="users/roles"
-                            element={<RolesAccessPage />}
-                          />
-                        </Route>
-                        <Route element={<AdminOrSupportGuard />}>
+                            element={
+                              <RoleGuard requiredCapability="manage_users" />
+                            }
+                          >
+                            <Route path="users" element={<UsersAccessPage />} />
+                            <Route
+                              path="users/roles"
+                              element={<RolesAccessPage />}
+                            />
+                          </Route>
+                          <Route element={<AdminOrSupportGuard />}>
+                            <Route
+                              path="users/mfa-requests"
+                              element={<MfaRequestsPage />}
+                            />
+                          </Route>
+                          <Route path="security" element={<SecurityPage />} />
+                          <Route path="audit-logs" element={<AuditLogPage />} />
+                          <Route path="audit-log" element={<AuditLogPage />} />
                           <Route
-                            path="users/mfa-requests"
-                            element={<MfaRequestsPage />}
-                          />
+                            element={
+                              <RoleGuard requiredCapability="manage_content" />
+                            }
+                          >
+                            <Route
+                              path="posts"
+                              element={<PostsManagementPage />}
+                            />
+                            <Route
+                              path="posts/*"
+                              element={<PostsManagementPage />}
+                            />
+                            <Route
+                              path="collections"
+                              element={<CollectionsListPage />}
+                            />
+                            <Route
+                              path="collections/:schemaSlug"
+                              element={<CollectionEntriesPage />}
+                            />
+                            <Route
+                              path="collections/:schemaSlug/:pageId"
+                              element={<PageEditorPage />}
+                            />
+                          </Route>
+                          <Route path="*" element={<NotFoundPage />} />
                         </Route>
-                        <Route path="security" element={<SecurityPage />} />
-                        <Route path="audit-logs" element={<AuditLogPage />} />
-                        <Route path="audit-log" element={<AuditLogPage />} />
+
+                        {/* Standalone Protected Routes (No Dashboard UI) */}
                         <Route
                           element={
                             <RoleGuard requiredCapability="manage_content" />
                           }
                         >
                           <Route
-                            path="posts"
-                            element={<PostsManagementPage />}
+                            path="/collections/:schemaSlug/preview"
+                            element={<PagePreviewPage />}
                           />
                           <Route
-                            path="posts/*"
-                            element={<PostsManagementPage />}
-                          />
-                          <Route
-                            path="collections"
-                            element={<CollectionsListPage />}
-                          />
-                          <Route
-                            path="collections/:schemaSlug"
-                            element={<CollectionEntriesPage />}
-                          />
-                          <Route
-                            path="collections/:schemaSlug/:pageId"
-                            element={<PageEditorPage />}
+                            path="/collections/:schemaSlug/preview/:slug"
+                            element={<PagePreviewPage />}
                           />
                         </Route>
-                        <Route path="*" element={<NotFoundPage />} />
                       </Route>
-
-                      {/* Standalone Protected Routes (No Dashboard UI) */}
-                      <Route
-                        element={
-                          <RoleGuard requiredCapability="manage_content" />
-                        }
-                      >
-                        <Route
-                          path="/collections/:schemaSlug/preview"
-                          element={<PagePreviewPage />}
-                        />
-                        <Route
-                          path="/collections/:schemaSlug/preview/:slug"
-                          element={<PagePreviewPage />}
-                        />
-                      </Route>
-                    </Route>
-                    {/* Error Pages */}
-                    <Route path="/error" element={<GeneralErrorPage />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
-                </Suspense>
-              </AuthHydrator>
-            </BrowserRouter>
+                      {/* Error Pages */}
+                      <Route path="/error" element={<GeneralErrorPage />} />
+                      <Route path="*" element={<NotFoundPage />} />
+                    </Routes>
+                  </Suspense>
+                </AuthHydrator>
+              </BrowserRouter>
+            </LiveAnnouncerProvider>
           </DialogProvider>
         </ToastProvider>
       </QueryClientProvider>
