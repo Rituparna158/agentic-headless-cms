@@ -132,32 +132,43 @@ export const schemaVersions = pgTable('schema_versions', {
     .notNull()
     .defaultNow(),
 });
-export const contentEntries = pgTable('content_entries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  schemaId: uuid('schema_id')
-    .notNull()
-    .references(() => schemas.id, { onDelete: 'restrict' }),
-  applicationId: uuid('application_id')
-    .notNull()
-    .default(sql`current_setting('app.current_application_id', true)::uuid`)
-    .references(() => applications.id, { onDelete: 'cascade' }),
-  actorType: actorTypeEnum('created_by_type').notNull(),
-  createdByUserId: uuid('created_by_user_id').references(() => users.id, {
-    onDelete: 'set null',
+export const contentEntries = pgTable(
+  'content_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    schemaId: uuid('schema_id')
+      .notNull()
+      .references(() => schemas.id, { onDelete: 'restrict' }),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    actorType: actorTypeEnum('created_by_type').notNull(),
+    createdByUserId: uuid('created_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    createdByAgentId: uuid('created_by_agent_id').references(() => agents.id, {
+      onDelete: 'set null',
+    }),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    updatedBy: varchar('updated_by', { length: 255 }),
+    collaborators: text('collaborators'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    schemaIdIdx: index('content_entries_schema_id_idx').on(table.schemaId),
+    appSchemaDeletedIdx: index('content_entries_app_schema_deleted_idx').on(
+      table.applicationId,
+      table.schemaId,
+      table.deletedAt,
+    ),
   }),
-  createdByAgentId: uuid('created_by_agent_id').references(() => agents.id, {
-    onDelete: 'set null',
-  }),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
-  updatedBy: varchar('updated_by', { length: 255 }),
-  collaborators: text('collaborators'),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+);
 export const entryLocalizations = pgTable(
   'entry_localizations',
   {
@@ -191,6 +202,10 @@ export const entryLocalizations = pgTable(
     entryLocaleUnique: unique('entry_localizations_entry_locale_unique').on(
       table.entryId,
       table.locale,
+    ),
+    scheduledPublishIdx: index('entry_localizations_scheduled_publish_idx').on(
+      table.status,
+      table.scheduledPublishAt,
     ),
     searchIndex: index('entry_localizations_search_idx').using(
       'gin',
