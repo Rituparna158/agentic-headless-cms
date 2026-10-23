@@ -39,4 +39,14 @@ export const ENDPOINTS = {
     BASE: '/audit-logs',
     BY_ID: (id: string) => `/audit-logs/${id}`,
   },
+  MEDIA: {
+    BASE: '/media',
+    BY_ID: (id: string) => `/media/${id}`,
+    FILE: (key: string) => `/media/file/${key}`,
+    BULK_DELETE: '/media/bulk-delete',
+  },
+  MEDIA_FOLDERS: {
+    BASE: '/media-folders',
+    BY_ID: (id: string) => `/media-folders/${id}`,
+  },
 } as const;
