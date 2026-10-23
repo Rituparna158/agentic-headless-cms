@@ -22,6 +22,10 @@ import { API_BASE_URL } from '@/lib/api-client';
 export function GeneralSettingsTab() {
   const appId = process.env.NEXT_PUBLIC_APP_ID || 'HEADLESS_CMS';
   const nodeEnv = process.env.NODE_ENV || 'production';
+  const appVersion =
+    process.env.NEXT_PUBLIC_APP_VERSION ||
+    process.env.NEXT_PUBLIC_VERSION ||
+    'v1.0.0';
 
   return (
     <div className="space-y-6">
@@ -69,7 +73,7 @@ export function GeneralSettingsTab() {
                 Version
               </p>
               <p className="text-sm font-semibold mt-1 font-mono">
-                v1.0.0-release
+                {appVersion}
               </p>
             </div>
             <div className="rounded-lg border p-3.5 bg-muted/20">
