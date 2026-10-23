@@ -38,6 +38,8 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
   const [isUnpublishConfirmOpen, setIsUnpublishConfirmOpen] = useState(false);
+  const [isLocaleConfirmOpen, setIsLocaleConfirmOpen] = useState(false);
+  const [pendingLocale, setPendingLocale] = useState<string | null>(null);
 
   const canPublish = useHasPermission('publish', schema.id);
   const canDelete = useHasPermission('delete', schema.id);
@@ -126,10 +128,9 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   function handleLocaleChange(newLocale: string) {
     if (newLocale === selectedLocale) return;
     if (form.formState.isDirty) {
-      const confirmDiscard = window.confirm(
-        'You have unsaved changes in this locale. Switching locales will discard them. Continue?',
-      );
-      if (!confirmDiscard) return;
+      setPendingLocale(newLocale);
+      setIsLocaleConfirmOpen(true);
+      return;
     }
     setSelectedLocale(newLocale);
   }
@@ -524,6 +525,26 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         confirmLabel={deleteMutation.isPending ? 'Deleting…' : 'Delete'}
         destructive={true}
         onConfirm={() => deleteMutation.mutate()}
+      />
+
+      {/* Locale Switch Confirmation Dialog */}
+      <ConfirmDialog
+        open={isLocaleConfirmOpen}
+        onOpenChange={(open) => {
+          setIsLocaleConfirmOpen(open);
+          if (!open) setPendingLocale(null);
+        }}
+        title="Discard Unsaved Changes?"
+        description="You have unsaved changes in this locale. Switching locales will discard them. Do you want to continue?"
+        confirmLabel="Discard & Switch"
+        destructive={true}
+        onConfirm={() => {
+          setIsLocaleConfirmOpen(false);
+          if (pendingLocale) {
+            setSelectedLocale(pendingLocale);
+            setPendingLocale(null);
+          }
+        }}
       />
 
       {entry ? (
