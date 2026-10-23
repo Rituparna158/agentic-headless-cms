@@ -30,8 +30,8 @@ export const register_cta_banner_clean = (editor: Editor) => {
         components: `
           <div class="cta-container">
             <div class="cta-content">
-              <h2 class="cta-title">Ready to dive in?</h2>
-              <p class="cta-desc">Start your free trial today. No credit card required.</p>
+              <h2 class="cta-title">Ready to Transform Your Workflow?</h2>
+              <p class="cta-desc">Join thousands of teams scaling their digital content with ease.</p>
             </div>
             <div class="cta-actions">
               <a href="#" class="cta-btn">Get Started Now</a>

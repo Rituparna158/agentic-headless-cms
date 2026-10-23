@@ -1,33 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
-import {
-  usePageBuilderStore,
-  DynamicFormField,
-} from '../stores/pageBuilderStore';
-
-interface DynamicFormSettingsProps {
-  targetComponentId: string;
-}
-
-const DEFAULT_STATE = {
-  title: 'Custom Form',
-  subtitle: 'Please fill out this form.',
-  fields: [] as DynamicFormField[],
-  buttonText: 'Submit',
-  backgroundColor: '#ffffff',
-  textColor: '#1a202c',
-  inputBackgroundColor: '#f7fafc',
-  inputBorderColor: '#e2e8f0',
-  buttonColor: '#667eea',
-  buttonTextColor: '#ffffff',
-  alignment: 'center' as const,
-};
+import { usePageBuilderStore, useShallow } from '../stores/pageBuilderStore';
+import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
+import { DEFAULT_DYNAMIC_FORM_STATE } from '@/features/collections/constants/page-builder-settings.constants';
+import type { DynamicFormField } from '@/features/collections/types/page-builder.types';
 
 export default function DynamicFormSettings({
   targetComponentId,
-}: DynamicFormSettingsProps) {
+}: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
-    (state) => state.dynamicForm[targetComponentId] ?? DEFAULT_STATE,
+    useShallow(
+      (state) =>
+        state.dynamicForm[targetComponentId] ?? DEFAULT_DYNAMIC_FORM_STATE,
+    ),
   );
   const set = usePageBuilderStore((state) => state.setDynamicForm);
   const u = (patch: Partial<typeof s>) => set(targetComponentId, patch);

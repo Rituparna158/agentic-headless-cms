@@ -127,11 +127,18 @@ export class MediaService {
       const key = extractStorageKey(asset);
       logger.debug('MediaService: reading file from storage');
       let buffer = await storage.read(key);
+      let mimeType = asset.mimeType;
       if (resize && asset.mimeType.startsWith('image/')) {
-        logger.debug('MediaService: resizing image');
+        logger.debug('MediaService: resizing and optimizing image');
         buffer = await resizeImage(buffer, resize);
+        if (resize.format) {
+          mimeType =
+            resize.format === 'jpg' ? 'image/jpeg' : `image/${resize.format}`;
+        } else if (resize.quality) {
+          mimeType = 'image/webp';
+        }
       }
-      return { buffer, mimeType: asset.mimeType, filename: asset.filename };
+      return { buffer, mimeType, filename: asset.filename };
     } catch (error) {
       logger.error({ err: error }, 'MediaService Error in getFile:');
       throw new ApiError(500, SERVICE_ERRORS.FETCH_MEDIA_FAILED);

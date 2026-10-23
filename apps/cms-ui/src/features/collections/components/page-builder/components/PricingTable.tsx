@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   PRICING_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface PricingProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { PricingProps } from '@/features/collections/types/page-builder.types';
 
 export const PricingTable = forwardRef<HTMLElement, PricingProps>(
   (props, ref) => {

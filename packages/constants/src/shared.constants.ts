@@ -63,6 +63,9 @@ export const AUTH_COOKIES = {
   MAX_AGE_MS: 24 * 60 * 60 * 1000, // 1 day
 } as const;
 
+export const ADMIN_ROLES = ['admin', 'super_admin'] as const;
+export type AdminRole = (typeof ADMIN_ROLES)[number];
+
 export const EMAIL_TEMPLATES = {
   INVITE: {
     SUBJECT: 'You have been invited to Agentic CMS',

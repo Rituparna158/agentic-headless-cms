@@ -125,6 +125,11 @@ export const serveMediaFile: RequestHandler = asyncHandler(
     const resize = parseResizeQuery(req.query);
     const file = await mediaService.getFile(asset, resize);
     res.setHeader('Content-Type', file.mimeType);
+    if (resize) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
     logger.info({ key }, 'MediaController: serveMediaFile end');
     res.status(200).send(file.buffer);
   },

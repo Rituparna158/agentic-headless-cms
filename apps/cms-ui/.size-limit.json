@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Route: Dashboard Home",
+    "path": "dist/assets/DashboardHome-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Login",
+    "path": "dist/assets/LoginPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Access Denied",
+    "path": "dist/assets/AccessDeniedPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Reset Password",
+    "path": "dist/assets/ResetPasswordPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Collections List",
+    "path": "dist/assets/CollectionsListPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Collection Entries",
+    "path": "dist/assets/CollectionEntriesPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Posts Management",
+    "path": "dist/assets/PostsManagementPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Page Preview",
+    "path": "dist/assets/PagePreviewPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Page Editor",
+    "path": "dist/assets/PageEditorPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Security Settings",
+    "path": "dist/assets/SecurityPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Roles Access",
+    "path": "dist/assets/RolesAccessPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Users Access",
+    "path": "dist/assets/UsersAccessPage-*.js",
+    "limit": "250 kB"
+  },
+  {
+    "name": "Route: Audit Log",
+    "path": "dist/assets/AuditLogPage-*.js",
+    "limit": "250 kB"
+  }
+]

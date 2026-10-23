@@ -1,8 +1,3 @@
-/**
- * Centralized API Endpoints
- * All backend routes should be mapped here to avoid hardcoded strings.
- */
-
 export const ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
@@ -35,5 +30,13 @@ export const ENDPOINTS = {
     BY_SCHEMA: (schemaSlug: string) => `/content/${schemaSlug}`,
     ENTRY: (schemaSlug: string, entryId: string) =>
       `/content/${schemaSlug}/${entryId}`,
+    VERSIONS: (schemaSlug: string, entryId: string) =>
+      `/content/${schemaSlug}/${entryId}/versions`,
+    REVERT: (schemaSlug: string, entryId: string) =>
+      `/content/${schemaSlug}/${entryId}/revert`,
+  },
+  AUDIT_LOGS: {
+    BASE: '/audit-logs',
+    BY_ID: (id: string) => `/audit-logs/${id}`,
   },
 } as const;

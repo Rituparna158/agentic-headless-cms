@@ -21,10 +21,10 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 
 ### Applications (`apps/`)
 
-- **apps/frontend**: The visual admin dashboard built with Next.js 15 (App Router), Tailwind CSS, and shadcn/ui.
-- **apps/backend**: The core backend API built with Express 5, supporting REST (`/api/v1`), GraphQL, authentication, and RBAC.
+- **apps/cms-ui**: Visual studio and page builder dashboard built with Vite 6, React 19, Tailwind CSS, and GrapesJS (default port: `3003`).
+- **apps/frontend**: The visual admin dashboard built with Next.js 15 (App Router), Tailwind CSS, and shadcn/ui (default port: `3001`).
+- **apps/backend**: The core backend API built with Express, supporting REST (`/api/v1`), GraphQL, MCP server, authentication, and RBAC (default port: `3000`).
 - **apps/worker**: Background queue worker powered by BullMQ and Redis for async media transformations (Sharp) and event jobs.
-- **apps/cms-ui**: Shared UI component library for CMS interfaces.
 
 ### SDKs & Client Libraries (`packages/`)
 
@@ -36,6 +36,7 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 
 ### Shared Internal Packages (`packages/`)
 
+- **packages/shared-ui**: Shared accessible component primitives, dialogs, tables, and design tokens.
 - **packages/shared-db**: Database schemas, ORM logic (Drizzle), PostgreSQL adapter, migrations, and seed scripts.
 - **packages/storage**: Multi-adapter storage (local disk and AWS S3/MinIO) with Sharp image processing.
 - **packages/validation**: Zod validation schemas and dynamic content compilers.
@@ -78,69 +79,119 @@ For end-users and teams who want to run the self-hosted CMS platform without clo
 
 - **Node.js** >= 20.9.0
 - **pnpm** (see `packageManager` in `package.json`, version 9.0.0)
-- **Docker** (recommended) — the bundled `docker-compose.yml` provisions a
-  matching Postgres and Redis with zero manual setup. You can use your own
-  instances instead as long as they meet the minimums below.
+- **Docker** (recommended) — the bundled `docker-compose.yml` provisions a matching Postgres and Redis with zero manual setup.
 - **PostgreSQL** >= 16
-- **Redis** >= 5.0.0 — required by `apps/backend`'s job queue (BullMQ), which relies on Redis Streams. Older versions (e.g. the deprecated Windows Redis port) will fail to boot the backend.
+- **Redis** >= 5.0.0 — required by `apps/backend`'s job queue (BullMQ), which relies on Redis Streams.
 
 ---
 
-## Getting Started (first-time setup)
+## Getting Started
 
-These steps get the whole stack — database, backend API, background worker, and frontend
-dashboard — running locally from a fresh clone.
+You can run the platform in two ways:
 
-1. **Install dependencies** (run once, from the repo root):
+- **Workflow A (Recommended for Development)**: Backing services (PostgreSQL + Redis) run in Docker, while application servers run natively on your host machine for instant Hot Module Replacement.
+- **Workflow B (Full-Stack Containerized)**: All 7 services (Gateway, CMS UI, Frontend, Backend, Worker, Postgres, Redis) run in production containers.
+
+---
+
+### Workflow A: Local Development (Fast HMR)
+
+1. **Install dependencies** (from repo root):
 
    ```bash
    pnpm install
    ```
 
-2. **Start Postgres and Redis:**
+2. **Start backing services** (PostgreSQL 16 + Redis 7):
 
    ```bash
    docker compose up -d postgres redis
    ```
 
-3. **Create your env file** from the checked-in example:
+3. **Initialize environment files**:
 
    ```bash
    cp .env.example .env
+   cp apps/backend/.env.example apps/backend/.env 2>/dev/null || true
+   cp apps/cms-ui/.env.example apps/cms-ui/.env 2>/dev/null || true
+   cp apps/frontend/.env.example apps/frontend/.env 2>/dev/null || true
+   cp packages/shared-db/.env.example packages/shared-db/.env 2>/dev/null || true
    ```
 
-   The defaults work as-is against the `docker-compose.yml` services — you
-   only need to edit values if you're pointing at your own Postgres/Redis, or
-   configuring real SMTP/S3 credentials (see `apps/backend/README.md`).
-
-4. **Run database migrations:**
+4. **Run database migrations**:
 
    ```bash
    pnpm --filter @repo/shared-db run db:migrate
    ```
 
-5. **Seed the initial admin user & system schemas:**
+5. **Seed initial admin account & system schemas**:
 
    ```bash
    pnpm --filter @repo/shared-db run seed:admin
    pnpm --filter @repo/shared-db run seed:system-schemas
    ```
 
-   Logs in with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` (default: `admin@agentic-cms.com` / `admin`).
+   Default login: `admin@agentic-cms.com` / `Password123!` (or configured `SEED_ADMIN_PASSWORD`).
 
-6. **Start every app's development server** (frontend + backend + worker, via Turborepo):
+6. **Start all application development servers**:
 
    ```bash
    pnpm dev
    ```
 
-7. **Access the applications:**
-   - **Admin Dashboard:** [http://localhost:3001](http://localhost:3001) (log in with the seeded admin credentials).
+7. **Access application endpoints**:
+   - **CMS UI Studio:** [http://localhost:3003](http://localhost:3003)
+   - **Admin Dashboard:** [http://localhost:3001](http://localhost:3001)
    - **Backend API:** [http://localhost:3000/api/v1](http://localhost:3000/api/v1)
    - **Swagger API Docs:** [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
    - **GraphQL Playground:** [http://localhost:3000/graphql](http://localhost:3000/graphql)
 
-_(Alternatively, you can build and run all 5 containers locally from source using `docker compose up --build -d`)_.
+---
+
+### Workflow B: Full-Stack Docker Deployment
+
+Run the complete platform via Docker Compose (ideal for pre-release testing, staging, and self-hosted deployments):
+
+1. **Create root environment**:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Build and launch all 7 services**:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. **Apply migrations and seed initial admin**:
+
+   ```bash
+   pnpm --filter @repo/shared-db run db:migrate
+   pnpm --filter backend run seed:admin
+   # Or run directly inside the running backend container:
+   docker compose exec backend pnpm --filter backend run seed:admin
+   ```
+
+4. **Access the unified Gateway (Port 80)**:
+   - **Frontend Web App**: [http://localhost/](http://localhost/)
+   - **CMS UI Studio**: [http://localhost/admin](http://localhost/admin) (or [http://cms.localhost/](http://cms.localhost/))
+   - **Backend API**: [http://localhost/api/v1](http://localhost/api/v1)
+   - **Gateway Health**: [http://localhost/healthz](http://localhost/healthz)
+
+---
+
+## Docker Compose Services
+
+| Service      | Container Image / Dockerfile | Exposed Ports     | Description                                                    |
+| :----------- | :--------------------------- | :---------------- | :------------------------------------------------------------- |
+| **gateway**  | `nginx:alpine`               | `80:80`           | Reverse proxy routing web traffic to frontend, studio, and API |
+| **cms-ui**   | `apps/cms-ui/Dockerfile`     | Internal (`5173`) | Vite/React 19 visual studio & page builder                     |
+| **frontend** | `apps/frontend/Dockerfile`   | Internal (`3000`) | Next.js 15 production server-rendered application              |
+| **backend**  | `apps/backend/Dockerfile`    | Internal (`3000`) | Express REST API, MCP server, and media upload handler         |
+| **worker**   | `apps/worker/Dockerfile`     | Internal          | BullMQ background worker process                               |
+| **postgres** | `postgres:16-alpine`         | `5432:5432`       | Relational database storage                                    |
+| **redis**    | `redis:7-alpine`             | `6379:6379`       | In-memory message broker & job queue                           |
 
 ---
 
@@ -185,6 +236,24 @@ export default function App() {
   );
 }
 ```
+
+---
+
+## Documentation
+
+- **Docker & Container Deployment Guide**: [docs/docker.md](docs/docker.md)
+- **CMS UI Studio Guide**: [apps/cms-ui/README.md](apps/cms-ui/README.md)
+- **Frontend App Guide**: [apps/frontend/README.md](apps/frontend/README.md)
+- **Backend API Guide**: [apps/backend/README.md](apps/backend/README.md)
+- **Architecture Decision Records (ADRs)**: [docs/adr/README.md](docs/adr/README.md)
+  - [ADR-0001: Visual Page Builder Engine (GrapesJS)](docs/adr/0001-grapesjs-visual-builder-engine.md)
+  - [ADR-0002: Dual-Builder Architecture (Schema + Canvas)](docs/adr/0002-dual-builder-architecture.md)
+  - [ADR-0003: Client-Side State & Contract Envelopes](docs/adr/0003-client-state-and-contract-envelopes.md)
+- **Operational Troubleshooting Runbook**: [docs/troubleshooting.md](docs/troubleshooting.md)
+- **Component & UI Catalog**: [docs/components.md](docs/components.md)
+- **Testing Strategy**: [docs/testing.md](docs/testing.md)
+- **Software Requirements Specification (SRS)**: [docs/SRS.md](docs/SRS.md)
+- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 

@@ -11,15 +11,20 @@ const RESIZE_FIT_VALUES = [
 ] as const;
 export type ResizeFit = (typeof RESIZE_FIT_VALUES)[number];
 
+export const IMAGE_FORMATS = ['webp', 'jpeg', 'jpg', 'png', 'avif'] as const;
+export type ImageFormat = (typeof IMAGE_FORMATS)[number];
+
 export interface ResizeOptions {
   width?: number;
   height?: number;
   fit: ResizeFit;
+  format?: ImageFormat;
+  quality?: number;
 }
 
 /**
- * Parses `?w=&h=&fit=` into validated resize options, or `undefined` if
- * neither `w` nor `h` was supplied (the common "just give me the original"
+ * Parses `?w=&h=&fit=&format=&quality=` into validated resize options, or `undefined` if
+ * neither `w`, `h`, `format`, nor `quality` was supplied (the common "just give me the original"
  * case, which callers should treat as "skip resizing").
  */
 export function parseResizeQuery(
@@ -27,8 +32,28 @@ export function parseResizeQuery(
 ): ResizeOptions | undefined {
   const width = parsePositiveIntParam(query.w, 'w');
   const height = parsePositiveIntParam(query.h, 'h');
+  const quality = parsePositiveIntParam(query.q ?? query.quality, 'q');
 
-  if (width === undefined && height === undefined) {
+  const formatRaw = query.format ?? query.fm;
+  let format: ImageFormat | undefined;
+  if (formatRaw !== undefined) {
+    if (
+      typeof formatRaw !== 'string' ||
+      !IMAGE_FORMATS.includes(formatRaw as ImageFormat)
+    ) {
+      throw new InvalidResizeError(
+        `${ERROR_MESSAGES.MEDIA.INVALID_RESIZE_PARAMS}: 'format' must be one of ${IMAGE_FORMATS.join(', ')}.`,
+      );
+    }
+    format = formatRaw as ImageFormat;
+  }
+
+  if (
+    width === undefined &&
+    height === undefined &&
+    format === undefined &&
+    quality === undefined
+  ) {
     return undefined;
   }
 
@@ -38,14 +63,14 @@ export function parseResizeQuery(
       `${ERROR_MESSAGES.MEDIA.INVALID_RESIZE_PARAMS}: 'fit' must be a string.`,
     );
   }
-  const fit = fitRaw ?? 'cover';
-  if (!RESIZE_FIT_VALUES.includes(fit as ResizeFit)) {
+  const fit = (fitRaw ?? 'cover') as ResizeFit;
+  if (!RESIZE_FIT_VALUES.includes(fit)) {
     throw new InvalidResizeError(
       `${ERROR_MESSAGES.MEDIA.INVALID_RESIZE_PARAMS}: 'fit' must be one of ${RESIZE_FIT_VALUES.join(', ')}.`,
     );
   }
 
-  return { width, height, fit: fit as ResizeFit };
+  return { width, height, fit, format, quality };
 }
 
 function parsePositiveIntParam(
@@ -80,12 +105,31 @@ export async function readImageDimensions(
   }
 }
 
-/** Resizes `buffer` per `options`, preserving the source format. */
+/** Resizes and optimizes `buffer` per `options`, supporting webp/avif format conversion. */
 export async function resizeImage(
   buffer: Buffer,
   options: ResizeOptions,
 ): Promise<Buffer> {
-  return sharp(buffer)
-    .resize({ width: options.width, height: options.height, fit: options.fit })
-    .toBuffer();
+  let pipeline = sharp(buffer);
+
+  if (options.width || options.height) {
+    pipeline = pipeline.resize({
+      width: options.width,
+      height: options.height,
+      fit: options.fit,
+    });
+  }
+
+  if (options.format) {
+    const targetFormat = options.format === 'jpg' ? 'jpeg' : options.format;
+    pipeline = pipeline.toFormat(targetFormat, {
+      quality: options.quality ?? 80,
+    });
+  } else if (options.quality) {
+    pipeline = pipeline.toFormat('webp', {
+      quality: options.quality,
+    });
+  }
+
+  return pipeline.toBuffer();
 }

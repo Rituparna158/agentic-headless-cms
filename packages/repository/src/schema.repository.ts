@@ -42,6 +42,7 @@ export class SchemaRepository {
           description: input.description,
           type: input.type,
           fields: input.fields,
+          metadata: input.metadata,
           actorType: 'user',
           createdByUserId: input.actorUserId,
         },
@@ -54,11 +55,13 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.CREATE_SCHEMA_FAILED);
     }
   }
-  async list(options: BaseQueryOptions = {}) {
+  async list(options: BaseQueryOptions = {}, applicationId?: string) {
     try {
       logger.info('SchemaRepository: listing schemas');
       const db = this.getDb();
-      const result = await listSchemaRecords(db, options);
+      const store = contextStorage.getStore();
+      const appId = applicationId || store?.applicationId;
+      const result = await listSchemaRecords(db, options, appId);
       logger.debug(
         { count: result[0].length },
         'SchemaRepository: list complete',
@@ -69,11 +72,13 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.LIST_SCHEMAS_FAILED);
     }
   }
-  async getById(id: string) {
+  async getById(id: string, applicationId?: string) {
     try {
       logger.info({ id }, 'SchemaRepository: fetching schema by ID');
       const db = this.getDb();
-      const result = await getSchemaById(db, id);
+      const store = contextStorage.getStore();
+      const appId = applicationId || store?.applicationId;
+      const result = await getSchemaById(db, id, appId);
       logger.debug({ found: !!result }, 'SchemaRepository: getById complete');
       return result;
     } catch (error) {
@@ -81,11 +86,13 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-  async getBySlug(slug: string) {
+  async getBySlug(slug: string, applicationId?: string) {
     try {
       logger.info({ slug }, 'SchemaRepository: fetching schema by slug');
       const db = this.getDb();
-      const result = await getSchemaBySlug(db, slug);
+      const store = contextStorage.getStore();
+      const appId = applicationId || store?.applicationId;
+      const result = await getSchemaBySlug(db, slug, appId);
       logger.debug({ found: !!result }, 'SchemaRepository: getBySlug complete');
       return result;
     } catch (error) {
@@ -96,21 +103,33 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.DB_FETCH_FAILED);
     }
   }
-  async update(id: string, input: UpdateSchemaInput & { actorUserId: string }) {
+  async update(
+    id: string,
+    input: UpdateSchemaInput & { actorUserId: string },
+    applicationId?: string,
+  ) {
     try {
       logger.info(
         { id, actorUserId: input.actorUserId },
         'SchemaRepository: updating schema',
       );
       const db = this.getDb();
-      const result = await updateSchemaRecord(db, id, {
-        name: input.name,
-        description: input.description,
-        fields: input.fields,
-        migrationNotes: input.migrationNotes,
-        actorType: 'user',
-        createdByUserId: input.actorUserId,
-      });
+      const store = contextStorage.getStore();
+      const appId = applicationId || store?.applicationId;
+      const result = await updateSchemaRecord(
+        db,
+        id,
+        {
+          name: input.name,
+          description: input.description,
+          fields: input.fields,
+          metadata: input.metadata,
+          migrationNotes: input.migrationNotes,
+          actorType: 'user',
+          createdByUserId: input.actorUserId,
+        },
+        appId,
+      );
       logger.debug({ id }, 'SchemaRepository: schema updated');
       return result;
     } catch (error) {
@@ -118,11 +137,13 @@ export class SchemaRepository {
       throw new ApiError(500, REPO_ERRORS.UPDATE_SCHEMA_FAILED);
     }
   }
-  async delete(id: string, force: boolean = false) {
+  async delete(id: string, force: boolean = false, applicationId?: string) {
     try {
       logger.info({ id, force }, 'SchemaRepository: deleting schema');
       const db = this.getDb();
-      const result = await deleteSchemaRecord(db, id, force);
+      const store = contextStorage.getStore();
+      const appId = applicationId || store?.applicationId;
+      const result = await deleteSchemaRecord(db, id, force, appId);
       logger.debug({ id }, 'SchemaRepository: schema deleted');
       return result;
     } catch (error) {

@@ -1,33 +1,18 @@
 import { create } from 'zustand';
-import type { AuthenticatedUser } from '@repo/types';
-export type AuthStatus =
-  | 'idle'
-  | 'loading'
-  | 'authenticated'
-  | 'unauthenticated'
-  | 'mfa_challenge_required';
-export interface AuthState {
-  user: AuthenticatedUser | null;
-  status: AuthStatus;
-  mfaToken: string | null;
-  isAuthenticated: boolean; // Computed
-  setAuthData: (user: AuthenticatedUser) => void;
-  setMfaChallenge: (token: string) => void;
-  setStatus: (status: AuthStatus) => void;
-  clearAuth: () => void;
-}
-export const useAuthStore = create<AuthState>((set, get) => ({
+import type { AuthState, AuthStatus } from '../types/auth.types';
+
+export type { AuthState, AuthStatus };
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   status: 'idle',
   mfaToken: null,
-  get isAuthenticated() {
-    return get().status === 'authenticated';
-  },
+  isAuthenticated: false,
   setAuthData: (user) => {
     set({
       user,
       status: 'authenticated',
       mfaToken: null,
+      isAuthenticated: true,
     });
   },
   setMfaChallenge: (mfaToken) => {
@@ -35,16 +20,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user: null,
       status: 'mfa_challenge_required',
       mfaToken,
+      isAuthenticated: false,
     });
   },
   setStatus: (status) => {
-    set({ status });
+    set({ status, isAuthenticated: status === 'authenticated' });
   },
   clearAuth: () => {
     set({
       user: null,
       status: 'unauthenticated',
       mfaToken: null,
+      isAuthenticated: false,
     });
   },
 }));

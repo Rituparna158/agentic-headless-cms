@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   CONTACT_FORM_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface ContactFormProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { ContactFormProps } from '@/features/collections/types/page-builder.types';
 
 const ContactForm = forwardRef<HTMLDivElement, ContactFormProps>(
   (props, ref) => {

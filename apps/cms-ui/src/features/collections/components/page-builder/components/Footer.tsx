@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   FOOTER_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface FooterProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { FooterProps } from '@/features/collections/types/page-builder.types';
 
 export const Footer = forwardRef<HTMLElement, FooterProps>((props, ref) => {
   const id = props.componentId ?? 'preview';

@@ -42,11 +42,43 @@ export default {
           DEFAULT: 'var(--card)',
           foreground: 'var(--card-foreground)',
         },
+        subtle: 'var(--border-subtle)',
+        sidebar: {
+          surface: 'var(--sidebar-surface)',
+          border: 'var(--sidebar-border)',
+        },
+        status: {
+          live: {
+            bg: 'var(--status-live-bg)',
+            text: 'var(--status-live-text)',
+            border: 'var(--status-live-border)',
+          },
+          draft: {
+            bg: 'var(--status-draft-bg)',
+            text: 'var(--status-draft-text)',
+            border: 'var(--status-draft-border)',
+          },
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      keyframes: {
+        'slide-in-right': {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+      },
+      animation: {
+        'slide-in-right':
+          'slide-in-right 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'fade-in': 'fade-in 0.25s ease-out forwards',
       },
     },
   },

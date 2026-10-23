@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   COUNTDOWN_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface CountdownProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { CountdownProps } from '@/features/collections/types/page-builder.types';
 
 export const Countdown = forwardRef<HTMLElement, CountdownProps>(
   (props, ref) => {

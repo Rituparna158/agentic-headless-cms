@@ -1,10 +1,6 @@
 import { forwardRef, useLayoutEffect, useState } from 'react';
 import { usePageBuilderStore, FAQ_DEFAULTS } from '../stores/pageBuilderStore';
-
-interface FAQProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { FAQProps } from '@/features/collections/types/page-builder.types';
 
 export const FAQ = forwardRef<HTMLElement, FAQProps>((props, ref) => {
   const id = props.componentId ?? 'preview';

@@ -6,7 +6,7 @@ import {
 } from './locales.controller.js';
 import { authenticateToken, requireAdmin } from '@repo/middlewares';
 export const localesRouter = Router();
-localesRouter.use(authenticateToken, requireAdmin);
+localesRouter.use(authenticateToken);
 localesRouter.get('/', listLocales);
-localesRouter.post('/', createLocale);
-localesRouter.delete('/:id', deleteLocale);
+localesRouter.post('/', requireAdmin, createLocale);
+localesRouter.delete('/:id', requireAdmin, deleteLocale);

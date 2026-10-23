@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   FAQItem,
   FAQ_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -18,7 +19,7 @@ export const FAQSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.faq[targetComponentId] ?? FAQ_DEFAULTS,
+    useShallow((state) => state.faq[targetComponentId] ?? FAQ_DEFAULTS),
   );
   const setFAQ = usePageBuilderStore((state) => state.setFAQ);
 

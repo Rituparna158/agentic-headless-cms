@@ -134,6 +134,20 @@
       "when": 1789455374720,
       "tag": "0018_friendly_zzzax",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791876749235,
+      "tag": "0019_exotic_fixer",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792640748563,
+      "tag": "0020_lively_sabra",
+      "breakpoints": true
     }
   ]
 }

@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   EMBED_CODE_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface EmbedCodeProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { EmbedCodeProps } from '@/features/collections/types/page-builder.types';
 
 export const EmbedCode = forwardRef<HTMLDivElement, EmbedCodeProps>(
   (props, ref) => {

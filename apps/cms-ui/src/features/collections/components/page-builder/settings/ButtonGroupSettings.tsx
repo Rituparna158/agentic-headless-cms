@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   ButtonItem,
   BUTTON_GROUP_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -20,7 +21,9 @@ export const ButtonGroupSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.buttonGroup[targetComponentId] ?? BUTTON_GROUP_DEFAULTS,
+    useShallow(
+      (state) => state.buttonGroup[targetComponentId] ?? BUTTON_GROUP_DEFAULTS,
+    ),
   );
   const setButtonGroup = usePageBuilderStore((state) => state.setButtonGroup);
 

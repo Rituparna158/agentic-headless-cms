@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "concurrency": "20",
+  "concurrency": "30",
   "ui": "tui",
   "globalEnv": [
     "NODE_ENV",
@@ -23,7 +23,12 @@
     "MODE",
     "DATABASE_URL",
     "MIGRATIONS_FOLDER",
-    "AUTO_MIGRATE"
+    "AUTO_MIGRATE",
+    "VITE_API_URL",
+    "VITE_APP_ID",
+    "ANALYZE",
+    "CMS_UI_URL",
+    "COOKIE_SECURE"
   ],
   "tasks": {
     "build": {

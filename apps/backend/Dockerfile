@@ -82,6 +82,9 @@ RUN addgroup --system --gid 1001 nodejs \
 # Only the deployed, production-only output makes it into the final image
 COPY --from=builder --chown=expressjs:nodejs /app/deploy .
 
+# Copy libvips shared libraries so musl dynamic linker can resolve them on Alpine
+RUN cp -d /app/node_modules/.pnpm/@img+sharp-libvips-linuxmusl-x64*/node_modules/@img/sharp-libvips-linuxmusl-x64/lib/*.so* /usr/local/lib/ 2>/dev/null || true
+
 USER expressjs
 WORKDIR /app
 

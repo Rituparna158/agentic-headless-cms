@@ -1,4 +1,4 @@
-import { eq, sql, getTableColumns } from 'drizzle-orm';
+import { eq, and, or, sql, getTableColumns, type SQL } from 'drizzle-orm';
 import type { Database } from '../client.js';
 import { RecordNotFoundError } from '../errors.js';
 import {
@@ -31,6 +31,7 @@ export interface CreateSchemaInput {
   description?: string | null;
   type: (typeof schemaTypeEnum.enumValues)[number];
   fields: SchemaFieldInput[];
+  metadata?: Record<string, unknown>;
   actorType: (typeof actorTypeEnum.enumValues)[number];
   createdByUserId?: string | null;
   createdByAgentId?: string | null;
@@ -41,6 +42,7 @@ export interface UpdateSchemaInput {
   name?: string;
   description?: string | null;
   fields?: SchemaFieldInput[];
+  metadata?: Record<string, unknown>;
   migrationNotes?: string | null;
   actorType: (typeof actorTypeEnum.enumValues)[number];
   createdByUserId?: string | null;
@@ -86,7 +88,10 @@ export async function createSchema(
   return withTransaction(
     db,
     async (tx) => {
-      const definition = { fields: input.fields };
+      const definition = {
+        fields: input.fields,
+        metadata: input.metadata || {},
+      };
 
       const [schema] = await tx
         .insert(schemas)
@@ -127,6 +132,7 @@ export async function createSchema(
 export async function listSchemas(
   db: Database,
   options: BaseQueryOptions = {},
+  applicationId?: string,
 ): Promise<readonly [SchemaRecord[], number]> {
   const { limit, offset, orderBy, where } = buildPaginationOptions(
     options,
@@ -145,11 +151,28 @@ export async function listSchemas(
 
   const systemFilter = includeSystem ? undefined : eq(schemas.isSystem, false);
 
-  const finalWhere = where
-    ? systemFilter
-      ? sql`${where} AND ${systemFilter}`
-      : where
-    : systemFilter;
+  const conditions: SQL[] = [];
+  if (where) conditions.push(where);
+  if (systemFilter) conditions.push(systemFilter);
+  if (applicationId) {
+    if (includeSystem) {
+      conditions.push(
+        or(
+          eq(schemas.applicationId, applicationId),
+          eq(schemas.isSystem, true),
+        )!,
+      );
+    } else {
+      conditions.push(eq(schemas.applicationId, applicationId));
+    }
+  }
+
+  const finalWhere =
+    conditions.length > 0
+      ? conditions.length === 1
+        ? conditions[0]
+        : and(...conditions)
+      : undefined;
 
   const result = await withTransaction(db, async (tx) => {
     return await tx
@@ -188,9 +211,20 @@ export async function listSchemas(
 export async function getSchemaById(
   db: Database,
   id: string,
+  applicationId?: string,
 ): Promise<SchemaRecord> {
+  const conditions: SQL[] = [eq(schemas.id, id)];
+  if (applicationId) {
+    conditions.push(
+      or(eq(schemas.applicationId, applicationId), eq(schemas.isSystem, true))!,
+    );
+  }
   const [schema] = await withTransaction(db, async (tx) => {
-    return await tx.select().from(schemas).where(eq(schemas.id, id)).limit(1);
+    return await tx
+      .select()
+      .from(schemas)
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0]!)
+      .limit(1);
   });
   if (!schema) {
     throw new RecordNotFoundError(`Schema ${id} does not exist.`);
@@ -200,12 +234,19 @@ export async function getSchemaById(
 export async function getSchemaBySlug(
   db: Database,
   slug: string,
+  applicationId?: string,
 ): Promise<SchemaRecord> {
+  const conditions: SQL[] = [eq(schemas.slug, slug)];
+  if (applicationId) {
+    conditions.push(
+      or(eq(schemas.applicationId, applicationId), eq(schemas.isSystem, true))!,
+    );
+  }
   const [schema] = await withTransaction(db, async (tx) => {
     return await tx
       .select()
       .from(schemas)
-      .where(eq(schemas.slug, slug))
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0]!)
       .limit(1);
   });
   if (!schema) {
@@ -217,21 +258,31 @@ export async function updateSchema(
   db: Database,
   id: string,
   input: UpdateSchemaInput,
+  applicationId?: string,
 ): Promise<SchemaRecord> {
   return withTransaction(db, async (tx) => {
+    const conditions: SQL[] = [eq(schemas.id, id)];
+    if (applicationId) {
+      conditions.push(eq(schemas.applicationId, applicationId));
+    }
     const [existing] = await tx
       .select()
       .from(schemas)
-      .where(eq(schemas.id, id))
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0]!)
       .limit(1);
     if (!existing) {
       throw new RecordNotFoundError(`Schema ${id} does not exist.`);
     }
-    const existingDefinition = existing.definition as {
+    const existingDefinition = (existing.definition as {
       fields: SchemaFieldInput[];
-    };
+      metadata?: Record<string, unknown>;
+    }) || { fields: [] };
     const nextFields = input.fields ?? existingDefinition.fields;
-    const definition = { fields: nextFields };
+    const nextMetadata =
+      input.metadata !== undefined
+        ? input.metadata
+        : (existingDefinition.metadata ?? {});
+    const definition = { fields: nextFields, metadata: nextMetadata };
     const nextVersion = existing.version + 1;
     const [updated] = await tx
       .update(schemas)
@@ -245,7 +296,7 @@ export async function updateSchema(
         version: nextVersion,
         updatedAt: new Date(),
       })
-      .where(eq(schemas.id, id))
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0]!)
       .returning();
     if (!updated) {
       throw new RecordNotFoundError(`Schema ${id} does not exist.`);
@@ -271,8 +322,22 @@ export async function deleteSchema(
   db: Database,
   id: string,
   force: boolean = false,
+  applicationId?: string,
 ): Promise<void> {
   return withTransaction(db, async (tx) => {
+    const conditions: SQL[] = [eq(schemas.id, id)];
+    if (applicationId) {
+      conditions.push(eq(schemas.applicationId, applicationId));
+    }
+    const [existing] = await tx
+      .select()
+      .from(schemas)
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0]!)
+      .limit(1);
+    if (!existing) {
+      throw new RecordNotFoundError(`Schema ${id} does not exist.`);
+    }
+
     if (force) {
       await tx.delete(contentEntries).where(eq(contentEntries.schemaId, id));
     } else {
@@ -299,7 +364,7 @@ export async function deleteSchema(
 
     const [deleted] = await tx
       .delete(schemas)
-      .where(eq(schemas.id, id))
+      .where(conditions.length > 1 ? and(...conditions) : conditions[0]!)
       .returning({ id: schemas.id });
     if (!deleted) {
       throw new RecordNotFoundError(`Schema ${id} does not exist.`);

@@ -137,4 +137,58 @@ describe('RelationPickerField', () => {
 
     expect(onChange).toHaveBeenCalledWith('entry-uuid-1');
   });
+
+  it('hides the target schema dropdown in the modal when targetSchemaSlug is configured', async () => {
+    mockListSchemas.mockResolvedValue({
+      data: [
+        { id: 'schema-1', name: 'Authors', slug: 'authors' },
+        { id: 'schema-2', name: 'Categories', slug: 'categories' },
+      ],
+    });
+    const user = userEvent.setup();
+    renderField('');
+
+    await user.click(screen.getByRole('button', { name: /select author…/i }));
+
+    expect(await screen.findByText('Select Author')).toBeInTheDocument();
+    // Because mockField has config: { targetSchemaSlug: 'authors' }, target schema dropdown must NOT be rendered
+    expect(screen.queryByLabelText(/target schema/i)).not.toBeInTheDocument();
+  });
+
+  it('infers schema slug from field.apiId when targetSchemaSlug is not configured', async () => {
+    mockListSchemas.mockResolvedValue({
+      data: [
+        { id: 'schema-1', name: 'Authors', slug: 'authors' },
+        { id: 'schema-2', name: 'Categories', slug: 'categories' },
+      ],
+    });
+    const unconfiguredCategoryField: SchemaField = {
+      apiId: 'category',
+      displayName: 'Category',
+      dataType: 'relation',
+      isRequired: false,
+      isUnique: false,
+      isLocalized: false,
+      isRepeatable: false,
+      sortOrder: 0,
+    };
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RelationPickerField
+          field={unconfiguredCategoryField}
+          value=""
+          onChange={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('categories')).toBeInTheDocument();
+    expect(mockListContentEntries).toHaveBeenCalledWith(
+      'categories',
+      expect.any(Object),
+    );
+  });
 });

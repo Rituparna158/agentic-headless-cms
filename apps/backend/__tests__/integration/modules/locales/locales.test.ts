@@ -51,11 +51,12 @@ describe('Locales Module', () => {
       const res = await request(app).get('/api/v1/locales');
       expect(res.status).toBe(401);
     });
-    it('should reject non-admin users', async () => {
+    it('should allow authenticated non-admin users to view locales', async () => {
       const res = await request(app)
         .get('/api/v1/locales')
         .set('Cookie', [`token_default=${nonAdminToken}`]);
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(200);
+      expect(res.body.data.data[0].code).toBe('en');
     });
     it('should return the locales list', async () => {
       const res = await request(app)

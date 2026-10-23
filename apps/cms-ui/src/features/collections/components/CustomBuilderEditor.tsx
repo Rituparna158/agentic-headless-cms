@@ -45,14 +45,7 @@ import { MapEmbedSettings } from './page-builder/settings/MapEmbedSettings';
 import { FAQ } from './page-builder/components/FAQ';
 import { FAQSettings } from './page-builder/settings/FAQSettings';
 
-import { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
-
-interface CustomBuilderEditorProps {
-  id: string;
-  initialDesign: PageBuilderDesign | undefined;
-  onChange: (design: PageBuilderDesign) => void;
-  title: string;
-}
+import { CustomBuilderEditorProps } from '../types/collections.types';
 
 export default function CustomBuilderEditor({
   id,

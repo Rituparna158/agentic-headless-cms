@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   ReviewItem,
   TESTIMONIAL_DEFAULTS,
 } from '../stores/pageBuilderStore';
@@ -19,7 +20,9 @@ export const TestimonialsSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.testimonials[targetComponentId] ?? TESTIMONIAL_DEFAULTS,
+    useShallow(
+      (state) => state.testimonials[targetComponentId] ?? TESTIMONIAL_DEFAULTS,
+    ),
   );
   const setTestimonial = usePageBuilderStore((state) => state.setTestimonial);
 

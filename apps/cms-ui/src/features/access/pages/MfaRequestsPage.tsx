@@ -22,17 +22,19 @@ import {
   Tabs,
 } from '@repo/shared-ui';
 import { accessApi } from '../api/access.api';
-import { MfaRequestRecord, MfaRequestStatus } from '../types/access.types';
-import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
-
-type TabId = 'pending' | 'history';
-type SortDirection = 'asc' | 'desc';
-
-const SORTABLE_COLUMNS = ['email', 'createdAt', 'status'] as const;
+import {
+  MfaRequestRecord,
+  MfaTabId,
+  SortDirection,
+  MfaSummaryCardProps,
+  MfaStatusBadgeProps,
+} from '../types/access.types';
+import { MFA_SORTABLE_COLUMNS } from '../constants/access.constants';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 export const MfaRequestsPage = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<TabId>('pending');
+  const [activeTab, setActiveTab] = useState<MfaTabId>('pending');
 
   const [pendingPage, setPendingPage] = useState(1);
   const [pendingPageSize, setPendingPageSize] = useState(10);
@@ -132,7 +134,7 @@ export const MfaRequestsPage = () => {
     actionMutation.variables?.action === action;
 
   const toSortValue = (
-    key: (typeof SORTABLE_COLUMNS)[number],
+    key: (typeof MFA_SORTABLE_COLUMNS)[number],
     direction: SortDirection,
   ) => `${key}:${direction}`;
 
@@ -282,13 +284,13 @@ export const MfaRequestsPage = () => {
                       }
                       onSortChange={(key, direction) => {
                         if (
-                          SORTABLE_COLUMNS.includes(
-                            key as (typeof SORTABLE_COLUMNS)[number],
+                          MFA_SORTABLE_COLUMNS.includes(
+                            key as (typeof MFA_SORTABLE_COLUMNS)[number],
                           )
                         ) {
                           setPendingSort(
                             toSortValue(
-                              key as (typeof SORTABLE_COLUMNS)[number],
+                              key as (typeof MFA_SORTABLE_COLUMNS)[number],
                               direction,
                             ),
                           );
@@ -351,13 +353,13 @@ export const MfaRequestsPage = () => {
                       }
                       onSortChange={(key, direction) => {
                         if (
-                          SORTABLE_COLUMNS.includes(
-                            key as (typeof SORTABLE_COLUMNS)[number],
+                          MFA_SORTABLE_COLUMNS.includes(
+                            key as (typeof MFA_SORTABLE_COLUMNS)[number],
                           )
                         ) {
                           setHistorySort(
                             toSortValue(
-                              key as (typeof SORTABLE_COLUMNS)[number],
+                              key as (typeof MFA_SORTABLE_COLUMNS)[number],
                               direction,
                             ),
                           );
@@ -384,17 +386,7 @@ export const MfaRequestsPage = () => {
   );
 };
 
-function SummaryCard({
-  icon,
-  label,
-  value,
-  className,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  className?: string;
-}) {
+function SummaryCard({ icon, label, value, className }: MfaSummaryCardProps) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
       <div className={`rounded-lg p-2.5 ${className}`}>{icon}</div>
@@ -408,7 +400,7 @@ function SummaryCard({
   );
 }
 
-function StatusBadge({ status }: { status: MfaRequestStatus }) {
+function StatusBadge({ status }: MfaStatusBadgeProps) {
   const styles =
     status === 'approved'
       ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30'

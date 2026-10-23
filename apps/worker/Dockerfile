@@ -50,11 +50,14 @@ ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 --ingroup nodejs workerjs
+  && adduser --system --uid 1001 --ingroup nodejs workeruser
 
-COPY --from=builder --chown=workerjs:nodejs /app/deploy .
+COPY --from=builder --chown=workeruser:nodejs /app/deploy .
 
-USER workerjs
+# Copy libvips shared libraries so musl dynamic linker can resolve them on Alpine
+RUN cp -d /app/node_modules/.pnpm/@img+sharp-libvips-linuxmusl-x64*/node_modules/@img/sharp-libvips-linuxmusl-x64/lib/*.so* /usr/local/lib/ 2>/dev/null || true
+
+USER workeruser
 WORKDIR /app
 
 ENV NODE_ENV=production

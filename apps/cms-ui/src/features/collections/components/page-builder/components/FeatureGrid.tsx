@@ -4,11 +4,7 @@ import {
   FEATURE_GRID_DEFAULTS,
 } from '../stores/pageBuilderStore';
 import DOMPurify from 'dompurify';
-
-interface FeatureGridProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { FeatureGridProps } from '@/features/collections/types/page-builder.types';
 
 const FeatureGrid = forwardRef<HTMLDivElement, FeatureGridProps>(
   (props, ref) => {

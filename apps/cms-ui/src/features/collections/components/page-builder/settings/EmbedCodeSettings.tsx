@@ -3,6 +3,7 @@ import React from 'react';
 import { Settings, Code } from 'lucide-react';
 import {
   usePageBuilderStore,
+  useShallow,
   EMBED_CODE_DEFAULTS,
 } from '../stores/pageBuilderStore';
 
@@ -10,7 +11,9 @@ export const EmbedCodeSettings: React.FC<{ targetComponentId: string }> = ({
   targetComponentId,
 }) => {
   const settings = usePageBuilderStore(
-    (state) => state.embedCode[targetComponentId] ?? EMBED_CODE_DEFAULTS,
+    useShallow(
+      (state) => state.embedCode[targetComponentId] ?? EMBED_CODE_DEFAULTS,
+    ),
   );
   const setEmbedCode = usePageBuilderStore((state) => state.setEmbedCode);
 

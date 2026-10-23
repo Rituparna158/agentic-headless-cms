@@ -16,10 +16,19 @@ export class ContentService {
     schemaId: string,
     locale: string = DEFAULT_LOCALE,
     query?: ContentQueryOptions,
+    applicationId?: string,
   ) {
     try {
-      logger.info({ schemaId, locale }, 'ContentService: listEntries');
-      return await this.repository.listEntries(schemaId, locale, query);
+      logger.info(
+        { schemaId, locale, applicationId },
+        'ContentService: listEntries',
+      );
+      return await this.repository.listEntries(
+        schemaId,
+        locale,
+        query,
+        applicationId,
+      );
     } catch (error) {
       logger.error({ err: error }, 'ContentService Error in listEntries:');
       throw new ApiError(500, SERVICE_ERRORS.LIST_ENTRIES_FAILED);
@@ -29,10 +38,19 @@ export class ContentService {
     schemaId: string,
     locale: string = DEFAULT_LOCALE,
     query?: ContentQueryOptions,
+    applicationId?: string,
   ) {
     try {
-      logger.info({ schemaId, locale }, 'ContentService: countEntries');
-      return await this.repository.countEntries(schemaId, locale, query?.where);
+      logger.info(
+        { schemaId, locale, applicationId },
+        'ContentService: countEntries',
+      );
+      return await this.repository.countEntries(
+        schemaId,
+        locale,
+        query?.where,
+        applicationId,
+      );
     } catch (error) {
       logger.error({ err: error }, 'ContentService Error in countEntries:');
       throw new ApiError(500, SERVICE_ERRORS.COUNT_ENTRIES_FAILED);
@@ -42,13 +60,19 @@ export class ContentService {
     entryId: string,
     locale: string = DEFAULT_LOCALE,
     schemaId?: string,
+    applicationId?: string,
   ) {
     try {
       logger.info(
-        { entryId, locale, schemaId },
+        { entryId, locale, schemaId, applicationId },
         'ContentService: getEntryById',
       );
-      return await this.repository.getEntryById(entryId, locale, schemaId);
+      return await this.repository.getEntryById(
+        entryId,
+        locale,
+        schemaId,
+        applicationId,
+      );
     } catch (error) {
       logger.error({ err: error }, 'ContentService Error in getEntryById:');
       throw new ApiError(500, SERVICE_ERRORS.FETCH_ENTRY_FAILED);
@@ -60,6 +84,7 @@ export class ContentService {
     userId: string,
     locale: string = DEFAULT_LOCALE,
     applicationId?: string,
+    userEmail?: string,
   ) {
     try {
       logger.info({ schemaId, userId }, 'ContentService: createDraft start');
@@ -68,7 +93,7 @@ export class ContentService {
         data,
         userId,
         locale,
-        { applicationId },
+        { applicationId, userEmail },
       );
       logger.debug(
         { id: result.id },
@@ -96,6 +121,7 @@ export class ContentService {
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: updateDraft start');
@@ -109,6 +135,7 @@ export class ContentService {
         data,
         userId,
         locale,
+        userEmail,
       );
       // Emit audit event
       logger.debug({ entryId }, 'ContentService: emitting audit log');
@@ -134,6 +161,7 @@ export class ContentService {
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: updatePartial start');
@@ -147,6 +175,7 @@ export class ContentService {
         mergedData,
         userId,
         locale,
+        userEmail,
       );
       const { actorUserId, actorAgentId, context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
@@ -169,6 +198,7 @@ export class ContentService {
     entryId: string,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: publishEntry start');
@@ -181,6 +211,7 @@ export class ContentService {
         entryId,
         userId,
         locale,
+        userEmail,
       );
       // Emit audit event
       logger.debug({ entryId }, 'ContentService: emitting audit log');
@@ -205,6 +236,7 @@ export class ContentService {
     entryId: string,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: unpublishEntry start');
@@ -213,6 +245,7 @@ export class ContentService {
         entryId,
         userId,
         locale,
+        userEmail,
       );
       const { actorUserId, actorAgentId, context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
@@ -286,15 +319,23 @@ export class ContentService {
       throw new ApiError(500, SERVICE_ERRORS.LIST_ENTRY_VERSIONS_FAILED);
     }
   }
-  async deleteEntry(entryId: string) {
+  async deleteEntry(entryId: string, applicationId?: string) {
     try {
-      logger.info({ entryId }, 'ContentService: deleteEntry start');
+      logger.info(
+        { entryId, applicationId },
+        'ContentService: deleteEntry start',
+      );
       // Capture BEFORE state
       logger.debug({ entryId }, 'ContentService: fetching beforeState');
-      const beforeState = await this.repository.getEntryById(entryId);
+      const beforeState = await this.repository.getEntryById(
+        entryId,
+        DEFAULT_LOCALE,
+        undefined,
+        applicationId,
+      );
       // Perform mutation
       logger.debug({ entryId }, 'ContentService: mutating data');
-      const result = await this.repository.deleteEntry(entryId);
+      const result = await this.repository.deleteEntry(entryId, applicationId);
       // Emit audit event
       logger.debug({ entryId }, 'ContentService: emitting audit log');
       const { actorUserId, actorAgentId, context } = getAuditContext();

@@ -1,15 +1,23 @@
-export interface GrapesJSData {
-  builder: 'grapesjs';
-  projectData?: Record<string, unknown>; // Replaces html, css, components, styles for better serialization
-  // We keep these for backwards compatibility if needed during transition, but projectData is preferred
-  html?: string;
-  css?: string;
-  components?: unknown;
-  styles?: unknown;
-}
+import type { Editor } from 'grapesjs';
+import type {
+  TemplateValidationResult,
+  ImportActionChoice,
+} from '../../types/template.types';
+import type {
+  GrapesJSData,
+  CmsSchemaField,
+  GrapesJSEditorProps,
+} from '../../types/collections.types';
 
-export interface GrapesJSEditorProps {
-  initialData?: Partial<GrapesJSData>;
-  onChange: (data: GrapesJSData) => void;
-  brandTitle?: string;
+export type { GrapesJSData, GrapesJSEditorProps };
+export type SchemaFieldOption = CmsSchemaField;
+
+export interface GrapesJSEditorHandle {
+  loadTemplate: (
+    result: TemplateValidationResult,
+    action: ImportActionChoice,
+  ) => void;
+  loadRawData: (data: Partial<GrapesJSData>) => void;
+  isCanvasEmpty: () => boolean;
+  getEditor: () => Editor | null;
 }

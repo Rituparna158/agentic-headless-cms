@@ -15,7 +15,8 @@
     "check-types": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "cli": "tsx --env-file=../../.env src/cli.ts"
+    "cli": "tsx --env-file=../../.env src/cli.ts",
+    "seed:admin": "pnpm --filter @repo/shared-db run seed:admin"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",
@@ -45,6 +46,7 @@
     "drizzle-orm": "^0.36.4",
     "eventemitter2": "^6.4.9",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
     "graphql": "^16.14.2",
     "graphql-compose": "^9.1.0",
     "helmet": "^8.2.0",

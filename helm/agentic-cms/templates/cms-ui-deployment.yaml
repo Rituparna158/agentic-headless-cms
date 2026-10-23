@@ -1,0 +1,51 @@
+{{- if .Values.cmsUI.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "agentic-cms.componentName" (dict "context" . "component" "cms-ui") }}
+  labels:
+    {{- include "agentic-cms.labels" . | nindent 4 }}
+    {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "cms-ui") | nindent 4 }}
+spec:
+  {{- if not .Values.cmsUI.autoscaling.enabled }}
+  replicas: {{ .Values.cmsUI.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "cms-ui") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "cms-ui") | nindent 8 }}
+    spec:
+      containers:
+        - name: cms-ui
+          image: "{{ .Values.cmsUI.image.repository }}:{{ .Values.cmsUI.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.cmsUI.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.cmsUI.service.port }}
+          {{- if .Values.cmsUI.env }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "agentic-cms.componentName" (dict "context" . "component" "cms-ui") }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.cmsUI.livenessProbe.path }}
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.cmsUI.readinessProbe.path }}
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.cmsUI.resources | nindent 12 }}
+{{- end }}

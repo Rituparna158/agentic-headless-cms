@@ -1,28 +1,14 @@
-import { usePageBuilderStore } from '../stores/pageBuilderStore';
-
-interface SearchBarSettingsProps {
-  targetComponentId: string;
-}
-
-const DEFAULT_SEARCH_BAR_STATE = {
-  placeholder: 'Search for anything...',
-  buttonText: 'Search',
-  backgroundColor: '#ffffff',
-  textColor: '#1a202c',
-  buttonColor: '#667eea',
-  buttonTextColor: '#ffffff',
-  showButton: true,
-  borderRadius: 8,
-  iconColor: '#a0aec0',
-  alignment: 'center' as const,
-  maxWidth: '600px',
-};
+import { usePageBuilderStore, useShallow } from '../stores/pageBuilderStore';
+import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
+import { DEFAULT_SEARCH_BAR_STATE } from '@/features/collections/constants/page-builder-settings.constants';
 
 export default function SearchBarSettings({
   targetComponentId,
-}: SearchBarSettingsProps) {
+}: PageBuilderSettingProps) {
   const s = usePageBuilderStore(
-    (state) => state.searchBar[targetComponentId] ?? DEFAULT_SEARCH_BAR_STATE,
+    useShallow(
+      (state) => state.searchBar[targetComponentId] ?? DEFAULT_SEARCH_BAR_STATE,
+    ),
   );
   const set = usePageBuilderStore((state) => state.setSearchBar);
   const u = (patch: Partial<typeof s>) => set(targetComponentId, patch);

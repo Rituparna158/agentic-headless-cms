@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   DYNAMIC_FORM_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface DynamicFormProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { DynamicFormProps } from '@/features/collections/types/page-builder.types';
 
 const DynamicForm = forwardRef<HTMLDivElement, DynamicFormProps>(
   (props, ref) => {

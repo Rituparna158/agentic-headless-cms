@@ -3,11 +3,7 @@ import {
   usePageBuilderStore,
   NEWSLETTER_FORM_DEFAULTS,
 } from '../stores/pageBuilderStore';
-
-interface NewsletterFormProps {
-  componentId: string;
-  isPreview?: boolean;
-}
+import type { NewsletterFormProps } from '@/features/collections/types/page-builder.types';
 
 const NewsletterForm = forwardRef<HTMLDivElement, NewsletterFormProps>(
   (props, ref) => {

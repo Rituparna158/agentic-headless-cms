@@ -14,7 +14,8 @@ export const globalAuthMiddleware = async (
   if (
     req.originalUrl &&
     (req.originalUrl.includes('/media/file/') ||
-      req.originalUrl.includes('/auth/sso'))
+      req.originalUrl.includes('/auth/sso') ||
+      req.originalUrl.includes('/telemetry/vitals'))
   ) {
     return next();
   }

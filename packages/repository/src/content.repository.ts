@@ -1,4 +1,4 @@
-import { eq, and, isNull, sql, desc, SQL } from 'drizzle-orm';
+import { eq, and, or, isNull, sql, desc, SQL } from 'drizzle-orm';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
 import { ApiError } from '@repo/utils';
@@ -7,6 +7,7 @@ import {
   contentEntries,
   contentVersions,
   entryLocalizations,
+  users,
   createEntryVersion,
   withTransaction,
   RecordNotFoundError,
@@ -27,7 +28,12 @@ export class ContentRepository {
       );
       const conditions = [eq(schemas.slug, slug)];
       if (applicationId) {
-        conditions.push(eq(schemas.applicationId, applicationId));
+        conditions.push(
+          or(
+            eq(schemas.applicationId, applicationId),
+            eq(schemas.isSystem, true),
+          )!,
+        );
       }
       const [schema] = await withTransaction(this.db, async (tx) => {
         return await tx
@@ -53,25 +59,42 @@ export class ContentRepository {
     schemaId: string,
     locale: string = DEFAULT_LOCALE,
     query?: ContentQueryOptions,
+    applicationId?: string,
   ) {
     try {
       logger.info(
-        { schemaId, locale, hasQuery: !!query },
+        { schemaId, locale, hasQuery: !!query, applicationId },
         'ContentRepository: listing entries',
       );
-      const baseWhere = and(
+      const conditions = [
         eq(contentEntries.schemaId, schemaId),
         isNull(contentEntries.deletedAt),
-      );
+      ];
+      if (applicationId) {
+        conditions.push(eq(contentEntries.applicationId, applicationId));
+      }
+      const baseWhere = and(...conditions);
       const where = query?.where ? and(baseWhere, query.where) : baseWhere;
       const rows = this.db
         .select({
           id: contentEntries.id,
+          schemaId: contentEntries.schemaId,
+          locale: entryLocalizations.locale,
           status: entryLocalizations.status,
           data: entryLocalizations.data,
           publishedData: entryLocalizations.publishedData,
           createdAt: contentEntries.createdAt,
           updatedAt: contentEntries.updatedAt,
+          updatedBy: sql<
+            string | null
+          >`COALESCE(${contentEntries.updatedBy}, ${users.email}, 'Admin')`.as(
+            'updatedBy',
+          ),
+          collaborators: sql<
+            string | null
+          >`COALESCE(${contentEntries.collaborators}, json_build_array(COALESCE(${users.email}, 'Admin'))::text)`.as(
+            'collaborators',
+          ),
         })
         .from(contentEntries)
         .innerJoin(
@@ -81,6 +104,7 @@ export class ContentRepository {
             eq(entryLocalizations.locale, locale),
           ),
         )
+        .leftJoin(users, eq(contentEntries.createdByUserId, users.id))
         .where(where);
       if (query) {
         logger.debug(
@@ -112,16 +136,21 @@ export class ContentRepository {
     schemaId: string,
     locale: string = DEFAULT_LOCALE,
     filterWhere?: SQL,
+    applicationId?: string,
   ) {
     try {
       logger.info(
-        { schemaId, locale, hasFilter: !!filterWhere },
+        { schemaId, locale, hasFilter: !!filterWhere, applicationId },
         'ContentRepository: counting entries',
       );
-      const baseWhere = and(
+      const conditions = [
         eq(contentEntries.schemaId, schemaId),
         isNull(contentEntries.deletedAt),
-      );
+      ];
+      if (applicationId) {
+        conditions.push(eq(contentEntries.applicationId, applicationId));
+      }
+      const baseWhere = and(...conditions);
       const where = filterWhere ? and(baseWhere, filterWhere) : baseWhere;
       const [result] = await withTransaction(this.db, async (tx) => {
         return await tx
@@ -150,10 +179,11 @@ export class ContentRepository {
     entryId: string,
     locale: string = DEFAULT_LOCALE,
     schemaId?: string,
+    applicationId?: string,
   ) {
     try {
       logger.info(
-        { entryId, locale, schemaId },
+        { entryId, locale, schemaId, applicationId },
         'ContentRepository: fetching entry by ID',
       );
       const conditions = [
@@ -163,15 +193,31 @@ export class ContentRepository {
       if (schemaId) {
         conditions.push(eq(contentEntries.schemaId, schemaId));
       }
+      if (applicationId) {
+        conditions.push(eq(contentEntries.applicationId, applicationId));
+      }
       const [entry] = await withTransaction(this.db, async (tx) => {
         return await tx
           .select({
             id: contentEntries.id,
             schemaId: contentEntries.schemaId,
+            locale: entryLocalizations.locale,
             status: entryLocalizations.status,
             data: entryLocalizations.data,
             publishedData: entryLocalizations.publishedData,
             publishedAt: entryLocalizations.publishedAt,
+            createdAt: contentEntries.createdAt,
+            updatedAt: contentEntries.updatedAt,
+            updatedBy: sql<
+              string | null
+            >`COALESCE(${contentEntries.updatedBy}, ${users.email}, 'Admin')`.as(
+              'updatedBy',
+            ),
+            collaborators: sql<
+              string | null
+            >`COALESCE(${contentEntries.collaborators}, json_build_array(COALESCE(${users.email}, 'Admin'))::text)`.as(
+              'collaborators',
+            ),
           })
           .from(contentEntries)
           .innerJoin(
@@ -181,6 +227,7 @@ export class ContentRepository {
               eq(entryLocalizations.locale, locale),
             ),
           )
+          .leftJoin(users, eq(contentEntries.createdByUserId, users.id))
           .where(and(...conditions))
           .limit(1);
       });
@@ -199,7 +246,7 @@ export class ContentRepository {
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
-    options: { applicationId?: string } = {},
+    options: { applicationId?: string; userEmail?: string } = {},
   ) {
     try {
       logger.info(
@@ -208,12 +255,15 @@ export class ContentRepository {
       );
       return await withTransaction(this.db, async (tx) => {
         logger.debug('ContentRepository: inserting contentEntries row');
+        const actor = options.userEmail || userId;
         const [newEntry] = await tx
           .insert(contentEntries)
           .values({
             schemaId,
             actorType: 'user',
             createdByUserId: userId,
+            updatedBy: actor,
+            collaborators: JSON.stringify([actor]),
             ...(options.applicationId
               ? { applicationId: options.applicationId }
               : {}),
@@ -245,9 +295,14 @@ export class ContentRepository {
         return {
           id: newEntry.id,
           schemaId: newEntry.schemaId,
+          locale,
           status: versionResult.localization.status,
           data: versionResult.localization.data,
           publishedData: versionResult.localization.publishedData,
+          createdAt: newEntry.createdAt,
+          updatedAt: newEntry.updatedAt,
+          updatedBy: newEntry.updatedBy,
+          collaborators: newEntry.collaborators,
         };
       });
     } catch (error) {
@@ -260,6 +315,7 @@ export class ContentRepository {
     data: Record<string, unknown>,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
   ) {
     try {
       logger.info(
@@ -281,6 +337,35 @@ export class ContentRepository {
         createdByUserId: userId,
         comment: 'Updated draft',
       });
+
+      const actor = userEmail || userId;
+      const [existingEntry] = await this.db
+        .select({ collaborators: contentEntries.collaborators })
+        .from(contentEntries)
+        .where(eq(contentEntries.id, entryId))
+        .limit(1);
+
+      let collabs: string[] = [];
+      try {
+        collabs = existingEntry?.collaborators
+          ? JSON.parse(existingEntry.collaborators)
+          : [];
+      } catch {
+        collabs = [];
+      }
+      if (actor && !collabs.includes(actor)) {
+        collabs.push(actor);
+      }
+
+      await this.db
+        .update(contentEntries)
+        .set({
+          updatedAt: new Date(),
+          updatedBy: actor,
+          collaborators: JSON.stringify(collabs),
+        })
+        .where(eq(contentEntries.id, entryId));
+
       const updatedEntry = await this.getEntryById(entryId, locale);
       if (!updatedEntry) {
         logger.error(
@@ -303,6 +388,7 @@ export class ContentRepository {
     entryId: string,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
   ) {
     try {
       logger.info(
@@ -327,6 +413,35 @@ export class ContentRepository {
         createdByUserId: userId,
         comment: 'Published entry',
       });
+
+      const actor = userEmail || userId;
+      const [existingEntry] = await this.db
+        .select({ collaborators: contentEntries.collaborators })
+        .from(contentEntries)
+        .where(eq(contentEntries.id, entryId))
+        .limit(1);
+
+      let collabs: string[] = [];
+      try {
+        collabs = existingEntry?.collaborators
+          ? JSON.parse(existingEntry.collaborators)
+          : [];
+      } catch {
+        collabs = [];
+      }
+      if (actor && !collabs.includes(actor)) {
+        collabs.push(actor);
+      }
+
+      await this.db
+        .update(contentEntries)
+        .set({
+          updatedAt: new Date(),
+          updatedBy: actor,
+          collaborators: JSON.stringify(collabs),
+        })
+        .where(eq(contentEntries.id, entryId));
+
       const publishedEntry = await this.getEntryById(entryId, locale);
       if (!publishedEntry) {
         logger.error(
@@ -347,6 +462,7 @@ export class ContentRepository {
     entryId: string,
     userId: string,
     locale: string = DEFAULT_LOCALE,
+    userEmail?: string,
   ) {
     try {
       logger.info(
@@ -386,6 +502,34 @@ export class ContentRepository {
             eq(entryLocalizations.locale, locale),
           ),
         );
+
+      const actor = userEmail || userId;
+      const [existingEntry] = await this.db
+        .select({ collaborators: contentEntries.collaborators })
+        .from(contentEntries)
+        .where(eq(contentEntries.id, entryId))
+        .limit(1);
+
+      let collabs: string[] = [];
+      try {
+        collabs = existingEntry?.collaborators
+          ? JSON.parse(existingEntry.collaborators)
+          : [];
+      } catch {
+        collabs = [];
+      }
+      if (actor && !collabs.includes(actor)) {
+        collabs.push(actor);
+      }
+
+      await this.db
+        .update(contentEntries)
+        .set({
+          updatedAt: new Date(),
+          updatedBy: actor,
+          collaborators: JSON.stringify(collabs),
+        })
+        .where(eq(contentEntries.id, entryId));
 
       const unpublishedEntry = await this.getEntryById(entryId, locale);
       if (!unpublishedEntry) {
@@ -492,14 +636,21 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.LIST_ENTRY_VERSIONS_FAILED);
     }
   }
-  async deleteEntry(entryId: string) {
+  async deleteEntry(entryId: string, applicationId?: string) {
     try {
-      logger.info({ entryId }, 'ContentRepository: deleting entry');
+      logger.info(
+        { entryId, applicationId },
+        'ContentRepository: deleting entry',
+      );
+      const conditions = [eq(contentEntries.id, entryId)];
+      if (applicationId) {
+        conditions.push(eq(contentEntries.applicationId, applicationId));
+      }
       const [deleted] = await withTransaction(this.db, async (tx) => {
         return await tx
           .update(contentEntries)
           .set({ deletedAt: new Date() })
-          .where(eq(contentEntries.id, entryId))
+          .where(conditions.length > 1 ? and(...conditions) : conditions[0]!)
           .returning({ id: contentEntries.id });
       });
       if (!deleted) {

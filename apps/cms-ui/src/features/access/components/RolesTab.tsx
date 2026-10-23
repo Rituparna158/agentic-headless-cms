@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { browserLogger } from '@repo/logger/browser';
 import { accessApi } from '../api/access.api';
 import {
   Role,
@@ -7,9 +8,10 @@ import {
   ApplicationType,
   CreateRolePayload,
   UpdateRolePayload,
+  RoleDetailPanelProps,
 } from '../types/access.types';
+import { CMS_CAPABILITIES } from '../constants/access.constants';
 import { Plus } from 'lucide-react';
-import { useEffect } from 'react';
 export const RolesTab = () => {
   const { data: rolesResponse, isLoading: rolesLoading } = useQuery({
     queryKey: ['roles'],
@@ -83,47 +85,7 @@ export const RolesTab = () => {
     </div>
   );
 };
-interface RoleDetailPanelProps {
-  role: Role | 'new';
-  onClose: () => void;
-}
-const CMS_CAPABILITIES = [
-  {
-    id: 'manage_content',
-    label: 'Manage Content',
-    description: 'Create, edit, and delete Posts, Pages, Tags, and Comments',
-  },
-  {
-    id: 'publish_content',
-    label: 'Publish Content',
-    description: 'Authority to publish content directly',
-  },
-  {
-    id: 'manage_media',
-    label: 'Manage Media',
-    description: 'Upload and organize files in the Media Library',
-  },
-  {
-    id: 'manage_appearance',
-    label: 'Manage Appearance',
-    description: 'Customize Themes and Menus',
-  },
-  {
-    id: 'manage_plugins',
-    label: 'Manage Plugins',
-    description: 'Install, activate, and configure Plugins',
-  },
-  {
-    id: 'manage_users',
-    label: 'Manage Users',
-    description: 'Add, edit, and delete Users and Roles',
-  },
-  {
-    id: 'manage_settings',
-    label: 'Manage Settings',
-    description: 'Access and modify Global Settings',
-  },
-];
+
 const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
   const queryClient = useQueryClient();
   const isNew = role === 'new';
@@ -184,7 +146,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
       onClose();
     },
     onError: (error) => {
-      console.error('Failed to create role', error);
+      browserLogger.error('Failed to create role', error);
       alert('Failed to create role');
     },
   });
@@ -212,7 +174,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
       onClose();
     },
     onError: (error) => {
-      console.error('Failed to update role', error);
+      browserLogger.error('Failed to update role', error);
       alert('Failed to update role');
     },
   });
