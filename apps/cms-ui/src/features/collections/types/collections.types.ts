@@ -74,6 +74,9 @@ export interface CmsPageSchema {
   id: string;
   name: string;
   slug: string;
+  pageId?: string;
+  pageTitle?: string;
+  isCurrentPage?: boolean;
   fields?: CmsSchemaField[];
 }
 
@@ -108,6 +111,9 @@ export interface GrapesJSEditorProps {
     id: string;
     name: string;
     slug: string;
+    pageId?: string;
+    pageTitle?: string;
+    isCurrentPage?: boolean;
     fields?: unknown[];
   }>;
   schemaValues?: Record<string, unknown>;
@@ -203,6 +209,9 @@ export interface CanvasAvailableSchema {
   id: string;
   name: string;
   slug: string;
+  pageId?: string;
+  pageTitle?: string;
+  isCurrentPage?: boolean;
   fields: Array<{
     id: string;
     name: string;
