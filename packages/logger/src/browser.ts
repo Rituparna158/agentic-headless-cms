@@ -47,14 +47,44 @@ function redactSensitiveData(data: unknown, depth = 0): unknown {
   return sanitized;
 }
 
+export function isProductionEnvironment(): boolean {
+  if (
+    typeof process !== 'undefined' &&
+    process.env?.NODE_ENV === 'production'
+  ) {
+    return true;
+  }
+  if (
+    typeof import.meta !== 'undefined' &&
+    Boolean((import.meta as unknown as { env?: { PROD?: boolean } }).env?.PROD)
+  ) {
+    return true;
+  }
+  if (
+    typeof window !== 'undefined' &&
+    ((window as unknown as { __CMS_PROD__?: boolean }).__CMS_PROD__ === true ||
+      (window as unknown as { __ENV__?: { NODE_ENV?: string } }).__ENV__
+        ?.NODE_ENV === 'production')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export class BrowserLogger {
   private level: LogLevel = 'info';
   private module?: string;
   private transports: TelemetryTransport[] = [];
 
-  constructor(moduleName?: string, level: LogLevel = 'info') {
+  constructor(moduleName?: string, level?: LogLevel) {
     this.module = moduleName;
-    this.level = level;
+    this.level =
+      level ??
+      (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
+        ? 'warn'
+        : isProductionEnvironment()
+          ? 'silent'
+          : 'info');
   }
 
   public setLevel(level: LogLevel): void {
