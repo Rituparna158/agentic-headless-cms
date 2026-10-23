@@ -15,4 +15,18 @@ export const baseCss = `
   * {
     box-sizing: border-box;
   }
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  img[data-object-fit="cover"],
+  [data-cms-slot="cover_image_url"],
+  [data-cms-slot="image"] {
+    object-fit: cover;
+  }
+  @media (min-width: 1200px) {
+    img:not([style*="max-height"]) {
+      max-height: 600px;
+    }
+  }
 `;

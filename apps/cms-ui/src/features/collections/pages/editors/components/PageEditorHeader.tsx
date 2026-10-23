@@ -76,21 +76,22 @@ export function PageEditorHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onOpenSchemaDrawer}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 font-medium hover:bg-indigo-500/20 transition-colors text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer"
+          title="Manage custom schemas and content fields for this page"
+          aria-label="Manage custom schemas"
+        >
+          <Boxes className="h-3.5 w-3.5 text-indigo-400" />
+          <span>Schemas</span>
+          <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-[10px] font-mono">
+            {availableSchemasCount}
+          </span>
+        </button>
+
         {activeBuilder === 'grapesjs' && (
           <>
-            <button
-              type="button"
-              onClick={onOpenSchemaDrawer}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 font-medium hover:bg-indigo-500/20 transition-colors text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-              title="Manage custom schemas and content fields for this page"
-              aria-label="Manage custom schemas"
-            >
-              <Boxes className="h-3.5 w-3.5 text-indigo-400" />
-              <span>Schemas</span>
-              <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-[10px] font-mono">
-                {availableSchemasCount}
-              </span>
-            </button>
             <button
               type="button"
               onClick={onOpenImportModal}

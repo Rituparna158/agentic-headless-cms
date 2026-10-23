@@ -228,8 +228,10 @@ export interface PageCustomSchema {
   name: string;
   slug: string;
   description?: string;
+  entryType?: 'single' | 'multi';
   fields: DynamicFieldDefinition[];
   values?: Record<string, unknown>;
+  items?: Array<Record<string, unknown>>;
   createdAt?: string;
   updatedAt?: string;
 }

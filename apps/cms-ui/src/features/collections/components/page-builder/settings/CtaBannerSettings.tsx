@@ -7,7 +7,6 @@ import {
 export default function CtaBannerSettings(props: {
   targetComponentId: string;
 }) {
-  console.log('CtaBannerSettings props:', props);
   const { targetComponentId } = props;
   const s = usePageBuilderStore(
     useShallow(

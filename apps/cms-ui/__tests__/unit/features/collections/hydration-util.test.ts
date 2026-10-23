@@ -134,4 +134,186 @@ describe('CMS Template Hydration Utility', () => {
     expect(result).toContain('data-entry-id="post-99"');
     expect(result).toContain('My Post');
   });
+
+  it('hydrates repeating feed from multi-entry schema items on target entry', () => {
+    const template = `
+      <div data-cms-repeat="true" class="cms-dynamic-feed">
+        <article class="card">
+          <h3>{{title}}</h3>
+          <p>{{excerpt}}</p>
+          <img data-cms-slot="image" src="" />
+        </article>
+      </div>
+    `;
+
+    const entry = {
+      id: 'index-page',
+      data: {
+        title: 'Blog Index',
+        _schemas: [
+          {
+            slug: 'posts',
+            entryType: 'multi',
+            items: [
+              {
+                title: 'AI in Architecture',
+                excerpt: 'First post excerpt',
+                cover_image_url: 'https://example.com/ai.jpg',
+              },
+              {
+                title: 'Robotics in Surgery',
+                excerpt: 'Second post excerpt',
+                cover_image_url: 'https://example.com/robotics.jpg',
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const result = hydrateHtmlTemplate(template, entry, [entry]);
+    expect(result).toContain('AI in Architecture');
+    expect(result).toContain('First post excerpt');
+    expect(result).toContain('src="https://example.com/ai.jpg"');
+    expect(result).toContain('Robotics in Surgery');
+    expect(result).toContain('Second post excerpt');
+    expect(result).toContain('src="https://example.com/robotics.jpg"');
+    expect(result).toContain('data-item-index="0"');
+    expect(result).toContain('data-item-index="1"');
+  });
+
+  it('prevents duplicate cards when collection contains blank layout pages without schemas', () => {
+    const template = `
+      <div data-cms-repeat="true">
+        <article class="card">
+          <h3>{{title}}</h3>
+        </article>
+      </div>
+    `;
+
+    const indexPage = {
+      id: 'index-page',
+      data: {
+        title: 'Index Page',
+        _schemas: [
+          {
+            slug: 'featured_post',
+            entryType: 'single',
+            values: {
+              title: 'Only One Post Created',
+            },
+          },
+        ],
+      },
+    };
+
+    // A blank reader page layout with grapesjs builder and no custom schema content
+    const blankReaderPage = {
+      id: 'blog-content-page',
+      data: {
+        title: 'blog-content-page',
+        body: { builder: 'grapesjs', html: '<div>Reader</div>' },
+        _schemas: null,
+      },
+    };
+
+    const result = hydrateHtmlTemplate(template, indexPage, [
+      indexPage,
+      blankReaderPage,
+    ]);
+    expect(result).toContain('Only One Post Created');
+    // Ensure blog-content-page is not duplicated as an empty second card
+    expect(result).not.toContain('blog-content-page');
+    // Only one article card should be generated
+    const matchCount = (result.match(/<article[^>]*class="card"/g) || [])
+      .length;
+    expect(matchCount).toBe(1);
+  });
+
+  it('inherits collection schema values for reader pages without their own schemas', () => {
+    const template = `
+      <div class="cms-post-reader">
+        <h1>{{title}}</h1>
+        <p>{{author}}</p>
+      </div>
+    `;
+
+    const indexPageWithSchema = {
+      id: 'index-page',
+      data: {
+        _schemas: [
+          {
+            slug: 'blog',
+            values: {
+              title: 'The Future of AI',
+              author: 'Sarah Jenkins',
+            },
+          },
+        ],
+      },
+    };
+
+    const readerPageWithoutSchema = {
+      id: 'blog-content-page',
+      data: {
+        title: 'blog-content-page',
+        _schemas: null,
+      },
+    };
+
+    const result = hydrateHtmlTemplate(template, readerPageWithoutSchema, [
+      readerPageWithoutSchema,
+      indexPageWithSchema,
+    ]);
+
+    expect(result).toContain('The Future of AI');
+    expect(result).toContain('Sarah Jenkins');
+  });
+
+  it('hydrates reader detail page using a specific item entry from multi-entry schemas', () => {
+    const readerTemplate = `
+      <h1 data-cms-slot="title">Default Title</h1>
+      <span data-cms-slot="author">Default Author</span>
+      <div data-cms-slot="content">Default Content</div>
+    `;
+
+    const item2Entry = {
+      id: 'item_2',
+      data: {
+        title: 'Designing Modern Headless CMS Architectures',
+        author: 'Elena Chen',
+        content: '<p>Traditional monolithic CMS platforms...</p>',
+        slug: 'item-2',
+      },
+    };
+
+    const result = hydrateHtmlTemplate(readerTemplate, item2Entry);
+    expect(result).toContain('Designing Modern Headless CMS Architectures');
+    expect(result).toContain('Elena Chen');
+    expect(result).toContain('<p>Traditional monolithic CMS platforms...</p>');
+  });
+
+  it('applies image alignment, fit, and appearance styles during hydration', () => {
+    const template = `
+      <img id="img-right" src="/test.jpg" data-image-align="right" data-object-fit="contain" data-aspect-ratio="16/9" data-max-height="300px" data-border-radius="8px" data-image-width="80%" data-object-position="top center" />
+      <img id="img-left" src="/test2.jpg" data-image-align="left" />
+      <img id="img-center" src="/test3.jpg" data-image-align="center" />
+      <div class="cms-post-reader">Post Body</div>
+    `;
+
+    const entry = {
+      id: 'entry-999',
+      data: {
+        title: 'Styled Post',
+      },
+    };
+
+    const result = hydrateHtmlTemplate(template, entry);
+    expect(result).toContain('margin-left: auto');
+    expect(result).toContain('margin-right: 0');
+    expect(result).toContain('margin-right: auto');
+    expect(result).toContain('data-entry-id="entry-999"');
+    expect(result).toContain('object-fit: contain');
+    expect(result).toContain('aspect-ratio: 16/9');
+  });
 });

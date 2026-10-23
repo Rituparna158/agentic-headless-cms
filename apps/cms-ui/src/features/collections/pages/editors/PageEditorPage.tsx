@@ -15,7 +15,12 @@ import {
   collectionsApi,
   PageBodyData,
 } from '@/features/collections/api/collections.api';
-import type { PageEntry, ContentCollectionMeta } from '@/types/content.types';
+import type {
+  PageEntry,
+  ContentCollectionMeta,
+  DynamicFieldDefinition,
+  PageCustomSchema,
+} from '@/types/content.types';
 import { PageSideDrawer } from '@/components/PageSideDrawer';
 import { GrapesJSData, GrapesJSEditorHandle } from './types';
 import type { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
@@ -30,10 +35,9 @@ import {
 import { PageEditorHeader } from './components/PageEditorHeader';
 import { DraftRecoveryBanner } from './components/DraftRecoveryBanner';
 import {
-  extractPageCustomSchemas,
-  buildSchemaFields,
-  buildAvailableSchemas,
-  extractSchemaValues,
+  buildCollectionAvailableSchemas,
+  buildCollectionSchemaFields,
+  extractCollectionSchemaValues,
 } from '../../utils/pageEditorSchema.util';
 import { usePageBuilderStore } from '../../components/page-builder/stores/pageBuilderStore';
 import { useCanvasAutoSave } from '../../hooks/useCanvasAutoSave';
@@ -72,8 +76,62 @@ export function PageEditorPage() {
       collectionsApi.getSchemaBySlug(schemaSlug!, { signal }),
     enabled: !!schemaSlug,
   });
-  const activeCollection = (collectionQuery.data ||
-    null) as unknown as ContentCollectionMeta;
+  const activeCollection: ContentCollectionMeta = useMemo(() => {
+    const now = new Date().toISOString();
+    if (collectionQuery.data) {
+      const raw = collectionQuery.data as unknown as Record<string, unknown>;
+      const def = raw.definition as { fields?: unknown[] } | undefined;
+      const fields = (
+        Array.isArray(raw.fields)
+          ? raw.fields
+          : Array.isArray(def?.fields)
+            ? def?.fields
+            : []
+      ) as DynamicFieldDefinition[];
+      return {
+        id: (raw.id as string) || schemaSlug || 'collection',
+        name:
+          (raw.name as string) ||
+          (raw.displayName as string) ||
+          (schemaSlug
+            ? schemaSlug.charAt(0).toUpperCase() + schemaSlug.slice(1)
+            : 'Collection'),
+        slug: (raw.slug as string) || schemaSlug || 'collection',
+        description: (raw.description as string) || undefined,
+        type: ((raw.type as string) || 'collection') as 'collection',
+        entryCount: (raw.entryCount as number) || 0,
+        linkedPagesCount: 0,
+        fields,
+        createdAt: (raw.createdAt as string) || now,
+        updatedAt: (raw.updatedAt as string) || now,
+      };
+    }
+    const name = schemaSlug
+      ? schemaSlug.charAt(0).toUpperCase() + schemaSlug.slice(1)
+      : 'Collection';
+    return {
+      id: schemaSlug || 'collection',
+      name,
+      slug: schemaSlug || 'collection',
+      type: 'collection',
+      entryCount: 0,
+      linkedPagesCount: 0,
+      fields: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+  }, [collectionQuery.data, schemaSlug]);
+
+  const pagesQuery = useQuery({
+    queryKey: ['pages', schemaSlug],
+    queryFn: ({ signal }) =>
+      collectionsApi.listPages(schemaSlug!, { pageSize: 100 }, { signal }),
+    enabled: !!schemaSlug,
+  });
+  const collectionPages: PageEntry[] = useMemo(() => {
+    const list = pagesQuery.data?.data;
+    return Array.isArray(list) ? (list as PageEntry[]) : [];
+  }, [pagesQuery.data?.data]);
 
   const [isSchemaDrawerOpen, setIsSchemaDrawerOpen] = useState(false);
 
@@ -87,22 +145,20 @@ export function PageEditorPage() {
 
   const pageData = pageQuery.data?.data as Record<string, unknown> | undefined;
 
-  const pageCustomSchemas = useMemo(
-    () => extractPageCustomSchemas(pageData),
-    [pageData],
+  const availableSchemas = useMemo(
+    () => buildCollectionAvailableSchemas(pageData, collectionPages, pageId),
+    [pageData, collectionPages, pageId],
   );
 
   const schemaFields = useMemo(
-    () => buildSchemaFields(pageCustomSchemas),
-    [pageCustomSchemas],
+    () => buildCollectionSchemaFields(availableSchemas),
+    [availableSchemas],
   );
 
-  const availableSchemas = useMemo(
-    () => buildAvailableSchemas(pageCustomSchemas),
-    [pageCustomSchemas],
+  const schemaValues = useMemo(
+    () => extractCollectionSchemaValues(pageData, collectionPages, pageId),
+    [pageData, collectionPages, pageId],
   );
-
-  const schemaValues = useMemo(() => extractSchemaValues(pageData), [pageData]);
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -119,6 +175,61 @@ export function PageEditorPage() {
   const pendingTemplateResult = useRef<TemplateValidationResult | null>(null);
   const grapesEditorRef = useRef<GrapesJSEditorHandle>(null);
   const bodyRef = useRef<unknown>([]);
+
+  const activeDrawerPage: PageEntry = useMemo(() => {
+    const raw = (pageQuery.data || {}) as unknown as Record<string, unknown>;
+    const rawDataRecord =
+      typeof raw.data === 'object' &&
+      raw.data !== null &&
+      !Array.isArray(raw.data)
+        ? (raw.data as Record<string, unknown>)
+        : undefined;
+
+    const pageIdVal = String(pageId || raw.id || rawDataRecord?.id || 'page');
+    const rawNested =
+      typeof rawDataRecord?.data === 'object' &&
+      rawDataRecord.data !== null &&
+      !Array.isArray(rawDataRecord.data)
+        ? (rawDataRecord.data as Record<string, unknown>)
+        : undefined;
+
+    const hasDataWrapper =
+      rawNested !== undefined &&
+      ('_schemas' in rawNested || 'title' in rawNested || 'body' in rawNested);
+
+    const rawData = (
+      hasDataWrapper ? rawNested : rawDataRecord || raw || {}
+    ) as Record<string, unknown>;
+
+    return {
+      id: pageIdVal,
+      status: (raw.status || rawDataRecord?.status || 'draft') as
+        | 'draft'
+        | 'published',
+      data: {
+        title:
+          title || (typeof rawData.title === 'string' ? rawData.title : ''),
+        slug:
+          slug || (typeof rawData.slug === 'string' ? rawData.slug : pageIdVal),
+        description:
+          typeof rawData.description === 'string'
+            ? rawData.description
+            : undefined,
+        body: bodyRef.current || rawData.body,
+        _schemas: Array.isArray(rawData._schemas)
+          ? (rawData._schemas as PageCustomSchema[])
+          : Array.isArray(pageData?._schemas)
+            ? (pageData._schemas as PageCustomSchema[])
+            : Array.isArray(rawDataRecord?._schemas)
+              ? (rawDataRecord._schemas as PageCustomSchema[])
+              : Array.isArray(raw._schemas)
+                ? (raw._schemas as PageCustomSchema[])
+                : [],
+      },
+      createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : undefined,
+      updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : undefined,
+    };
+  }, [pageQuery.data, pageId, title, slug, pageData]);
 
   const handleTemplateImport = (result: TemplateValidationResult) => {
     const isEmpty = grapesEditorRef.current?.isCanvasEmpty() ?? true;
@@ -495,15 +606,17 @@ export function PageEditorPage() {
         isOpen={isSchemaDrawerOpen}
         onClose={() => setIsSchemaDrawerOpen(false)}
         collection={activeCollection}
-        page={pageQuery.data}
+        page={activeDrawerPage}
+        collectionPages={collectionPages}
         onSavePage={async (pId, data, publishImmediately) => {
-          await collectionsApi.updatePage(schemaSlug!, pId, {
+          const effectiveSlug = schemaSlug || 'collection';
+          await collectionsApi.updatePage(effectiveSlug, pId, {
             ...data,
             title: typeof data.title === 'string' ? data.title : title,
             slug: typeof data.slug === 'string' ? data.slug : slug,
           });
           if (publishImmediately) {
-            await collectionsApi.publishPage(schemaSlug!, pId);
+            await collectionsApi.publishPage(effectiveSlug, pId);
           }
           queryClient.invalidateQueries({
             queryKey: ['page', schemaSlug, pId],
