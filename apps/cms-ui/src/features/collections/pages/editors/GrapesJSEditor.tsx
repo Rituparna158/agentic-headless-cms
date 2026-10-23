@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { setupLayerIcons } from './components/LayerIconPlugin';
 import { setupBlockA11y } from './components/BlockA11yPlugin';
+import { MediaAssetPickerModal } from '@/features/media/components/MediaAssetPickerModal';
+import { getMediaFileUrl } from '@/features/media/utils/media.util';
 
 export const GrapesJSEditor = forwardRef<
   GrapesJSEditorHandle,
@@ -62,6 +64,8 @@ export const GrapesJSEditor = forwardRef<
   const [outlineActive, setOutlineActive] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isEngineLoading, setIsEngineLoading] = useState(true);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const mediaPickerCallbackRef = useRef<((url: string) => void) | null>(null);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -109,7 +113,38 @@ export const GrapesJSEditor = forwardRef<
           fromElement: false,
           height: '100%',
           width: '100%',
-          storageManager: false,
+          assetManager: {
+            custom: {
+              open(props?: {
+                select?: (asset: string | object) => void;
+                close?: () => void;
+                target?: unknown;
+              }) {
+                mediaPickerCallbackRef.current = (assetUrl: string) => {
+                  if (typeof props?.select === 'function') {
+                    props.select(assetUrl);
+                  }
+                  const sel = editor.getSelected();
+                  if (sel && sel.is('image')) {
+                    sel.set('src', assetUrl);
+                  }
+                  if (
+                    props?.target &&
+                    typeof (props.target as Record<string, unknown>).set ===
+                      'function'
+                  ) {
+                    (
+                      props.target as { set: (k: string, v: unknown) => void }
+                    ).set('src', assetUrl);
+                  }
+                };
+                setIsMediaPickerOpen(true);
+              },
+              close() {
+                setIsMediaPickerOpen(false);
+              },
+            },
+          },
           deviceManager: {
             devices: [
               {
@@ -152,6 +187,119 @@ export const GrapesJSEditor = forwardRef<
         });
 
         editorRef.current = editor;
+
+        // Centralized Asset Manager Command
+        editor.Commands.add('open-assets' as string, {
+          run(
+            ed: Editor,
+            _sender: unknown,
+            opts: Record<string, unknown> = {},
+          ) {
+            mediaPickerCallbackRef.current = (assetUrl: string) => {
+              const selected = ed.getSelected();
+              if (selected && selected.is('image')) {
+                selected.set('src', assetUrl);
+              }
+              if (
+                opts.target &&
+                typeof (opts.target as Record<string, unknown>).set ===
+                  'function'
+              ) {
+                (opts.target as { set: (k: string, v: unknown) => void }).set(
+                  'src',
+                  assetUrl,
+                );
+              }
+              if (typeof opts.select === 'function') {
+                (opts.select as (url: string) => void)(assetUrl);
+              }
+            };
+            setIsMediaPickerOpen(true);
+          },
+        });
+
+        // Prompt user with central media library when an image component is added or dropped
+        editor.on('component:add', (component: unknown) => {
+          const comp = component as {
+            is?: (t: string) => boolean;
+            get?: (k: string) => string;
+            set?: (k: string, v: unknown) => void;
+            addAttributes?: (attrs: Record<string, unknown>) => void;
+            addStyle?: (style: Record<string, string>) => void;
+          };
+          if (typeof comp?.is === 'function' && comp.is('image')) {
+            // Apply responsive defaults so image NEVER breaks on large screens!
+            comp.addAttributes?.({
+              'data-object-fit': 'cover',
+              'data-aspect-ratio': '16/9',
+              'data-max-height': '480px',
+              'data-image-width': '100%',
+              'data-border-radius': '8px',
+              'data-object-position': 'center',
+            });
+            comp.addStyle?.({
+              width: '100%',
+              'max-height': '480px',
+              'aspect-ratio': '16/9',
+              'object-fit': 'cover',
+              'border-radius': '8px',
+              display: 'block',
+              margin: '0 auto',
+            });
+
+            const currentSrc = comp.get ? comp.get('src') : '';
+            if (
+              !currentSrc ||
+              currentSrc.includes('placeholder') ||
+              currentSrc.includes('via.placeholder')
+            ) {
+              mediaPickerCallbackRef.current = (assetUrl: string) => {
+                if (typeof comp.set === 'function') {
+                  comp.set('src', assetUrl);
+                }
+              };
+              setIsMediaPickerOpen(true);
+            }
+          }
+        });
+
+        // Auto-switch to Properties (Traits) tab when user selects an image
+        editor.on('component:selected', (component: unknown) => {
+          const comp = component as {
+            is?: (t: string) => boolean;
+            get?: (k: string) => unknown;
+          };
+          if (
+            comp &&
+            (comp.is?.('image') ||
+              (comp.get?.('tagName') as unknown as string) === 'img')
+          ) {
+            setRightTab('traits');
+          }
+        });
+
+        // Intercept native file drag-and-drop on the visual canvas
+        editor.on(
+          'canvas:drop',
+          (dataTransfer: DataTransfer | null | undefined) => {
+            if (dataTransfer?.files && dataTransfer.files.length > 0) {
+              mediaPickerCallbackRef.current = (assetUrl: string) => {
+                const sel = editor.getSelected();
+                if (
+                  sel &&
+                  typeof (
+                    sel as unknown as { set: (k: string, v: unknown) => void }
+                  ).set === 'function'
+                ) {
+                  (
+                    sel as unknown as { set: (k: string, v: unknown) => void }
+                  ).set('src', assetUrl);
+                }
+              };
+              setIsMediaPickerOpen(true);
+            }
+          },
+        );
 
         // Load initial data
         const initialConfig = initialDataRef.current;
@@ -546,6 +694,24 @@ export const GrapesJSEditor = forwardRef<
           ></div>
         </div>
       </div>
+
+      {/* Centralized Media Asset Picker Modal */}
+      <MediaAssetPickerModal
+        isOpen={isMediaPickerOpen}
+        onClose={() => {
+          setIsMediaPickerOpen(false);
+          mediaPickerCallbackRef.current = null;
+        }}
+        onSelect={(asset) => {
+          const fullUrl = getMediaFileUrl(asset.url);
+          if (mediaPickerCallbackRef.current) {
+            mediaPickerCallbackRef.current(fullUrl);
+          }
+          setIsMediaPickerOpen(false);
+          mediaPickerCallbackRef.current = null;
+        }}
+        title="Visual Asset Manager - Insert into Canvas"
+      />
     </div>
   );
 });
