@@ -23,6 +23,9 @@ export default defineConfig(({ mode }) => ({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  esbuild: {
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
+  },
   server: {
     port: 3003,
     strictPort: true,
@@ -30,6 +33,12 @@ export default defineConfig(({ mode }) => ({
       // Content Security Policy (CSP) headers for security
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
   build: {
