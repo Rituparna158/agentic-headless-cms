@@ -17,7 +17,8 @@ export type {
 export type MediaViewMode = 'grid' | 'list';
 
 export interface MediaFilterOptions {
-  folderId?: string; // undefined = all, 'root' = uncategorized, or folderId
+  // undefined = all, 'root' = uncategorized, or folderId
+  folderId?: string;
   search?: string;
   mimeTypeGroup?: 'all' | 'image' | 'video' | 'document';
 }
