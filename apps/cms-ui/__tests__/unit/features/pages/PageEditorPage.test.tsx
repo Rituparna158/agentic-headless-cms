@@ -141,4 +141,87 @@ describe('PageEditorPage', () => {
     const gjsInitialData = await screen.findByTestId('gjs-initial-data');
     expect(gjsInitialData).toHaveTextContent('"builder":"grapesjs"');
   });
+
+  it('should open Schemas drawer without crashing when clicking Schemas button', async () => {
+    const mockPageData = {
+      data: {
+        id: 'page-1',
+        data: {
+          title: 'Blog Overview',
+          slug: '/blog-overview',
+          body: { builder: 'grapesjs' },
+          _schemas: [
+            {
+              id: 's1',
+              name: 'Hero Schema',
+              slug: 'hero_schema',
+              fields: [
+                { apiId: 'heading', displayName: 'Heading', dataType: 'text' },
+              ],
+            },
+          ],
+        },
+      },
+      isLoading: false,
+    };
+    (ReactQuery.useQuery as Mock).mockReturnValue(mockPageData);
+
+    renderComponent();
+
+    const schemasButton = await screen.findByRole('button', {
+      name: /manage custom schemas/i,
+    });
+    expect(schemasButton).toBeInTheDocument();
+
+    fireEvent.click(schemasButton);
+
+    // Verify drawer is open and rendered without blanking out
+    const drawerDialog = await screen.findByRole('dialog');
+    expect(drawerDialog).toBeInTheDocument();
+    expect(screen.getByText('Hero Schema')).toBeInTheDocument();
+    expect(screen.getByText('Page Schemas')).toBeInTheDocument();
+  });
+
+  it('should open Schemas drawer with empty state when page has no schemas and transition to builder', async () => {
+    const mockEmptyPageData = {
+      data: {
+        id: 'page-1',
+        title: 'Empty Page',
+        slug: '/empty-page',
+        data: {
+          title: 'Empty Page',
+          slug: '/empty-page',
+          body: { builder: 'grapesjs' },
+          _schemas: [],
+        },
+      },
+      isLoading: false,
+    };
+    (ReactQuery.useQuery as Mock).mockReturnValue(mockEmptyPageData);
+
+    renderComponent();
+
+    const schemasButton = await screen.findByRole('button', {
+      name: /manage custom schemas/i,
+    });
+    fireEvent.click(schemasButton);
+
+    const drawerDialog = await screen.findByRole('dialog');
+    expect(drawerDialog).toBeInTheDocument();
+
+    // Verify empty state message
+    expect(
+      screen.getByText(/No custom schemas defined on this page yet/i),
+    ).toBeInTheDocument();
+
+    // Click "Create Schema" to transition to builder
+    const createButtons = screen.getAllByRole('button', {
+      name: /Create Schema/i,
+    });
+    expect(createButtons.length).toBeGreaterThan(0);
+    fireEvent.click(createButtons[0] as HTMLElement);
+
+    // Builder should render without blanking out
+    expect(screen.getByText('Create New Schema')).toBeInTheDocument();
+  });
 });
