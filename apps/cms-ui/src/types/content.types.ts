@@ -1,3 +1,4 @@
+// All Dynamic field data types
 export type DynamicFieldDataType =
   | 'text'
   | 'textarea'
