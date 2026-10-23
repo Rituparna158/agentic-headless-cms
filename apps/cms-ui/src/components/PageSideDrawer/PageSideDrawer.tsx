@@ -4,6 +4,9 @@ import type {
   DynamicFieldDataType,
   DynamicFieldDefinition,
   PageCustomSchema,
+  PageSchemaEntryType,
+  ContentCollectionMeta,
+  PageEntry,
 } from '@/types/content.types';
 import type {
   PageSideDrawerProps,
@@ -24,6 +27,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   onClose,
   collection,
   page,
+  collectionPages,
   onSavePage,
   isSaving,
 }) => {
@@ -42,6 +46,9 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   const [selectedSchemaId, setSelectedSchemaId] = useState<string | null>(null);
   const [editingSchemaId, setEditingSchemaId] = useState<string | null>(null);
 
+  // Active item index when editing values for a multi-entry schema
+  const [activeItemIndex, setActiveItemIndex] = useState<number>(0);
+
   // Schemas attached to this page with isolated values
   const [pageSchemas, setPageSchemas] = useState<PageCustomSchema[]>([]);
 
@@ -55,6 +62,8 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   const [builderName, setBuilderName] = useState('');
   const [builderSlug, setBuilderSlug] = useState('');
   const [builderDesc, setBuilderDesc] = useState('');
+  const [builderEntryType, setBuilderEntryType] =
+    useState<PageSchemaEntryType>('single');
   const [builderFields, setBuilderFields] = useState<DynamicFieldDefinition[]>(
     [],
   );
@@ -81,47 +90,258 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
 
   const prevPageIdRef = useRef<string | null>(null);
 
-  // Sync state whenever the page prop changes
-  useEffect(() => {
-    if (page) {
-      const isDifferentPage = prevPageIdRef.current !== page.id;
-      prevPageIdRef.current = page.id;
-
-      setPageTitle(page.data?.title || '');
-      setPageSlug(page.data?.slug || '');
-      const rawSchemas = (page.data?._schemas as PageCustomSchema[]) || [];
-      setPageSchemas(
-        Array.isArray(rawSchemas)
-          ? rawSchemas.map((s) => ({
-              ...s,
-              values:
-                s.values && typeof s.values === 'object'
-                  ? (s.values as Record<string, unknown>)
-                  : {},
-            }))
-          : [],
-      );
-      if (isDifferentPage) {
-        setCurrentView('table');
-        setSelectedSchemaId(null);
-        setEditingSchemaId(null);
-      }
+  const safeCollection: ContentCollectionMeta = useMemo(() => {
+    const now = new Date().toISOString();
+    if (collection) {
+      return {
+        id: collection.id || 'collection',
+        name: collection.name || 'Collection',
+        slug: collection.slug || 'collection',
+        description: collection.description,
+        type: collection.type || 'collection',
+        entryCount: collection.entryCount || 0,
+        linkedPagesCount: collection.linkedPagesCount || 0,
+        fields: Array.isArray(collection.fields) ? collection.fields : [],
+        createdAt: collection.createdAt || now,
+        updatedAt: collection.updatedAt || now,
+      };
     }
+    return {
+      id: 'collection',
+      name: 'Collection',
+      slug: 'collection',
+      type: 'collection',
+      entryCount: 0,
+      linkedPagesCount: 0,
+      fields: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+  }, [collection]);
+
+  const safePage: PageEntry = useMemo(() => {
+    const raw = (page || {}) as unknown as Record<string, unknown>;
+    const rawDataRecord =
+      typeof raw.data === 'object' &&
+      raw.data !== null &&
+      !Array.isArray(raw.data)
+        ? (raw.data as Record<string, unknown>)
+        : undefined;
+
+    // Guard against custom fields named "data" (e.g. date or string fields) masquerading as double-wrapped payloads
+    const rawNested =
+      typeof rawDataRecord?.data === 'object' &&
+      rawDataRecord.data !== null &&
+      !Array.isArray(rawDataRecord.data)
+        ? (rawDataRecord.data as Record<string, unknown>)
+        : undefined;
+
+    const hasDataWrapper =
+      rawNested !== undefined &&
+      ('_schemas' in rawNested || 'title' in rawNested || 'body' in rawNested);
+
+    const innerData = hasDataWrapper ? rawNested : rawDataRecord || raw;
+
+    const pageId = String(raw.id || rawDataRecord?.id || 'page');
+    const pageStatus = String(raw.status || rawDataRecord?.status || 'draft');
+
+    const resolvedTitle =
+      (typeof innerData.title === 'string' && innerData.title.trim()) ||
+      (typeof raw.title === 'string' && raw.title.trim()) ||
+      (typeof rawDataRecord?.title === 'string' &&
+        rawDataRecord.title.trim()) ||
+      '';
+
+    const resolvedSlug =
+      (typeof innerData.slug === 'string' && innerData.slug.trim()) ||
+      (typeof raw.slug === 'string' && raw.slug.trim()) ||
+      (typeof rawDataRecord?.slug === 'string' && rawDataRecord.slug.trim()) ||
+      pageId;
+
+    const resolvedSchemas =
+      (Array.isArray(innerData._schemas) &&
+        (innerData._schemas as PageCustomSchema[])) ||
+      (Array.isArray(rawDataRecord?._schemas) &&
+        (rawDataRecord._schemas as PageCustomSchema[])) ||
+      (Array.isArray(raw._schemas) && (raw._schemas as PageCustomSchema[])) ||
+      [];
+
+    return {
+      id: pageId,
+      status: pageStatus === 'published' ? 'published' : 'draft',
+      data: {
+        title: resolvedTitle,
+        slug: resolvedSlug,
+        description:
+          typeof innerData.description === 'string'
+            ? innerData.description
+            : typeof raw.description === 'string'
+              ? raw.description
+              : typeof rawDataRecord?.description === 'string'
+                ? rawDataRecord.description
+                : undefined,
+        body: innerData.body || rawDataRecord?.body || raw.body,
+        _schemas: resolvedSchemas,
+      },
+      createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : undefined,
+      updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : undefined,
+    };
   }, [page]);
 
+  // Sync state whenever the page prop changes
+  useEffect(() => {
+    const isDifferentPage = prevPageIdRef.current !== safePage.id;
+    prevPageIdRef.current = safePage.id;
+
+    setPageTitle(safePage.data?.title || '');
+    setPageSlug(safePage.data?.slug || '');
+    const rawSchemas = (safePage.data?._schemas as PageCustomSchema[]) || [];
+    setPageSchemas(
+      Array.isArray(rawSchemas)
+        ? rawSchemas.map((s) => ({
+            ...s,
+            id: s.id || `schema_${Date.now()}`,
+            name: s.name || s.slug || 'Untitled Schema',
+            slug: s.slug || s.name || 'schema',
+            entryType: s.entryType || 'single',
+            fields: Array.isArray(s.fields) ? s.fields : [],
+            values:
+              s.values && typeof s.values === 'object'
+                ? (s.values as Record<string, unknown>)
+                : {},
+            items: Array.isArray(s.items)
+              ? s.items
+              : s.values && Object.keys(s.values).length > 0
+                ? [s.values]
+                : [{}],
+          }))
+        : [],
+    );
+    if (isDifferentPage) {
+      setCurrentView('table');
+      setSelectedSchemaId(null);
+      setEditingSchemaId(null);
+      setActiveItemIndex(0);
+    }
+  }, [safePage]);
+
+  // Schemas available from other pages in the same collection
+  const collectionSchemas = useMemo(() => {
+    if (!Array.isArray(collectionPages)) return [];
+    const list: Array<{
+      pageId: string;
+      pageTitle: string;
+      schema: PageCustomSchema;
+    }> = [];
+
+    for (const otherPage of collectionPages) {
+      if (!otherPage) continue;
+      const rawOther = otherPage as unknown as Record<string, unknown>;
+      const otherDataRecord =
+        typeof rawOther.data === 'object' &&
+        rawOther.data !== null &&
+        !Array.isArray(rawOther.data)
+          ? (rawOther.data as Record<string, unknown>)
+          : undefined;
+
+      const otherId = String(rawOther.id || otherDataRecord?.id || '');
+      if (!otherId || otherId === safePage.id) continue;
+
+      const otherNestedData =
+        typeof otherDataRecord?.data === 'object' &&
+        otherDataRecord.data !== null &&
+        !Array.isArray(otherDataRecord.data)
+          ? (otherDataRecord.data as Record<string, unknown>)
+          : undefined;
+
+      const hasOtherWrapper =
+        otherNestedData !== undefined &&
+        ('_schemas' in otherNestedData ||
+          'title' in otherNestedData ||
+          'body' in otherNestedData);
+
+      const otherData = hasOtherWrapper
+        ? otherNestedData
+        : otherDataRecord || rawOther;
+
+      const otherTitle =
+        (typeof otherData.title === 'string' && otherData.title.trim()) ||
+        (typeof rawOther.title === 'string' && rawOther.title.trim()) ||
+        (typeof otherDataRecord?.title === 'string' &&
+          otherDataRecord.title.trim()) ||
+        otherId;
+
+      const rawSchemas =
+        (Array.isArray(otherData._schemas) &&
+          (otherData._schemas as PageCustomSchema[])) ||
+        (Array.isArray(otherDataRecord?._schemas) &&
+          (otherDataRecord._schemas as PageCustomSchema[])) ||
+        (Array.isArray(rawOther._schemas) &&
+          (rawOther._schemas as PageCustomSchema[])) ||
+        [];
+
+      if (Array.isArray(rawSchemas)) {
+        for (const s of rawSchemas) {
+          if (s && (s.name || s.slug || s.id)) {
+            list.push({
+              pageId: otherId,
+              pageTitle: otherTitle,
+              schema: {
+                ...s,
+                id: s.id || `schema_${Date.now()}`,
+                name: s.name || s.slug || 'Untitled Schema',
+                slug: s.slug || s.name || 'schema',
+                entryType: s.entryType || 'single',
+                fields: Array.isArray(s.fields) ? s.fields : [],
+                values:
+                  s.values && typeof s.values === 'object'
+                    ? (s.values as Record<string, unknown>)
+                    : {},
+                items: Array.isArray(s.items) ? s.items : undefined,
+              },
+            });
+          }
+        }
+      }
+    }
+    return list;
+  }, [collectionPages, safePage.id]);
+
   const drawerRef = useFocusTrap<HTMLDivElement>({
-    enabled: isOpen && Boolean(page),
+    enabled: isOpen,
     onEscape: onClose,
     restoreFocus: true,
+    initialFocusSelector: 'button[title="Close Drawer"]',
   });
 
-  if (!isOpen || !collection || !page) return null;
+  if (!isOpen) return null;
 
   const handleSchemaFieldValueChange = (fieldApiId: string, value: unknown) => {
     if (!selectedSchemaId) return;
     setPageSchemas((prev) =>
       prev.map((s) => {
         if (s.id === selectedSchemaId) {
+          if (s.entryType === 'multi') {
+            const currentItems =
+              Array.isArray(s.items) && s.items.length > 0
+                ? [...s.items]
+                : [{ ...(s.values || {}) }];
+            const safeIdx = Math.max(
+              0,
+              Math.min(activeItemIndex, currentItems.length - 1),
+            );
+            const updatedItem = {
+              ...(currentItems[safeIdx] || {}),
+              [fieldApiId]: value,
+            };
+            currentItems[safeIdx] = updatedItem;
+            return {
+              ...s,
+              items: currentItems,
+              values: safeIdx === 0 ? updatedItem : s.values || updatedItem,
+            };
+          }
+
           return {
             ...s,
             values: {
@@ -133,6 +353,61 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
         return s;
       }),
     );
+  };
+
+  const handleAddItemToSchema = () => {
+    if (!selectedSchemaId) return;
+    setPageSchemas((prev) =>
+      prev.map((s) => {
+        if (s.id === selectedSchemaId) {
+          const currentItems = Array.isArray(s.items)
+            ? [...s.items]
+            : [{ ...(s.values || {}) }];
+          const newItem: Record<string, unknown> = {};
+          (s.fields || []).forEach((f) => {
+            if (f.dataType === 'boolean') newItem[f.apiId] = false;
+            else if (f.dataType === 'number') newItem[f.apiId] = 0;
+            else newItem[f.apiId] = '';
+          });
+          currentItems.push(newItem);
+          setActiveItemIndex(currentItems.length - 1);
+          return {
+            ...s,
+            items: currentItems,
+          };
+        }
+        return s;
+      }),
+    );
+    toast.success('New item added to list!');
+  };
+
+  const handleDeleteItemFromSchema = (indexToDelete: number) => {
+    if (!selectedSchemaId) return;
+    setPageSchemas((prev) =>
+      prev.map((s) => {
+        if (s.id === selectedSchemaId) {
+          const currentItems = Array.isArray(s.items)
+            ? [...s.items]
+            : [{ ...(s.values || {}) }];
+          if (currentItems.length <= 1) {
+            toast.error('Cannot delete the only item in the list.');
+            return s;
+          }
+          currentItems.splice(indexToDelete, 1);
+          setActiveItemIndex((prevIdx) =>
+            Math.max(0, Math.min(prevIdx, currentItems.length - 1)),
+          );
+          return {
+            ...s,
+            items: currentItems,
+            values: currentItems[0] || {},
+          };
+        }
+        return s;
+      }),
+    );
+    toast.success('Item removed.');
   };
 
   const handleCopyToken = (slot: string) => {
@@ -148,6 +423,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
     setBuilderName('');
     setBuilderSlug('');
     setBuilderDesc('');
+    setBuilderEntryType('single');
     setBuilderFields([]);
     setBuilderInitialValues({});
     setEditingFieldData(null);
@@ -166,6 +442,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
     setBuilderName(schema.name);
     setBuilderSlug(schema.slug);
     setBuilderDesc(schema.description || '');
+    setBuilderEntryType(schema.entryType || 'single');
     setBuilderFields([...(schema.fields || [])]);
     setBuilderInitialValues({ ...(schema.values || {}) });
     setEditingFieldData(null);
@@ -371,13 +648,30 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
           }
           Object.assign(mergedValues, builderInitialValues);
 
+          const existingItems =
+            Array.isArray(s.items) && s.items.length > 0
+              ? s.items
+              : [mergedValues];
+          const updatedItems = existingItems.map((item) => {
+            const migrated = { ...item };
+            for (const [oldKey, newKey] of Object.entries(renamedFieldsMap)) {
+              if (migrated[oldKey] !== undefined) {
+                migrated[newKey] = migrated[oldKey];
+                delete migrated[oldKey];
+              }
+            }
+            return migrated;
+          });
+
           return {
             ...s,
             name: builderName.trim(),
             slug: cleanBuilderSlug,
             description: builderDesc.trim() || undefined,
+            entryType: builderEntryType,
             fields: builderFields,
             values: mergedValues,
+            items: builderEntryType === 'multi' ? updatedItems : undefined,
             updatedAt: new Date().toISOString(),
           };
         }
@@ -389,8 +683,13 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
         name: builderName.trim(),
         slug: cleanBuilderSlug,
         description: builderDesc.trim() || undefined,
+        entryType: builderEntryType,
         fields: builderFields,
         values: { ...builderInitialValues },
+        items:
+          builderEntryType === 'multi'
+            ? [{ ...builderInitialValues }]
+            : undefined,
         createdAt: new Date().toISOString(),
       };
       updatedSchemas = [...pageSchemas, newSchema];
@@ -399,13 +698,13 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
     setPageSchemas(updatedSchemas);
 
     const updatedData = {
-      ...page.data,
-      title: pageTitle.trim() || page.data?.title || 'Untitled',
-      slug: pageSlug.trim() || page.data?.slug || 'page',
+      ...(safePage.data || {}),
+      title: pageTitle.trim() || safePage.data?.title || 'Untitled',
+      slug: pageSlug.trim() || safePage.data?.slug || 'page',
       _schemas: updatedSchemas,
     };
 
-    await onSavePage(page.id, updatedData, false);
+    await onSavePage(safePage.id, updatedData, false);
     setCurrentView('table');
     toast.success(
       editingSchemaId
@@ -423,30 +722,76 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
     setPageSchemas(updatedSchemas);
 
     const updatedData = {
-      ...page.data,
-      title: pageTitle.trim() || page.data?.title || 'Untitled',
-      slug: pageSlug.trim() || page.data?.slug || 'page',
+      ...(safePage.data || {}),
+      title: pageTitle.trim() || safePage.data?.title || 'Untitled',
+      slug: pageSlug.trim() || safePage.data?.slug || 'page',
       _schemas: updatedSchemas,
     };
 
-    await onSavePage(page.id, updatedData, false);
+    await onSavePage(safePage.id, updatedData, false);
     toast.success(`Schema "${schemaName}" removed.`);
+  };
+
+  // Use / copy a schema from another page in the collection to this page
+  const handleUseCollectionSchema = async (
+    sourceSchema: PageCustomSchema,
+    sourcePageTitle: string,
+  ) => {
+    const existing = pageSchemas.find(
+      (s) => s.slug === sourceSchema.slug || s.name === sourceSchema.name,
+    );
+    if (existing) {
+      toast.error(
+        `This page already has a schema named "${sourceSchema.name}" (${sourceSchema.slug}).`,
+      );
+      return;
+    }
+
+    const newSchema: PageCustomSchema = {
+      id: `schema_${Date.now()}`,
+      name: sourceSchema.name,
+      slug: sourceSchema.slug,
+      description: sourceSchema.description,
+      entryType: sourceSchema.entryType || 'single',
+      fields: Array.isArray(sourceSchema.fields)
+        ? sourceSchema.fields.map((f) => ({ ...f }))
+        : [],
+      values: { ...(sourceSchema.values || {}) },
+      items: Array.isArray(sourceSchema.items)
+        ? sourceSchema.items.map((it) => ({ ...it }))
+        : undefined,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedSchemas = [...pageSchemas, newSchema];
+    setPageSchemas(updatedSchemas);
+
+    const updatedData = {
+      ...(safePage.data || {}),
+      title: pageTitle.trim() || safePage.data?.title || 'Untitled',
+      slug: pageSlug.trim() || safePage.data?.slug || 'page',
+      _schemas: updatedSchemas,
+    };
+
+    await onSavePage(safePage.id, updatedData, false);
+    toast.success(
+      `Schema "${sourceSchema.name}" from "${sourcePageTitle}" copied to this page!`,
+    );
   };
 
   // Save filled values for the active schema specifically
   const handleSaveSchemaForm = async () => {
-    if (!page) return;
-    const titleVal = pageTitle.trim() || page.data?.title || 'Untitled';
-    const slugVal = pageSlug.trim() || page.data?.slug || 'page';
+    const titleVal = pageTitle.trim() || safePage.data?.title || 'Untitled';
+    const slugVal = pageSlug.trim() || safePage.data?.slug || 'page';
 
     const updatedData = {
-      ...page.data,
+      ...(safePage.data || {}),
       title: titleVal,
       slug: slugVal,
       _schemas: pageSchemas,
     };
 
-    await onSavePage(page.id, updatedData, false);
+    await onSavePage(safePage.id, updatedData, false);
     toast.success(
       activeFormSchema
         ? `Saved content for "${activeFormSchema.name}"!`
@@ -464,27 +809,26 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
     }
 
     const submission = {
-      ...page.data,
+      ...(safePage.data || {}),
       title: titleVal,
       slug: pageSlug.trim() || slugify(titleVal),
       _schemas: pageSchemas,
     };
 
-    await onSavePage(page.id, submission, publishImmediately);
+    await onSavePage(safePage.id, submission, publishImmediately);
   };
 
-  const isPublished = page.status === 'published';
-  const cleanSlug = (pageSlug || page.data?.slug || page.id).replace(
-    /^\/+/,
-    '',
-  );
+  const isPublished = safePage.status === 'published';
+  const cleanSlug = String(
+    pageSlug || safePage.data?.slug || safePage.id || 'page',
+  ).replace(/^\/+/, '');
 
   return (
     <div
       className="fixed inset-0 z-50 overflow-hidden"
       role="dialog"
       aria-modal="true"
-      aria-label={`Page settings and schema editor for ${pageTitle || page.data?.title || 'page'}`}
+      aria-label={`Page settings and schema editor for ${pageTitle || safePage.data?.title || 'page'}`}
     >
       {/* Backdrop */}
       <div
@@ -502,21 +846,20 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
         >
           {/* 1. Drawer Header */}
           <PageMetaDrawerHeader
-            collectionName={collection.name}
-            collectionSlug={collection.slug}
+            collectionName={safeCollection.name}
+            collectionSlug={safeCollection.slug}
             cleanSlug={cleanSlug}
-            pageId={page.id}
+            pageId={safePage.id}
             pageTitle={pageTitle}
-            onPageTitleChange={setPageTitle}
             isPublished={isPublished}
             onOpenPreview={() =>
               window.open(
-                `/collections/${collection.slug}/preview/${cleanSlug}`,
+                `/collections/${safeCollection.slug}/preview/${cleanSlug}`,
                 '_blank',
               )
             }
             onOpenCanvas={() =>
-              navigate(`/collections/${collection.slug}/${page.id}`)
+              navigate(`/collections/${safeCollection.slug}/${safePage.id}`)
             }
             onClose={onClose}
           />
@@ -527,13 +870,16 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
             {currentView === 'table' && (
               <PageSchemaList
                 pageSchemas={pageSchemas}
+                collectionSchemas={collectionSchemas}
                 onStartCreateSchema={handleStartCreateSchema}
                 onStartEditSchema={handleStartEditSchema}
                 onSelectFillContent={(schemaId) => {
                   setSelectedSchemaId(schemaId);
+                  setActiveItemIndex(0);
                   setCurrentView('form');
                 }}
                 onDeleteSchema={handleDeleteSchema}
+                onUseCollectionSchema={handleUseCollectionSchema}
               />
             )}
 
@@ -547,6 +893,8 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
                 setBuilderSlug={setBuilderSlug}
                 builderDesc={builderDesc}
                 setBuilderDesc={setBuilderDesc}
+                builderEntryType={builderEntryType}
+                setBuilderEntryType={setBuilderEntryType}
                 builderFields={builderFields}
                 builderInitialValues={builderInitialValues}
                 editingFieldData={editingFieldData}
@@ -576,6 +924,10 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
               <PageSchemaForm
                 schema={activeFormSchema}
                 copiedToken={copiedToken}
+                activeItemIndex={activeItemIndex}
+                onSelectActiveItem={setActiveItemIndex}
+                onAddItem={handleAddItemToSchema}
+                onDeleteItem={handleDeleteItemFromSchema}
                 isSaving={isSaving}
                 onCopyToken={handleCopyToken}
                 onFieldValueChange={handleSchemaFieldValueChange}
