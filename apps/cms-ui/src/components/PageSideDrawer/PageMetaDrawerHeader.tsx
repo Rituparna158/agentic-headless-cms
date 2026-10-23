@@ -6,7 +6,6 @@ export const PageMetaDrawerHeader: React.FC<PageMetaDrawerHeaderProps> = ({
   collectionName,
   cleanSlug,
   pageTitle,
-  onPageTitleChange,
   isPublished,
   onOpenPreview,
   onOpenCanvas,
@@ -24,13 +23,9 @@ export const PageMetaDrawerHeader: React.FC<PageMetaDrawerHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={pageTitle}
-            onChange={(e) => onPageTitleChange(e.target.value)}
-            placeholder="Page Title"
-            className="text-base font-bold text-zinc-100 bg-transparent border-none outline-none focus:ring-1 focus:ring-zinc-600 rounded px-1 py-0.5"
-          />
+          <h2 className="text-base font-bold text-zinc-100 tracking-tight">
+            {pageTitle || 'Untitled Page'}
+          </h2>
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
               isPublished

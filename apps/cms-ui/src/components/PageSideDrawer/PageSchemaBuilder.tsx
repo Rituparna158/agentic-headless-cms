@@ -14,6 +14,8 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
   setBuilderSlug,
   builderDesc,
   setBuilderDesc,
+  builderEntryType,
+  setBuilderEntryType,
   builderFields,
   builderInitialValues,
   editingFieldData,
@@ -100,6 +102,60 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
               placeholder="e.g. hero_section"
               className="w-full px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-zinc-300 font-mono focus:outline-none focus:border-zinc-500"
             />
+          </div>
+        </div>
+
+        {/* Schema Architecture: Single-Entry vs Multi-Entry */}
+        <div>
+          <label className="block text-xs font-semibold text-zinc-300 mb-2">
+            Schema Architecture (Entry Configuration)
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setBuilderEntryType('single')}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                builderEntryType === 'single'
+                  ? 'bg-indigo-600/15 border-indigo-500/50 text-indigo-200'
+                  : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-zinc-100">
+                  Single-Entry
+                </span>
+                {builderEntryType === 'single' && (
+                  <Check className="size-3.5 text-indigo-400" />
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Filled once. Best for static page sections (Hero, Header info,
+                About Us).
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBuilderEntryType('multi')}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                builderEntryType === 'multi'
+                  ? 'bg-indigo-600/15 border-indigo-500/50 text-indigo-200'
+                  : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-zinc-100">
+                  Multi-Entry (Dynamic List)
+                </span>
+                {builderEntryType === 'multi' && (
+                  <Check className="size-3.5 text-indigo-400" />
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                Filled multiple times. Best for dynamic items (Blog posts,
+                Products, Cards, FAQs).
+              </p>
+            </button>
           </div>
         </div>
 
