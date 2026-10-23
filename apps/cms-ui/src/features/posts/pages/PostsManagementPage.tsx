@@ -576,6 +576,7 @@ export const PostsManagementPage: React.FC = () => {
         }}
         collection={activeCollection}
         page={activePage}
+        collectionPages={pages}
         onSavePage={async (pageId, data, publishImmediately) => {
           await updatePageMutation.mutateAsync({
             pageId,

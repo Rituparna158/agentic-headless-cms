@@ -734,6 +734,7 @@ export function CollectionEntriesPage() {
         }}
         collection={activeCollection}
         page={drawerPage}
+        collectionPages={pagesQuery.data?.data}
         onSavePage={async (pageId, data, publishImmediately) => {
           const res = await updatePageMutation.mutateAsync({
             pageId,
