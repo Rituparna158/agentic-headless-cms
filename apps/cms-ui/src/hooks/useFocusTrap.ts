@@ -4,6 +4,7 @@ interface UseFocusTrapOptions {
   enabled: boolean;
   onEscape?: () => void;
   restoreFocus?: boolean;
+  initialFocusSelector?: string;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -13,6 +14,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>({
   enabled,
   onEscape,
   restoreFocus = true,
+  initialFocusSelector,
 }: UseFocusTrapOptions) {
   const containerRef = useRef<T>(null);
   const triggerElementRef = useRef<HTMLElement | null>(null);
@@ -26,13 +28,27 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>({
     const container = containerRef.current;
     if (!container) return;
 
-    // Focus the first focusable element within the container
+    // Focus initial element if specified, or first non-input/first focusable
     const focusable =
       container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-    const firstFocusable = focusable[0];
-    if (firstFocusable) {
+    let targetToFocus: HTMLElement | null = null;
+
+    if (initialFocusSelector) {
+      targetToFocus =
+        container.querySelector<HTMLElement>(initialFocusSelector);
+    }
+
+    if (!targetToFocus && focusable.length > 0) {
+      // Prefer focusing buttons/links over editable inputs to avoid cursor hijacking
+      const preferred = Array.from(focusable).find(
+        (el) => el.tagName === 'BUTTON' || el.tagName === 'A',
+      );
+      targetToFocus = preferred || focusable[0] || null;
+    }
+
+    if (targetToFocus) {
       requestAnimationFrame(() => {
-        firstFocusable.focus();
+        targetToFocus?.focus();
       });
     }
 
@@ -87,7 +103,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>({
         triggerElementRef.current.focus();
       }
     };
-  }, [enabled, onEscape, restoreFocus]);
+  }, [enabled, initialFocusSelector, onEscape, restoreFocus]);
 
   return containerRef;
 }

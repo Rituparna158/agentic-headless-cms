@@ -28,7 +28,9 @@
     "VITE_APP_ID",
     "ANALYZE",
     "CMS_UI_URL",
-    "COOKIE_SECURE"
+    "COOKIE_SECURE",
+    "PROD",
+    "DEV"
   ],
   "tasks": {
     "build": {
