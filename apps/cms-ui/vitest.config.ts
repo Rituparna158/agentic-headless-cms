@@ -42,6 +42,8 @@ export default mergeConfig(
             'src/features/audit/utils/**',
             'src/features/audit/constants/**',
             'src/features/access/constants/**',
+            'src/features/media/utils/**',
+            'src/features/media/constants/**',
             'src/components/Guard/**',
             'src/pages/GeneralError/**',
             'src/pages/NotFound/**',

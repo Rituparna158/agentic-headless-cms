@@ -33,4 +33,18 @@ describe('ENDPOINTS', () => {
     expect(ENDPOINTS.AUDIT_LOGS.BASE).toBe('/audit-logs');
     expect(ENDPOINTS.AUDIT_LOGS.BY_ID('log-456')).toBe('/audit-logs/log-456');
   });
+
+  it('generates media endpoints', () => {
+    expect(ENDPOINTS.MEDIA.BASE).toBe('/media');
+    expect(ENDPOINTS.MEDIA.BY_ID('asset-123')).toBe('/media/asset-123');
+    expect(ENDPOINTS.MEDIA.FILE('banner.png')).toBe('/media/file/banner.png');
+    expect(ENDPOINTS.MEDIA.BULK_DELETE).toBe('/media/bulk-delete');
+  });
+
+  it('generates media folder endpoints', () => {
+    expect(ENDPOINTS.MEDIA_FOLDERS.BASE).toBe('/media-folders');
+    expect(ENDPOINTS.MEDIA_FOLDERS.BY_ID('folder-1')).toBe(
+      '/media-folders/folder-1',
+    );
+  });
 });
