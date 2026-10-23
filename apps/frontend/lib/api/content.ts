@@ -10,6 +10,7 @@ import { apiFetch } from '@/lib/api-client';
 
 export interface FrontendListContentEntriesOptions extends ListContentEntriesOptions {
   status?: 'published' | 'draft' | 'all';
+  search?: string;
 }
 
 function buildQueryString(options: FrontendListContentEntriesOptions): string {
@@ -19,6 +20,7 @@ function buildQueryString(options: FrontendListContentEntriesOptions): string {
   if (options.sort) params.set('sort', options.sort);
   if (options.locale) params.set('locale', options.locale);
   if (options.status) params.set('status', options.status);
+  if (options.search) params.set('search', options.search);
   if (options.filters) {
     for (const [apiId, operators] of Object.entries(options.filters)) {
       for (const [operator, value] of Object.entries(operators)) {

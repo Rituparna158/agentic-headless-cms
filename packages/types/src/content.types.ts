@@ -47,6 +47,7 @@ export interface ListContentEntriesOptions {
   sort?: string;
   locale?: string;
   status?: 'published' | 'draft' | 'all';
+  search?: string;
   filters?: Record<string, Record<string, string>>;
 }
 

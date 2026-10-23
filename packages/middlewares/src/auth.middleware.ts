@@ -2,7 +2,12 @@ import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import type { AuthenticatedUser } from '@repo/types';
 import { env, getDatabaseAdapter } from '@repo/config';
-import { ERROR_MESSAGES, HTTP_STATUS, AUTH_COOKIES } from '@repo/constants';
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  AUTH_COOKIES,
+  ADMIN_ROLES,
+} from '@repo/constants';
 import { apiTokens, roles, permissions } from '@repo/shared-db';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'node:crypto';
@@ -229,8 +234,8 @@ export const requireAdmin = (
     return;
   }
 
-  const isAdmin = req.user.roles?.some(
-    (role) => role.toLowerCase() === 'admin',
+  const isAdmin = req.user.roles?.some((role) =>
+    (ADMIN_ROLES as readonly string[]).includes(role.toLowerCase()),
   );
 
   if (!isAdmin) {
@@ -257,7 +262,10 @@ export const requireAdminOrSupport = (
 
   const isAdminOrSupport = req.user.roles?.some((role) => {
     const lowerRole = role.toLowerCase();
-    return lowerRole === 'admin' || lowerRole === 'support';
+    return (
+      (ADMIN_ROLES as readonly string[]).includes(lowerRole) ||
+      lowerRole === 'support'
+    );
   });
 
   if (!isAdminOrSupport) {

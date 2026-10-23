@@ -2,7 +2,10 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { listSchemas } from '@repo/shared-db';
 import { Router } from 'express';
+import { eventBus } from '@repo/events';
+import { EVENT_NAMES } from '@repo/constants';
 
+import type { AuditEventPayload } from '@repo/types';
 import { authenticateToken } from '@repo/middlewares';
 import { getDatabaseAdapter } from '@repo/config';
 import { GraphQLContext } from '../../types/graphql.types.js';
@@ -11,8 +14,24 @@ import { buildGraphQLSchema } from './schema-builder.js';
 
 export const graphqlRouter = Router();
 
-// Lazy load ApolloServer
+// Lazy load ApolloServer with automatic cache invalidation on schema mutations
+let currentServer: ApolloServer<GraphQLContext> | null = null;
 let apolloServerPromise: Promise<ApolloServer<GraphQLContext>> | null = null;
+
+export function invalidateGraphQLSchema(): void {
+  if (currentServer) {
+    currentServer.stop().catch(() => {});
+    currentServer = null;
+  }
+  apolloServerPromise = null;
+}
+
+// Invalidate dynamic schema whenever schemas are modified
+eventBus.on(EVENT_NAMES.AUDIT_LOG, (payload: AuditEventPayload) => {
+  if (payload.resourceType === 'schema') {
+    invalidateGraphQLSchema();
+  }
+});
 
 function getApolloServer(): Promise<ApolloServer<GraphQLContext>> {
   apolloServerPromise ??= (async () => {
@@ -25,6 +44,7 @@ function getApolloServer(): Promise<ApolloServer<GraphQLContext>> {
       formatError: formatGraphQLError,
     });
     await server.start();
+    currentServer = server;
     return server;
   })();
 

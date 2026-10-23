@@ -11,11 +11,11 @@ export const globalAuthMiddleware = async (
   next: NextFunction,
 ) => {
   // Public routes that don't require tenant mapping or authentication
+  const requestPath = req.path || req.url.split('?')[0] || '';
   if (
-    req.originalUrl &&
-    (req.originalUrl.includes('/media/file/') ||
-      req.originalUrl.includes('/auth/sso') ||
-      req.originalUrl.includes('/telemetry/vitals'))
+    requestPath.startsWith('/media/file/') ||
+    requestPath.startsWith('/auth/sso') ||
+    requestPath === '/telemetry/vitals'
   ) {
     return next();
   }

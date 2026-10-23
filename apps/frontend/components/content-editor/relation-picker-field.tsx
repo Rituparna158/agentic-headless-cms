@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link2, Trash2, Search, Check, Layers } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
-import { listContentEntries } from '@/lib/api/content';
+import { listContentEntries, getContentEntry } from '@/lib/api/content';
 import { Button, Modal, Input, Badge } from '@repo/shared-ui';
 import { cn } from '@/lib/utils';
 import type {
@@ -120,20 +120,42 @@ export function RelationPickerField({
 
   const activeSchemaSlug = effectiveTargetSchema || selectedSchemaSlug;
 
-  // 2. Fetch entries for the active target schema
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // 2. Fetch entries for the active target schema with server-side search
   const { data: entriesData, isLoading: isEntriesLoading } = useQuery({
-    queryKey: ['content', activeSchemaSlug, 'entries'],
-    queryFn: () => listContentEntries(activeSchemaSlug, { pageSize: 100 }),
+    queryKey: ['content', activeSchemaSlug, 'entries', debouncedSearch],
+    queryFn: () =>
+      listContentEntries(activeSchemaSlug, {
+        pageSize: 50,
+        search: debouncedSearch.trim() || undefined,
+      }),
     enabled: Boolean(activeSchemaSlug),
   });
 
   const entries = React.useMemo(() => entriesData?.data ?? [], [entriesData]);
 
+  // Fetch currently selected entry directly so its details stay intact even if not in the current search page
+  const { data: directSelectedEntry } = useQuery({
+    queryKey: ['content', activeSchemaSlug, 'entry', stringValue],
+    queryFn: () => getContentEntry(activeSchemaSlug, stringValue),
+    enabled: Boolean(activeSchemaSlug && stringValue),
+  });
+
   // Find currently selected entry details if available
   const selectedEntry = React.useMemo(() => {
     if (!stringValue) return null;
-    return entries.find((e) => e.id === stringValue) ?? null;
-  }, [entries, stringValue]);
+    return (
+      entries.find((e) => e.id === stringValue) ?? directSelectedEntry ?? null
+    );
+  }, [entries, directSelectedEntry, stringValue]);
 
   // Filter entries based on search input
   const filteredEntries = React.useMemo(() => {
