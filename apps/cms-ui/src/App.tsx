@@ -112,6 +112,11 @@ const PostsManagementPage = React.lazy(() =>
     default: m.PostsManagementPage,
   })),
 );
+const MediaLibraryPage = React.lazy(() =>
+  import('./features/media/pages/MediaLibraryPage').then((m) => ({
+    default: m.MediaLibraryPage,
+  })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -189,6 +194,16 @@ export const App = () => {
                           <Route path="security" element={<SecurityPage />} />
                           <Route path="audit-logs" element={<AuditLogPage />} />
                           <Route path="audit-log" element={<AuditLogPage />} />
+                          <Route
+                            element={
+                              <RoleGuard requiredCapability="manage_media" />
+                            }
+                          >
+                            <Route
+                              path="media"
+                              element={<MediaLibraryPage />}
+                            />
+                          </Route>
                           <Route
                             element={
                               <RoleGuard requiredCapability="manage_content" />

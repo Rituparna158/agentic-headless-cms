@@ -101,9 +101,17 @@ export default [
                     },
                   },
                 },
+                {
+                  to: {
+                    element: {
+                      type: 'feature',
+                      captured: { featureName: 'media' },
+                    },
+                  },
+                },
               ],
             },
-            // Features can import shared, components, internal modules of their own feature, and auth for identity
+            // Features can import shared, components, internal modules of their own feature, and auth/media for identity & central asset storage
             {
               from: { element: { type: 'feature' } },
               allow: [
@@ -122,6 +130,14 @@ export default [
                     element: {
                       type: 'feature',
                       captured: { featureName: 'auth' },
+                    },
+                  },
+                },
+                {
+                  to: {
+                    element: {
+                      type: 'feature',
+                      captured: { featureName: 'media' },
                     },
                   },
                 },
