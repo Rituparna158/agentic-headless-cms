@@ -22,6 +22,8 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
+import { AUDIT_ACTION_LIST as ACTIONS, RESOURCE_TYPES } from '@repo/constants';
+
 type BadgeVariant = React.ComponentProps<typeof Badge>['variant'];
 
 const ACTION_BADGE_VARIANTS: Record<string, BadgeVariant> = {
@@ -32,18 +34,6 @@ const ACTION_BADGE_VARIANTS: Record<string, BadgeVariant> = {
   delete: 'destructive',
 };
 
-const RESOURCE_TYPES = [
-  'content',
-  'schema',
-  'role',
-  'user',
-  'locale',
-  'webhook',
-  'media',
-];
-
-const ACTIONS = ['create', 'update', 'publish', 'delete', 'rollback'];
-
 const COLUMNS = [
   { key: 'action', label: 'Action', sortable: true },
   { key: 'resource', label: 'Resource', sortable: true },
@@ -51,6 +41,56 @@ const COLUMNS = [
   { key: 'timestamp', label: 'Timestamp', sortable: true },
   { key: 'details', label: 'Details', sortable: false },
 ];
+
+interface FormattedAuditLog {
+  id: string;
+  action: string;
+  actionVariant: BadgeVariant;
+  resourceType: string;
+  resourceId: string;
+  actorType: string;
+  actorName: string;
+  actorEmail?: string;
+  formattedDate: string;
+  formattedTime: string;
+  rawLog: AuditLogRecord;
+}
+
+/**
+ * Pure data transformation separated from React JSX presentation
+ */
+function formatAuditLogRecord(log: AuditLogRecord): FormattedAuditLog {
+  const actorName =
+    log.actorFirstName && log.actorLastName
+      ? `${log.actorFirstName} ${log.actorLastName}`
+      : log.actorEmail || 'System';
+
+  const logTime = new Date(log.timestamp);
+  const formattedDate = logTime.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const formattedTime = logTime.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return {
+    id: log.id,
+    action: log.action.toUpperCase(),
+    actionVariant: ACTION_BADGE_VARIANTS[log.action.toLowerCase()] || 'default',
+    resourceType: log.resourceType,
+    resourceId: log.resourceId,
+    actorType: log.actorType,
+    actorName,
+    actorEmail:
+      log.actorEmail && log.actorFirstName ? log.actorEmail : undefined,
+    formattedDate,
+    formattedTime,
+    rawLog: log,
+  };
+}
 
 export function AuditLogTable() {
   const [page, setPage] = React.useState(1);
@@ -142,98 +182,87 @@ export function AuditLogTable() {
     actionFilter || resourceFilter || searchQuery,
   );
 
+  // Pure data transformation memoized separately from JSX
+  const formattedLogs = React.useMemo(() => {
+    return sortedLogs.map(formatAuditLogRecord);
+  }, [sortedLogs]);
+
+  // Table row JSX presentation mapping
   const rows = React.useMemo(() => {
-    return sortedLogs.map((log) => {
-      const actorName =
-        log.actorFirstName && log.actorLastName
-          ? `${log.actorFirstName} ${log.actorLastName}`
-          : log.actorEmail || 'System';
-
-      const logTime = new Date(log.timestamp);
-      const formattedDate = logTime.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-      const formattedTime = logTime.toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-
-      return {
-        action: (
-          <Badge
-            variant={
-              ACTION_BADGE_VARIANTS[log.action.toLowerCase()] || 'default'
-            }
-            size="sm"
-            className="tracking-wider font-bold"
+    return formattedLogs.map((item) => ({
+      action: (
+        <Badge
+          variant={item.actionVariant}
+          size="sm"
+          className="tracking-wider font-bold"
+        >
+          {item.action}
+        </Badge>
+      ),
+      resource: (
+        <div className="flex flex-col">
+          <span className="font-medium text-sm capitalize">
+            {item.resourceType}
+          </span>
+          <span
+            className="text-[11px] font-mono text-muted-foreground truncate max-w-[180px]"
+            title={item.resourceId}
           >
-            {log.action.toUpperCase()}
-          </Badge>
-        ),
-        resource: (
-          <div className="flex flex-col">
-            <span className="font-medium text-sm capitalize">
-              {log.resourceType}
+            {item.resourceId}
+          </span>
+        </div>
+      ),
+      actor: (
+        <div className="flex items-center gap-2">
+          {item.actorType === 'agent' ? (
+            <div className="p-1 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+              <Bot className="size-3.5" />
+            </div>
+          ) : (
+            <div className="p-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              <User className="size-3.5" />
+            </div>
+          )}
+          <div className="flex flex-col truncate max-w-[200px]">
+            <span className="text-sm font-medium truncate">
+              {item.actorName}
             </span>
-            <span
-              className="text-[11px] font-mono text-muted-foreground truncate max-w-[180px]"
-              title={log.resourceId}
-            >
-              {log.resourceId}
-            </span>
-          </div>
-        ),
-        actor: (
-          <div className="flex items-center gap-2">
-            {log.actorType === 'agent' ? (
-              <div className="p-1 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                <Bot className="size-3.5" />
-              </div>
-            ) : (
-              <div className="p-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                <User className="size-3.5" />
-              </div>
+            {item.actorEmail && (
+              <span className="text-[11px] text-muted-foreground truncate">
+                {item.actorEmail}
+              </span>
             )}
-            <div className="flex flex-col truncate max-w-[200px]">
-              <span className="text-sm font-medium truncate">{actorName}</span>
-              {log.actorEmail && log.actorFirstName && (
-                <span className="text-[11px] text-muted-foreground truncate">
-                  {log.actorEmail}
-                </span>
-              )}
-            </div>
           </div>
-        ),
-        timestamp: (
-          <div className="flex flex-col text-xs text-muted-foreground">
-            <div className="flex items-center gap-1 text-foreground font-medium">
-              <Clock className="size-3 text-muted-foreground" />
-              <span>{formattedTime}</span>
-            </div>
-            <span>{formattedDate}</span>
+        </div>
+      ),
+      timestamp: (
+        <div className="flex flex-col text-xs text-muted-foreground">
+          <div className="flex items-center gap-1 text-foreground font-medium">
+            <Clock className="size-3 text-muted-foreground" />
+            <span>{item.formattedTime}</span>
           </div>
-        ),
-        details: (
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                handleRowClick(log);
-              }}
-              className="h-8 w-8 p-0"
-              title="View details"
-            >
-              <Eye className="size-4 text-muted-foreground" />
-            </Button>
-          </div>
-        ),
-      };
-    });
-  }, [sortedLogs, handleRowClick]);
+          <span>{item.formattedDate}</span>
+        </div>
+      ),
+      details: (
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              handleRowClick(item.rawLog);
+            }}
+            className="h-8 w-8 p-0"
+            title="View details"
+            aria-label="View audit log details"
+          >
+            <Eye className="size-4 text-muted-foreground" />
+          </Button>
+        </div>
+      ),
+    }));
+  }, [formattedLogs, handleRowClick]);
 
   return (
     <div className="flex flex-col gap-4">
