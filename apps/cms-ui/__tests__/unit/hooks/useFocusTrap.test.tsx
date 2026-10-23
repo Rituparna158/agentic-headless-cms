@@ -39,6 +39,7 @@ function TrapComponent({
   );
 }
 
+// Use Fccous trap
 describe('useFocusTrap', () => {
   it('focuses preferred button element over input by default', async () => {
     render(<TrapComponent enabled={true} />);
