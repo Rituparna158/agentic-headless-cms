@@ -852,6 +852,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
             cleanSlug={cleanSlug}
             pageId={safePage.id}
             pageTitle={pageTitle}
+            onPageTitleChange={setPageTitle}
             isPublished={isPublished}
             onOpenPreview={() =>
               window.open(

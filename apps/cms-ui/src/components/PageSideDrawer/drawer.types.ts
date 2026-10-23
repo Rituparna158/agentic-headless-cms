@@ -38,6 +38,7 @@ export interface PageMetaDrawerHeaderProps {
   cleanSlug: string;
   pageId: string;
   pageTitle: string;
+  onPageTitleChange?: (title: string) => void;
   isPublished: boolean;
   onOpenPreview: () => void;
   onOpenCanvas: () => void;
