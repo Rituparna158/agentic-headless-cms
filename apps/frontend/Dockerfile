@@ -28,7 +28,11 @@ RUN find /app/apps/frontend -maxdepth 1 -name ".env*" -type l -delete
 RUN pnpm turbo run build --filter=frontend...
 
 # ---- Runtime ----
-FROM base AS runner
+FROM node:24-alpine AS runner
+RUN apk add --no-cache libc6-compat
+# Strip unused package managers (npm, yarn, corepack) from production runner
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs \

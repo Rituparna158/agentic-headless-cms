@@ -48,14 +48,38 @@ RUN pnpm turbo run build --filter=backend...
 # dependencies (@repo/shared-db, @repo/shared-types) down to their built
 # output plus prod-only deps, into one self-contained directory.
 RUN pnpm --filter=backend deploy --prod /app/deploy
+RUN cp -r packages/shared-db/drizzle /app/deploy/drizzle
+RUN cp apps/backend/docker-entrypoint.sh /app/deploy/docker-entrypoint.sh && \
+    sed -i 's/\r$//' /app/deploy/docker-entrypoint.sh && \
+    chmod +x /app/deploy/docker-entrypoint.sh
+# Strip source maps and extraneous files from deploy output to save space
+RUN find /app/deploy -name "*.map" -delete 2>/dev/null || true
+# Ensure prebuilt libvips libraries from @img/sharp-libvips-linuxmusl-x64 are linked for sharp
+RUN mkdir -p /app/deploy/libvips && \
+    LIBVIPS_DIR=$(find /app/node_modules -path "*/@img/sharp-libvips-linuxmusl-x64/lib" | head -n 1) && \
+    if [ -n "$LIBVIPS_DIR" ]; then \
+      cp -a "$LIBVIPS_DIR"/* /app/deploy/libvips/ && \
+      SHARP_IMG_DIR=$(find /app/deploy/node_modules/.pnpm -path "*/@img+sharp-linuxmusl-x64*/node_modules/@img" | head -n 1); \
+      if [ -n "$SHARP_IMG_DIR" ]; then \
+        cp -a "$(dirname "$LIBVIPS_DIR")" "$SHARP_IMG_DIR/sharp-libvips-linuxmusl-x64"; \
+      fi; \
+    fi
 
 # ---- Runtime ----
-FROM base AS runner
+FROM node:24-alpine AS runner
+RUN apk add --no-cache libc6-compat
+# Strip unused package managers (npm, yarn, corepack) from production runner
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+
+COPY --from=builder /app/deploy/libvips/ /usr/lib/
+ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
+
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --ingroup nodejs expressjs
 
+# Only the deployed, production-only output makes it into the final image
 COPY --from=builder --chown=expressjs:nodejs /app/deploy .
 
 # Copy libvips shared libraries so musl dynamic linker can resolve them on Alpine
@@ -67,4 +91,5 @@ WORKDIR /app
 ENV NODE_ENV=production
 EXPOSE 3000
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "dist/server.js"]

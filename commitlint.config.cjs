@@ -60,6 +60,7 @@ module.exports = {
         'deps',
         'ci',
         'swagger',
+        'docker',
         'all',
       ],
     ],

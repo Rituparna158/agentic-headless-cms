@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-agentic_cms}
     ports:
-      - '5432:5432'
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +20,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -34,20 +34,29 @@ services:
       context: .
       dockerfile: apps/backend/Dockerfile
     restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
     environment:
-      NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agentic_cms
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_at_least_32_characters_long}
-      CORS_ORIGIN: '*'
+      - NODE_ENV=production
+      - PORT=3000
+      - AUTO_MIGRATE=${AUTO_MIGRATE:-true}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_cms}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-super_secret_jwt_key_at_least_32_characters_long}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1d}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - STORAGE_ADAPTER=${STORAGE_ADAPTER:-local}
+      - STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
+      - STORAGE_LOCAL_BASE_URL=/api/v1/media/file
+      - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL:-admin@agentic-cms.com}
+      - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-admin}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    expose:
-      - '3000'
+    volumes:
+      - media_uploads:/app/uploads
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/health/live']
       interval: 10s
@@ -60,30 +69,37 @@ services:
       context: .
       dockerfile: apps/worker/Dockerfile
     restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agentic_cms
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_at_least_32_characters_long}
     depends_on:
+      backend:
+        condition: service_started
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_cms}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-super_secret_jwt_key_at_least_32_characters_long}
+      - STORAGE_ADAPTER=${STORAGE_ADAPTER:-local}
+      - STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
+    volumes:
+      - media_uploads:/app/uploads
 
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
     restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      NEXT_PUBLIC_API_URL: http://backend:3000
     depends_on:
-      - backend
-    expose:
-      - '3000'
+      backend:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT:-3001}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3000}
 
   cms-ui:
     build:
@@ -123,3 +139,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  media_uploads:

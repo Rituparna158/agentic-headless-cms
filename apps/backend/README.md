@@ -1,73 +1,106 @@
 # Backend — Agentic Headless CMS API
 
-Express + TypeScript API for the Agentic Headless CMS. Uses `@repo/shared-db` (Drizzle ORM) for
-all database access.
+Express + TypeScript core API server for the Agentic Headless CMS. Powered by `@repo/shared-db` (Drizzle ORM) for PostgreSQL persistence and BullMQ/Redis for asynchronous job processing.
 
-> First time setting up the whole project? Follow the root
-> [README.md](../../README.md#getting-started-first-time-setup) — it covers
-> Docker, env files, migrations, and seeding for the full stack. This file
-> only covers backend-specific details.
+> **First time setting up the whole project?** Follow the root [README.md](../../README.md#getting-started-first-time-setup) — it covers Docker, environment variables, migrations, and seeding for the full stack. This document covers backend-specific details.
 
-## Structure
+---
+
+## Architecture & Structure
 
 ```
-src/
-  server.ts              # entry point — builds the app, connects, listens, handles graceful shutdown
-  app.ts                 # Express app factory (middleware + route mounting); no listen() — importable by tests
-  config/
-    env.ts                # zod-validated environment config, fails fast on boot
-  database/
-    index.ts               # wraps @repo/shared-db client lifecycle for this process
-  common/
-    errors/                # typed HTTP error hierarchy + DatabaseError → HTTP status mapping
-    middlewares/            # request-id, 404, and the central error handler
-    logger.ts               # pino instance
-  modules/
-    health/                  # routes / controller / service — the template for future feature modules
-  routes/
-    index.ts                 # versioned (/api/v1) router aggregator feature modules mount into
-test/                        # vitest + supertest
+apps/backend/
+├── src/
+│   ├── server.ts              # Entry point — connects to DB/Redis, initializes OpenTelemetry, listens, handles shutdown
+│   ├── app.ts                 # Express factory (middleware, security, route mounting); no listen() — importable by tests
+│   ├── instrumentation.ts     # OpenTelemetry SDK and metrics initialization
+│   ├── cli.ts                 # Backend CLI utility powered by CAC
+│   ├── scripts/
+│   │   └── run-migrations-and-seed.ts # Automated database migration and system seeding runner
+│   ├── config/
+│   │   └── env.ts             # Zod-validated environment config, fails fast on boot
+│   ├── modules/
+│   │   ├── access/            # RBAC roles, permissions, and application assignment
+│   │   ├── audit/             # Detailed audit logging for human and agent operations
+│   │   ├── auth/              # JWT authentication, TOTP 2FA/MFA, and SSO/OIDC
+│   │   ├── content/           # Dynamic content CRUD, draft/publish lifecycle, and version history
+│   │   ├── graphql/           # Apollo Server GraphQL schema generator & resolver stitching
+│   │   ├── health/            # Liveness (/health/live) and readiness (/health/ready) probes
+│   │   ├── locales/           # Multi-language localization configuration
+│   │   ├── media/             # Media library upload handling, folder grouping, and S3/local adapters
+│   │   ├── observability/     # Prometheus metrics endpoint (/metrics)
+│   │   ├── schemas/           # Dynamic schema definitions (single types & collections)
+│   │   └── webhooks/          # Webhook event dispatching and deliveries
+│   └── routes/
+│       └── index.ts           # Versioned (/api/v1) route aggregator
+├── __tests__/                 # Vitest unit and integration test suite
+├── Dockerfile                 # Multi-stage production container build (turbo prune)
+└── docker-entrypoint.sh       # Container entrypoint with automatic migration execution
 ```
 
-## Setup
+---
+
+## Setup & Configuration
+
+The backend reads configuration directly from the root unified `.env` file via `--env-file=../../.env`:
 
 ```bash
-cp .env.example .env   # defaults match docker-compose.yml; adjust if needed
+# 1. From repository root, copy the environment template
+cp .env.example .env
+
+# 2. Install dependencies
 pnpm install
 ```
 
-## Environment variables
+### Key Environment Variables
 
-See `.env.example` for the full list with inline comments. Ones you're most likely to
-change:
+See the root `.env.example` for the full list with inline documentation. Common variables:
 
-- `DATABASE_URL` / `REDIS_URL` — only if you're not using the bundled `docker-compose.yml`.
-- `JWT_SECRET` — the `.env.example` value is a local-dev placeholder only; use a real
-  generated secret anywhere this isn't a throwaway environment.
-- `CORS_ORIGIN` — restrict this beyond `*` outside of local development.
-- `STORAGE_ADAPTER` — `local` (default, writes to `STORAGE_LOCAL_UPLOAD_DIR`) or `s3`
-  (fill in the `STORAGE_S3_*` variables).
-- `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` — required for real invitation emails to send;
-  left blank, the backend logs emails instead of sending them.
-- `E2E_DATABASE_URL` — only used by the frontend's Playwright suite; see
-  [docs/testing.md](../../docs/testing.md). You don't need to set this yourself.
+- `PORT` — Port number (defaults to `3000`).
+- `DATABASE_URL` — PostgreSQL connection string (`postgresql://postgres:postgres@localhost:5432/agentic_cms`).
+- `REDIS_URL` — Redis connection URI for caching and queues (`redis://localhost:6379`).
+- `JWT_SECRET` — Key for signing auth tokens (must be at least 32 characters long).
+- `CORS_ORIGIN` — Allowed client origin(s) (defaults to `http://localhost:3001` for the Admin UI).
+- `STORAGE_ADAPTER` — Storage driver: `local` (default) or `s3` (AWS S3 / MinIO).
+- `AUTO_MIGRATE` — Set to `true` (default in Docker) to automatically apply pending migrations on container boot.
 
-## Commands
+---
+
+## API Endpoints & Interfaces
+
+When the backend is running (port `3000`):
+
+| Endpoint            | Protocol | Description                                                            |
+| :------------------ | :------- | :--------------------------------------------------------------------- |
+| **`/api/v1`**       | REST     | Versioned REST API root                                                |
+| **`/api-docs`**     | HTTP     | Interactive Swagger / OpenAPI documentation UI                         |
+| **`/graphql`**      | GraphQL  | Apollo Server GraphQL query and mutation endpoint                      |
+| **`/health/live`**  | HTTP     | Liveness probe (returns `200` if Express process is running)           |
+| **`/health/ready`** | HTTP     | Readiness probe (returns `200` only if database connection is healthy) |
+| **`/metrics`**      | HTTP     | Prometheus metrics for scraping                                        |
+
+---
+
+## Development Commands
+
+Run from `apps/backend/` or via `pnpm --filter backend <command>`:
 
 ```bash
-pnpm dev                        # watch mode (tsx)
-pnpm build                      # compile to dist/
-pnpm start                      # run the compiled build
-pnpm lint                       # eslint
-pnpm check-types                # tsc --noEmit
-pnpm test                       # vitest run
-pnpm test:watch                 # vitest watch mode
-pnpm seed:admin                 # create/update the initial superadmin user
-pnpm seed:e2e-expired-invite    # E2E-only fixture,see docs/testing.md
+pnpm dev             # Start server in watch mode (tsx watch with root .env)
+pnpm build           # Compile TypeScript to dist/ (using tsconfig.build.json)
+pnpm start           # Run the compiled production build from dist/
+pnpm lint            # Run ESLint across src/
+pnpm check-types     # Typecheck using TypeScript compiler (tsc --noEmit)
+pnpm test            # Run Vitest unit & integration tests
+pnpm test:watch      # Run tests in interactive watch mode
+pnpm cli             # Run backend CLI commands
 ```
 
-## Health checks
+---
 
-- `GET /health/live` — liveness; always 200 if the process is up, no dependencies checked.
-- `GET /health/ready` — readiness; 200 only if the database is reachable, 503 otherwise. Intended
-  for Kubernetes readiness probes / load balancer health checks.
+## Docker & Production Container
+
+The backend is packaged using a multi-stage Docker build:
+
+- **`apps/backend/Dockerfile`**: Uses Turborepo pruning (`turbo prune backend --docker`) to produce a minimal production image (<150MB) running on Alpine Linux under non-root user `expressjs`.
+- **`docker-entrypoint.sh`**: Checks database connectivity, runs `dist/scripts/run-migrations-and-seed.js` if `AUTO_MIGRATE=true`, and executes `node dist/server.js`.

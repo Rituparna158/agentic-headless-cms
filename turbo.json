@@ -22,6 +22,8 @@
     "SUPPORT_EMAIL",
     "MODE",
     "DATABASE_URL",
+    "MIGRATIONS_FOLDER",
+    "AUTO_MIGRATE",
     "VITE_API_URL",
     "VITE_APP_ID",
     "ANALYZE",

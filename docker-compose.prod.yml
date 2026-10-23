@@ -1,0 +1,108 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-agentic_cms}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-agentic_cms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - agentic-network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - agentic-network
+
+  backend:
+    image: ghcr.io/mindfire-test/agentic-headless-cms/backend:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - AUTO_MIGRATE=${AUTO_MIGRATE:-true}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_cms}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-super_secret_jwt_key_at_least_32_characters_long}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1d}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3001}
+      - STORAGE_ADAPTER=${STORAGE_ADAPTER:-local}
+      - STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
+      - STORAGE_LOCAL_BASE_URL=/api/v1/media/file
+      - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL:-admin@agentic-cms.com}
+      - SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-admin}
+    volumes:
+      - media_uploads:/app/uploads
+    networks:
+      - agentic-network
+
+  worker:
+    image: ghcr.io/mindfire-test/agentic-headless-cms/worker:latest
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-agentic_cms}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-super_secret_jwt_key_at_least_32_characters_long}
+      - STORAGE_ADAPTER=${STORAGE_ADAPTER:-local}
+      - STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
+    volumes:
+      - media_uploads:/app/uploads
+    networks:
+      - agentic-network
+
+  frontend:
+    image: ghcr.io/mindfire-test/agentic-headless-cms/frontend:latest
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT:-3001}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    networks:
+      - agentic-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_uploads:
+
+networks:
+  agentic-network:
+    driver: bridge

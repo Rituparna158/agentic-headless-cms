@@ -1,31 +1,89 @@
 # Agentic Headless CMS
 
-Welcome to the **Agentic Headless CMS**! This project is a modular, API-first content management system designed to be operated by both human editors and AI agents.
+Welcome to the **Agentic Headless CMS**! This project is a modular, API-first content management system designed to be operated collaboratively by both **human editors and autonomous AI agents**.
+
+---
+
+## Core Concepts: Headless & Agentic
+
+### What is a Headless CMS?
+
+Unlike a traditional CMS (like WordPress or Drupal) where the content database, admin dashboard, and public website templates are tightly coupled, a **Headless CMS** separates the content repository and management backend from the frontend presentation layer:
+
+- **Backend & APIs:** The core CMS validates, manages, and stores content, exposing it through clean REST (`/api/v1`) and GraphQL (`/graphql`) endpoints.
+- **Frontend Independence:** Any client application—a Next.js website, mobile app (iOS/Android), or external service—can fetch and render the exact same content from one central system using our client SDKs (`@repo/sdk-react`, `@repo/sdk-core`).
+
+---
 
 ## Project Structure
 
 This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 
-- **apps/cms-ui**: The visual studio and page builder dashboard built with Vite 6, React 19, Tailwind CSS, and GrapesJS (default port: `3003`).
-- **apps/frontend**: The frontend web application built with Next.js, Tailwind CSS, and shadcn/ui (default port: `3001`).
-- **apps/backend**: The core backend REST API and MCP server built with Express (default port: `3000`).
+### Applications (`apps/`)
+
+- **apps/cms-ui**: Visual studio and page builder dashboard built with Vite 6, React 19, Tailwind CSS, and GrapesJS (default port: `3003`).
+- **apps/frontend**: The visual admin dashboard built with Next.js 15 (App Router), Tailwind CSS, and shadcn/ui (default port: `3001`).
+- **apps/backend**: The core backend API built with Express, supporting REST (`/api/v1`), GraphQL, MCP server, authentication, and RBAC (default port: `3000`).
+- **apps/worker**: Background queue worker powered by BullMQ and Redis for async media transformations (Sharp) and event jobs.
+
+### SDKs & Client Libraries (`packages/`)
+
+- **packages/sdk-core**: Isomorphic TypeScript client for querying the CMS API.
+- **packages/sdk-react**: React hooks (`useContentList`, `useContentEntry`, `useAuth`) powered by TanStack React Query.
+- **packages/sdk-codegen**: CLI code generator that produces TypeScript types from dynamic CMS content schemas.
+- **packages/sdk-nextjs**: Next.js App Router and Server Actions integration.
+- **packages/sdk-node**: Server-side Node.js SDK.
+
+### Shared Internal Packages (`packages/`)
+
 - **packages/shared-ui**: Shared accessible component primitives, dialogs, tables, and design tokens.
-- **packages/shared-db**: Database schemas, ORM logic (Drizzle), and migrations.
-- **packages/types**: Shared compile-time TypeScript interfaces and definitions.
-- **packages/validation**: Zod validation schemas and dynamic compilers.
+- **packages/shared-db**: Database schemas, ORM logic (Drizzle), PostgreSQL adapter, migrations, and seed scripts.
+- **packages/storage**: Multi-adapter storage (local disk and AWS S3/MinIO) with Sharp image processing.
+- **packages/validation**: Zod validation schemas and dynamic content compilers.
 - **packages/constants**: Shared runtime constants (error messages, HTTP status codes, cookies, email templates).
+- **packages/middlewares**: Express middlewares (Authentication, RBAC, error handling, rate limiting).
+- **packages/events**: Internal event emitter for system actions.
+- **packages/types**: Shared compile-time TypeScript interfaces and domain definitions.
+- **packages/config**: Centralized environment configuration and database adapters.
+- **packages/logger**: High-performance structured JSON logging with Pino.
+- **packages/utils**: Shared utility functions, pagination helpers, and error mappers.
 - **packages/eslint-config**: Shared ESLint configuration.
 - **packages/typescript-config**: Shared TypeScript configuration.
 
-## Prerequisites
+---
+
+## Self-Hosted Production (Docker Compose)
+
+For end-users and teams who want to run the self-hosted CMS platform without cloning the full repository or installing Node.js/pnpm:
+
+1. **Download the production compose file and env template:**
+
+   ```bash
+   curl -O https://raw.githubusercontent.com/mindfire-test/agentic-headless-cms/main/docker-compose.prod.yml
+   curl -O https://raw.githubusercontent.com/mindfire-test/agentic-headless-cms/main/.env.example
+   cp .env.example .env
+   ```
+
+2. **Configure your secrets in `.env`:**
+   Set your `JWT_SECRET` (at least 32 characters) and custom database password if needed.
+
+3. **Start the platform:**
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d
+   ```
+   _Pre-built production images for Backend, Frontend, Worker, PostgreSQL 16, and Redis 7 will be pulled directly from GitHub Container Registry (GHCR). Database migrations and initial admin account creation run automatically on first boot._
+
+---
+
+## Prerequisites (for Local Development)
 
 - **Node.js** >= 20.9.0
-- **pnpm** (see `packageManager` in `package.json`)
-- **Docker** (recommended) — the bundled `docker-compose.yml` provisions a
-  matching Postgres and Redis with zero manual setup. You can use your own
-  instances instead as long as they meet the minimums below.
+- **pnpm** (see `packageManager` in `package.json`, version 9.0.0)
+- **Docker** (recommended) — the bundled `docker-compose.yml` provisions a matching Postgres and Redis with zero manual setup.
 - **PostgreSQL** >= 16
-- **Redis** >= 5.0.0 — required by `apps/backend`'s job queue (BullMQ), which relies on Redis Streams. Older versions (e.g. the deprecated Windows Redis port) will fail to boot the backend.
+- **Redis** >= 5.0.0 — required by `apps/backend`'s job queue (BullMQ), which relies on Redis Streams.
+
+---
 
 ## Getting Started
 
@@ -53,10 +111,11 @@ You can run the platform in two ways:
 3. **Initialize environment files**:
 
    ```bash
-   cp apps/backend/.env.example apps/backend/.env
-   cp apps/cms-ui/.env.example apps/cms-ui/.env
-   cp apps/frontend/.env.example apps/frontend/.env
-   cp packages/shared-db/.env.example packages/shared-db/.env
+   cp .env.example .env
+   cp apps/backend/.env.example apps/backend/.env 2>/dev/null || true
+   cp apps/cms-ui/.env.example apps/cms-ui/.env 2>/dev/null || true
+   cp apps/frontend/.env.example apps/frontend/.env 2>/dev/null || true
+   cp packages/shared-db/.env.example packages/shared-db/.env 2>/dev/null || true
    ```
 
 4. **Run database migrations**:
@@ -65,13 +124,14 @@ You can run the platform in two ways:
    pnpm --filter @repo/shared-db run db:migrate
    ```
 
-5. **Seed initial admin account**:
+5. **Seed initial admin account & system schemas**:
 
    ```bash
-   pnpm --filter backend run seed:admin
+   pnpm --filter @repo/shared-db run seed:admin
+   pnpm --filter @repo/shared-db run seed:system-schemas
    ```
 
-   Default login: `admin@agentic-cms.com` / `Password123!`
+   Default login: `admin@agentic-cms.com` / `Password123!` (or configured `SEED_ADMIN_PASSWORD`).
 
 6. **Start all application development servers**:
 
@@ -80,9 +140,11 @@ You can run the platform in two ways:
    ```
 
 7. **Access application endpoints**:
-   - **CMS UI Studio**: [http://localhost:3003](http://localhost:3003)
-   - **Frontend Web App**: [http://localhost:3001](http://localhost:3001)
-   - **Backend REST API**: [http://localhost:3000/api/v1](http://localhost:3000/api/v1) (Liveness: `/health/live`, Readiness: `/health/ready`)
+   - **CMS UI Studio:** [http://localhost:3003](http://localhost:3003)
+   - **Admin Dashboard:** [http://localhost:3001](http://localhost:3001)
+   - **Backend API:** [http://localhost:3000/api/v1](http://localhost:3000/api/v1)
+   - **Swagger API Docs:** [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+   - **GraphQL Playground:** [http://localhost:3000/graphql](http://localhost:3000/graphql)
 
 ---
 
@@ -117,8 +179,6 @@ Run the complete platform via Docker Compose (ideal for pre-release testing, sta
    - **Backend API**: [http://localhost/api/v1](http://localhost/api/v1)
    - **Gateway Health**: [http://localhost/healthz](http://localhost/healthz)
 
-_For advanced Docker operations, multi-stage build caching, and production orchestration, see [docs/docker.md](docs/docker.md)._
-
 ---
 
 ## Docker Compose Services
@@ -132,6 +192,50 @@ _For advanced Docker operations, multi-stage build caching, and production orche
 | **worker**   | `apps/worker/Dockerfile`     | Internal          | BullMQ background worker process                               |
 | **postgres** | `postgres:16-alpine`         | `5432:5432`       | Relational database storage                                    |
 | **redis**    | `redis:7-alpine`             | `6379:6379`       | In-memory message broker & job queue                           |
+
+---
+
+## Consuming Content with Client SDKs
+
+External frontend applications (React, Next.js, Remix, Astro) can consume published content directly:
+
+```bash
+npm install @repo/sdk-core @repo/sdk-react
+```
+
+```tsx
+import React from 'react';
+import { CmsProvider, useContentList } from '@repo/sdk-react';
+
+function ArticleList() {
+  const {
+    data: articles,
+    isLoading,
+    error,
+  } = useContentList('article', {
+    status: 'published',
+  });
+
+  if (isLoading) return <p>Loading articles...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
+  return (
+    <ul>
+      {articles?.map((article) => (
+        <li key={article.id}>{article.title}</li>
+      ))}
+    </ul>
+  );
+}
+
+export default function App() {
+  return (
+    <CmsProvider baseUrl="http://localhost:3000/api/v1">
+      <ArticleList />
+    </CmsProvider>
+  );
+}
+```
 
 ---
 
@@ -151,10 +255,12 @@ _For advanced Docker operations, multi-stage build caching, and production orche
 - **Software Requirements Specification (SRS)**: [docs/SRS.md](docs/SRS.md)
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
 
+---
+
 ## Common Commands
 
 ```bash
-pnpm dev           # Start every app's dev server
+pnpm dev           # Start every app's dev server in watch mode
 pnpm lint          # Lint all apps and packages
 pnpm check-types   # Type-check all apps and packages
 pnpm format        # Format the codebase with Prettier
