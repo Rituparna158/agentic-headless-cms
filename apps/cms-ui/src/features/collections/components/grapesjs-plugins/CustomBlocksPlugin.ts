@@ -92,8 +92,47 @@ export const CustomBlocksPlugin = (
   register_embed_block(editor);
   register_badge_block(editor);
   register_dynamic_cms_blocks(editor);
+  register_responsive_cover_image_block(editor);
   register_universal_cms_traits(editor, opts);
 };
+
+export const register_responsive_cover_image_block = (editor: Editor) => {
+  const bm = editor.BlockManager;
+  bm.add('cover-image-responsive', {
+    label: `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      <div class="gjs-block-label">Cover Image</div>
+    `,
+    category: 'Content Blocks',
+    content: {
+      type: 'image',
+      attributes: {
+        'data-object-fit': 'cover',
+        'data-aspect-ratio': '16/9',
+        'data-max-height': '480px',
+        'data-image-width': '100%',
+        'data-border-radius': '8px',
+        'data-object-position': 'center',
+        src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+        alt: 'Responsive Banner Image',
+      },
+      style: {
+        width: '100%',
+        'max-height': '480px',
+        'aspect-ratio': '16/9',
+        'object-fit': 'cover',
+        'border-radius': '8px',
+        display: 'block',
+        margin: '0 auto',
+      },
+    },
+  });
+};
+
 export function register_universal_cms_traits(
   editor: Editor,
   opts: CustomBlocksPluginOptions = {},
@@ -101,12 +140,14 @@ export function register_universal_cms_traits(
   const schemaFields = opts.schemaFields || [];
   const availableSchemas = opts.availableSchemas || [];
 
-  // Helper to dynamically filter field options based on chosen schema slug
+  // Helper to dynamically filter field options based on chosen schema slug or ID
   const getFilteredFieldOptions = (
-    schemaSlug?: string,
+    schemaSlugOrId?: string,
   ): Array<{ id: string; name: string }> => {
-    if (schemaSlug) {
-      const matched = availableSchemas.find((s) => s.slug === schemaSlug);
+    if (schemaSlugOrId) {
+      const matched = availableSchemas.find(
+        (s) => s.slug === schemaSlugOrId || s.id === schemaSlugOrId,
+      );
       if (matched && matched.fields && matched.fields.length > 0) {
         return [
           { id: '', name: '— None (Static Content) —' },
@@ -120,7 +161,7 @@ export function register_universal_cms_traits(
       }
     }
 
-    // Default: all page-level fields
+    // Default: all schema fields across the collection
     return [
       { id: '', name: '— None (Static Content) —' },
       ...schemaFields
@@ -132,24 +173,29 @@ export function register_universal_cms_traits(
     ];
   };
 
-  // Build schema options: only page-level schemas (not the full collection list)
+  // Build schema options: show which page has which schema in the same collection
   const schemaOptions: Array<{ id: string; name: string }> =
     availableSchemas.length > 0
       ? [
-          { id: '', name: ' All Schemas (Current Page)' },
+          { id: '', name: '— All Schemas (Collection) —' },
           ...availableSchemas
-            .filter((s) => s && s.slug)
-            .map((s) => ({
-              id: s.slug,
-              name: `${s.name} (${s.slug})`,
-            })),
+            .filter((s) => s && (s.slug || s.id))
+            .map((s) => {
+              const origin = s.isCurrentPage
+                ? 'Current Page'
+                : s.pageTitle || 'Other Page';
+              return {
+                id: s.id || s.slug,
+                name: `[${origin}] ${s.name} (${s.slug})`,
+              };
+            }),
         ]
       : [];
 
   // CMS traits to inject into canvas elements
   const cmsTraits: Array<Record<string, unknown>> = [];
 
-  // Schema selector (if page has any schemas)
+  // Schema selector (if collection/page has any schemas)
   if (schemaOptions.length > 0) {
     cmsTraits.push({
       type: 'select',
@@ -167,6 +213,93 @@ export function register_universal_cms_traits(
     options: getFilteredFieldOptions(),
   });
 
+  // Visual appearance traits for images to prevent large screen breakage
+  const imageAppearanceTraits: Array<Record<string, unknown>> = [
+    {
+      type: 'select',
+      label: 'Image Fit (object-fit)',
+      name: 'data-object-fit',
+      options: [
+        { id: 'cover', name: 'Cover (Fill & Crop Cleanly)' },
+        { id: 'contain', name: 'Contain (Fit Entire Image)' },
+        { id: 'fill', name: 'Fill (Stretch to Frame)' },
+        { id: 'scale-down', name: 'Scale Down' },
+        { id: 'none', name: 'None (Natural Size)' },
+      ],
+    },
+    {
+      type: 'select',
+      label: 'Aspect Ratio',
+      name: 'data-aspect-ratio',
+      options: [
+        { id: 'auto', name: 'Auto (Original Ratio)' },
+        { id: '16/9', name: '16:9 (Landscape Banner)' },
+        { id: '21/9', name: '21:9 (Ultrawide Hero)' },
+        { id: '4/3', name: '4:3 (Standard Photo)' },
+        { id: '1/1', name: '1:1 (Square)' },
+        { id: '3/2', name: '3:2 (Classic 35mm)' },
+      ],
+    },
+    {
+      type: 'select',
+      label: 'Max Height (Desktop / Wide)',
+      name: 'data-max-height',
+      options: [
+        { id: 'none', name: 'None (Uncapped)' },
+        { id: '280px', name: '280px (Compact Thumbnail)' },
+        { id: '380px', name: '380px (Medium Card)' },
+        { id: '480px', name: '480px (Standard Hero)' },
+        { id: '600px', name: '600px (Large Screen Banner)' },
+        { id: '750px', name: '750px (Cinematic Feature)' },
+      ],
+    },
+    {
+      type: 'select',
+      label: 'Width',
+      name: 'data-image-width',
+      options: [
+        { id: '100%', name: '100% (Full Width)' },
+        { id: '75%', name: '75% (Centered)' },
+        { id: '50%', name: '50% (Half Width)' },
+        { id: 'auto', name: 'Auto (Intrinsic)' },
+      ],
+    },
+    {
+      type: 'select',
+      label: 'Corner Radius',
+      name: 'data-border-radius',
+      options: [
+        { id: '0px', name: 'Sharp (0px)' },
+        { id: '8px', name: 'Subtle (8px)' },
+        { id: '16px', name: 'Rounded (16px)' },
+        { id: '24px', name: 'Card Rounded (24px)' },
+        { id: '9999px', name: 'Circle / Pill' },
+      ],
+    },
+    {
+      type: 'select',
+      label: 'Focal Point (Position)',
+      name: 'data-object-position',
+      options: [
+        { id: 'center', name: 'Center (Balanced)' },
+        { id: 'top', name: 'Top (Headshot / Sky)' },
+        { id: 'bottom', name: 'Bottom' },
+        { id: 'left', name: 'Left' },
+        { id: 'right', name: 'Right' },
+      ],
+    },
+    {
+      type: 'select',
+      label: 'Alignment',
+      name: 'data-image-align',
+      options: [
+        { id: 'center', name: 'Center in Container' },
+        { id: 'left', name: 'Left Aligned' },
+        { id: 'right', name: 'Right Aligned' },
+      ],
+    },
+  ];
+
   // 1. Extend common base element types to include CMS traits
   const typesToExtend = ['default', 'text', 'textnode', 'image', 'link', 'box'];
   typesToExtend.forEach((typeName) => {
@@ -178,6 +311,7 @@ export function register_universal_cms_traits(
             traits: [
               ...(existingType.model.prototype.defaults?.traits || []),
               ...cmsTraits,
+              ...(typeName === 'image' ? imageAppearanceTraits : []),
             ],
           },
         },
@@ -189,23 +323,31 @@ export function register_universal_cms_traits(
   editor.on('component:selected', (model: unknown) => {
     if (!model || typeof model !== 'object') return;
     const comp = model as {
-      get: (k: string) => {
-        find?: (
-          fn: (t: {
-            get: (name: string) => string;
-            set?: (k: string, v: unknown) => void;
-          }) => boolean,
-        ) =>
-          | {
-              get?: (name: string) => string;
-              set?: (k: string, v: unknown) => void;
-            }
-          | undefined;
-        add?: (items: unknown[]) => void;
-      };
+      get?: (k: string) => unknown;
       getAttributes?: () => Record<string, unknown>;
+      addAttributes?: (attrs: Record<string, unknown>) => void;
+      addStyle?: (style: Record<string, string>) => void;
+      getStyle?: () => Record<string, string>;
+      getEl?: () => HTMLElement | null;
+      is?: (type: string) => boolean;
     };
-    const traits = comp.get('traits');
+    const traits = comp.get?.('traits') as
+      | {
+          find?: (
+            fn: (t: {
+              get: (name: string) => string;
+              set?: (k: string, v: unknown) => void;
+            }) => boolean,
+          ) =>
+            | {
+                get?: (name: string) => string;
+                set?: (k: string, v: unknown) => void;
+              }
+            | undefined;
+          add?: (items: unknown[]) => void;
+        }
+      | undefined;
+
     if (
       traits &&
       typeof traits.find === 'function' &&
@@ -229,10 +371,141 @@ export function register_universal_cms_traits(
         );
         if (schemaTrait && schemaTrait.set) {
           schemaTrait.set('options', schemaOptions);
+        } else if (!schemaTrait && traits.add) {
+          traits.add([
+            {
+              type: 'select',
+              label: 'Schema Section',
+              name: 'data-cms-schema',
+              options: schemaOptions,
+            },
+          ]);
+        }
+      }
+
+      // Add image appearance traits when an image is selected
+      const isImg =
+        !!comp.is?.('image') ||
+        (comp.get?.('tagName') as unknown as string) === 'img';
+      if (isImg) {
+        const fitTrait = traits.find(
+          (t) => t.get?.('name') === 'data-object-fit',
+        );
+        if (!fitTrait && traits.add) {
+          traits.add(imageAppearanceTraits);
+          (
+            editor.TraitManager as unknown as { render?: () => void }
+          )?.render?.();
+        }
+
+        const currentAttrs = comp.getAttributes?.() || {};
+        const updates: Record<string, unknown> = {};
+        if (!currentAttrs['data-object-fit']) {
+          updates['data-object-fit'] = 'cover';
+        }
+        if (!currentAttrs['data-image-width']) {
+          updates['data-image-width'] = '100%';
+        }
+        if (!currentAttrs['data-max-height']) {
+          updates['data-max-height'] = '480px';
+        }
+        if (!currentAttrs['data-aspect-ratio']) {
+          updates['data-aspect-ratio'] = '16/9';
+        }
+        if (Object.keys(updates).length > 0) {
+          comp.addAttributes?.(updates);
+        }
+
+        const currentStyle = comp.getStyle?.() || {};
+        if (!currentStyle['object-fit']) {
+          const defaultStyles: Record<string, string> = {
+            width: (currentAttrs['data-image-width'] as string) || '100%',
+            'object-fit':
+              (currentAttrs['data-object-fit'] as string) || 'cover',
+            'max-height':
+              (currentAttrs['data-max-height'] as string) || '480px',
+            'aspect-ratio':
+              (currentAttrs['data-aspect-ratio'] as string) || '16/9',
+            display: 'block',
+          };
+          comp.addStyle?.(defaultStyles);
+          const el = comp.getEl?.();
+          if (el) Object.assign(el.style, defaultStyles);
         }
       }
     }
   });
+
+  // Apply image styling live when traits or attributes change
+  const syncImageStyles = (component: unknown) => {
+    if (!component || typeof component !== 'object') return;
+    const comp = component as {
+      is?: (type: string) => boolean;
+      get?: (k: string) => unknown;
+      getAttributes?: () => Record<string, unknown>;
+      addStyle?: (style: Record<string, string>) => void;
+      getEl?: () => HTMLElement | null;
+    };
+    const isImg =
+      !!comp.is?.('image') ||
+      (comp.get?.('tagName') as unknown as string) === 'img';
+    if (!isImg) return;
+
+    const attrs = comp.getAttributes?.() || {};
+    const newStyles: Record<string, string> = {};
+
+    if (attrs['data-object-fit']) {
+      newStyles['object-fit'] = String(attrs['data-object-fit']);
+    }
+    if (attrs['data-aspect-ratio']) {
+      newStyles['aspect-ratio'] =
+        attrs['data-aspect-ratio'] === 'auto'
+          ? 'auto'
+          : String(attrs['data-aspect-ratio']);
+    }
+    if (attrs['data-max-height']) {
+      newStyles['max-height'] =
+        attrs['data-max-height'] === 'none'
+          ? 'none'
+          : String(attrs['data-max-height']);
+    }
+    if (attrs['data-border-radius']) {
+      newStyles['border-radius'] = String(attrs['data-border-radius']);
+    }
+    if (attrs['data-image-width']) {
+      newStyles['width'] = String(attrs['data-image-width']);
+    }
+    if (attrs['data-object-position']) {
+      newStyles['object-position'] = String(attrs['data-object-position']);
+    }
+    if (attrs['data-image-align']) {
+      const align = String(attrs['data-image-align']);
+      if (align === 'center') {
+        newStyles['margin-left'] = 'auto';
+        newStyles['margin-right'] = 'auto';
+        newStyles['display'] = 'block';
+      } else if (align === 'right') {
+        newStyles['margin-left'] = 'auto';
+        newStyles['margin-right'] = '0';
+        newStyles['display'] = 'block';
+      } else {
+        newStyles['margin-left'] = '0';
+        newStyles['margin-right'] = 'auto';
+        newStyles['display'] = 'block';
+      }
+    }
+
+    if (Object.keys(newStyles).length > 0) {
+      comp.addStyle?.(newStyles);
+      const el = comp.getEl?.();
+      if (el) {
+        Object.assign(el.style, newStyles);
+      }
+    }
+  };
+
+  editor.on('component:update', syncImageStyles);
+  editor.on('component:update:attributes', syncImageStyles);
 
   // 3. Dynamic reaction: when user changes Schema Section trait, re-filter CMS Dynamic Slot trait instantly
   editor.on(
@@ -299,15 +572,37 @@ export function register_universal_cms_traits(
       const slot = comp.getAttributes?.()?.['data-cms-slot'] as
         | string
         | undefined;
-      if (slot && opts.schemaValues && opts.schemaValues[slot] !== undefined) {
-        const val = opts.schemaValues[slot];
-        const isImg = comp.is?.('image') || comp.get?.('tagName') === 'img';
-        if (isImg) {
-          comp.addAttributes?.({ src: String(val) });
-        } else if (comp.components && typeof val === 'string') {
-          comp.components(val);
+      const schemaSlug = comp.getAttributes?.()?.['data-cms-schema'] as
+        | string
+        | undefined;
+      if (slot && opts.schemaValues) {
+        let val = opts.schemaValues[slot];
+        if (val === undefined && schemaSlug) {
+          val = opts.schemaValues[`${schemaSlug}.${slot}`];
+        }
+        if (val !== undefined && val !== null) {
+          const isImg = comp.is?.('image') || comp.get?.('tagName') === 'img';
+          if (isImg) {
+            comp.addAttributes?.({ src: String(val) });
+          } else if (comp.components) {
+            comp.components(typeof val === 'string' ? val : String(val));
+          }
         }
       }
     },
   );
+
+  // Trigger refresh on currently selected component if any
+  try {
+    const selected = editor.getSelected();
+    if (selected) {
+      (
+        editor as unknown as {
+          trigger: (e: string, ...args: unknown[]) => void;
+        }
+      ).trigger('component:selected', selected);
+    }
+  } catch {
+    // Ignore in non-DOM or unit test environments
+  }
 }

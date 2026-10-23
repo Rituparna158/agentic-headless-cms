@@ -39,7 +39,7 @@ export const register_dynamic_cms_blocks = (editor: Editor) => {
                 <h3 data-cms-slot="title" style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 10px; line-height: 1.35;">{{title}}</h3>
                 <p data-cms-slot="excerpt" style="font-size: 14px; color: #64748b; line-height: 1.6; margin: 0 0 20px; flex: 1;">{{excerpt}}</p>
                 <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid #f1f5f9;">
-                  <a href="/{{slug}}" target="_blank" rel="noopener noreferrer" style="font-size: 13px; font-weight: 700; color: #4f46e5; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                  <a href="/{{slug}}" data-cms-action="view-post" data-entry-slug="{{slug}}" style="font-size: 13px; font-weight: 700; color: #4f46e5; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
                     Read Full Story
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M5 12h14M12 5l7 7-7 7"/>
