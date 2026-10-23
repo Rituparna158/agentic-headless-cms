@@ -1,14 +1,7 @@
-export interface ImageOptimizationOptions {
-  width?: number;
-  height?: number;
-  quality?: number;
-  format?: 'webp' | 'avif' | 'jpeg' | 'png';
-  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside';
-}
+import { ImageOptimizationOptions } from '@/types/imageHanlder.types';
 
-/**
- * Returns an optimized image URL with proper dimension, format, and compression parameters.
- */
+// Returns an optimized image URL with proper dimension, format, and compression parameters.
+
 export function getOptimizedImageUrl(
   src: string | undefined | null,
   options: ImageOptimizationOptions = {},
@@ -71,9 +64,8 @@ export function getOptimizedImageUrl(
   return src;
 }
 
-/**
- * Generates a responsive srcset string for specified widths.
- */
+// Generates a responsive srcset string for specified widths.
+
 export function getResponsiveSrcSet(
   src: string | undefined | null,
   widths: number[] = [320, 640, 960, 1200],
