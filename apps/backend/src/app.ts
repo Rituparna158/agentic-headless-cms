@@ -53,9 +53,16 @@ export function createApp(): Express {
   );
   app.use(
     cors({
-      origin: env.CORS_ORIGIN.includes(',')
-        ? env.CORS_ORIGIN.split(',').map((o) => o.trim())
-        : env.CORS_ORIGIN,
+      origin: (origin, callback) => {
+        if (!origin || env.CORS_ORIGIN === '*') {
+          return callback(null, true);
+        }
+        const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+      },
       credentials: true,
     }),
   );
