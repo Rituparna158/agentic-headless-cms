@@ -32,13 +32,17 @@ export interface DynamicFieldDefinition {
   config?: Record<string, unknown> | null;
 }
 
+export type PageSchemaEntryType = 'single' | 'multi';
+
 export interface PageCustomSchema {
   id: string;
   name: string;
   slug: string;
   description?: string;
+  entryType?: PageSchemaEntryType;
   fields: DynamicFieldDefinition[];
   values: Record<string, unknown>;
+  items?: Array<Record<string, unknown>>;
   createdAt?: string;
   updatedAt?: string;
 }
