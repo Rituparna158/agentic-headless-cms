@@ -23,6 +23,7 @@ export interface PageSideDrawerProps {
   onClose: () => void;
   collection: ContentCollectionMeta | null | undefined;
   page: PageEntry | null | undefined;
+  collectionPages?: PageEntry[];
   onSavePage: (
     pageId: string,
     data: Record<string, unknown>,
@@ -37,7 +38,6 @@ export interface PageMetaDrawerHeaderProps {
   cleanSlug: string;
   pageId: string;
   pageTitle: string;
-  onPageTitleChange: (title: string) => void;
   isPublished: boolean;
   onOpenPreview: () => void;
   onOpenCanvas: () => void;
@@ -46,10 +46,19 @@ export interface PageMetaDrawerHeaderProps {
 
 export interface PageSchemaListProps {
   pageSchemas: PageCustomSchema[];
+  collectionSchemas?: Array<{
+    pageId: string;
+    pageTitle: string;
+    schema: PageCustomSchema;
+  }>;
   onStartCreateSchema: () => void;
   onStartEditSchema: (schema: PageCustomSchema) => void;
   onSelectFillContent: (schemaId: string) => void;
   onDeleteSchema: (schemaId: string, schemaName: string) => void;
+  onUseCollectionSchema?: (
+    sourceSchema: PageCustomSchema,
+    sourcePageTitle: string,
+  ) => void;
 }
 
 export interface FieldEditorModalProps {
@@ -67,6 +76,8 @@ export interface PageSchemaBuilderProps {
   setBuilderSlug: (slug: string) => void;
   builderDesc: string;
   setBuilderDesc: (desc: string) => void;
+  builderEntryType: 'single' | 'multi';
+  setBuilderEntryType: (type: 'single' | 'multi') => void;
   builderFields: DynamicFieldDefinition[];
   builderInitialValues: Record<string, unknown>;
   editingFieldData: EditingFieldFormData | null;
@@ -93,9 +104,13 @@ export interface PageSchemaBuilderProps {
 export interface PageSchemaFormProps {
   schema: PageCustomSchema;
   copiedToken: string | null;
+  activeItemIndex?: number;
   isSaving?: boolean;
   onCopyToken: (slot: string) => void;
   onFieldValueChange: (fieldApiId: string, value: unknown) => void;
+  onSelectActiveItem?: (index: number) => void;
+  onAddItem?: () => void;
+  onDeleteItem?: (index: number) => void;
   onBackToSchemas: () => void;
   onSaveForm: () => Promise<void>;
 }
