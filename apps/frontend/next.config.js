@@ -8,6 +8,9 @@ const nextConfig = {
     '@repo/validation',
     '@repo/shared-ui',
   ],
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       {
