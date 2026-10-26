@@ -297,6 +297,26 @@ const TableHeaderCell: React.FC<TableHeaderCellProps> = memo(
     return (
       <th
         scope="col"
+        aria-sort={
+          isSortableColumn
+            ? isActive
+              ? direction === 'asc'
+                ? 'ascending'
+                : 'descending'
+              : 'none'
+            : undefined
+        }
+        tabIndex={isSortableColumn ? 0 : undefined}
+        onKeyDown={
+          isSortableColumn
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onHeaderClick(column.key);
+                }
+              }
+            : undefined
+        }
         onClick={isSortableColumn ? () => onHeaderClick(column.key) : undefined}
         className={cn(
           'select-none px-3 py-2 font-semibold border-b border-border whitespace-nowrap',
@@ -305,7 +325,8 @@ const TableHeaderCell: React.FC<TableHeaderCellProps> = memo(
             : isCenterAligned
               ? 'text-center'
               : 'text-left',
-          isSortableColumn && 'cursor-pointer hover:bg-muted/80',
+          isSortableColumn &&
+            'cursor-pointer hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
         )}
       >
         <div

@@ -38,8 +38,7 @@ export function LoginForm() {
   const [resetError, setResetError] = useState<string | null>(null);
 
   const form = useForm<LoginInput>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(loginSchema) as any,
+    resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '', rememberMe: false },
   });
 

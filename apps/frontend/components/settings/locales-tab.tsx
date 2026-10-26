@@ -125,6 +125,7 @@ export function LocalesTab() {
                   className="text-red-500 hover:text-red-600"
                   onClick={() => setPendingDelete(locale)}
                   title="Delete Locale"
+                  aria-label="Delete Locale"
                 >
                   <Trash2 className="size-4" />
                 </Button>

@@ -89,6 +89,7 @@ function FolderNode({
             e.stopPropagation();
             setPendingDelete(folder.id);
           }}
+          aria-label={`Delete folder ${folder.name}`}
         >
           <Trash2 className="w-4 h-4" />
         </Button>
@@ -179,6 +180,7 @@ export function MediaFolderTree({
           size="icon"
           className="w-6 h-6"
           onClick={() => setIsCreating(!isCreating)}
+          aria-label="Create new folder"
         >
           <Plus className="w-4 h-4" />
         </Button>

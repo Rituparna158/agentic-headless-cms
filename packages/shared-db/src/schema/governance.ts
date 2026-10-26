@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   integer,
   jsonb,
   numeric,
@@ -47,38 +48,56 @@ export const approvals = pgTable('approvals', {
 // The differentiator's foundation (FR-AG-6/7): immutable, attributable log of every
 // human or agent write. Enforce immutability at the DB grant level (revoke UPDATE/DELETE
 // on this table for the application role) — this schema alone doesn't guarantee it.
-export const auditLogs = pgTable('audit_logs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  applicationId: uuid('application_id')
-    .notNull()
-    .default(sql`current_setting('app.current_application_id', true)::uuid`)
-    .references(() => applications.id, { onDelete: 'cascade' }),
-  actorType: actorTypeEnum('actor_type').notNull(),
-  actorUserId: uuid('actor_user_id').references(() => users.id, {
-    onDelete: 'set null',
-  }),
-  actorAgentId: uuid('actor_agent_id').references(() => agents.id, {
-    onDelete: 'set null',
-  }),
-  action: auditActionEnum('action').notNull(),
-  resourceType: varchar('resource_type', { length: 100 }).notNull(),
-  resourceId: uuid('resource_id').notNull(),
-  beforeState: jsonb('before_state'),
-  afterState: jsonb('after_state'),
-  revertedByLogId: uuid('reverted_by_log_id').references(
-    (): AnyPgColumn => auditLogs.id,
-    {
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    actorType: actorTypeEnum('actor_type').notNull(),
+    actorUserId: uuid('actor_user_id').references(() => users.id, {
       onDelete: 'set null',
-    },
-  ),
-  // ip, token id, MCP tool name, prompt reference, etc. — kept as one flexible
-  // bag rather than a single ip_address column so it covers whatever context
-  // the write path actually has available.
-  context: jsonb('context'),
-  timestamp: timestamp('timestamp', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+    }),
+    actorAgentId: uuid('actor_agent_id').references(() => agents.id, {
+      onDelete: 'set null',
+    }),
+    action: auditActionEnum('action').notNull(),
+    resourceType: varchar('resource_type', { length: 100 }).notNull(),
+    resourceId: uuid('resource_id').notNull(),
+    beforeState: jsonb('before_state'),
+    afterState: jsonb('after_state'),
+    revertedByLogId: uuid('reverted_by_log_id').references(
+      (): AnyPgColumn => auditLogs.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
+    // ip, token id, MCP tool name, prompt reference, etc. — kept as one flexible
+    // bag rather than a single ip_address column so it covers whatever context
+    // the write path actually has available.
+    context: jsonb('context'),
+    timestamp: timestamp('timestamp', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    appTimestampIdx: index('audit_logs_app_timestamp_idx').on(
+      table.applicationId,
+      table.timestamp,
+    ),
+    appResourceIdx: index('audit_logs_app_resource_idx').on(
+      table.applicationId,
+      table.resourceType,
+      table.resourceId,
+    ),
+    appActionIdx: index('audit_logs_app_action_idx').on(
+      table.applicationId,
+      table.action,
+    ),
+  }),
+);
 // The underlying LLM call: what was asked, what came back, which
 // provider/model, what it cost. One agent turn may span zero or more of
 // these (a rule-based automation might invoke tools with no LLM call at all).

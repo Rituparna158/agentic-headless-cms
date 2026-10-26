@@ -124,7 +124,12 @@ export function TokensTab() {
                   value={generatedToken}
                   className="font-mono text-sm flex-1"
                 />
-                <Button variant="outline" size="icon" onClick={handleCopy}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopy}
+                  aria-label="Copy token"
+                >
                   {copied ? (
                     <Check className="size-4 text-green-600" />
                   ) : (
@@ -274,6 +279,7 @@ export function TokensTab() {
                       setIsRevokeOpen(true);
                     }}
                     title="Revoke Token"
+                    aria-label="Revoke Token"
                   >
                     <Trash2 className="size-4" />
                   </Button>
