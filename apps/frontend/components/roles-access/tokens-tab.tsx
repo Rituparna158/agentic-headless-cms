@@ -279,7 +279,7 @@ export function TokensTab() {
                       setIsRevokeOpen(true);
                     }}
                     title="Revoke Token"
-                    aria-label={`Revoke token ${token.name}`}
+                    aria-label="Revoke Token"
                   >
                     <Trash2 className="size-4" />
                   </Button>
