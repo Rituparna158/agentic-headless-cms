@@ -134,6 +134,7 @@ export function WebhookDeliveriesDrawer({
               className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
               onClick={copyUrlToClipboard}
               title="Copy URL"
+              aria-label="Copy payload URL"
             >
               {hasCopiedUrl ? (
                 <Check className="size-3 text-emerald-500" />

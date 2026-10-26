@@ -162,7 +162,12 @@ function RoleList({
         <h3 className="font-semibold text-sm uppercase text-muted-foreground">
           Roles
         </h3>
-        <Button variant="ghost" size="icon" onClick={() => onSelectRole('new')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onSelectRole('new')}
+          aria-label="Create new role"
+        >
           <Plus className="size-4" />
         </Button>
       </div>
