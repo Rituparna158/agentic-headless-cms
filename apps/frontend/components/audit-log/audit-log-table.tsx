@@ -111,59 +111,27 @@ export function AuditLogTable() {
     const params: GetAuditLogsQuery = {
       page,
       limit: pageSize,
+      sortBy: sortKey,
+      sortDirection,
     };
     if (actionFilter) params.action = actionFilter;
     if (resourceFilter) params.resourceType = resourceFilter;
     if (searchQuery.trim()) params.search = searchQuery.trim();
     return params;
-  }, [page, pageSize, actionFilter, resourceFilter, searchQuery]);
+  }, [
+    page,
+    pageSize,
+    sortKey,
+    sortDirection,
+    actionFilter,
+    resourceFilter,
+    searchQuery,
+  ]);
 
   const { data, isLoading, isError, refetch } = useAuditLogs(queryParams);
 
-  // Use server-returned data directly — the API already handles search filtering
+  // Use server-returned data directly — the API handles global server-side sorting and filtering
   const displayLogs = React.useMemo(() => data?.data ?? [], [data?.data]);
-
-  // Client-side sorting on the actual record data values
-  const sortedLogs = React.useMemo(() => {
-    const list = [...displayLogs];
-    list.sort((a, b) => {
-      if (sortKey === 'action') {
-        const aVal = a.action || '';
-        const bVal = b.action || '';
-        const cmp = aVal.localeCompare(bVal, undefined, {
-          sensitivity: 'base',
-        });
-        return sortDirection === 'asc' ? cmp : -cmp;
-      }
-      if (sortKey === 'resource') {
-        const aVal = `${a.resourceType} ${a.resourceId}`;
-        const bVal = `${b.resourceType} ${b.resourceId}`;
-        const cmp = aVal.localeCompare(bVal, undefined, {
-          sensitivity: 'base',
-        });
-        return sortDirection === 'asc' ? cmp : -cmp;
-      }
-      if (sortKey === 'actor') {
-        const aVal =
-          `${a.actorFirstName || ''} ${a.actorLastName || ''} ${a.actorEmail || ''}`.trim() ||
-          'System';
-        const bVal =
-          `${b.actorFirstName || ''} ${b.actorLastName || ''} ${b.actorEmail || ''}`.trim() ||
-          'System';
-        const cmp = aVal.localeCompare(bVal, undefined, {
-          sensitivity: 'base',
-        });
-        return sortDirection === 'asc' ? cmp : -cmp;
-      }
-      if (sortKey === 'timestamp') {
-        const aTime = new Date(a.timestamp).getTime();
-        const bTime = new Date(b.timestamp).getTime();
-        return sortDirection === 'asc' ? aTime - bTime : bTime - aTime;
-      }
-      return 0;
-    });
-    return list;
-  }, [displayLogs, sortKey, sortDirection]);
 
   const handleRowClick = React.useCallback((log: AuditLogRecord) => {
     setSelectedLog(log);
@@ -174,6 +142,8 @@ export function AuditLogTable() {
     setActionFilter('');
     setResourceFilter('');
     setSearchQuery('');
+    setSortKey('timestamp');
+    setSortDirection('desc');
     setPage(1);
   }, []);
 
@@ -184,8 +154,8 @@ export function AuditLogTable() {
 
   // Pure data transformation memoized separately from JSX
   const formattedLogs = React.useMemo(() => {
-    return sortedLogs.map(formatAuditLogRecord);
-  }, [sortedLogs]);
+    return displayLogs.map(formatAuditLogRecord);
+  }, [displayLogs]);
 
   // Table row JSX presentation mapping
   const rows = React.useMemo(() => {
@@ -407,6 +377,7 @@ export function AuditLogTable() {
             onSortChange={(key: string, dir: 'asc' | 'desc') => {
               setSortKey(key);
               setSortDirection(dir);
+              setPage(1);
             }}
             manualPagination
             enablePagination={true}
