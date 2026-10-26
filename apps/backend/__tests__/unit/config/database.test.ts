@@ -29,6 +29,8 @@ describe('Database Configuration DI', () => {
       max: 10,
       ssl: undefined,
       onIdleClientError: expect.any(Function),
+      slowQueryThresholdMs: 100,
+      onSlowQuery: expect.any(Function),
     });
   });
 

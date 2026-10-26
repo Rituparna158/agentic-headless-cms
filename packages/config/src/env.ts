@@ -27,6 +27,11 @@ const baseEnvSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  DATABASE_SLOW_QUERY_THRESHOLD_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(100),
 
   CORS_ORIGIN: z.string().default('http://localhost:3001'),
   LOG_LEVEL: z

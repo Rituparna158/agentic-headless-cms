@@ -20,6 +20,15 @@ export function getDatabaseAdapter(): DatabasePort<Database> {
       onIdleClientError: (error) => {
         logger.error({ err: error }, 'Idle Postgres client error');
       },
+      slowQueryThresholdMs: env.DATABASE_SLOW_QUERY_THRESHOLD_MS ?? 100,
+      onSlowQuery: (query: string, durationMs: number) => {
+        const truncatedQuery =
+          query.length > 500 ? `${query.slice(0, 500)}... [truncated]` : query;
+        logger.warn(
+          { query: truncatedQuery, durationMs },
+          `Slow database query detected (${durationMs}ms)`,
+        );
+      },
     });
     return adapterInstance;
   }

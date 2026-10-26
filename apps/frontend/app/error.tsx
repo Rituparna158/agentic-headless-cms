@@ -24,6 +24,12 @@ export default function ErrorBoundary({ error, reset }: ErrorProps) {
     console.error('Unhandled Application Error:', error);
   }, [error]);
 
+  const isProduction = process.env.NODE_ENV === 'production';
+  const errorMessage = isProduction
+    ? 'An unexpected error occurred while processing your request. Please try again.'
+    : error.message ||
+      'An unexpected error occurred while processing your request. Please try again.';
+
   return (
     <ErrorPage variant="default" icon={AlertCircle}>
       <ErrorPageContent>
@@ -31,10 +37,7 @@ export default function ErrorBoundary({ error, reset }: ErrorProps) {
           <ErrorPageErrorCode errorCode="500" animationType="none" />
         </ErrorPageIcons>
         <ErrorPageHeading>Something went wrong</ErrorPageHeading>
-        <ErrorPageDesc>
-          {error.message ||
-            'An unexpected error occurred while processing your request. Please try again.'}
-        </ErrorPageDesc>
+        <ErrorPageDesc>{errorMessage}</ErrorPageDesc>
         <ErrorPageLinks>
           <ButtonWithIcon
             variant="default"

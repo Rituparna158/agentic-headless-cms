@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   jsonb,
   pgTable,
   text,
@@ -182,28 +183,40 @@ export const userIdentities = pgTable(
     ),
   }),
 );
-export const apiTokens = pgTable('api_tokens', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  applicationId: uuid('application_id')
-    .notNull()
-    .default(sql`current_setting('app.current_application_id', true)::uuid`)
-    .references(() => applications.id, { onDelete: 'cascade' }),
-  name: varchar('name', { length: 255 }).notNull(),
-  type: tokenTypeEnum('type').notNull().default('user'),
-  tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
-  roleId: uuid('role_id').references(() => roles.id, { onDelete: 'set null' }),
-  scopes: jsonb('scopes'),
-  rateLimitConfig: jsonb('rate_limit_config'),
-  createdBy: uuid('created_by').references(() => users.id, {
-    onDelete: 'set null',
+export const apiTokens = pgTable(
+  'api_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 255 }).notNull(),
+    type: tokenTypeEnum('type').notNull().default('user'),
+    tokenHash: varchar('token_hash', { length: 255 }).notNull().unique(),
+    roleId: uuid('role_id').references(() => roles.id, {
+      onDelete: 'set null',
+    }),
+    scopes: jsonb('scopes'),
+    rateLimitConfig: jsonb('rate_limit_config'),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    appRevokedExpiresIdx: index('api_tokens_app_revoked_expires_idx').on(
+      table.applicationId,
+      table.revokedAt,
+      table.expiresAt,
+    ),
   }),
-  expiresAt: timestamp('expires_at', { withTimezone: true }),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+);
 export const agents = pgTable('agents', {
   id: uuid('id').primaryKey().defaultRandom(),
   applicationId: uuid('application_id')

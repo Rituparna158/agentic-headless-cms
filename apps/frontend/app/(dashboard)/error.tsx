@@ -14,6 +14,12 @@ export default function DashboardErrorBoundary({ error, reset }: ErrorProps) {
     console.error('Dashboard Section Error:', error);
   }, [error]);
 
+  const isProduction = process.env.NODE_ENV === 'production';
+  const errorMessage = isProduction
+    ? 'An error occurred while loading this section. Please try again.'
+    : error.message ||
+      'An error occurred while loading this section. Please try again.';
+
   return (
     <div className="flex h-full min-h-[400px] w-full flex-col items-center justify-center p-6 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 mb-4">
@@ -23,8 +29,7 @@ export default function DashboardErrorBoundary({ error, reset }: ErrorProps) {
         Failed to load content
       </h2>
       <p className="max-w-md text-sm text-neutral-600 dark:text-neutral-400 mb-6">
-        {error.message ||
-          'An error occurred while loading this section. Please try again.'}
+        {errorMessage}
       </p>
       <Button
         variant="default"

@@ -11,4 +11,6 @@ export interface DatabaseClientOptions {
   connectionTimeoutMillis?: number;
   ssl?: PoolConfig['ssl'];
   onIdleClientError?: (error: unknown) => void;
+  slowQueryThresholdMs?: number;
+  onSlowQuery?: (query: string, durationMs: number) => void;
 }
