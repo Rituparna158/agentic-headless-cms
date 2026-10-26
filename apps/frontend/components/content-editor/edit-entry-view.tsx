@@ -3,7 +3,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
 import { getContentEntry } from '@/lib/api/content';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+} from '@repo/shared-ui';
 import { ContentEntryForm } from './content-entry-form';
 
 export function EditEntryView({
@@ -29,7 +35,90 @@ export function EditEntryView({
   });
 
   if (isSchemaLoading || isEntryLoading) {
-    return <p className="text-muted-foreground text-sm">Loading…</p>;
+    return (
+      <div className="grid gap-6">
+        <Skeleton
+          variant="text"
+          width="220px"
+          height="32px"
+          className="rounded"
+        />
+        <div className="rounded-xl border border-border bg-card p-6 space-y-6">
+          <Skeleton
+            variant="text"
+            width="80px"
+            height="24px"
+            className="rounded"
+          />
+          <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/20">
+            <Skeleton
+              variant="rectangular"
+              width="140px"
+              height="32px"
+              className="rounded-lg"
+            />
+            <div className="flex gap-2">
+              <Skeleton
+                variant="rectangular"
+                width="90px"
+                height="32px"
+                className="rounded-lg"
+              />
+              <Skeleton
+                variant="rectangular"
+                width="90px"
+                height="32px"
+                className="rounded-lg"
+              />
+            </div>
+          </div>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Skeleton
+                variant="text"
+                width="120px"
+                height="16px"
+                className="rounded"
+              />
+              <Skeleton
+                variant="rectangular"
+                width="100%"
+                height="40px"
+                className="rounded-md"
+              />
+            </div>
+            <div className="space-y-2">
+              <Skeleton
+                variant="text"
+                width="140px"
+                height="16px"
+                className="rounded"
+              />
+              <Skeleton
+                variant="rectangular"
+                width="100%"
+                height="40px"
+                className="rounded-md"
+              />
+            </div>
+            <div className="space-y-2">
+              <Skeleton
+                variant="text"
+                width="100px"
+                height="16px"
+                className="rounded"
+              />
+              <Skeleton
+                variant="rectangular"
+                width="100%"
+                height="120px"
+                className="rounded-md"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isSchemaError || !schema) {

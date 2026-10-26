@@ -432,4 +432,56 @@ describe('ContentEntryForm', () => {
       expect(screen.getByDisplayValue('Hola Mundo')).toBeInTheDocument();
     });
   });
+
+  it('renders loading skeleton while fetching localized entry data', async () => {
+    let resolveGetEntry: (value: unknown) => void;
+    mockListLocales.mockResolvedValue({
+      data: [
+        { id: 'loc-1', code: 'en', name: 'English', isDefault: true },
+        { id: 'loc-2', code: 'es', name: 'Spanish', isDefault: false },
+      ],
+    });
+    mockGetEntry.mockReturnValue(
+      new Promise((resolve) => {
+        resolveGetEntry = resolve;
+      }),
+    );
+
+    const entry: ContentEntryRecord = {
+      id: 'entry-1',
+      status: 'draft',
+      data: { title: 'Hello World', views: 42 },
+      publishedData: null,
+    };
+
+    const user = userEvent.setup();
+    renderForm(entry);
+
+    const localeBtn = await screen.findByRole('button', {
+      name: /select locale/i,
+    });
+    await user.click(localeBtn);
+
+    const spanishOption = await screen.findByText('Spanish');
+    await user.click(spanishOption);
+
+    // Skeleton screen should be displayed while fetch is pending
+    expect(
+      await screen.findByTestId('locale-loading-skeleton'),
+    ).toBeInTheDocument();
+
+    // Resolve the query
+    resolveGetEntry!({
+      id: 'entry-1',
+      status: 'draft',
+      data: { title: 'Hola Mundo', views: 99 },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('locale-loading-skeleton'),
+      ).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue('Hola Mundo')).toBeInTheDocument();
+    });
+  });
 });

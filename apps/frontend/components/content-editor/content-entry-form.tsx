@@ -18,7 +18,14 @@ import {
 } from '@/lib/api/content';
 import { listLocales } from '@/lib/api/locales';
 import { ApiError } from '@/lib/api-client';
-import { Badge, Button, Dropdown, DropdownItem } from '@repo/shared-ui';
+import {
+  Badge,
+  Button,
+  Dropdown,
+  DropdownItem,
+  Skeleton,
+} from '@repo/shared-ui';
+import type { SchemaField } from '@repo/types';
 import { ChevronDown, Globe, History, Trash2, Undo2 } from 'lucide-react';
 import { FormProvider } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -29,6 +36,94 @@ import type { ContentEntryFormProps } from '@/types/component.types';
 import { useHasPermission } from '@/hooks/use-permissions';
 
 import { buildDefaultValues } from '@/utils/form';
+
+/**
+ * Type-aware field loading skeleton using Ignix UI Skeleton.
+ * Accurately mirrors field labels, inputs, switches, and rich-text areas to prevent layout shift.
+ */
+function FormFieldSkeleton({ field }: { field: SchemaField }) {
+  if (field.dataType === 'boolean') {
+    return (
+      <div className="grid gap-2">
+        <Skeleton
+          variant="text"
+          width="100px"
+          height="16px"
+          className="rounded"
+        />
+        <Skeleton
+          variant="rectangular"
+          width="44px"
+          height="24px"
+          className="rounded-full"
+        />
+      </div>
+    );
+  }
+
+  if (field.dataType === 'richtext') {
+    return (
+      <div className="grid gap-2">
+        <Skeleton
+          variant="text"
+          width="120px"
+          height="16px"
+          className="rounded"
+        />
+        <div className="rounded-lg border border-border/70 p-3 space-y-2">
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height="32px"
+            className="rounded"
+          />
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height="120px"
+            className="rounded"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (field.dataType === 'media') {
+    return (
+      <div className="grid gap-2">
+        <Skeleton
+          variant="text"
+          width="110px"
+          height="16px"
+          className="rounded"
+        />
+        <Skeleton
+          variant="rectangular"
+          width="100%"
+          height="96px"
+          className="rounded-lg border border-dashed border-border/70"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-2">
+      <Skeleton
+        variant="text"
+        width="130px"
+        height="16px"
+        className="rounded"
+      />
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height="40px"
+        className="rounded-md"
+      />
+    </div>
+  );
+}
 
 export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const router = useRouter();
@@ -73,7 +168,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   }, [defaultLocale, selectedLocale]);
 
   // Query entry data for currently selected locale when editing an existing entry
-  const { data: localizedEntry } = useQuery({
+  const { data: localizedEntry, isFetching: isLocalizedLoading } = useQuery({
     queryKey: ['content', schema.slug, 'entry', entry?.id, selectedLocale],
     queryFn: async () => {
       try {
@@ -382,7 +477,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 variant="outline"
                 size="sm"
                 className="text-xs font-medium"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isLocalizedLoading}
               >
                 {isSubmitting ? 'Saving…' : 'Save Draft'}
               </Button>
@@ -412,7 +507,11 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                     variant="outline"
                     size="sm"
                     className="text-xs font-medium flex items-center gap-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400"
-                    disabled={!canPublish || unpublishMutation.isPending}
+                    disabled={
+                      !canPublish ||
+                      unpublishMutation.isPending ||
+                      isLocalizedLoading
+                    }
                     onClick={() => setIsUnpublishConfirmOpen(true)}
                   >
                     <Undo2 className="size-3.5" />
@@ -434,7 +533,11 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   type="button"
                   size="sm"
                   className="text-xs font-medium"
-                  disabled={!canPublish || publishMutation.isPending}
+                  disabled={
+                    !canPublish ||
+                    publishMutation.isPending ||
+                    isLocalizedLoading
+                  }
                   onClick={() => void handlePublishClick()}
                 >
                   {publishMutation.isPending ? 'Publishing…' : 'Publish'}
@@ -453,7 +556,9 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   variant="outline"
                   size="sm"
                   className="text-xs font-medium flex items-center gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                  disabled={!canDelete || deleteMutation.isPending}
+                  disabled={
+                    !canDelete || deleteMutation.isPending || isLocalizedLoading
+                  }
                   onClick={() => setIsDeleteConfirmOpen(true)}
                 >
                   <Trash2 className="size-3.5" />
@@ -477,13 +582,24 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
 
         {/* Dynamic Fields taking full width */}
         <div className="grid gap-5 w-full">
-          {definition.fields.map((field) => (
-            <DynamicField
-              key={field.apiId}
-              field={field}
-              control={form.control}
-            />
-          ))}
+          {isLocalizedLoading ? (
+            <div
+              data-testid="locale-loading-skeleton"
+              className="grid gap-5 w-full"
+            >
+              {definition.fields.map((field) => (
+                <FormFieldSkeleton key={field.apiId} field={field} />
+              ))}
+            </div>
+          ) : (
+            definition.fields.map((field) => (
+              <DynamicField
+                key={field.apiId}
+                field={field}
+                control={form.control}
+              />
+            ))
+          )}
         </div>
       </form>
 
