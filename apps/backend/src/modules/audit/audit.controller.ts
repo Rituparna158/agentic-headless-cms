@@ -12,7 +12,7 @@ export const listAuditLogs: RequestHandler = asyncHandler(
       ? Number(req.query.limit)
       : req.query.pageSize
         ? Number(req.query.pageSize)
-        : 20;
+        : 15;
 
     const query: GetAuditLogsQuery = {
       page: req.query.page ? Number(req.query.page) : 1,
