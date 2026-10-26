@@ -12,7 +12,7 @@ export const listAuditLogs: RequestHandler = asyncHandler(
       ? Number(req.query.limit)
       : req.query.pageSize
         ? Number(req.query.pageSize)
-        : 20;
+        : 15;
 
     const query: GetAuditLogsQuery = {
       page: req.query.page ? Number(req.query.page) : 1,
@@ -23,6 +23,11 @@ export const listAuditLogs: RequestHandler = asyncHandler(
       startDate: req.query.startDate as string | undefined,
       endDate: req.query.endDate as string | undefined,
       search: (req.query.search || req.query.searchQuery) as string | undefined,
+      sortBy: (req.query.sortBy || req.query.sortKey) as string | undefined,
+      sortOrder: (req.query.sortOrder || req.query.sortDirection) as
+        'asc' | 'desc' | undefined,
+      sortDirection: (req.query.sortDirection || req.query.sortOrder) as
+        'asc' | 'desc' | undefined,
     };
 
     const result = await auditService.list(query);

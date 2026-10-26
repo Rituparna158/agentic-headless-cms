@@ -29,6 +29,7 @@ export class AgenticCmsClient<
         'HEADLESS_CMS',
       apiKey: config.apiKey,
       headers: config.headers,
+      retry: config.retry,
     });
     this.auth.setTransport(this.transport);
 

@@ -23,6 +23,7 @@ export * from './components/ui/datepicker';
 export * from './components/ui/spinner';
 export * from './components/ui/scroll-area';
 export * from './components/ui/split';
+export * from './components/ui/skeleton';
 export * from './templates/errorpage';
 export * from './templates/maintenance-page';
 export * from './tokens/colorTokens';

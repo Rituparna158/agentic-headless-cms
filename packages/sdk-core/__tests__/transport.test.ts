@@ -141,7 +141,7 @@ describe('HttpTransport', () => {
     expect(headers.get('x-custom-header')).toBe('override');
   });
 
-  it('should throw ApiError on 500 response', async () => {
+  it('should throw ApiError on 500 response without retrying', async () => {
     (global.fetch as import('vitest').Mock).mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -150,5 +150,88 @@ describe('HttpTransport', () => {
     });
 
     await expect(transport.request('/error')).rejects.toThrow(ApiError);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should retry transient 503 response with backoff and succeed on subsequent attempt', async () => {
+    const retryTransport = new HttpTransport(
+      'https://api.example.com',
+      authClient,
+      { retry: { retries: 2, initialDelayMs: 10 } },
+    );
+
+    (global.fetch as import('vitest').Mock)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: 'Service Unavailable',
+        json: async () => ({ message: 'Overloaded' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+    const result = await retryTransport.request<{ success: boolean }>(
+      '/transient',
+    );
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ success: true });
+  });
+
+  it('should retry on network error and succeed on subsequent attempt', async () => {
+    const retryTransport = new HttpTransport(
+      'https://api.example.com',
+      authClient,
+      { retry: { retries: 2, initialDelayMs: 10 } },
+    );
+
+    (global.fetch as import('vitest').Mock)
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: 'recovered' }),
+      });
+
+    const result = await retryTransport.request<{ data: string }>('/network');
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ data: 'recovered' });
+  });
+
+  it('should throw after exceeding max retries on persistent 502 errors', async () => {
+    const retryTransport = new HttpTransport(
+      'https://api.example.com',
+      authClient,
+      { retry: { retries: 2, initialDelayMs: 10 } },
+    );
+
+    (global.fetch as import('vitest').Mock).mockResolvedValue({
+      ok: false,
+      status: 502,
+      statusText: 'Bad Gateway',
+      json: async () => ({ message: 'Bad Gateway' }),
+    });
+
+    await expect(retryTransport.request('/persistent-error')).rejects.toThrow(
+      ApiError,
+    );
+    // 1 initial attempt + 2 retries = 3 calls
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('should respect retry: false option to disable retries', async () => {
+    (global.fetch as import('vitest').Mock).mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+      json: async () => ({ message: 'Overloaded' }),
+    });
+
+    await expect(
+      transport.request('/no-retry', { retry: false }),
+    ).rejects.toThrow(ApiError);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 });
