@@ -11,7 +11,18 @@ Welcome to the **Agentic Headless CMS**! This project is a modular, API-first co
 Unlike a traditional CMS (like WordPress or Drupal) where the content database, admin dashboard, and public website templates are tightly coupled, a **Headless CMS** separates the content repository and management backend from the frontend presentation layer:
 
 - **Backend & APIs:** The core CMS validates, manages, and stores content, exposing it through clean REST (`/api/v1`) and GraphQL (`/graphql`) endpoints.
-- **Frontend Independence:** Any client application—a Next.js website, mobile app (iOS/Android), or external service—can fetch and render the exact same content from one central system using our client SDKs (`@repo/sdk-react`, `@repo/sdk-core`).
+- **Frontend Independence:** Any client application—a Next.js website, mobile app (iOS/Android), or external service—can fetch and render the exact same content from one central system using our client SDKs (`@repo/sdk-react`, `@repo/sdk-nextjs`, `@repo/sdk-node`, `@repo/sdk-core`).
+
+---
+
+## Key Capabilities & Features
+
+- **Dynamic Content Modeling:** Define Collection Types (multi-entry models like Articles, Products) and Single Types (singletons like Site Settings, Homepage) with flexible field types (Text, Rich Text, Media, Number, Boolean, Relations, and JSON).
+- **Draft / Publish Lifecycle & Versioning:** Full draft state isolation, content version histories, and point-in-time rollbacks for maximum content safety.
+- **Native Localization:** Multi-locale content support with localized field fallbacks across REST and GraphQL endpoints.
+- **Media Asset Pipeline:** Local disk and AWS S3/MinIO cloud storage adapters with background image transformations (thumbnails, WebP conversion, resizing) powered by BullMQ and Sharp.
+- **Granular RBAC & Security:** Role-based permissions per schema and action (create, read, update, delete, publish), API token management with expiration, and TOTP Two-Factor Authentication (MFA).
+- **Omnichannel Content Delivery:** High-speed REST API (`/api/v1`), GraphQL schema with Apollo Server, and typed client SDKs.
 
 ---
 
@@ -28,20 +39,23 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 
 ### SDKs & Client Libraries (`packages/`)
 
-- **packages/sdk-core**: Isomorphic TypeScript client for querying the CMS API.
+- **packages/sdk-core**: Isomorphic TypeScript client for querying the CMS API with exponential backoff retries.
 - **packages/sdk-react**: React hooks (`useContentList`, `useContentEntry`, `useAuth`) powered by TanStack React Query.
 - **packages/sdk-codegen**: CLI code generator that produces TypeScript types from dynamic CMS content schemas.
 - **packages/sdk-nextjs**: Next.js App Router and Server Actions integration.
-- **packages/sdk-node**: Server-side Node.js SDK.
+- **packages/sdk-node**: Server-side Node.js SDK for scripts and background services.
 
 ### Shared Internal Packages (`packages/`)
 
-- **packages/shared-ui**: Shared accessible component primitives, dialogs, tables, and design tokens.
+- **packages/repository**: Decoupled repository data access layer with caching and sorting abstractions over Drizzle ORM.
+- **packages/shared-ui**: Shared accessible component primitives, dialogs, tables, skeletons, and design tokens.
 - **packages/shared-db**: Database schemas, ORM logic (Drizzle), PostgreSQL adapter, migrations, and seed scripts.
 - **packages/storage**: Multi-adapter storage (local disk and AWS S3/MinIO) with Sharp image processing.
 - **packages/validation**: Zod validation schemas and dynamic content compilers.
 - **packages/constants**: Shared runtime constants (error messages, HTTP status codes, cookies, email templates).
 - **packages/middlewares**: Express middlewares (Authentication, RBAC, error handling, rate limiting).
+- **packages/context**: AsyncLocalStorage-based request context and tenant storage.
+- **packages/plugin-sdk**: Extensible plugin contracts and lifecycle hooks for CMS extensions.
 - **packages/events**: Internal event emitter for system actions.
 - **packages/types**: Shared compile-time TypeScript interfaces and domain definitions.
 - **packages/config**: Centralized environment configuration and database adapters.
@@ -59,8 +73,8 @@ For end-users and teams who want to run the self-hosted CMS platform without clo
 1. **Download the production compose file and env template:**
 
    ```bash
-   curl -O https://raw.githubusercontent.com/mindfire-test/agentic-headless-cms/main/docker-compose.prod.yml
-   curl -O https://raw.githubusercontent.com/mindfire-test/agentic-headless-cms/main/.env.example
+   curl -O https://raw.githubusercontent.com/mindfiredigital/agentic-headless-cms/main/docker-compose.prod.yml
+   curl -O https://raw.githubusercontent.com/mindfiredigital/agentic-headless-cms/main/.env.example
    cp .env.example .env
    ```
 
@@ -197,13 +211,13 @@ Run the complete platform via Docker Compose (ideal for pre-release testing, sta
 
 ## Consuming Content with Client SDKs
 
-External frontend applications (React, Next.js, Remix, Astro) can consume published content directly:
+External frontend applications (React, Next.js, Remix, Astro, Node.js) can consume published content directly using our client SDKs:
 
 ```bash
 npm install @repo/sdk-core @repo/sdk-react
 ```
 
-```tsx
+````tsx
 import React from 'react';
 import { CmsProvider, useContentList } from '@repo/sdk-react';
 
@@ -212,9 +226,7 @@ function ArticleList() {
     data: articles,
     isLoading,
     error,
-  } = useContentList('article', {
-    status: 'published',
-  });
+  } = useContentList('article', { status: 'published' });
 
   if (isLoading) return <p>Loading articles...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -235,7 +247,6 @@ export default function App() {
     </CmsProvider>
   );
 }
-```
 
 ---
 
@@ -266,4 +277,4 @@ pnpm check-types   # Type-check all apps and packages
 pnpm format        # Format the codebase with Prettier
 pnpm build         # Build all apps and packages
 pnpm test          # Run backend + frontend unit/integration tests
-```
+````
