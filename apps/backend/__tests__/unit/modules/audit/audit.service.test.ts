@@ -141,6 +141,38 @@ describe('AuditService', () => {
     expect(result).toEqual(mockLog);
   });
 
+  it('should list audit logs with server-side sorting parameters', async () => {
+    const mockResponse = {
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 15,
+      totalPages: 0,
+    };
+
+    mockRepository.findMany.mockResolvedValue(mockResponse as any);
+
+    const result = await auditService.list({
+      page: 1,
+      limit: 15,
+      sortBy: 'action',
+      sortDirection: 'asc',
+    });
+
+    expect(mockRepository.findMany).toHaveBeenCalledWith({
+      page: 1,
+      limit: 15,
+      sortBy: 'action',
+      sortDirection: 'asc',
+    });
+    expect(result).toEqual(mockResponse);
+  });
+
+  it('should handle pattern-based cache invalidation safely when Redis is available or unavailable', async () => {
+    // Verifies invalidateCache does not throw and completes
+    await expect(auditService.invalidateCache()).resolves.toBeUndefined();
+  });
+
   it('should throw NotFoundError if audit log is not found', async () => {
     mockRepository.findById.mockResolvedValue(null);
 

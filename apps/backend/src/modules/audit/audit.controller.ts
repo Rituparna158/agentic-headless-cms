@@ -23,6 +23,11 @@ export const listAuditLogs: RequestHandler = asyncHandler(
       startDate: req.query.startDate as string | undefined,
       endDate: req.query.endDate as string | undefined,
       search: (req.query.search || req.query.searchQuery) as string | undefined,
+      sortBy: (req.query.sortBy || req.query.sortKey) as string | undefined,
+      sortOrder: (req.query.sortOrder || req.query.sortDirection) as
+        'asc' | 'desc' | undefined,
+      sortDirection: (req.query.sortDirection || req.query.sortOrder) as
+        'asc' | 'desc' | undefined,
     };
 
     const result = await auditService.list(query);

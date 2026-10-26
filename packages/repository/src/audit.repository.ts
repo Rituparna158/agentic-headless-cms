@@ -1,4 +1,15 @@
-import { and, desc, eq, gte, lte, ilike, or, type SQL, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  lte,
+  ilike,
+  or,
+  type SQL,
+  sql,
+} from 'drizzle-orm';
 import {
   auditLogs,
   users,
@@ -100,6 +111,27 @@ export class AuditRepository {
       const whereClause =
         conditions.length > 0 ? and(...conditions) : undefined;
 
+      const isAsc = (query.sortOrder || query.sortDirection) === 'asc';
+      const orderFn = isAsc ? asc : desc;
+
+      let orderByClause: SQL;
+      switch (query.sortBy) {
+        case 'action':
+          orderByClause = orderFn(auditLogs.action);
+          break;
+        case 'resource':
+        case 'resourceType':
+          orderByClause = orderFn(auditLogs.resourceType);
+          break;
+        case 'actor':
+          orderByClause = orderFn(users.firstName);
+          break;
+        case 'timestamp':
+        default:
+          orderByClause = orderFn(auditLogs.timestamp);
+          break;
+      }
+
       const data = await withTransaction(this.db, async (tx) => {
         return await tx
           .select({
@@ -124,7 +156,7 @@ export class AuditRepository {
           .where(whereClause)
           .limit(limit)
           .offset(offset)
-          .orderBy(desc(auditLogs.timestamp));
+          .orderBy(orderByClause);
       });
 
       const countResult = await withTransaction(this.db, async (tx) => {
