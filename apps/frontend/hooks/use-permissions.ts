@@ -7,7 +7,18 @@ export function useHasPermission(
 ): boolean {
   const user = useAuthStore((state) => state.user);
 
-  if (!user || !user.permissions) {
+  if (!user) {
+    return false;
+  }
+
+  const isAdmin = user.roles?.some((role) =>
+    ['admin', 'super_admin'].includes(role.toLowerCase()),
+  );
+  if (isAdmin) {
+    return true;
+  }
+
+  if (!user.permissions) {
     return false;
   }
 

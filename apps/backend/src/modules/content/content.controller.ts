@@ -7,6 +7,35 @@ import { DEFAULT_LOCALE, ERROR_MESSAGES } from '@repo/constants';
 import type { SchemaDefinition } from '@repo/types';
 import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
 const contentService = new ContentService();
+function checkAuthorizedForDrafts(req: Request, schemaId?: string): boolean {
+  const userRoles = (req.user?.roles || []).map((r: string) => r.toLowerCase());
+  if (
+    userRoles.some((r: string) =>
+      ['admin', 'super_admin', 'editor', 'author'].includes(r),
+    )
+  ) {
+    return true;
+  }
+  const userPerms = (req.user?.permissions || []) as Array<{
+    action: string;
+    schemaId?: string | null;
+    effect?: string;
+  }>;
+  return userPerms.some((p) => {
+    const actionMatches =
+      p.action === '*' ||
+      p.action === 'read' ||
+      p.action === 'create' ||
+      p.action === 'update';
+    const schemaMatches =
+      !schemaId ||
+      !p.schemaId ||
+      p.schemaId === null ||
+      p.schemaId === schemaId;
+    return actionMatches && schemaMatches && p.effect !== 'deny';
+  });
+}
+
 export const listEntries: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const schemaId = req.schemaId!;
@@ -16,12 +45,7 @@ export const listEntries: RequestHandler = asyncHandler(
       typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
 
     // Check user authorization for draft access
-    const userRoles = (req.user?.roles || []).map((r: string) =>
-      r.toLowerCase(),
-    );
-    const isAuthorizedForDrafts = userRoles.some((r: string) =>
-      ['admin', 'super_admin', 'editor', 'author'].includes(r),
-    );
+    const isAuthorizedForDrafts = checkAuthorizedForDrafts(req, schemaId);
 
     // Reject unauthorized requests trying to view draft or all entries
     const requestedStatus =
@@ -114,12 +138,7 @@ export const getEntry: RequestHandler = asyncHandler(
       logger.error({ entryId }, 'ContentController: entry not found');
       throw new ApiError(404, ERROR_MESSAGES.CONTENT.ENTRY_NOT_FOUND);
     }
-    const userRoles = (req.user?.roles || []).map((r: string) =>
-      r.toLowerCase(),
-    );
-    const isAuthorizedForDrafts = userRoles.some((r: string) =>
-      ['admin', 'super_admin', 'editor', 'author'].includes(r),
-    );
+    const isAuthorizedForDrafts = checkAuthorizedForDrafts(req, req.schemaId);
     if (entry.status === 'draft' && !isAuthorizedForDrafts) {
       logger.warn(
         { entryId },

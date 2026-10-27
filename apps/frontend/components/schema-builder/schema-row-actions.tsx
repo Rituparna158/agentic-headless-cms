@@ -16,6 +16,7 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
   const [showForceDeleteDialog, setShowForceDeleteDialog] = useState(false);
 
   const canDelete = useHasPermission('delete', schema.id);
+  const canUpdate = useHasPermission('update', schema.id);
 
   const deleteMutation = useMutation({
     mutationFn: ({ id, force }: { id: string; force: boolean }) =>
@@ -43,6 +44,14 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
     },
   });
 
+  if (!canUpdate && !canDelete) {
+    return (
+      <span className="text-xs text-muted-foreground italic px-2">
+        View only
+      </span>
+    );
+  }
+
   return (
     <>
       <Dropdown
@@ -54,15 +63,17 @@ export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
           </Button>
         }
       >
-        <DropdownItem asChild>
-          <Link
-            href={`/content-types/${schema.slug}/edit`}
-            className="flex items-center no-underline w-full cursor-pointer"
-          >
-            <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
-            Edit
-          </Link>
-        </DropdownItem>
+        {canUpdate && (
+          <DropdownItem asChild>
+            <Link
+              href={`/content-types/${schema.slug}/edit`}
+              className="flex items-center no-underline w-full cursor-pointer"
+            >
+              <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
+              Edit
+            </Link>
+          </DropdownItem>
+        )}
 
         <DropdownItem
           className="text-destructive focus:text-destructive cursor-pointer"

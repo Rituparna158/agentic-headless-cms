@@ -18,6 +18,7 @@ import {
 } from '@/components/layout/nav-items';
 import { listSchemas } from '@/lib/api/schemas';
 import { Badge, ScrollArea } from '@repo/shared-ui';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -38,6 +39,13 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     }
   }, [pathname, isContentPath]);
 
+  const user = useAuthStore((state) => state.user);
+  const status = useAuthStore((state) => state.status);
+  const isAdmin =
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin'].includes(role.toLowerCase()),
+    ) || false;
+
   // Fetch all schemas for the tree sub-menu with server-side search query
   const { data: schemasData } = useQuery({
     queryKey: ['schemas', schemaSearch],
@@ -50,7 +58,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     placeholderData: keepPreviousData,
   });
 
-  const schemas = useMemo(() => schemasData?.data ?? [], [schemasData]);
+  const schemas = useMemo(() => {
+    const list = schemasData?.data ?? [];
+    if (isAdmin || !user?.permissions) return list;
+    const permissions = user.permissions;
+    return list.filter((s) =>
+      permissions.some(
+        (p) =>
+          (p.schemaId === s.id || p.schemaId === '*' || !p.schemaId) &&
+          ['read', 'create', 'update', '*'].includes(p.action),
+      ),
+    );
+  }, [schemasData, isAdmin, user]);
 
   const activeTypeSlug = searchParams?.get('type');
 
@@ -243,11 +262,27 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     );
   }
 
+  const visibleSecondaryNavItems = useMemo(() => {
+    return secondaryNavItems.filter((item) => {
+      if (
+        item.href === '/audit-log' ||
+        item.href === '/roles-access' ||
+        item.href === '/webhooks'
+      ) {
+        if (status === 'loading' || status === 'idle') {
+          return true;
+        }
+        return isAdmin;
+      }
+      return true;
+    });
+  }, [isAdmin, status]);
+
   return (
     <nav className="flex flex-1 flex-col gap-1 p-3">
       {primaryNavItems.map(renderItem)}
       <div className="bg-border my-2 h-px" />
-      {secondaryNavItems.map(renderItem)}
+      {visibleSecondaryNavItems.map(renderItem)}
     </nav>
   );
 }

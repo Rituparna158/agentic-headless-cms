@@ -136,8 +136,11 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const [isLocaleConfirmOpen, setIsLocaleConfirmOpen] = useState(false);
   const [pendingLocale, setPendingLocale] = useState<string | null>(null);
 
+  const canCreate = useHasPermission('create', schema.id);
+  const canUpdate = useHasPermission('update', schema.id);
   const canPublish = useHasPermission('publish', schema.id);
   const canDelete = useHasPermission('delete', schema.id);
+  const canEdit = entry ? canUpdate : canCreate;
 
   const definition = schema.definition;
   // Rebuilt only when the schema itself changes, not on every render — the
@@ -471,7 +474,14 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               </Button>
             ) : null}
 
-            {showSaveDraft ? (
+            {!canEdit ? (
+              <Badge
+                variant="outline"
+                className="text-amber-600 bg-amber-500/10 border-amber-500/20 text-xs px-2.5 py-1"
+              >
+                Read-Only
+              </Badge>
+            ) : showSaveDraft ? (
               <Button
                 type="submit"
                 variant="outline"

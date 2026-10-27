@@ -20,10 +20,12 @@ function RolesAccessContent() {
   const status = useAuthStore((state) => state.status);
 
   const isAdmin =
-    user?.roles.some((role) => role.toLowerCase() === 'admin') || false;
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin'].includes(role.toLowerCase()),
+    ) || false;
   const isAdminOrSupport =
-    user?.roles.some((role) =>
-      ['admin', 'support'].includes(role.toLowerCase()),
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin', 'support'].includes(role.toLowerCase()),
     ) || false;
 
   const tabs = useMemo(() => {

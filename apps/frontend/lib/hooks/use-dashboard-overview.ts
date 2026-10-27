@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { listContentEntries } from '@/lib/api/content';
 import { listSchemas } from '@/lib/api/schemas';
 import { RecentActivityItem, DashboardOverview } from '@/types/hook.types';
+import { ApiError } from '@/lib/api-client';
 
 const ENTRIES_PER_SCHEMA = 100; // the backend's MAX_PAGE_SIZE (content-query.util.ts)
 
@@ -30,15 +31,34 @@ export function useDashboardOverview() {
     queryKey: ['dashboard-overview', schemas.map((s) => s.slug)],
     enabled: schemasQuery.isSuccess && schemas.length > 0,
     queryFn: async () => {
-      const perSchema = await Promise.all(
-        schemas.map((schema) =>
-          listContentEntries(schema.slug, {
-            page: 1,
-            pageSize: ENTRIES_PER_SCHEMA,
-            sort: 'updatedAt:desc',
-          }).then((result) => ({ schema, result })),
-        ),
+      const settled = await Promise.allSettled(
+        schemas.map(async (schema) => {
+          try {
+            const result = await listContentEntries(schema.slug, {
+              page: 1,
+              pageSize: ENTRIES_PER_SCHEMA,
+              sort: 'updatedAt:desc',
+            });
+            return { schema, result };
+          } catch (err: unknown) {
+            if (err instanceof ApiError && err.statusCode === 403) {
+              return null;
+            }
+            throw err;
+          }
+        }),
       );
+
+      const perSchema = settled
+        .filter(
+          (
+            r,
+          ): r is PromiseFulfilledResult<{
+            schema: (typeof schemas)[0];
+            result: Awaited<ReturnType<typeof listContentEntries>>;
+          }> => r.status === 'fulfilled' && r.value !== null,
+        )
+        .map((r) => r.value);
 
       let totalEntries = 0;
       let publishedEntries = 0;

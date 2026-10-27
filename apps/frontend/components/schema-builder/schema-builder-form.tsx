@@ -16,9 +16,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createSchemaSchema, schemaTypeValues } from '@repo/validation';
 import { type CreateSchemaInput, type SchemaRecord } from '@repo/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/stores/auth-store';
 import {
   useFieldArray,
   useForm,
@@ -69,6 +71,20 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Controls which field's config is expanded in the settings panel.
   const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
+
+  const user = useAuthStore((state) => state.user);
+  const status = useAuthStore((state) => state.status);
+  const isAdmin =
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin'].includes(role.toLowerCase()),
+    ) || false;
+  const canCreate =
+    isAdmin ||
+    user?.permissions?.some(
+      (p) =>
+        (p.schemaId === null || p.schemaId === '*') &&
+        ['create', '*'].includes(p.action),
+    );
 
   const form = useForm<SchemaBuilderFieldValues, unknown, CreateSchemaInput>({
     resolver: zodResolver(createSchemaSchema),
@@ -281,6 +297,30 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
     }
 
     toast.error('Please fix all validation errors before submitting.');
+  }
+
+  if (!isEditing && !canCreate && status === 'authenticated') {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6 bg-muted/10">
+        <Card className="max-w-md text-center border-dashed p-4">
+          <CardHeader>
+            <div className="flex justify-center mb-3">
+              <ShieldAlert className="h-10 w-10 text-amber-500" />
+            </div>
+            <CardTitle>Permission Denied</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              You do not have permission to define or create content types. Only
+              administrators can build new schemas.
+            </p>
+            <Button asChild variant="outline">
+              <Link href="/content-types">Back to Content Types</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

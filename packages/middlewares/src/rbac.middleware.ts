@@ -25,10 +25,13 @@ export const requirePermission =
       }
       try {
         const appId = (req.headers['x-app-id'] as string) || 'default';
-        const permissions =
-          req.user.permissions ||
-          (await getUserPermissions(req.user.id, appId));
-        if (!hasPermission(permissions, action, schemaId)) {
+        const dbPerms = await getUserPermissions(req.user.id, appId).catch(
+          () => null,
+        );
+        const permissions = dbPerms || req.user.permissions || [];
+        const targetSchemaId =
+          schemaId || (req as unknown as { schemaId?: string }).schemaId;
+        if (!hasPermission(permissions, action, targetSchemaId)) {
           errorJson(res, HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.RBAC.FORBIDDEN);
           return;
         }
