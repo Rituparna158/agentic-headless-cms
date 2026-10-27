@@ -61,11 +61,13 @@ export interface ContentVersionRecord {
     title: string;
     slug: string;
     body?: unknown;
+    _schemas?: unknown[];
     [key: string]: unknown;
   };
   versionNo: number;
   actorType: string;
   createdByUserId: string;
+  createdByUserName?: string | null;
   comment: string | null;
   createdAt: string;
 }
@@ -99,6 +101,8 @@ export interface VersionHistoryDrawerProps {
     title: string;
     slug: string;
     body?: unknown;
+    _schemas?: unknown[];
+    [key: string]: unknown;
   };
   onRevertSuccess: (revertedData: ContentVersionRecord['data']) => void;
 }
