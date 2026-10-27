@@ -15,6 +15,7 @@ import {
   SnapshotDetailDeckProps,
   SnapshotDiffEntry,
 } from '../../types/template.types';
+import type { PageCustomSchema } from '@/types/content.types';
 
 export const SnapshotDetailDeck: React.FC<SnapshotDetailDeckProps> = ({
   isOpen,
@@ -92,25 +93,217 @@ export const SnapshotDetailDeck: React.FC<SnapshotDetailDeckProps> = ({
       });
     }
 
-    // Additional metadata diff
+    // Page Schemas & Embedded Entity changes diff (_schemas: PageCustomSchema[])
+    // Each page in a collection has its own schemas and entities
+    const baseSchemas = (
+      Array.isArray(base._schemas) ? base._schemas : []
+    ) as PageCustomSchema[];
+    const snapSchemas = (
+      Array.isArray(snapData._schemas) ? snapData._schemas : []
+    ) as PageCustomSchema[];
+
+    const allSchemaKeys = Array.from(
+      new Set([
+        ...baseSchemas.map((s) => s.slug || s.name || s.id),
+        ...snapSchemas.map((s) => s.slug || s.name || s.id),
+      ]),
+    );
+
+    for (const sKey of allSchemaKeys) {
+      const bSchema = baseSchemas.find(
+        (s) =>
+          (s.slug && s.slug === sKey) ||
+          (s.name && s.name === sKey) ||
+          s.id === sKey,
+      );
+      const sSchema = snapSchemas.find(
+        (s) =>
+          (s.slug && s.slug === sKey) ||
+          (s.name && s.name === sKey) ||
+          s.id === sKey,
+      );
+      const schemaName = sSchema?.name || bSchema?.name || sKey;
+
+      if (!bSchema && sSchema) {
+        entries.push({
+          field: `Page Schema: ${schemaName}`,
+          changeType: 'added',
+          previousValue: '(None)',
+          currentValue: `Added page schema (${sSchema.entryType || 'single'}) with ${sSchema.fields?.length || 0} fields`,
+        });
+      } else if (bSchema && !sSchema) {
+        entries.push({
+          field: `Page Schema: ${schemaName}`,
+          changeType: 'removed',
+          previousValue: `Removed page schema (${bSchema.entryType || 'single'})`,
+          currentValue: '(None)',
+        });
+      } else if (bSchema && sSchema) {
+        // Compare schema field definitions
+        const bFieldIds = (bSchema.fields || []).map(
+          (f) => `${f.displayName || f.apiId} (${f.dataType || 'text'})`,
+        );
+        const sFieldIds = (sSchema.fields || []).map(
+          (f) => `${f.displayName || f.apiId} (${f.dataType || 'text'})`,
+        );
+        if (JSON.stringify(bFieldIds) !== JSON.stringify(sFieldIds)) {
+          entries.push({
+            field: `[${schemaName} Schema] Field Definitions`,
+            changeType: 'modified',
+            previousValue: bFieldIds.join(', ') || '(Empty)',
+            currentValue: sFieldIds.join(', ') || '(Empty)',
+          });
+        }
+
+        const isMulti =
+          sSchema.entryType === 'multi' || bSchema.entryType === 'multi';
+
+        if (!isMulti) {
+          // Compare single entity values for this page schema
+          const bVal =
+            (bSchema.values && typeof bSchema.values === 'object'
+              ? bSchema.values
+              : Array.isArray(bSchema.items) && bSchema.items[0]
+                ? bSchema.items[0]
+                : {}) || {};
+          const sVal =
+            (sSchema.values && typeof sSchema.values === 'object'
+              ? sSchema.values
+              : Array.isArray(sSchema.items) && sSchema.items[0]
+                ? sSchema.items[0]
+                : {}) || {};
+
+          const allValKeys = Array.from(
+            new Set([...Object.keys(bVal), ...Object.keys(sVal)]),
+          );
+
+          for (const vKey of allValKeys) {
+            const bFieldVal = bVal[vKey];
+            const sFieldVal = sVal[vKey];
+            if (JSON.stringify(bFieldVal) !== JSON.stringify(sFieldVal)) {
+              entries.push({
+                field: `[${schemaName} Schema (Entity)] ${vKey}`,
+                changeType:
+                  bFieldVal === undefined
+                    ? 'added'
+                    : sFieldVal === undefined
+                      ? 'removed'
+                      : 'modified',
+                previousValue:
+                  bFieldVal === undefined
+                    ? '(None)'
+                    : typeof bFieldVal === 'object'
+                      ? JSON.stringify(bFieldVal, null, 2)
+                      : String(bFieldVal),
+                currentValue:
+                  sFieldVal === undefined
+                    ? '(None)'
+                    : typeof sFieldVal === 'object'
+                      ? JSON.stringify(sFieldVal, null, 2)
+                      : String(sFieldVal),
+              });
+            }
+          }
+        } else {
+          // Compare multi-entry items (multiple entities for this page schema)
+          const bItems = Array.isArray(bSchema.items)
+            ? bSchema.items
+            : bSchema.values && Object.keys(bSchema.values).length > 0
+              ? [bSchema.values]
+              : [];
+          const sItems = Array.isArray(sSchema.items)
+            ? sSchema.items
+            : sSchema.values && Object.keys(sSchema.values).length > 0
+              ? [sSchema.values]
+              : [];
+
+          if (bItems.length !== sItems.length) {
+            entries.push({
+              field: `[${schemaName} Schema] Total Entities`,
+              changeType: 'modified',
+              previousValue: `${bItems.length} entities`,
+              currentValue: `${sItems.length} entities`,
+            });
+          }
+
+          const maxLen = Math.max(bItems.length, sItems.length);
+          for (let i = 0; i < maxLen; i++) {
+            const bItem = bItems[i] || {};
+            const sItem = sItems[i] || {};
+            if (JSON.stringify(bItem) !== JSON.stringify(sItem)) {
+              const itemLabel =
+                (sItem.title as string) ||
+                (sItem.name as string) ||
+                (sItem.productName as string) ||
+                (bItem.title as string) ||
+                (bItem.name as string) ||
+                (bItem.productName as string) ||
+                `Entity #${i + 1}`;
+              const allItemKeys = Array.from(
+                new Set([...Object.keys(bItem), ...Object.keys(sItem)]),
+              );
+              for (const ik of allItemKeys) {
+                const biVal = bItem[ik];
+                const siVal = sItem[ik];
+                if (JSON.stringify(biVal) !== JSON.stringify(siVal)) {
+                  entries.push({
+                    field: `[${schemaName} Schema > ${itemLabel}] ${ik}`,
+                    changeType:
+                      biVal === undefined
+                        ? 'added'
+                        : siVal === undefined
+                          ? 'removed'
+                          : 'modified',
+                    previousValue:
+                      biVal === undefined
+                        ? '(None)'
+                        : typeof biVal === 'object'
+                          ? JSON.stringify(biVal, null, 2)
+                          : String(biVal),
+                    currentValue:
+                      siVal === undefined
+                        ? '(None)'
+                        : typeof siVal === 'object'
+                          ? JSON.stringify(siVal, null, 2)
+                          : String(siVal),
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Direct page custom fields (e.g. description, seoTitle)
     const allKeys = Array.from(
       new Set([...Object.keys(base), ...Object.keys(snapData)]),
-    ).filter((k) => !['title', 'slug', 'body'].includes(k));
+    ).filter((k) => !['title', 'slug', 'body', '_schemas'].includes(k));
 
     for (const key of allKeys) {
       const bVal = (base as Record<string, unknown>)[key];
       const sVal = (snapData as Record<string, unknown>)[key];
       if (JSON.stringify(bVal) !== JSON.stringify(sVal)) {
         entries.push({
-          field: key,
+          field: `Page Field: ${key}`,
           changeType:
             bVal === undefined
               ? 'added'
               : sVal === undefined
                 ? 'removed'
                 : 'modified',
-          previousValue: bVal === undefined ? '(None)' : JSON.stringify(bVal),
-          currentValue: sVal === undefined ? '(None)' : JSON.stringify(sVal),
+          previousValue:
+            bVal === undefined
+              ? '(None)'
+              : typeof bVal === 'object'
+                ? JSON.stringify(bVal, null, 2)
+                : String(bVal),
+          currentValue:
+            sVal === undefined
+              ? '(None)'
+              : typeof sVal === 'object'
+                ? JSON.stringify(sVal, null, 2)
+                : String(sVal),
         });
       }
     }
@@ -139,8 +332,8 @@ export const SnapshotDetailDeck: React.FC<SnapshotDetailDeckProps> = ({
 
   return (
     <div className="fixed inset-0 z-[60] overflow-hidden bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-xl bg-[#141417] border-l border-zinc-800 text-zinc-100 shadow-2xl flex flex-col animate-slide-in-right">
+      <div className="absolute inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+        <div className="w-screen max-w-4xl xl:max-w-5xl bg-[#141417] border-l border-zinc-800 text-zinc-100 shadow-2xl flex flex-col animate-slide-in-right">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4 bg-zinc-900/60">
             <div className="flex items-center gap-3">
@@ -167,7 +360,9 @@ export const SnapshotDetailDeck: React.FC<SnapshotDetailDeckProps> = ({
                   <span>•</span>
                   <span className="flex items-center gap-1">
                     <User className="size-3 text-zinc-500" />
-                    {snapshot.createdByUserId || 'Admin'}
+                    {snapshot.createdByUserName ||
+                      snapshot.createdByUserId ||
+                      'Admin'}
                   </span>
                 </p>
               </div>
