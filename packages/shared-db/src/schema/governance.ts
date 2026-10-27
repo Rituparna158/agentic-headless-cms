@@ -172,24 +172,33 @@ export const webhooks = pgTable('webhooks', {
     .defaultNow(),
 });
 // Fixes the missing delivery/retry visibility gap.
-export const webhookDeliveries = pgTable('webhook_deliveries', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  webhookId: uuid('webhook_id')
-    .notNull()
-    .references(() => webhooks.id, { onDelete: 'cascade' }),
-  applicationId: uuid('application_id')
-    .notNull()
-    .default(sql`current_setting('app.current_application_id', true)::uuid`)
-    .references(() => applications.id, { onDelete: 'cascade' }),
-  eventType: varchar('event_type', { length: 100 }).notNull(),
-  payload: jsonb('payload').notNull(),
-  responseStatus: integer('response_status'),
-  attempt: integer('attempt').notNull().default(1),
-  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const webhookDeliveries = pgTable(
+  'webhook_deliveries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    webhookId: uuid('webhook_id')
+      .notNull()
+      .references(() => webhooks.id, { onDelete: 'cascade' }),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    eventType: varchar('event_type', { length: 100 }).notNull(),
+    payload: jsonb('payload').notNull(),
+    responseStatus: integer('response_status'),
+    attempt: integer('attempt').notNull().default(1),
+    deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    webhookCreatedIdx: index('webhook_deliveries_webhook_created_idx').on(
+      table.webhookId,
+      table.createdAt,
+    ),
+  }),
+);
 export const approvalsRelations = relations(approvals, ({ one }) => ({
   application: one(applications, {
     fields: [approvals.applicationId],

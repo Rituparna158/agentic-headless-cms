@@ -173,7 +173,7 @@ export function LoginForm() {
               </Button>
             )}
             {resetError && (
-              <p className="text-sm text-destructive text-center">
+              <p role="alert" className="text-sm text-destructive text-center">
                 {resetError}
               </p>
             )}

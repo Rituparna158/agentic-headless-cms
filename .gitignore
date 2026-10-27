@@ -47,3 +47,8 @@ uploads
 
 test-results
 playwright-report
+
+# Database Backups
+backups/
+*.dump
+*.sql.gz

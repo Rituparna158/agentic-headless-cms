@@ -89,7 +89,10 @@ function RepeatableDynamicField({ field, control }: DynamicFieldProps) {
                   </Button>
                 </div>
                 {fieldState.error?.message ? (
-                  <p className="text-sm font-medium text-destructive">
+                  <p
+                    role="alert"
+                    className="text-sm font-medium text-destructive"
+                  >
                     {fieldState.error.message}
                   </p>
                 ) : null}

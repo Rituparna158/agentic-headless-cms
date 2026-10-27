@@ -10,6 +10,7 @@
     "cli:ui": "pnpm --filter backend run cli serve-ui",
     "db:migrate": "pnpm --filter @repo/shared-db run db:migrate",
     "db:push": "pnpm --filter @repo/shared-db run db:push",
+    "db:backup": "node scripts/db-backup.mjs",
     "seed:admin": "pnpm --filter @repo/shared-db run seed:admin",
     "seed:system-schemas": "pnpm --filter @repo/shared-db run seed:system-schemas",
     "codegen": "node ./packages/sdk-codegen/dist/cli.js --url http://localhost:3000 --output ./apps/frontend/types.ts",

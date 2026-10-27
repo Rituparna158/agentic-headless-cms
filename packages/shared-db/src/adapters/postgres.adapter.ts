@@ -54,6 +54,50 @@ export class PostgresAdapter implements DatabasePort<Database> {
       }
     });
 
+    const slowQueryThreshold = options.slowQueryThresholdMs ?? 100;
+    if (options.onSlowQuery) {
+      const onSlowQuery = options.onSlowQuery;
+      const origPoolQuery = this._pool.query.bind(this._pool);
+      this._pool.query = (async (...args: unknown[]) => {
+        const start = Date.now();
+        const text =
+          typeof args[0] === 'string'
+            ? args[0]
+            : (args[0] as { text?: string } | undefined)?.text;
+        try {
+          return await (origPoolQuery as (...a: unknown[]) => Promise<unknown>)(
+            ...args,
+          );
+        } finally {
+          const duration = Date.now() - start;
+          if (duration >= slowQueryThreshold && text) {
+            onSlowQuery(text, duration);
+          }
+        }
+      }) as typeof this._pool.query;
+
+      this._pool.on('connect', (client) => {
+        const origClientQuery = client.query.bind(client);
+        client.query = (async (...args: unknown[]) => {
+          const start = Date.now();
+          const text =
+            typeof args[0] === 'string'
+              ? args[0]
+              : (args[0] as { text?: string } | undefined)?.text;
+          try {
+            return await (
+              origClientQuery as (...a: unknown[]) => Promise<unknown>
+            )(...args);
+          } finally {
+            const duration = Date.now() - start;
+            if (duration >= slowQueryThreshold && text) {
+              onSlowQuery(text, duration);
+            }
+          }
+        }) as typeof client.query;
+      });
+    }
+
     this._db = drizzle(this._pool, { schema });
   }
 
