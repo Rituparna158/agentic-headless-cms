@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Eye, Palette, CheckCircle2, Clock } from 'lucide-react';
+import { X, Eye, Palette, CheckCircle2, Clock, History } from 'lucide-react';
 import type { PageMetaDrawerHeaderProps } from './drawer.types';
 
 export const PageMetaDrawerHeader: React.FC<PageMetaDrawerHeaderProps> = ({
@@ -10,6 +10,7 @@ export const PageMetaDrawerHeader: React.FC<PageMetaDrawerHeaderProps> = ({
   isPublished,
   onOpenPreview,
   onOpenCanvas,
+  onOpenHistory,
   onClose,
 }) => {
   return (
@@ -76,6 +77,19 @@ export const PageMetaDrawerHeader: React.FC<PageMetaDrawerHeaderProps> = ({
           <Palette className="size-3.5 text-indigo-400" />
           <span>Canvas Editor</span>
         </button>
+
+        {onOpenHistory && (
+          <button
+            type="button"
+            onClick={onOpenHistory}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors cursor-pointer"
+            title="View Version History & Rollback"
+            aria-label="View Version History & Rollback"
+          >
+            <History className="size-3.5 text-amber-400" />
+            <span>History</span>
+          </button>
+        )}
 
         <button
           type="button"
