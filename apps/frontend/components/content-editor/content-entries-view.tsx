@@ -7,6 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { LayersIcon, PlusIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
 import { Badge, Button, Card, CardContent } from '@repo/shared-ui';
+import { useAuthStore } from '@/stores/auth-store';
+import { useHasPermission } from '@/hooks/use-permissions';
 import { ContentEntryList } from './content-entry-list';
 
 export function ContentEntriesView() {
@@ -22,9 +24,26 @@ export function ContentEntriesView() {
     queryFn: () => listSchemas({ pageSize: 100 }),
   });
 
-  const schemas = useMemo(() => schemasData?.data ?? [], [schemasData]);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin =
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin'].includes(role.toLowerCase()),
+    ) || false;
 
-  // Determine active schema (from query param or default to first available schema)
+  const schemas = useMemo(() => {
+    const list = schemasData?.data ?? [];
+    if (isAdmin || !user?.permissions) return list;
+    const permissions = user.permissions;
+    return list.filter((s) =>
+      permissions.some(
+        (p) =>
+          (p.schemaId === s.id || p.schemaId === '*' || !p.schemaId) &&
+          ['read', 'create', 'update', '*'].includes(p.action),
+      ),
+    );
+  }, [schemasData, isAdmin, user]);
+
+  // Determine active schema (from query param or default to first available permitted schema)
   const activeSchema = useMemo(() => {
     if (!schemas.length) return null;
     if (activeTypeSlug) {
@@ -33,6 +52,8 @@ export function ContentEntriesView() {
     }
     return schemas[0];
   }, [schemas, activeTypeSlug]);
+
+  const canCreate = useHasPermission('create', activeSchema?.id);
 
   if (isLoading) {
     return (
@@ -100,12 +121,18 @@ export function ContentEntriesView() {
           </p>
         </div>
 
-        <Button asChild>
-          <Link href={`/content/${activeSchema.slug}/new`}>
-            <PlusIcon className="size-4 mr-2" />
-            New {activeSchema.name} Entry
-          </Link>
-        </Button>
+        {canCreate ? (
+          <Button asChild>
+            <Link href={`/content/${activeSchema.slug}/new`}>
+              <PlusIcon className="size-4 mr-2" />
+              New {activeSchema.name} Entry
+            </Link>
+          </Button>
+        ) : (
+          <Badge variant="outline" className="text-muted-foreground py-1 px-3">
+            Read-only Access
+          </Badge>
+        )}
       </div>
 
       {/* 100% Full-Width Ignix UI Data Table */}
