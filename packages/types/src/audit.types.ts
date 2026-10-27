@@ -39,6 +39,9 @@ export interface GetAuditLogsQuery {
   startDate?: string;
   endDate?: string;
   search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  sortDirection?: 'asc' | 'desc';
 }
 
 export interface PaginatedAuditLogsResponse {

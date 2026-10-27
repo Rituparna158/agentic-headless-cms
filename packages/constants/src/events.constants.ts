@@ -13,3 +13,29 @@ export const AUDIT_ACTIONS = {
   LOGIN: 'login',
   SCHEMA_CHANGE: 'schema_change',
 } as const;
+
+export const AUDIT_ACTION_LIST = [
+  'create',
+  'update',
+  'publish',
+  'delete',
+  'rollback',
+  'unpublish',
+  'login',
+  'schema_change',
+] as const;
+
+export const AUDIT_ACTIONS_ARRAY = AUDIT_ACTION_LIST;
+
+export const RESOURCE_TYPES = [
+  'content',
+  'schema',
+  'role',
+  'user',
+  'locale',
+  'webhook',
+  'media',
+  'api_token',
+] as const;
+
+export const AUDIT_RESOURCE_TYPES = RESOURCE_TYPES;

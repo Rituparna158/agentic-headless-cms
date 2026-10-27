@@ -19,15 +19,21 @@ export class AuditService {
   private isDefaultPage1Query(query: GetAuditLogsQuery): boolean {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Number(query.limit) || 15;
+    const hasCustomSort = Boolean(
+      (query.sortBy && query.sortBy !== 'timestamp') ||
+      (query.sortOrder && query.sortOrder !== 'desc') ||
+      (query.sortDirection && query.sortDirection !== 'desc'),
+    );
     const hasFilters = Boolean(
       query.action ||
       query.resourceType ||
       query.actorUserId ||
       query.startDate ||
       query.endDate ||
-      (query.search && query.search.trim().length > 0),
+      (query.search && query.search.trim().length > 0) ||
+      hasCustomSort,
     );
-    // Unfiltered page 1 query (default dashboard view)
+    // Unfiltered page 1 query with default timestamp desc sort (default dashboard view)
     return page === 1 && limit === 15 && !hasFilters;
   }
 
@@ -105,9 +111,29 @@ export class AuditService {
 
   async invalidateCache(): Promise<void> {
     try {
-      const redis = getRedisConnection();
+      const redis = await this.getRedisClient();
+      if (!redis) return;
+
+      // Invalidate default page 1 key immediately
       await redis.del(DEFAULT_PAGE1_CACHE_KEY);
-      logger.debug('AuditService: invalidated default page 1 cache');
+
+      // Pattern-based invalidation for all audit query cache keys using non-blocking SCAN
+      let cursor = '0';
+      do {
+        const [nextCursor, keys] = await redis.scan(
+          cursor,
+          'MATCH',
+          'audit:logs:*',
+          'COUNT',
+          100,
+        );
+        cursor = nextCursor;
+        if (keys && keys.length > 0) {
+          await redis.del(...keys);
+        }
+      } while (cursor !== '0');
+
+      logger.debug('AuditService: invalidated all audit:logs:* cache keys');
     } catch (cacheErr) {
       logger.warn(
         { err: cacheErr },

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { Suspense, useMemo, useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
   Tabs,
   Card,
@@ -16,9 +17,16 @@ import { TokensTab } from '@/components/roles-access/tokens-tab';
 import { MfaRequestsTab } from '@/components/roles-access/mfa-requests-tab';
 import { useAuthStore } from '@/stores/auth-store';
 
-export default function RolesAccessPage() {
+const KNOWN_TABS = ['roles', 'users', 'tokens', 'mfa-requests'] as const;
+
+function RolesAccessContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const user = useAuthStore((state) => state.user);
   const status = useAuthStore((state) => state.status);
+
   const isAdmin =
     user?.roles?.some((role) =>
       ['admin', 'super_admin'].includes(role.toLowerCase()),
@@ -29,7 +37,7 @@ export default function RolesAccessPage() {
     ) || false;
 
   const tabs = useMemo(() => {
-    const t = [];
+    const t: { label: string; id: string }[] = [];
     if (isAdmin) t.push({ label: 'Roles', id: 'roles' });
     t.push({ label: 'Users', id: 'users' });
     if (isAdmin) t.push({ label: 'API Tokens', id: 'tokens' });
@@ -37,7 +45,40 @@ export default function RolesAccessPage() {
     return t;
   }, [isAdmin, isAdminOrSupport]);
 
-  const [activeTab, setActiveTab] = useState(isAdmin ? 'roles' : 'users');
+  const tabParam = searchParams.get('tab');
+
+  const getResolvedTab = useCallback(() => {
+    if (tabParam && tabs.some((t) => t.id === tabParam)) {
+      return tabParam;
+    }
+    if (
+      status !== 'authenticated' &&
+      tabParam &&
+      (KNOWN_TABS as readonly string[]).includes(tabParam)
+    ) {
+      return tabParam;
+    }
+    return tabs[0]?.id ?? (isAdmin ? 'roles' : 'users');
+  }, [tabParam, tabs, status, isAdmin]);
+
+  const [activeTab, setActiveTab] = useState(getResolvedTab);
+
+  useEffect(() => {
+    const resolved = getResolvedTab();
+    if (resolved !== activeTab) {
+      setActiveTab(resolved);
+    }
+  }, [getResolvedTab, activeTab]);
+
+  const handleTabChange = (idx: number) => {
+    const selectedTab = tabs[idx];
+    if (!selectedTab) return;
+    setActiveTab(selectedTab.id);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', selectedTab.id);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   const activeIndex = Math.max(
     0,
     tabs.findIndex((t) => t.id === activeTab),
@@ -86,11 +127,10 @@ export default function RolesAccessPage() {
 
       <div className="space-y-4">
         <Tabs
+          key={tabs.map((t) => t.id).join('-')}
           options={tabs.map((t) => t.label)}
           selected={activeIndex}
-          value={(idx: number) => {
-            if (tabs[idx]) setActiveTab(tabs[idx].id);
-          }}
+          value={handleTabChange}
         />
         {activeTab === 'roles' && isAdmin && (
           <div className="space-y-4 h-[calc(100vh-14rem)]">
@@ -114,5 +154,13 @@ export default function RolesAccessPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function RolesAccessPage() {
+  return (
+    <Suspense fallback={null}>
+      <RolesAccessContent />
+    </Suspense>
   );
 }

@@ -18,6 +18,10 @@ export function buildAuditQueryString(options?: GetAuditLogsQuery): string {
   if (options.startDate) params.append('startDate', options.startDate);
   if (options.endDate) params.append('endDate', options.endDate);
   if (options.search) params.append('search', options.search);
+  if (options.sortBy) params.append('sortBy', options.sortBy);
+  if (options.sortDirection)
+    params.append('sortDirection', options.sortDirection);
+  else if (options.sortOrder) params.append('sortOrder', options.sortOrder);
   const str = params.toString();
   return str ? `?${str}` : '';
 }

@@ -1,15 +1,25 @@
 import type { AuthenticatedUser } from '@repo/types';
 
+export interface RetryConfig {
+  retries?: number;
+  initialDelayMs?: number;
+  maxDelayMs?: number;
+  backoffFactor?: number;
+  statusCodes?: number[];
+}
+
 export interface ClientConfig {
   baseUrl: string;
   apiToken?: string;
   appId?: string;
   apiKey?: string;
   headers?: Record<string, string>;
+  retry?: RetryConfig | boolean;
 }
 
 export interface FetchOptions extends RequestInit {
   params?: Record<string, unknown>;
+  retry?: RetryConfig | boolean;
 }
 
 export interface ApiResponse<T> {

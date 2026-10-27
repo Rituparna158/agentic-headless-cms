@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useReducer } from 'react';
 import Image from 'next/image';
 import { ShieldAlert, ShieldCheck, QrCode, Key, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,81 +15,175 @@ import {
 import { useAuthStore } from '@/stores/auth-store';
 import { enrollMfa, verifyMfa, disableMfa } from '@/lib/api/auth';
 
+export type MfaStatus =
+  | 'idle'
+  | 'enrolling'
+  | 'setup'
+  | 'verifying'
+  | 'disabling';
+
+export interface MfaState {
+  status: MfaStatus;
+  qrCode: string | null;
+  secret: string | null;
+  code: string;
+  error: string | null;
+}
+
+export type MfaAction =
+  | { type: 'START_ENROLL' }
+  | { type: 'ENROLL_SUCCESS'; payload: { qrCode: string; secret: string } }
+  | { type: 'ENROLL_FAILURE'; payload: { error: string } }
+  | { type: 'SET_CODE'; payload: string }
+  | { type: 'START_VERIFY' }
+  | { type: 'VERIFY_SUCCESS' }
+  | { type: 'VERIFY_FAILURE'; payload: { error: string } }
+  | { type: 'START_DISABLE' }
+  | { type: 'DISABLE_SUCCESS' }
+  | { type: 'DISABLE_FAILURE'; payload: { error: string } }
+  | { type: 'CANCEL' };
+
+export const initialMfaState: MfaState = {
+  status: 'idle',
+  qrCode: null,
+  secret: null,
+  code: '',
+  error: null,
+};
+
+export function mfaReducer(state: MfaState, action: MfaAction): MfaState {
+  switch (action.type) {
+    case 'START_ENROLL':
+      return {
+        ...state,
+        status: 'enrolling',
+        error: null,
+      };
+    case 'ENROLL_SUCCESS':
+      return {
+        ...state,
+        status: 'setup',
+        qrCode: action.payload.qrCode,
+        secret: action.payload.secret,
+        code: '',
+        error: null,
+      };
+    case 'ENROLL_FAILURE':
+      return {
+        ...state,
+        status: 'idle',
+        error: action.payload.error,
+      };
+    case 'SET_CODE':
+      return {
+        ...state,
+        code: action.payload,
+      };
+    case 'START_VERIFY':
+      return {
+        ...state,
+        status: 'verifying',
+        error: null,
+      };
+    case 'VERIFY_SUCCESS':
+      return {
+        ...state,
+        status: 'idle',
+        qrCode: null,
+        secret: null,
+        code: '',
+        error: null,
+      };
+    case 'VERIFY_FAILURE':
+      return {
+        ...state,
+        status: 'setup',
+        error: action.payload.error,
+      };
+    case 'START_DISABLE':
+      return {
+        ...state,
+        status: 'disabling',
+        error: null,
+      };
+    case 'DISABLE_SUCCESS':
+      return {
+        ...state,
+        status: 'idle',
+        error: null,
+      };
+    case 'DISABLE_FAILURE':
+      return {
+        ...state,
+        status: 'idle',
+        error: action.payload.error,
+      };
+    case 'CANCEL':
+      return initialMfaState;
+    default:
+      return state;
+  }
+}
+
 export function SecurityTab() {
   const user = useAuthStore((state) => state.user);
   const hydrate = useAuthStore((state) => state.hydrate);
 
-  const [setupMode, setSetupMode] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [secret, setSecret] = useState<string | null>(null);
-  const [disabling, setDisabling] = useState(false);
-  const [code, setCode] = useState('');
-  const [verifying, setVerifying] = useState(false);
+  const [state, dispatch] = useReducer(mfaReducer, initialMfaState);
+
+  const isEnrolling = state.status === 'enrolling';
+  const isSetupMode = state.status === 'setup' || state.status === 'verifying';
+  const isVerifying = state.status === 'verifying';
+  const isDisabling = state.status === 'disabling';
 
   async function handleStartSetup() {
-    setLoading(true);
-    setError(null);
+    dispatch({ type: 'START_ENROLL' });
     try {
       const data = await enrollMfa();
-      setQrCode(data.qrCode);
-      setSecret(data.secret);
-      setSetupMode(true);
+      dispatch({
+        type: 'ENROLL_SUCCESS',
+        payload: { qrCode: data.qrCode, secret: data.secret },
+      });
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : 'Failed to start MFA setup';
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
+      dispatch({ type: 'ENROLL_FAILURE', payload: { error: errorMsg } });
     }
   }
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
-    setVerifying(true);
-    setError(null);
+    dispatch({ type: 'START_VERIFY' });
     try {
-      await verifyMfa(code);
+      await verifyMfa(state.code);
       // Re-fetch user details to update mfaEnabled state in frontend
       await hydrate();
-      setSetupMode(false);
-      setQrCode(null);
-      setSecret(null);
-      setCode('');
+      dispatch({ type: 'VERIFY_SUCCESS' });
       toast.success('Two-factor authentication enabled successfully!');
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : 'Invalid verification code';
-      setError(errorMsg);
-    } finally {
-      setVerifying(false);
+      dispatch({ type: 'VERIFY_FAILURE', payload: { error: errorMsg } });
     }
   }
 
   async function handleDisableMfa() {
-    setDisabling(true);
-    setError(null);
+    dispatch({ type: 'START_DISABLE' });
     try {
       await disableMfa();
       await hydrate();
+      dispatch({ type: 'DISABLE_SUCCESS' });
       toast.success('Two-factor authentication disabled successfully.');
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : 'Failed to disable MFA';
-      setError(errorMsg);
+      dispatch({ type: 'DISABLE_FAILURE', payload: { error: errorMsg } });
       toast.error('Failed to disable MFA.');
-    } finally {
-      setDisabling(false);
     }
   }
 
   function handleCancel() {
-    setSetupMode(false);
-    setQrCode(null);
-    setSecret(null);
-    setCode('');
-    setError(null);
+    dispatch({ type: 'CANCEL' });
   }
 
   return (
@@ -120,16 +214,18 @@ export function SecurityTab() {
               <Button
                 variant="danger"
                 onClick={handleDisableMfa}
-                disabled={disabling}
+                disabled={isDisabling}
               >
-                {disabling && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {isDisabling && (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                )}
                 Disable Two-Factor Authentication
               </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-6">
-            {!setupMode ? (
+            {!isSetupMode ? (
               <div className="flex flex-col items-start gap-4">
                 <div className="flex items-start gap-4 p-4 border rounded-lg bg-amber-500/5 border-amber-500/20">
                   <ShieldAlert className="size-8 text-amber-500 shrink-0" />
@@ -143,8 +239,10 @@ export function SecurityTab() {
                   </div>
                 </div>
 
-                <Button onClick={handleStartSetup} disabled={loading}>
-                  {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+                <Button onClick={handleStartSetup} disabled={isEnrolling}>
+                  {isEnrolling && (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  )}
                   Set up Authenticator
                 </Button>
               </div>
@@ -162,10 +260,10 @@ export function SecurityTab() {
                     </p>
                   </div>
 
-                  {qrCode && (
+                  {state.qrCode && (
                     <div className="bg-white p-3 rounded-lg border w-fit mx-auto md:mx-0">
                       <Image
-                        src={qrCode}
+                        src={state.qrCode}
                         alt="MFA QR Code"
                         width={192}
                         height={192}
@@ -174,14 +272,14 @@ export function SecurityTab() {
                     </div>
                   )}
 
-                  {secret && (
+                  {state.secret && (
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Key className="size-3.5" />
                         Can&apos;t scan? Use this setup key instead:
                       </p>
                       <code className="block p-2 rounded bg-muted font-mono text-xs select-all break-all">
-                        {secret}
+                        {state.secret}
                       </code>
                     </div>
                   )}
@@ -204,9 +302,12 @@ export function SecurityTab() {
                     <div className="space-y-2">
                       <Input
                         placeholder="000000"
-                        value={code}
+                        value={state.code}
                         onChange={(val: string) =>
-                          setCode(val.replace(/\D/g, ''))
+                          dispatch({
+                            type: 'SET_CODE',
+                            payload: val.replace(/\D/g, ''),
+                          })
                         }
                         className="text-center font-mono text-lg tracking-widest"
                         variant="default"
@@ -216,9 +317,9 @@ export function SecurityTab() {
                     <div className="flex gap-2">
                       <Button
                         type="submit"
-                        disabled={verifying || code.length !== 6}
+                        disabled={isVerifying || state.code.length !== 6}
                       >
-                        {verifying && (
+                        {isVerifying && (
                           <Loader2 className="mr-2 size-4 animate-spin" />
                         )}
                         Verify & Enable
@@ -238,9 +339,9 @@ export function SecurityTab() {
           </div>
         )}
 
-        {error && (
+        {state.error && (
           <p role="alert" className="text-destructive text-sm mt-2">
-            {error}
+            {state.error}
           </p>
         )}
       </CardContent>
