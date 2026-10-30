@@ -281,6 +281,7 @@ export interface CollectionEntriesGridViewProps {
   currentUser: AuthenticatedUser | null;
   pageAuthorMap: Map<string, { name: string; email: string }>;
   onOpenDrawer: (page: PageEntry) => void;
+  onOpenHistory?: (page: PageEntry) => void;
   onDeletePage: (item: { id: string; title: string }) => void;
 }
 

@@ -21,6 +21,7 @@ import {
   Eye,
   Palette,
   Boxes,
+  History,
 } from 'lucide-react';
 import {
   collectionsApi,
@@ -28,6 +29,7 @@ import {
   type PaginatedResponse,
 } from '../api/collections.api';
 import { PageSideDrawer } from '@/components/PageSideDrawer';
+import { VersionHistoryDrawer } from '../components/template/VersionHistoryDrawer';
 import type {
   DynamicFieldDefinition,
   ContentCollectionMeta,
@@ -198,6 +200,8 @@ export function CollectionEntriesPage() {
   };
 
   const [pageToDelete, setPageToDelete] = useState<PageToDelete | null>(null);
+  const [historyPage, setHistoryPage] = useState<PageEntry | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('create') === 'true' && schemaSlug) {
@@ -519,6 +523,18 @@ export function CollectionEntriesPage() {
           </Link>
           <button
             type="button"
+            onClick={() => {
+              setHistoryPage(page);
+              setIsHistoryOpen(true);
+            }}
+            className="p-1.5 rounded border border-border hover:bg-muted text-amber-400 hover:text-amber-300 transition-colors"
+            title="Version History & Rollback"
+            aria-label="Version History & Rollback"
+          >
+            <History className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
             onClick={() =>
               setPageToDelete({
                 id: page.id,
@@ -673,6 +689,10 @@ export function CollectionEntriesPage() {
               setDrawerPage(page);
               setIsDrawerOpen(true);
             }}
+            onOpenHistory={(page) => {
+              setHistoryPage(page);
+              setIsHistoryOpen(true);
+            }}
             onDeletePage={setPageToDelete}
           />
         )}
@@ -746,7 +766,41 @@ export function CollectionEntriesPage() {
           }
         }}
         isSaving={updatePageMutation.isPending}
+        onOpenHistory={() => {
+          if (drawerPage) {
+            setHistoryPage(drawerPage);
+            setIsHistoryOpen(true);
+          }
+        }}
       />
+
+      {isHistoryOpen && historyPage && schemaSlug && (
+        <VersionHistoryDrawer
+          isOpen={isHistoryOpen}
+          onClose={() => {
+            setIsHistoryOpen(false);
+            setHistoryPage(null);
+          }}
+          schemaSlug={schemaSlug}
+          pageId={historyPage.id}
+          currentPageData={{
+            ...(historyPage.data || {}),
+            title: historyPage.data?.title || 'Untitled',
+            slug: historyPage.data?.slug || 'page',
+            body: historyPage.data?.body,
+            _schemas: historyPage.data?._schemas as unknown[],
+          }}
+          onRevertSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
+            queryClient.invalidateQueries({
+              queryKey: ['page', schemaSlug, historyPage.id],
+            });
+            toast.success(
+              `Page "${historyPage.data?.title || 'page'}" restored successfully!`,
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

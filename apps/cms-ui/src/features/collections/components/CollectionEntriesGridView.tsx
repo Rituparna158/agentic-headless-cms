@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, Boxes, Palette, Eye, Trash2 } from 'lucide-react';
+import { Search, Boxes, Palette, Eye, Trash2, History } from 'lucide-react';
 import type { CollectionEntriesGridViewProps } from '../types/collections.types';
 import { normalizeCollaborator } from '../utils/collaborator.util';
 
@@ -18,6 +18,7 @@ export function CollectionEntriesGridView({
   currentUser,
   pageAuthorMap,
   onOpenDrawer,
+  onOpenHistory,
   onDeletePage,
 }: CollectionEntriesGridViewProps) {
   return (
@@ -188,6 +189,17 @@ export function CollectionEntriesGridView({
                   >
                     <Eye className="w-4 h-4" />
                   </Link>
+                  {onOpenHistory && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenHistory(p)}
+                      className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-background hover:bg-muted text-amber-400 hover:text-amber-300 transition-colors"
+                      title="Version History & Rollback"
+                      aria-label="Version History & Rollback"
+                    >
+                      <History className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() =>

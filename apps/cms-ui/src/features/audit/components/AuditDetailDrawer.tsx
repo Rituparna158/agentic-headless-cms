@@ -77,7 +77,7 @@ export const AuditDetailDrawer: React.FC<AuditDetailDrawerProps> = ({
       />
 
       {/* Drawer Container */}
-      <div className="relative w-full max-w-2xl bg-card border-l border-border h-full flex flex-col shadow-2xl z-10 animate-in slide-in-from-right duration-300">
+      <div className="relative w-full max-w-4xl xl:max-w-5xl bg-card border-l border-border h-full flex flex-col shadow-2xl z-10 animate-in slide-in-from-right duration-300">
         {/* Header */}
         <div className="flex items-start justify-between p-5 border-b border-border/60 bg-muted/20">
           <div className="space-y-1">

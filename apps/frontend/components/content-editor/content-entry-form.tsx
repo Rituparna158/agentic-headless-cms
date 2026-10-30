@@ -213,15 +213,25 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     resolver: zodResolver(zodSchema),
     defaultValues: buildDefaultValues(definition, entry?.data),
     values: buildDefaultValues(definition, activeEntryData),
+    resetOptions: {
+      keepDirtyValues: false,
+    },
   });
 
   useEffect(() => {
     if (activeEntryData !== undefined) {
       form.reset(buildDefaultValues(definition, activeEntryData));
-    } else if (entry && localizedEntry === null) {
+    } else if (localizedEntry === null || (!entry && selectedLocale)) {
       form.reset(buildDefaultValues(definition, undefined));
     }
-  }, [activeEntryData, localizedEntry, entry, definition, form]);
+  }, [
+    activeEntryData,
+    localizedEntry,
+    entry,
+    selectedLocale,
+    definition,
+    form,
+  ]);
 
   function handleLocaleChange(newLocale: string) {
     if (newLocale === selectedLocale) return;
@@ -667,8 +677,12 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         onConfirm={() => {
           setIsLocaleConfirmOpen(false);
           if (pendingLocale) {
-            setSelectedLocale(pendingLocale);
+            const nextLocale = pendingLocale;
+            setSelectedLocale(nextLocale);
             setPendingLocale(null);
+            const targetData =
+              nextLocale === defaultLocale ? entry?.data : undefined;
+            form.reset(buildDefaultValues(definition, targetData));
           }
         }}
       />

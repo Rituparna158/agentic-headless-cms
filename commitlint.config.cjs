@@ -62,6 +62,7 @@ module.exports = {
         'swagger',
         'docker',
         'docs',
+        'coderabbit',
         'all',
       ],
     ],

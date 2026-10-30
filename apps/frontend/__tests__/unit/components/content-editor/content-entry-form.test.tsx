@@ -484,4 +484,43 @@ describe('ContentEntryForm', () => {
       expect(screen.getByDisplayValue('Hola Mundo')).toBeInTheDocument();
     });
   });
+
+  it('wipes out unsaved dirty input fields when user confirms discard and switches locale', async () => {
+    mockListLocales.mockResolvedValue({
+      data: [
+        { id: 'loc-1', code: 'en', name: 'English', isDefault: true },
+        { id: 'loc-2', code: 'es', name: 'Spanish', isDefault: false },
+      ],
+    });
+
+    const user = userEvent.setup();
+    renderForm();
+
+    const titleInput = screen.getByLabelText(/title/i);
+    await user.type(titleInput, 'Mr X');
+    expect(titleInput).toHaveValue('Mr X');
+
+    // Switch locale with unsaved dirty changes
+    const localeBtn = await screen.findByRole('button', {
+      name: /select locale/i,
+    });
+    await user.click(localeBtn);
+
+    const spanishOption = await screen.findByText('Spanish');
+    await user.click(spanishOption);
+
+    // Confirmation dialog should appear
+    expect(screen.getByText('Discard Unsaved Changes?')).toBeInTheDocument();
+
+    // Click Discard & Switch
+    const discardBtn = screen.getByRole('button', {
+      name: /discard & switch/i,
+    });
+    await user.click(discardBtn);
+
+    // Input field should be wiped clean
+    await waitFor(() => {
+      expect(screen.getByLabelText(/title/i)).toHaveValue('');
+    });
+  });
 });

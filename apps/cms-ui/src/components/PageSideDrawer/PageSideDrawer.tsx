@@ -31,6 +31,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   collectionPages,
   onSavePage,
   isSaving,
+  onOpenHistory,
 }) => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -863,6 +864,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
             onOpenCanvas={() =>
               navigate(`/collections/${safeCollection.slug}/${safePage.id}`)
             }
+            onOpenHistory={onOpenHistory}
             onClose={onClose}
           />
 
