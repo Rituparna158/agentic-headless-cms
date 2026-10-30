@@ -1,0 +1,376 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well with Docusaurus.
+ */
+
+/* Custom styles for the Docusaurus theme */
+
+:root {
+  --color-gradient-from-dropdown: #a855f7;
+  --color-gradient-to-dropdown: #ec4899;
+  --color-dark-dropdown-bg: #121212;
+  --color-dark-dropdown-text: #ffffff;
+  --color-dark-dropdown-border: #2a2a2a;
+  --ifm-color-primary: #ff0000;
+  --ifm-color-primary-dark: #cc0511;
+  --ifm-color-primary-darker: #b70510;
+  --ifm-color-primary-darkest: #99040d;
+  --ifm-color-primary-light: #f01622;
+  --ifm-color-primary-lighter: #f33a45;
+  --ifm-color-primary-lightest: #f7777f;
+  --ifm-background-color: #ffffff;
+  --radius: 0.625rem;
+  --background: var(--ifm-background-color, #ffffff);
+  --foreground: var(--ifm-font-color-base, #1c1e21);
+  --card: var(--ifm-card-background-color, #ffffff);
+  --card-foreground: var(--ifm-font-color-base, #1c1e21);
+  --popover: var(--ifm-card-background-color, #ffffff);
+  --popover-foreground: var(--ifm-font-color-base, #1c1e21);
+
+  --primary: 0 100% 50%;
+  --primary-light: 2 83% 51%;
+  --primary-dark: 357 95% 41%;
+  --primary-darker: 357 93% 37%;
+  --primary-darkest: 358 92% 31%;
+  --primary-lighter: 358 86% 58%;
+  --primary-lightest: 357 88% 72%;
+
+  --primary-foreground: #ffffff;
+  --secondary: var(--ifm-color-emphasis-200, #f5f5f5);
+  --secondary-foreground: var(--ifm-color-emphasis-800, #3e3e3e);
+  --muted: var(--ifm-color-emphasis-300, #e0e0e0);
+  --muted-foreground: #3e3e3e;
+  --accent: var(--ifm-color-emphasis-200, #f5f5f5);
+  --accent-foreground: var(--ifm-color-emphasis-800, #3e3e3e);
+  --destructive: var(--ifm-color-danger, #d93636);
+  --border: var(--ifm-color-emphasis-300, #e0e0e0);
+  --input: var(--ifm-color-emphasis-300, #e0e0e0);
+  --ring: var(--ifm-color-primary-light);
+  --sidebar: var(--ifm-background-color, #ffffff);
+  --sidebar-foreground: var(--ifm-font-color-base, #1c1e21);
+  --sidebar-primary: hsl(var(--primary));
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--ifm-color-emphasis-200, #f5f5f5);
+  --sidebar-accent-foreground: var(--ifm-color-emphasis-800, #3e3e3e);
+  --sidebar-border: var(--ifm-color-emphasis-300, #e0e0e0);
+  --sidebar-ring: hsl(var(--primary-light));
+  --warning: var(--ifm-color-warning);
+  --warning-foreground: var(--ifm-color-warning-foreground);
+  --success: var(--ifm-color-success);
+  --success-foreground: var(--ifm-color-success-foreground);
+  --error: var(--ifm-color-error);
+  --error-foreground: var(--ifm-color-error-foreground);
+
+  --destructive-light: #ef4444;
+  --destructive-dark: #b91c1c;
+  --success-light: #34d399;
+  --success-dark: #047857;
+  --warning-light: #fbbf24;
+  --warning-dark: #b45309;
+  --info: #06b6d4;
+  --info-light: #22d3ee;
+  --info-dark: #0e7490;
+  --info-foreground: #ffffff;
+  --purple: #7e22ce;
+  --purple-light: #c084fc;
+  --purple-dark: #7e22ce;
+  --purple-foreground: #ffffff;
+  --red-primary: hsl(var(--primary));
+
+  --ifm-paragraph-margin-bottom: 0rem;
+
+  /* Floating Dock */
+  --dock-solid: #1e293b;
+  --dock-solid-foreground: #f8fafc;
+  --dock-glass: rgba(255, 255, 255, 0.12);
+  --dock-outlined-border: #cbd5e1;
+  --dock-neon-bg: #0f172a;
+  --dock-neon-glow: 210 100% 60%;
+  --dock-icon-bg: #334155;
+  --dock-icon-hover: #475569;
+  --dock-separator: #94a3b8;
+  --dock-outlined-dot: #0f172a;
+
+  /* Kanban Priorities */
+  --priority-urgent: #f43f5e;
+  --priority-high: #f97316;
+  --priority-medium: #0ea5e9;
+  --priority-low: #64748b;
+
+  /* Kanban Labels */
+  --label-red: #ef4444;
+  --label-rose: #f43f5e;
+  --label-amber: #f59e0b;
+  --label-emerald: #10b981;
+  --label-sky: #0ea5e9;
+  --label-violet: #8b5cf6;
+  --label-slate: #64748b;
+
+  /* Kanban Board */
+  --board-bg: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
+  --column-bg: rgba(241, 245, 249, 0.5);
+  --brand-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+
+  /* Glass Theme - Light */
+  --glass-bg: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.78) 0%,
+      rgba(255, 225, 235, .90) 45%,
+      rgba(255, 222, 230, 0.76) 100%);
+
+  --glass-border: rgba(255, 120, 150, 0.28);
+
+  --glass-shadow:
+    0 12px 28px rgba(255, 70, 110, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+
+  --glass-hover: linear-gradient(135deg,
+      rgba(255, 255, 255, .88),
+      rgba(255, 225, 235, .86),
+      rgba(255, 205, 220, .82));
+
+  --glass-text: var(--foreground);
+  --glass-muted: var(--muted-foreground);
+}
+
+[data-theme='dark'] {
+  --ifm-background-color: #000000;
+  --ifm-color-primary: hsl(0 100% 50%);
+  --ifm-color-primary-dark: hsl(357 73% 55%);
+  --ifm-color-primary-darker: hsl(357 63% 48%);
+  --ifm-color-primary-darkest: hsl(357 56% 40%);
+  --ifm-color-primary-light: hsl(0 100% 67%);
+  --ifm-color-primary-lighter: hsl(0 100% 75%);
+  --ifm-color-primary-lightest: hsl(0 100% 84%);
+  --radius: 0.625rem;
+  --background: var(--ifm-background-color, #000000);
+  --foreground: var(--ifm-font-color-base, #ffffff);
+  --card: var(--ifm-card-background-color, #242526);
+  --card-foreground: var(--ifm-font-color-base, #ffffff);
+  --popover: var(--ifm-card-background-color, #242526);
+  --popover-foreground: var(--ifm-font-color-base, #ffffff);
+
+  --primary: 0 100% 50%;
+  --primary-light: 0 100% 67%;
+  --primary-dark: 357 73% 55%;
+  --primary-darker: 357 63% 48%;
+  --primary-darkest: 357 56% 40%;
+  --primary-lighter: 0 100% 75%;
+  --primary-lightest: 0 100% 84%;
+
+  --primary-foreground: #121212;
+  --secondary: var(--ifm-color-emphasis-200, #303030);
+  --secondary-foreground: var(--ifm-color-emphasis-800, #d4d4d4);
+  --muted: var(--ifm-color-emphasis-300, #424242);
+  --muted-foreground: var(--ifm-color-emphasis-600, #a3a3a3);
+  --accent: var(--ifm-color-emphasis-200, #303030);
+  --accent-foreground: var(--ifm-color-emphasis-800, #d4d4d4);
+  --destructive: var(--ifm-color-danger, #ff6b6b);
+  --border: var(--ifm-color-emphasis-300, #424242);
+  --input: var(--ifm-color-emphasis-300, #424242);
+  --ring: hsl(var(--primary-light));
+  --sidebar: var(--ifm-background-color, #121212);
+  --sidebar-foreground: var(--ifm-font-color-base, #ffffff);
+  --sidebar-primary: hsl(var(--primary));
+  --sidebar-primary-foreground: #121212;
+  --sidebar-accent: var(--ifm-color-emphasis-200, #303030);
+  --sidebar-accent-foreground: var(--ifm-color-emphasis-800, #d4d4d4);
+  --sidebar-border: var(--ifm-color-emphasis-300, #424242);
+  --sidebar-ring: hsl(var(--primary-light));
+  --warning: var(--ifm-color-warning);
+  --warning-foreground: var(--ifm-color-warning-foreground);
+  --success: var(--ifm-color-success);
+  --success-foreground: var(--ifm-color-success-foreground);
+  --error: var(--ifm-color-error);
+  --error-foreground: var(--ifm-color-error-foreground);
+
+  --red-primary: hsl(var(--primary));
+
+  --destructive-light: #ef4444;
+  --destructive-dark: #b91c1c;
+  --success-light: #34d399;
+  --success-dark: #047857;
+  --warning-light: #fbbf24;
+  --warning-dark: #b45309;
+  --info: #06b6d4;
+  --info-light: #22d3ee;
+  --info-dark: #0e7490;
+  --info-foreground: #ffffff;
+  --purple: #7e22ce;
+  --purple-light: #c084fc;
+  --purple-dark: #7e22ce;
+  --purple-foreground: #ffffff;
+
+  /* Floating Dock */
+  --dock-solid: #1e293b;
+  --dock-solid-foreground: #f8fafc;
+  --dock-glass: rgba(255, 255, 255, 0.08);
+  --dock-outlined-border: #334155;
+  --dock-neon-bg: #020617;
+  --dock-neon-glow: 210 100% 60%;
+  --dock-icon-bg: #1e293b;
+  --dock-icon-hover: #334155;
+  --dock-separator: #475569;
+  --dock-outlined-dot: #f1f5f9;
+
+  /* Kanban Board - Dark Mode */
+  --board-bg: linear-gradient(to bottom right, #0f172a, #020617);
+  --column-bg: rgba(30, 41, 59, 0.4);
+  --brand-gradient: linear-gradient(135deg, #60a5fa, #a78bfa);
+
+  --glass-bg:
+    linear-gradient(135deg,
+      rgba(255, 255, 255, .08),
+      rgba(255, 90, 90, .06),
+      rgba(255, 40, 90, .04));
+
+  --glass-bg-subtle:
+    linear-gradient(135deg,
+      rgba(255, 255, 255, .05),
+      rgba(255, 255, 255, .03));
+
+  --glass-border: rgba(255, 255, 255, .12);
+
+  --glass-shadow:
+    0 12px 36px rgba(0, 0, 0, .45);
+
+  --glass-text: var(--foreground);
+
+  --glass-muted: var(--muted-foreground);
+
+  --glass-hover:
+    linear-gradient(135deg,
+      rgba(255, 255, 255, .12),
+      rgba(255, 90, 90, .08),
+      rgba(255, 40, 90, .06));
+}
+
+.navbar {
+  background: var(--background);
+  width: 100%;
+  display: flex;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.footer {
+  background: var(--background);
+  border-top: 1px solid var(--border);
+}
+
+.header--github-link {
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  margin-right: 4px;
+  border-radius: 50%;
+  transition: background var(--ifm-transition-fast);
+}
+
+.header--github-link:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbs__item {
+  display: flex;
+  align-items: center;
+}
+
+.header--github-link:before {
+  content: '';
+  height: 100%;
+  display: block;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E") no-repeat;
+}
+
+.header--github-link:hover {
+  transform: translateY(-1px) scale(1.08);
+  opacity: 1;
+}
+
+html[data-theme='dark'] .header--github-link:before {
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='white' d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E") no-repeat;
+}
+
+.hero-h1 {
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.gradient-anim,
+.emphasis {
+  background: linear-gradient(90deg, #ff0000 0%, #ff4b4b 50%, #ff8a00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 100%;
+  animation: gradientShift 6s linear infinite;
+  font-weight: 800;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.btn-primary {
+  background: #ff0000;
+  color: white;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  display: inline-block;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 0, 0, 0.3);
+  color: white;
+  text-decoration: none;
+}
+
+.btn-secondary {
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  display: inline-block;
+  transition: transform .18s ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.markdown table {
+  display: table !important;
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 1.5rem 0 !important;
+}
+
+.markdown table th,
+.markdown table td {
+  padding: 12px 14px !important;
+  text-align: left !important;
+  border: 1px solid var(--border);
+}
+

@@ -1,0 +1,69 @@
+---
+title: Schema Builder
+description: Visual content modeling engine powered by PostgreSQL JSONB and dynamic runtime Zod validation.
+sidebar_position: 1
+---
+
+The **Schema Builder** (Content Types Builder) is the visual data modeling engine of the Agentic Headless CMS. Located at `/content-types` in the admin dashboard, it allows content architects and developers to design rich content models dynamically without writing database migrations or running SQL DDL alterations.
+
+---
+
+## Architecture: Hybrid Relational + JSONB
+
+In traditional monolithic CMS architectures, adding, modifying, or deleting fields requires executing SQL `ALTER TABLE` statements. In high-traffic production databases, DDL locks can cause performance degradation or downtime.
+
+Agentic Headless CMS resolves this using a **hybrid relational + JSONB** storage pattern:
+
+- **Relational Schema Registry:** The structural definitions (names, slugs, field types, validation rules) are stored in the PostgreSQL `schemas` table.
+- **Dynamic JSONB Content Payloads:** Every content entry stores its actual field values inside a PostgreSQL `data (jsonb)` column.
+- **Sub-millisecond Querying:** Generalized Inverted Indexes (GIN) on the `data` column ensure fast queries, JSON path lookups, and relational joins without altering database tables.
+- **Immediate Availability:** As soon as you save a content type, the corresponding REST endpoint (`/api/v1/content/:slug`) and GraphQL queries become instantly available.
+
+---
+
+## Content Type Kinds
+
+When creating a new schema, you choose between three primary models:
+
+| Kind | Key | Description | Use Cases |
+| :--- | :--- | :--- | :--- |
+| **Collection Type** | `collection` | Manages multiple entries with pagination, filtering, and sorting. | Articles, Products, Authors, Categories |
+| **Single Type** | `single_type` | Manages a singleton entry with a single state. | Homepage Hero, Global Site Settings, Navigation Menus |
+| **Component** | `component` | Reusable data structure embeddable within other content types. | SEO Metadata, Call-to-Action blocks, Address fields |
+
+---
+
+## Supported Field Types
+
+The schema engine supports 11 native field data types:
+
+| Field Type | JSON Storage | Description & Validation Support |
+| :--- | :--- | :--- |
+| **Text** | `string` | Short text (titles, names). Supports `min`, `max`, and `regex` validation. |
+| **Rich Text** | `string` | Long-form formatted text or HTML. Supports `min`, `max`, and `regex`. |
+| **Number** | `number` | Integers and floating-point numbers. Supports `min` and `max` value limits. |
+| **Boolean** | `boolean` | Binary `true` or `false` toggle switch. |
+| **Date** | `string` | Calendar date formatted as `YYYY-MM-DD`. |
+| **DateTime** | `string` | Full ISO-8601 timestamp with date and time. |
+| **Email** | `string` | Enforces standard RFC email format validation. |
+| **URL** | `string` | Validates standard `http://` or `https://` web URLs. |
+| **Enum** | `string` | Constrained choice from a predefined list of allowed string options. |
+| **Media** | `string` (UUID) | Asset UUID referencing a file stored in the Media Library. |
+| **Relation** | `string` (UUID) | Relational reference pointing to an entry in another content type (`targetSchemaSlug`). |
+| **JSON** | `object` / `array` | Freeform, unconstrained structured JSON payloads. |
+
+---
+
+## Field Options & Validation Rules
+
+Every field configured in the Schema Builder can be customized with granular behavioral flags and validation constraints:
+
+| Option / Constraint | Property Key | Applicable Types | Description & Enforcement |
+| :--- | :--- | :--- | :--- |
+| **Required** | `isRequired` | All Types | Rejects entry submissions where the field value is missing, empty, or `null`. |
+| **Unique** | `isUnique` | `text`, `number`, `email`, `url` | Enforces database-level uniqueness across all entries for this content type. |
+| **Localized** | `isLocalized` | All Types | Enables multi-language translation, allowing separate values per active locale. |
+| **Repeatable** | `isRepeatable` | All Types | Converts field into an array of values (`z.array(...)`) with dynamic add/remove controls. |
+| **Min / Max Limit** | `validation.min`, `validation.max` | `text`, `richtext`, `number` | Restricts minimum/maximum character length or numeric lower/upper bounds. |
+| **Regex Pattern** | `validation.regex` | `text`, `richtext` | Enforces custom regular expression pattern matching (e.g. `^[a-z0-9_-]+$`). |
+{/*  */}

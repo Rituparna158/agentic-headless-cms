@@ -35,7 +35,7 @@ services:
       - agentic-network
 
   backend:
-    image: ghcr.io/mindfire-test/agentic-headless-cms/backend:latest
+    image: ghcr.io/mindfiredigital/agentic-headless-cms/backend:latest
     restart: unless-stopped
     depends_on:
       postgres:
@@ -64,7 +64,7 @@ services:
       - agentic-network
 
   worker:
-    image: ghcr.io/mindfire-test/agentic-headless-cms/worker:latest
+    image: ghcr.io/mindfiredigital/agentic-headless-cms/worker:latest
     restart: unless-stopped
     depends_on:
       backend:
@@ -84,7 +84,7 @@ services:
       - agentic-network
 
   frontend:
-    image: ghcr.io/mindfire-test/agentic-headless-cms/frontend:latest
+    image: ghcr.io/mindfiredigital/agentic-headless-cms/frontend:latest
     restart: unless-stopped
     depends_on:
       backend:
