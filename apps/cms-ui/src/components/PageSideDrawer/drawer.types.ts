@@ -30,6 +30,7 @@ export interface PageSideDrawerProps {
     publishImmediately: boolean,
   ) => Promise<void>;
   isSaving?: boolean;
+  onOpenHistory?: () => void;
 }
 
 export interface PageMetaDrawerHeaderProps {
@@ -42,6 +43,7 @@ export interface PageMetaDrawerHeaderProps {
   isPublished: boolean;
   onOpenPreview: () => void;
   onOpenCanvas: () => void;
+  onOpenHistory?: () => void;
   onClose: () => void;
 }
 

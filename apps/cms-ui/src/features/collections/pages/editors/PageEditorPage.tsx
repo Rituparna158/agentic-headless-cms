@@ -263,10 +263,19 @@ export function PageEditorPage() {
     if (revertedData.title) setTitle(revertedData.title);
     if (revertedData.slug) setSlug(revertedData.slug);
     if (revertedData.body) {
-      grapesEditorRef.current?.loadRawData(
-        revertedData.body as Partial<GrapesJSData>,
-      );
+      bodyRef.current = revertedData.body;
+      if (activeBuilder === 'grapesjs') {
+        grapesEditorRef.current?.loadRawData(
+          revertedData.body as Partial<GrapesJSData>,
+        );
+      } else {
+        setInitialBody(revertedData.body);
+      }
     }
+    usePageBuilderStore.getState().markClean(pageId!);
+    queryClient.invalidateQueries({ queryKey: ['page', schemaSlug, pageId] });
+    announce('Restored version snapshot onto canvas', 'polite');
+    toast.success('Restored snapshot successfully!');
   };
 
   useEffect(() => {
@@ -595,9 +604,12 @@ export function PageEditorPage() {
           schemaSlug={schemaSlug}
           pageId={pageId}
           currentPageData={{
+            ...((pageQuery.data?.data as Record<string, unknown>) || {}),
             title,
             slug,
             body: bodyRef.current,
+            _schemas: (pageQuery.data?.data as Record<string, unknown>)
+              ?._schemas as unknown[],
           }}
           onRevertSuccess={handleRevertSuccess}
         />
@@ -631,6 +643,7 @@ export function PageEditorPage() {
           );
         }}
         isSaving={updateMutation.isPending}
+        onOpenHistory={() => setIsHistoryDrawerOpen(true)}
       />
     </div>
   );

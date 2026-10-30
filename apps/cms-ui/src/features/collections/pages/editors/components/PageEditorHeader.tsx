@@ -91,29 +91,28 @@ export function PageEditorHeader({
         </button>
 
         {activeBuilder === 'grapesjs' && (
-          <>
-            <button
-              type="button"
-              onClick={onOpenImportModal}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs focus:outline-none focus:ring-2 focus:ring-zinc-600"
-              title="Import dynamic JSON template"
-              aria-label="Import JSON template"
-            >
-              <Upload className="h-3.5 w-3.5 text-indigo-400" />
-              Template
-            </button>
-            <button
-              type="button"
-              onClick={onOpenHistoryDrawer}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs focus:outline-none focus:ring-2 focus:ring-zinc-600"
-              title="View version snapshots and rollback"
-              aria-label="View version history"
-            >
-              <History className="h-3.5 w-3.5 text-amber-400" />
-              History
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={onOpenImportModal}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs focus:outline-none focus:ring-2 focus:ring-zinc-600"
+            title="Import dynamic JSON template"
+            aria-label="Import JSON template"
+          >
+            <Upload className="h-3.5 w-3.5 text-indigo-400" />
+            Template
+          </button>
         )}
+
+        <button
+          type="button"
+          onClick={onOpenHistoryDrawer}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-background text-foreground font-medium hover:bg-muted transition-colors text-xs focus:outline-none focus:ring-2 focus:ring-zinc-600 cursor-pointer"
+          title="View version snapshots and rollback"
+          aria-label="View version history"
+        >
+          <History className="h-3.5 w-3.5 text-amber-400" />
+          History
+        </button>
 
         <button
           type="button"

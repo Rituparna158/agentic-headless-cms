@@ -93,8 +93,8 @@ export const VersionHistoryDrawer: React.FC<VersionHistoryDrawerProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm animate-fade-in">
-        <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-          <div className="w-screen max-w-md bg-[#141417] border-l border-zinc-800 text-zinc-100 shadow-2xl flex flex-col animate-slide-in-right">
+        <div className="absolute inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+          <div className="w-screen max-w-2xl xl:max-w-3xl bg-[#141417] border-l border-zinc-800 text-zinc-100 shadow-2xl flex flex-col animate-slide-in-right">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4 bg-zinc-900/60">
               <div className="flex items-center gap-2.5">
@@ -191,7 +191,11 @@ export const VersionHistoryDrawer: React.FC<VersionHistoryDrawerProps> = ({
                       <div className="flex items-center justify-between pt-1 border-t border-zinc-800/60 mt-2">
                         <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
                           <User className="size-3 text-zinc-500" />
-                          <span>{version.createdByUserId || 'Admin'}</span>
+                          <span>
+                            {version.createdByUserName ||
+                              version.createdByUserId ||
+                              'Admin'}
+                          </span>
                         </div>
 
                         <button
