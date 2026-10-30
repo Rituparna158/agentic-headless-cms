@@ -61,6 +61,7 @@ module.exports = {
         'ci',
         'swagger',
         'docker',
+        'docs',
         'all',
       ],
     ],

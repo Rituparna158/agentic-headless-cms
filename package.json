@@ -6,6 +6,8 @@
     "build:analyze": "pnpm --filter cms-ui run build:analyze",
     "analyze": "pnpm --filter cms-ui run build:analyze",
     "dev": "turbo run dev",
+    "docs:dev": "pnpm --filter docs run start",
+    "docs:build": "pnpm --filter docs run build",
     "cli": "pnpm --filter backend run cli",
     "cli:ui": "pnpm --filter backend run cli serve-ui",
     "db:migrate": "pnpm --filter @repo/shared-db run db:migrate",
