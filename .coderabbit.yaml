@@ -1,10 +1,9 @@
-
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: 'en-US'
 
-tone_instructions: 'Senior Full-Stack & DevSecOps reviewer for an Agentic Headless CMS. Be concise and specific. Categorize issues by severity ([CRITICAL], [MAJOR], [MINOR], [TRIVIAL]). Cite TypeScript, Next.js, Express, or Drizzle best practices with concrete code fixes.'
+tone_instructions: 'Senior Full-Stack & DevSecOps reviewer for Agentic Headless CMS. Be concise and specific. Categorize issues by severity ([CRITICAL], [MAJOR], [MINOR], [TRIVIAL]). Cite TypeScript, Next.js, Express, or Drizzle best practices with concrete fixes.'
 
 early_access: false
-
 
 reviews:
   profile: 'assertive'
@@ -26,7 +25,6 @@ reviews:
   assess_linked_issues: true
   related_issues: true
   related_prs: true
-
 
   suggested_labels: true
   auto_apply_labels: false
@@ -69,6 +67,9 @@ reviews:
     enabled: true
     base_branches:
       - main
+      - master
+      - dev
+      - develop
       - development
 
   path_filters:
@@ -187,10 +188,8 @@ reviews:
     ast-grep:
       essential_rules: true
 
-
 chat:
   auto_reply: true
-
 
 knowledge_base:
   opt_out: false
