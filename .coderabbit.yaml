@@ -1,0 +1,205 @@
+
+language: 'en-US'
+
+tone_instructions: 'Senior Full-Stack & DevSecOps reviewer for an Agentic Headless CMS. Be concise and specific. Categorize issues by severity ([CRITICAL], [MAJOR], [MINOR], [TRIVIAL]). Cite TypeScript, Next.js, Express, or Drizzle best practices with concrete code fixes.'
+
+early_access: false
+
+
+reviews:
+  profile: 'assertive'
+  request_changes_workflow: true
+
+  high_level_summary: true
+  high_level_summary_instructions: >
+    Summarise the PR as a concise bullet-point list. Group changes by:
+    (1) Backend APIs & Security,
+    (2) Frontend & UI/UX,
+    (3) Database & Migrations,
+    (4) Tests, Tooling & Config.
+    End with a "Breaking changes" section (write "None" if absent).
+  high_level_summary_in_walkthrough: false
+  collapse_walkthrough: false
+  changed_files_summary: true
+  sequence_diagrams: true
+  estimate_code_review_effort: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+
+
+  suggested_labels: true
+  auto_apply_labels: false
+  labeling_instructions:
+    - label: 'backend'
+      instructions: 'Apply when the PR modifies apps/backend/ routes, controllers, or services.'
+    - label: 'frontend'
+      instructions: 'Apply when the PR modifies apps/frontend/ pages, components, hooks, or stores.'
+    - label: 'security: rbac'
+      instructions: 'Apply when the PR touches authentication, tokens, roles, permissions, or access middleware.'
+    - label: 'database: schema'
+      instructions: 'Apply when the PR modifies packages/shared-db/ schemas, migrations, or Drizzle definitions.'
+    - label: 'events: audit'
+      instructions: 'Apply when the PR touches audit log ingestion, listeners, or Redis cache eviction.'
+    - label: 'webhooks'
+      instructions: 'Apply when the PR modifies webhook dispatching, BullMQ queues, or delivery workers.'
+    - label: 'sdk'
+      instructions: 'Apply when the PR touches packages/sdk-core, packages/sdk-node, or packages/sdk-nextjs.'
+    - label: 'breaking change'
+      instructions: 'Apply when the PR alters API contracts, removes database columns, or breaks backwards compatibility.'
+    - label: 'tests'
+      instructions: 'Apply when the PR adds or updates Vitest unit tests (*.test.ts/tsx) or Playwright E2E specs (*.spec.ts).'
+    - label: 'tooling & ci'
+      instructions: 'Apply when the PR touches .github/workflows/, package.json, turbo.json, or build configs.'
+    - label: 'dependencies'
+      instructions: 'Apply when the PR bumps, adds, or removes npm/pnpm dependencies.'
+
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+
+  commit_status: true
+  fail_commit_status: false
+  review_status: true
+  review_details: true
+
+  poem: false
+  in_progress_fortune: false
+
+  auto_review:
+    enabled: true
+    base_branches:
+      - main
+      - development
+
+  path_filters:
+    - '!dist/**'
+    - '!**/dist/**'
+    - '!node_modules/**'
+    - '!pnpm-lock.yaml'
+    - '!package-lock.json'
+    - '!yarn.lock'
+    - '!coverage/**'
+    - '!.turbo/**'
+    - '!.next/**'
+    - '!**/*.snap'
+    - '!**/__snapshots__/**'
+    - '!.husky/**'
+    - '!**/drizzle/migrations/meta/**'
+    - '!agentic-headless-cms.zip'
+
+  path_instructions:
+    - path: 'apps/backend/src/**/*.ts'
+      instructions: |
+        ## Backend Review Checklist (Express + TypeScript)
+
+        ### Security & RBAC Invariants
+        - Protected routes must apply `authenticateToken` followed by `requireAdmin` or `requirePermission(...)`.
+        - Do not rely on client-supplied role names; verify active database permissions or JWT claims.
+        - Multi-tenant data queries must validate tenant context (`applicationId` or `x-app-id`).
+
+        ### Error Handling & Responses
+        - Controllers must wrap async handlers in `asyncHandler(...)` or standard try/catch blocks.
+        - Throw standard error classes (`ApiError`, `NotFoundError`, `BadRequestError`, `ForbiddenError`).
+        - Never leak raw database error messages or internal stack traces to the API response.
+
+        ### Asynchronous Auditing & Queues
+        - Audit logs must be emitted via `eventBus.emit(EVENT_NAMES.AUDIT_LOG, payload)` and processed asynchronously.
+        - Primary API mutation requests must not block waiting for audit log database writes.
+
+        ### Resilience & Redis
+        - All Redis cache operations (read, write, delete) must be wrapped in fail-safe try/catch blocks.
+        - If Redis is offline or unreachable, the system must seamlessly fall back to PostgreSQL without throwing 500 errors.
+
+    - path: 'apps/frontend/**/*.tsx'
+      instructions: |
+        ## Frontend Review Checklist (Next.js 15 App Router + React 19)
+
+        ### React Rules of Hooks
+        - React hooks (`useMemo`, `useState`, `useEffect`, `useCallback`, `useQuery`, `useHasPermission`) must ALWAYS be called at the top of the component body.
+        - Hooks must NEVER be called conditionally or placed after early return statements (e.g. `if (isLoading) return ...`).
+
+        ### Next.js 15 Conventions
+        - Client components must start with the `'use client'` directive.
+        - Any component reading `useSearchParams()` must be wrapped in a `<Suspense>` boundary to prevent CSR bailout.
+
+        ### Upfront Permission Guards
+        - Unauthorized actions (e.g. `+ Invite User`, `+ New Entry`, `Save Draft`) must be hidden or disabled upfront based on user permissions.
+        - When direct URL visits occur on unauthorized pages, render an appropriate Access Denied state.
+        - Gracefully handle 403 Forbidden responses in React Query counters without breaking dashboard layouts.
+
+        ### Accessibility (a11y)
+        - Ensure semantic HTML (`button`, `nav`, `main`, headings hierarchy).
+        - Verify visible focus indicators, accessible labels for icon buttons, and WCAG AA contrast compliance.
+
+    - path: 'packages/shared-db/src/schema/**/*.ts'
+      instructions: |
+        ## Database Schema Review Checklist (Drizzle ORM + PostgreSQL)
+
+        ### Integrity & Constraints
+        - Primary keys must use `uuid('id').primaryKey().defaultRandom()`.
+        - Foreign keys must explicitly specify `onDelete` behaviour (`cascade` or `set null`).
+        - Composite indexes must be added on hot query paths (e.g. `[applicationId, timestamp]`, `[applicationId, resourceType]`).
+
+        ### Immutability & Multi-Tenancy
+        - `audit_logs` is an append-only ledger; ensure no update or delete mutations are introduced.
+        - Tenant-scoped tables must enforce `applicationId` references.
+
+    - path: 'packages/repository/src/**/*.ts'
+      instructions: |
+        ## Repository Review Checklist
+        - Multi-table writes or cascading operations must be wrapped in `withTransaction(this.db, ...)`.
+        - Use parameterized Drizzle query builders or `sql` tagged templates; never concatenate raw strings.
+        - Pagination queries must enforce safe upper bounds on `limit` (e.g. `Math.min(100, limit)`).
+
+    - path: 'apps/frontend/__tests__/e2e/**/*.spec.ts'
+      instructions: |
+        ## E2E Test Review Checklist (Playwright)
+        - Use resilient semantic locators (`getByRole`, `getByLabel`, `getByText`) rather than fragile CSS classes.
+        - Avoid hardcoded `page.waitForTimeout()` sleeps; prefer `expect(...).toBeVisible()` or `waitForResponse()`.
+        - Clean up created test entities or isolate state per test run using unique random suffixes.
+
+    - path: '.github/workflows/**'
+      instructions: |
+        ## CI/CD Review Checklist (GitHub Actions)
+        - GitHub Action steps should use pinned versions.
+        - Sensitive keys or tokens must strictly reference `${{ secrets.* }}`.
+        - CI pipeline steps must include linting, type-checking, and unit tests with non-zero exit on failure.
+
+    - path: 'packages/sdk-*/**'
+      instructions: |
+        ## Client SDK Review Checklist (Next.js & Node SDKs)
+        - Ensure methods return strongly typed response objects.
+        - Handle HTTP network timeouts, retries, and rate limits gracefully.
+
+  tools:
+    eslint:
+      enabled: true
+    biome:
+      enabled: false
+    markdownlint:
+      enabled: true
+    actionlint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    yamllint:
+      enabled: true
+    ast-grep:
+      essential_rules: true
+
+
+chat:
+  auto_reply: true
+
+
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - 'README.md'
+      - 'docs/**'
+  learnings:
+    scope: auto
