@@ -15,15 +15,20 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Core Features',
-      collapsed: false,
+      collapsed: true,
       items: [
         'features/schema-builder',
+        'features/content-manager',
+        'features/draft-and-publish',
+        'features/audit-logs',
+        'features/webhooks',
       ],
     },
+    
     {
       type: 'category',
       label: 'Contribution Guide',
-      collapsed: false,
+      collapsed: true,
       items: [
         'contribution-guide/how-to-contribute',
         'contribution-guide/code-of-conduct',
@@ -33,4 +38,3 @@ const sidebars: SidebarsConfig = {
 };
 
 export default sidebars;
-

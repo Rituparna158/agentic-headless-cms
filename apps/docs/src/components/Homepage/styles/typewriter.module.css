@@ -1,0 +1,26 @@
+.typewriterWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-width: 14ch;
+  text-align: center;
+  vertical-align: baseline;
+}
+
+.cursor {
+  display: inline-block;
+  margin-left: 2px;
+  color: #ff0000;
+  font-weight: 300;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}

@@ -25,7 +25,7 @@ We are committed to fostering a welcoming and inclusive community. Before contri
 
 ## Finding Something to Work On
 
-1.  **Explore the Issues:** Head over to our [issue tracker](https://github.com/mindfire-test/agentic-headless-cms/issues). This is the best place to find tasks.
+1.  **Explore the Issues:** Head over to our [issue tracker](https://github.com/mindfiredigital/agentic-headless-cms/issues). This is the best place to find tasks.
 2.  **Good First Issues:** Look for issues tagged with `good first issue` or `help wanted`. These are specifically prepared for new contributors.
 3.  **Propose a New Feature:** If you have an idea for a new component or feature, please **open an issue first**. This allows us to discuss the feature and make sure it aligns with the project's goals before you start working on it.
 

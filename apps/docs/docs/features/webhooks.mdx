@@ -1,0 +1,29 @@
+---
+title: Webhooks
+description: Automated real-time HTTP notifications for content changes and deployment triggers.
+sidebar_position: 6
+---
+
+**Webhooks** send automated HTTP `POST` notifications to external services whenever content in the CMS changes. They are commonly used to trigger static site rebuilds, on-demand cache revalidation in Next.js, or notifications in team communication tools.
+
+---
+
+## Supported Events
+
+You can configure each webhook to listen to specific content actions:
+
+| Event Name | Trigger |
+| :--- | :--- |
+| **`content.published`** | Triggers when an entry is published live. |
+| **`content.updated`** | Triggers when content edits or drafts are saved. |
+| **`content.deleted`** | Triggers when an entry is deleted. |
+| **`media.uploaded`** | Triggers when an asset is uploaded to the Media Library. |
+
+---
+
+## Creating a Webhook
+
+1. Navigate to **Webhooks** (`/webhooks`) in the dashboard.
+2. Click **Create Webhook**.
+3. Enter a **Name**, destination **URL**, and select the **Events** you want to receive.
+4. Click **Save**. A secret key is automatically generated to sign outgoing payloads.

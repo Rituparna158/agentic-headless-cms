@@ -1,0 +1,149 @@
+.backgroundContainer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle drifting dot matrix */
+.gridPattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(225, 25, 45, 0.08) 1.2px, transparent 1.2px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(ellipse 85% 70% at 50% 35%, black 35%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 35%, black 35%, transparent 90%);
+  animation: gridDrift 40s linear infinite;
+}
+
+[data-theme='dark'] .gridPattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.2px, transparent 1.2px);
+}
+
+@keyframes gridDrift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 34px 34px;
+  }
+}
+
+/* Pulsing hero aura */
+.auraCenter {
+  position: absolute;
+  top: 1%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 740px;
+  height: 460px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 30, 45, 0.09) 0%, rgba(255, 90, 70, 0.03) 45%, transparent 70%);
+  filter: blur(60px);
+  animation: auraPulse 8s ease-in-out infinite alternate;
+}
+
+[data-theme='dark'] .auraCenter {
+  background: radial-gradient(circle, rgba(255, 0, 0, 0.12) 0%, rgba(255, 60, 60, 0.03) 45%, transparent 70%);
+}
+
+@keyframes auraPulse {
+  0% {
+    transform: translateX(-50%) scale(0.92);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(-50%) scale(1.08);
+    opacity: 1;
+  }
+}
+
+/* Fluid wandering glowing orbs */
+.orbPrimary {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 30, 45, 0.08) 0%, rgba(255, 80, 60, 0.02) 50%, transparent 70%);
+  filter: blur(60px);
+  animation: floatOrbPrimary 18s ease-in-out infinite;
+}
+
+[data-theme='dark'] .orbPrimary {
+  background: radial-gradient(circle, rgba(255, 0, 0, 0.10) 0%, rgba(255, 50, 50, 0.02) 50%, transparent 70%);
+}
+
+.orbSecondary {
+  position: absolute;
+  top: 36%;
+  right: 5%;
+  width: 480px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 60, 20, 0.07) 0%, rgba(255, 110, 40, 0.02) 50%, transparent 70%);
+  filter: blur(65px);
+  animation: floatOrbSecondary 22s ease-in-out infinite;
+}
+
+[data-theme='dark'] .orbSecondary {
+  background: radial-gradient(circle, rgba(255, 50, 0, 0.08) 0%, rgba(255, 0, 0, 0.02) 50%, transparent 70%);
+}
+
+.orbTertiary {
+  position: absolute;
+  top: 65%;
+  left: 5%;
+  width: 450px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 20, 60, 0.07) 0%, transparent 70%);
+  filter: blur(60px);
+  animation: floatOrbTertiary 20s ease-in-out infinite;
+}
+
+[data-theme='dark'] .orbTertiary {
+  background: radial-gradient(circle, rgba(255, 0, 50, 0.08) 0%, transparent 70%);
+}
+
+@keyframes floatOrbPrimary {
+  0% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  33% {
+    transform: translate(calc(-50% + 75px), 65px) scale(1.12);
+  }
+  66% {
+    transform: translate(calc(-50% - 65px), 110px) scale(0.92);
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes floatOrbSecondary {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-95px, 85px) scale(1.18);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes floatOrbTertiary {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(85px, -75px) scale(1.15);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
