@@ -1,0 +1,338 @@
+/* ─── Interactive Studio Tour (Linear / Supabase Split Style) ──────────── */
+.section {
+  position: relative;
+  width: 100%;
+  padding: 5.5rem 1.5rem;
+  background: var(--background);
+  color: var(--foreground);
+  border-top: 1px solid var(--border);
+}
+
+.inner {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 3rem auto;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ff3344;
+  margin-bottom: 0.85rem;
+  padding: 0.35rem 0.95rem;
+  border-radius: 9999px;
+  background: rgba(255, 51, 68, 0.08);
+  border: 1px solid rgba(255, 51, 68, 0.25);
+}
+
+.title {
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+  margin: 0 0 0.85rem 0;
+  line-height: 1.15;
+}
+
+.gradientWord {
+  color: #ff3344;
+}
+
+.subtitle {
+  font-size: 1.08rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ─── Split Layout: Left Menu + Right Showcase Window ──────────────────── */
+.tourLayout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+@media (max-width: 1024px) {
+  .tourLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Left Menu Column ─────────────────────────────────────────────────── */
+.menuCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.navCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  border-radius: 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.navCard:hover {
+  border-color: rgba(255, 51, 68, 0.35);
+  transform: translateX(3px);
+}
+
+.navCardActive {
+  background: rgba(255, 51, 68, 0.07) !important;
+  border-color: rgba(255, 51, 68, 0.5) !important;
+  box-shadow: 0 4px 20px rgba(255, 51, 68, 0.12);
+}
+
+.navCardActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #ff3344;
+  border-radius: 0 2px 2px 0;
+}
+
+.navIconBox {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--foreground);
+  margin-top: 0.1rem;
+  transition: all 0.2s ease;
+}
+
+.navCardActive .navIconBox {
+  background: #ff3344;
+  border-color: #ff3344;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 51, 68, 0.4);
+}
+
+.navText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.navTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1.3;
+}
+
+.navCardActive .navTitle {
+  color: #ff3344;
+}
+
+.navDesc {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  line-height: 1.45;
+}
+
+/* ─── Right Showcase Column ────────────────────────────────────────────── */
+.previewCol {
+  position: relative;
+  width: 100%;
+}
+
+.window {
+  background: #0f111a;
+  border: 1px solid var(--border);
+  border-radius: 0.95rem;
+  box-shadow:
+    0 25px 65px -15px rgba(0, 0, 0, 0.7),
+    0 0 45px rgba(255, 51, 68, 0.1);
+  overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.window:hover {
+  border-color: rgba(255, 51, 68, 0.4);
+  box-shadow:
+    0 32px 80px -15px rgba(0, 0, 0, 0.85),
+    0 0 55px rgba(255, 51, 68, 0.18);
+}
+
+.windowBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.15rem;
+  background: #141724;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dots {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.dotRed { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; opacity: 0.85; }
+.dotYellow { width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; opacity: 0.85; }
+.dotGreen { width: 10px; height: 10px; border-radius: 50%; background: #10b981; opacity: 0.85; }
+
+.urlBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.95rem;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 0.4rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.windowBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.7);
+  display: inline-block;
+}
+
+.screenArea {
+  background: #090a0f;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 1024 / 514;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screenshotImg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 1024 / 514;
+  transition: opacity 0.2s ease;
+}
+
+/* Feature Details Card under Screenshot */
+.infoBox {
+  margin-top: 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 82px;
+  flex-wrap: nowrap;
+}
+
+.infoText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.infoTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.infoDesc {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.docsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #ff3344 !important;
+  font-size: 0.86rem;
+  font-weight: 650;
+  text-decoration: none !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 51, 68, 0.06);
+  border: 1px solid rgba(255, 51, 68, 0.2);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.docsLink:hover {
+  background: rgba(255, 51, 68, 0.12);
+  border-color: rgba(255, 51, 68, 0.45);
+  box-shadow: 0 2px 10px rgba(255, 51, 68, 0.15);
+}
+
+.docsArrow {
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.18s ease;
+}
+
+.docsLink:hover .docsArrow {
+  transform: translateX(3px);
+}
+
+@media (max-width: 640px) {
+  .infoBox {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+    min-height: auto;
+  }
+
+  .docsLink {
+    align-self: flex-start;
+  }
+}

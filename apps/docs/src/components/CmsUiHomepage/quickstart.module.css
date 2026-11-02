@@ -1,0 +1,171 @@
+/* ─── Developer Quickstart Section (Matches Theme Navbar) ───────────────── */
+.section {
+  position: relative;
+  width: 100%;
+  padding: 5.5rem 1.5rem;
+  background: var(--background);
+  color: var(--foreground);
+  border-top: 1px solid var(--border);
+}
+
+.inner {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 2.5rem auto;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ff3344;
+  margin-bottom: 0.85rem;
+  padding: 0.35rem 0.95rem;
+  border-radius: 9999px;
+  background: rgba(255, 51, 68, 0.08);
+  border: 1px solid rgba(255, 51, 68, 0.25);
+}
+
+.title {
+  font-size: clamp(2rem, 3.8vw, 2.8rem);
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.15;
+}
+
+.gradientWord {
+  color: #ff3344;
+}
+
+.subtitle {
+  font-size: 1.08rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ─── Terminal Box ─────────────────────────────────────────────────────── */
+.terminal {
+  background: #0f111a;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  box-shadow:
+    0 20px 50px -15px rgba(0, 0, 0, 0.6),
+    0 0 35px rgba(255, 51, 68, 0.08);
+  overflow: hidden;
+}
+
+.terminalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.15rem;
+  background: #141724;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dots {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.dotRed { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; opacity: 0.85; }
+.dotYellow { width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; opacity: 0.85; }
+.dotGreen { width: 10px; height: 10px; border-radius: 50%; background: #10b981; opacity: 0.85; }
+
+.pkgTabs {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.pkgBtn {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 0.35rem;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pkgBtn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pkgBtnActive {
+  background: rgba(255, 51, 68, 0.25);
+  border-color: rgba(255, 51, 68, 0.5);
+  color: #ff8591;
+  font-weight: 600;
+}
+
+.terminalBody {
+  padding: 1.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.codeLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.promptSymbol {
+  color: #ff3344;
+  font-weight: 700;
+  margin-right: 0.6rem;
+  user-select: none;
+}
+
+.commandCode {
+  color: #f1f5f9;
+}
+
+.copyBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.copyBtn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.terminalOutput {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.outputSuccess {
+  color: #34d399;
+}
