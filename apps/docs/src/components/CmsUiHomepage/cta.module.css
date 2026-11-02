@@ -1,0 +1,120 @@
+/* ─── CTA Section (Matches Theme Navbar) ────────────────────────────────── */
+.section {
+  position: relative;
+  width: 100%;
+  padding: 5.5rem 1.5rem 6.5rem;
+  background: var(--background);
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Card ───────────────────────────────────────────────────────────── */
+.glowBorder {
+  position: absolute;
+  inset: 2rem 1.5rem;
+  border-radius: 1.25rem;
+  background: var(--card);
+  border: 1px solid rgba(255, 51, 68, 0.25);
+  box-shadow:
+    0 20px 50px -10px rgba(0, 0, 0, 0.4),
+    0 0 35px rgba(255, 51, 68, 0.08);
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  z-index: 10;
+  max-width: 720px;
+  width: 100%;
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.95rem;
+  border-radius: 9999px;
+  background: rgba(255, 51, 68, 0.08);
+  border: 1px solid rgba(255, 51, 68, 0.25);
+  color: #ff3344;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.25rem;
+}
+
+.heading {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+  line-height: 1.15;
+  margin: 0 0 1rem 0;
+}
+
+.gradientText {
+  color: #ff3344;
+}
+
+.subtext {
+  font-size: 1.08rem;
+  color: var(--muted-foreground);
+  line-height: 1.65;
+  max-width: 540px;
+  margin: 0 auto 2.25rem auto;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.95rem;
+  border-radius: 0.65rem;
+  background: #ff3344;
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 18px rgba(255, 51, 68, 0.35);
+  border: 1px solid #e11d48;
+}
+
+.btnPrimary:hover {
+  background: #e11d48;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(255, 51, 68, 0.5);
+}
+
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground) !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.btnGhost:hover {
+  border-color: rgba(255, 51, 68, 0.4);
+  color: var(--foreground) !important;
+  transform: translateY(-2px);
+}

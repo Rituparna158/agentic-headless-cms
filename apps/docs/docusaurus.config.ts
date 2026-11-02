@@ -21,6 +21,19 @@ const config: Config = {
     locales: ['en'],
   },
 
+  // ─── CMS UI docs as a separate plugin instance ──────────────────────────────
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'cms-ui',
+        path: 'cms-ui-docs',
+        routeBasePath: 'cms-ui/docs',
+        sidebarPath: './sidebars-cms-ui.ts',
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
@@ -51,10 +64,30 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          to: '/',
+          label: 'CMS Core',
           position: 'left',
+          exact: true,
+        },
+        {
+          to: '/cms-ui',
+          label: 'CMS UI Studio',
+          position: 'left',
+        },
+        {
+          type: 'dropdown',
           label: 'Documentation',
+          position: 'left',
+          items: [
+            {
+              label: 'CMS Core Documentation',
+              to: '/docs/getting-started/introduction',
+            },
+            {
+              label: 'CMS UI Studio Docs',
+              to: '/cms-ui/docs/getting-started/introduction',
+            },
+          ],
         },
         {
           href: 'https://github.com/mindfiredigital/agentic-headless-cms',

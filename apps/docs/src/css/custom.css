@@ -254,6 +254,36 @@
   align-items: center;
   margin: 0 auto;
   border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+}
+
+/* Hide default Docusaurus navbar on CMS UI landing page to show custom navbar */
+body:has(.cms-ui-page) .navbar,
+.has-custom-navbar .navbar {
+  display: none !important;
+}
+
+.navbar__brand {
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.navbar__item {
+  font-weight: 550;
+  font-size: 0.92rem;
+  transition: color 0.15s ease;
+}
+
+.navbar__link {
+  color: var(--foreground);
+  opacity: 0.85;
+}
+
+.navbar__link:hover,
+.navbar__link--active {
+  color: #ff3344 !important;
+  opacity: 1;
+  font-weight: 650;
 }
 
 .footer {
