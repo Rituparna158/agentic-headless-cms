@@ -479,6 +479,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      lucide-react:
+        specifier: ^1.65.0
+        version: 1.65.0(@types/react@19.2.18)(react@19.2.0)
       prism-react-renderer:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.0)
@@ -11168,6 +11171,15 @@ packages:
     resolution: {integrity: sha512-G8u2eEtoHUnUa9f8lbvqDhCiORMnYLdUEo06EEG9MQvHQrInKcX3Pa2TH39MM5qyzRcWETxB0+aOwAPI1g1kEg==}
     peerDependencies:
       react: 19.2.0
+
+  lucide-react@1.65.0:
+    resolution: {integrity: sha512-roSdtzudEY39i2hn5LLjA8toYfhF2z4S10WSqZF4ubXpHlOmNTvaxMxZLdJfQDi6pEifQWX+cRmYihKSsvAxfA==}
+    peerDependencies:
+      '@types/react': '*'
+      react: 19.2.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   luxon@3.7.2:
     resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
@@ -26810,6 +26822,12 @@ snapshots:
   lucide-react@1.31.0(react@19.2.0):
     dependencies:
       react: 19.2.0
+
+  lucide-react@1.65.0(@types/react@19.2.18)(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+    optionalDependencies:
+      '@types/react': 19.2.18
 
   luxon@3.7.2: {}
 

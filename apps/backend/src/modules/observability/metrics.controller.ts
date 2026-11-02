@@ -36,6 +36,71 @@ export const getMetrics = async (req: Request, res: Response) => {
   }
 };
 
+export function normalizeMetricPath(rawPath: unknown): string {
+  if (typeof rawPath !== 'string' || !rawPath.trim()) {
+    return 'unknown';
+  }
+
+  // Cap input length upfront to prevent memory issues from abnormally long inputs
+  const boundedRaw = rawPath.trim().slice(0, 100);
+
+  const [pathWithoutQuery = ''] = boundedRaw.split('?');
+  const [cleanPath = ''] = pathWithoutQuery.split('#');
+
+  let path = cleanPath;
+  if (!path.startsWith('/')) {
+    path = `/${path}`;
+  }
+
+  // Normalize UUIDs (v4/v1) -> :id
+  path = path.replace(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+    ':id',
+  );
+  // Normalize numeric IDs (e.g. /posts/123 -> /posts/:id)
+  path = path.replace(/\/\d+(?=\/|$)/g, '/:id');
+  // Normalize long hex hashes (16+ chars)
+  path = path.replace(/\/[0-9a-f]{16,}(?=\/|$)/gi, '/:id');
+  // Normalize long arbitrary dynamic segments (> 32 characters) to :param
+  path = path.replace(/\/[^/?#]{33,}(?=\/|$)/g, '/:param');
+
+  // Strip trailing slash unless root /
+  if (path.length > 1 && path.endsWith('/')) {
+    path = path.slice(0, -1);
+  }
+
+  const ALLOWED_PREFIXES = [
+    '/auth',
+    '/dashboard',
+    '/content',
+    '/schemas',
+    '/media',
+    '/users',
+    '/roles',
+    '/audit',
+    '/locales',
+    '/webhooks',
+    '/tokens',
+    '/api-docs',
+    '/health',
+    '/',
+  ];
+
+  const matched = ALLOWED_PREFIXES.find((prefix) =>
+    prefix === '/' ? path === '/' : path.startsWith(prefix),
+  );
+
+  if (matched) {
+    const segments = path.split('/').filter(Boolean);
+    if (segments.length > 3) {
+      return `/${segments.slice(0, 3).join('/')}/*`;
+    }
+    return path.length > 100 ? path.slice(0, 100) : path;
+  }
+
+  return '/other';
+}
+
 interface WebVitalPayloadItem {
   name?: unknown;
   value?: unknown;
@@ -63,10 +128,7 @@ export const recordWebVitals = (req: Request, res: Response): void => {
       const name = event.name.toUpperCase();
       const rating =
         typeof event.rating === 'string' ? event.rating : 'unknown';
-      const pathname =
-        typeof event.pathname === 'string'
-          ? event.pathname.slice(0, 100)
-          : 'unknown';
+      const pathname = normalizeMetricPath(event.pathname);
 
       webVitalsCounter.inc({ name, rating });
       webVitalsHistogram.observe({ name, rating, pathname }, event.value);

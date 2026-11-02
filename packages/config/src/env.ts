@@ -95,13 +95,119 @@ const baseEnvSchema = z.object({
   OIDC_CLIENT_SECRET: z.string().optional(),
   OIDC_REDIRECT_URI: z.string().url().optional(),
 
+  METRICS_TOKEN: z.string().min(16).optional(),
+
   SEED_ADMIN_EMAIL: z.string().email().optional(),
   SEED_ADMIN_PASSWORD: z.string().optional(),
   SEED_CMS_ADMIN_EMAIL: z.string().email().optional(),
   SEED_CMS_ADMIN_PASSWORD: z.string().optional(),
 });
 
-const envSchema = baseEnvSchema.superRefine((data, ctx) => {
+export const envSchema = baseEnvSchema.superRefine((data, ctx) => {
+  if (data.NODE_ENV === 'production') {
+    const INSECURE_JWT_SECRETS = [
+      'super_secret_jwt_key_at_least_32_characters_long',
+      'your-super-secret-jwt-key-here-32chars',
+      'change-me-to-a-secure-random-32-char-secret',
+      'default_jwt_secret_must_be_changed_in_prod',
+      '12345678901234567890123456789012',
+      'abcdefghijklmnopqrstuvwxyz123456',
+    ];
+
+    if (INSECURE_JWT_SECRETS.includes(data.JWT_SECRET.toLowerCase())) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['JWT_SECRET'],
+        message:
+          'Predictable or default JWT_SECRET is not permitted in production. Generate a secure, random 32+ character secret.',
+      });
+    }
+
+    if (data.CORS_ORIGIN === '*') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['CORS_ORIGIN'],
+        message: 'Wildcard CORS_ORIGIN ("*") is not permitted in production',
+      });
+    }
+
+    const origins = data.CORS_ORIGIN.split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    const hasLoopbackOrigin = origins.some((origin) => {
+      if (origin === '*') return false;
+      try {
+        const parsed = new URL(origin);
+        return ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(
+          parsed.hostname.toLowerCase(),
+        );
+      } catch {
+        return (
+          origin.toLowerCase().includes('localhost') ||
+          origin.includes('127.0.0.1')
+        );
+      }
+    });
+
+    if (hasLoopbackOrigin && process.env.ALLOW_LOCALHOST_CORS !== 'true') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['CORS_ORIGIN'],
+        message:
+          'CORS_ORIGIN must be set to a valid production domain, not localhost or loopback addresses',
+      });
+    }
+
+    try {
+      const dbUrl = new URL(data.DATABASE_URL);
+      const decodedUser = decodeURIComponent(dbUrl.username);
+      const decodedPass = decodeURIComponent(dbUrl.password);
+      if (decodedUser === 'postgres' && decodedPass === 'postgres') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['DATABASE_URL'],
+          message:
+            'Default database credentials (postgres:postgres) are not permitted in production',
+        });
+      }
+    } catch {
+      // Handled by base schema protocol check
+    }
+
+    const INSECURE_PASSWORDS = [
+      'admin',
+      'admin123',
+      'password',
+      '12345678',
+      'root',
+    ];
+
+    if (
+      data.SEED_ADMIN_PASSWORD &&
+      INSECURE_PASSWORDS.includes(data.SEED_ADMIN_PASSWORD.toLowerCase())
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SEED_ADMIN_PASSWORD'],
+        message:
+          'Weak or default SEED_ADMIN_PASSWORD is not permitted in production',
+      });
+    }
+
+    if (
+      data.SEED_CMS_ADMIN_PASSWORD &&
+      INSECURE_PASSWORDS.includes(data.SEED_CMS_ADMIN_PASSWORD.toLowerCase())
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SEED_CMS_ADMIN_PASSWORD'],
+        message:
+          'Weak or default SEED_CMS_ADMIN_PASSWORD is not permitted in production',
+      });
+    }
+  }
+
   if (data.STORAGE_ADAPTER === 's3') {
     if (!data.STORAGE_S3_BUCKET) {
       ctx.addIssue({

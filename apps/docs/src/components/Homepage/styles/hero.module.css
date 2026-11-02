@@ -89,3 +89,19 @@
   box-shadow: 0 0 8px #ff0000;
 }
 
+
+.tagsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 0 auto 2rem auto;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.tagDot {
+  color: #ff0000;
+  opacity: 0.8;
+}

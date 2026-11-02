@@ -5,18 +5,28 @@ export function SectionTitleCapsule({
   highlight,
   align = 'center',
   caseInsensitive = false,
+  style,
 }: {
   children: React.ReactNode;
   highlight?: string;
   align?: 'left' | 'center';
   caseInsensitive?: boolean;
+  style?: React.CSSProperties;
 }) {
-  const base = 'font-semibold tracking-tight text-3xl sm:text-4xl lg:text-5xl leading-[1.1] text-foreground';
-  const alignClass = align === 'center' ? 'text-center' : 'text-left';
+  const headingStyle: React.CSSProperties = {
+    fontSize: 'clamp(2.1rem, 3.8vw, 2.85rem)',
+    fontWeight: 800,
+    lineHeight: 1.2,
+    letterSpacing: '-0.02em',
+    color: 'var(--foreground)',
+    textAlign: align,
+    margin: '0 auto 0.85rem',
+    ...style,
+  };
 
   if (typeof children !== 'string' || !highlight || highlight.length === 0) {
     return (
-      <h2 className={`${base} ${alignClass}`} style={{ textAlign: align }}>
+      <h2 style={headingStyle}>
         {children}
       </h2>
     );
@@ -28,7 +38,7 @@ export function SectionTitleCapsule({
 
   if (!haystack.includes(needle)) {
     return (
-      <h2 className={`${base} ${alignClass}`} style={{ textAlign: align }}>
+      <h2 style={headingStyle}>
         {children}
       </h2>
     );
@@ -63,9 +73,8 @@ export function SectionTitleCapsule({
   }
 
   return (
-    <h2 className={`${base} ${alignClass}`} style={{ textAlign: align, margin: '0 auto 1rem' }}>
+    <h2 style={headingStyle}>
       {parts}
     </h2>
   );
 }
-

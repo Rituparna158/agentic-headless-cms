@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { authenticateToken } from '@repo/middlewares';
-import { authRateLimiter } from '../../middlewares/rate-limit.middleware.js';
+import {
+  authRateLimiter,
+  passwordResetRateLimiter,
+} from '../../middlewares/rate-limit.middleware.js';
 import {
   acceptInvite,
   getCurrentUser,
@@ -17,7 +20,9 @@ import {
   requestPasswordReset,
   resetPassword,
 } from './auth.controller.js';
+
 export const authRouter = Router();
+
 authRouter.post('/login', authRateLimiter, login);
 authRouter.post('/logout', logout);
 authRouter.get('/me', authenticateToken, getCurrentUser);
@@ -28,9 +33,23 @@ authRouter.post('/mfa/enroll', authenticateToken, enrollMfa);
 authRouter.post('/mfa/verify', authenticateToken, verifyMfa);
 authRouter.post('/mfa/challenge', authRateLimiter, verifyMfaChallenge);
 authRouter.post('/mfa/disable', authenticateToken, disableMfa);
+
 // MFA Reset flow routes (Public)
-authRouter.post('/mfa/reset-request', authRateLimiter, requestMfaReset);
-authRouter.post('/mfa/reset-complete', authRateLimiter, completeMfaReset);
+authRouter.post(
+  '/mfa/reset-request',
+  passwordResetRateLimiter,
+  requestMfaReset,
+);
+authRouter.post(
+  '/mfa/reset-complete',
+  passwordResetRateLimiter,
+  completeMfaReset,
+);
+
 // Password Reset flow routes (Public)
-authRouter.post('/forgot-password', authRateLimiter, requestPasswordReset);
-authRouter.post('/reset-password', authRateLimiter, resetPassword);
+authRouter.post(
+  '/forgot-password',
+  passwordResetRateLimiter,
+  requestPasswordReset,
+);
+authRouter.post('/reset-password', passwordResetRateLimiter, resetPassword);

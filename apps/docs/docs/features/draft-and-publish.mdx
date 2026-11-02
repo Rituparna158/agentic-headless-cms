@@ -1,0 +1,27 @@
+---
+title: Draft & Publish
+description: Manage the content lifecycle from private drafting to live production.
+sidebar_position: 3
+---
+
+The **Draft & Publish** workflow gives editorial teams complete control over when content goes live. Writers can draft, revise, and preview updates privately without exposing unfinished work to your public website or application.
+
+---
+
+## Workflow & States
+
+| State | Action | Visibility | What Happens |
+| :--- | :--- | :--- | :--- |
+| **Draft** | Save Draft | Authorized users & tokens | Saves progress privately. Changes are hidden from public unauthenticated requests. |
+| **Published** | Publish | Everyone (Live) | Makes content publicly live. The publication timestamp is recorded and content is accessible via public APIs. |
+| **Draft (Unpublished)** | Unpublish | Authorized users & tokens | Retracts a published entry back to Draft status immediately without losing any data or version history. |
+
+---
+
+## Content Access Control
+
+Public API queries return only published content by default.
+
+Draft entries are protected by authentication and authorization checks:
+- **Unauthenticated requests**: Calls to read private drafts are rejected with `401 Unauthorized` or return `404 Not Found` if querying public endpoints.
+- **API Tokens**: Only API tokens or user sessions with appropriate read permissions can inspect drafts via preview endpoints.
