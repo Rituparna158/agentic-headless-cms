@@ -23,7 +23,6 @@ const sidebars: SidebarsConfig = {
         'features/media-library',
         'features/internationalization',
         'features/roles-and-permissions',
-        'features/multi-factor-authentication',
         'features/api-tokens',
         'features/audit-logs',
         'features/webhooks',
