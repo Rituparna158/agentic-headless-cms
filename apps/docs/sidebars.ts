@@ -20,11 +20,23 @@ const sidebars: SidebarsConfig = {
         'features/schema-builder',
         'features/content-manager',
         'features/draft-and-publish',
+        'features/media-library',
+        'features/internationalization',
+        'features/roles-and-permissions',
+        'features/multi-factor-authentication',
+        'features/api-tokens',
         'features/audit-logs',
         'features/webhooks',
       ],
     },
-    
+    {
+      type: 'category',
+      label: 'Developer SDKs',
+      collapsed: true,
+      items: [
+        'content-apis/sdks',
+      ],
+    },
     {
       type: 'category',
       label: 'Contribution Guide',

@@ -1,0 +1,50 @@
+---
+title: Media Library
+sidebar_label: Media Library
+description: Upload, organize, transform, and serve digital assets with local and S3 storage.
+sidebar_position: 4
+---
+
+The **Media Library** provides centralized digital asset management for images, videos, audio, and documents. Located at `/media` in the admin dashboard, it allows content editors to upload, organize, and reuse assets across all content types.
+
+---
+
+## Key Capabilities
+
+- **Folder Hierarchy:** Organize assets into nested folders for projects, brands, or seasonal campaigns.
+- **Drag-and-Drop Uploads:** Upload single files or batches directly from your local filesystem.
+- **Metadata Extraction:** Automatically extracts image dimensions (width, height), MIME type, file size, and SHA-256 checksums on upload.
+- **Background Processing:** An asynchronous worker service automatically generates multiple responsive thumbnail sizes and WebP formats using Sharp and BullMQ queues.
+
+---
+
+## Storage Adapters
+
+The CMS supports pluggable storage backends configured via environment variables:
+
+| Adapter | Environment Config | Best For |
+| :--- | :--- | :--- |
+| **Local Disk** | `STORAGE_ADAPTER=local` | Local development, single-node Docker setups, and internal testing. Files are stored under `/app/uploads`. |
+| **AWS S3 / MinIO** | `STORAGE_ADAPTER=s3` | Production environments, distributed Kubernetes clusters, and cloud deployments with CDN caching. |
+
+### Configuring S3 or Compatible Object Storage
+
+To connect AWS S3 or MinIO, configure the following environment variables on the backend service:
+
+```bash
+STORAGE_ADAPTER=s3
+S3_BUCKET=my-cms-media
+S3_REGION=us-east-1
+S3_ACCESS_KEY_ID=your_access_key
+S3_SECRET_ACCESS_KEY=your_secret_key
+S3_ENDPOINT=https://s3.amazonaws.com # Optional: set custom endpoint for MinIO/Cloudflare R2
+```
+
+---
+
+## Embedding Media in Content
+
+Media assets can be linked to content models in two ways:
+
+1. **Media Field Type:** When designing schemas in the Schema Builder, add a **Media** field. You can restrict allowed file types (e.g., images only) and specify single or multiple asset selection.
+2. **Rich Text Editor:** Insert images directly into Markdown or Rich Text blocks with custom alt text and captions.
