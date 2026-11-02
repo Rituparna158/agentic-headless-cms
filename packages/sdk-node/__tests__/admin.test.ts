@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AdminModule } from '../src/modules/admin.module.js';
-import type { HttpTransport } from '@repo/sdk-core';
+import type { HttpTransport } from '@mindfiredigital/sdk-core';
 
 describe('AdminModule', () => {
   let transport: HttpTransport;

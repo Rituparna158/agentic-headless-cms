@@ -10,6 +10,6 @@ export default defineConfig({
   sourcemap: true,
   minify: false,
   target: 'es2022',
-  external: ['react', '@tanstack/react-query', '@repo/sdk-core'],
+  external: ['react', '@tanstack/react-query', '@mindfiredigital/sdk-core'],
   noExternal: ['@repo/types'],
 });

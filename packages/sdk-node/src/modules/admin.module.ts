@@ -1,4 +1,4 @@
-import { HttpTransport, ApiResponse } from '@repo/sdk-core';
+import { HttpTransport, ApiResponse } from '@mindfiredigital/sdk-core';
 import type {
   UserRecord,
   RoleRecord,

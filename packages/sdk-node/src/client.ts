@@ -1,4 +1,4 @@
-import { AgenticCmsClient, type ClientConfig } from '@repo/sdk-core';
+import { AgenticCmsClient, type ClientConfig } from '@mindfiredigital/sdk-core';
 import { AdminModule } from './modules/admin.module.js';
 import { NodeMediaModule } from './modules/media-node.module.js';
 

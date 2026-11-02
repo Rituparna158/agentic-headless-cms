@@ -1,8 +1,17 @@
 {
-  "name": "@repo/sdk-react",
+  "name": "@mindfiredigital/sdk-react",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
+  "license": "MIT",
+  "author": "Mindfire Digital",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mindfiredigital/agentic-headless-cms.git",
+    "directory": "packages/sdk-react"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,13 +32,13 @@
     "test:watch": "vitest"
   },
   "peerDependencies": {
-    "@repo/sdk-core": "*",
+    "@mindfiredigital/sdk-core": "*",
     "@tanstack/react-query": "^5.0.0",
     "react": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
+    "@mindfiredigital/sdk-core": "workspace:*",
     "@repo/eslint-config": "workspace:*",
-    "@repo/sdk-core": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@tanstack/react-query": "^5.28.4",

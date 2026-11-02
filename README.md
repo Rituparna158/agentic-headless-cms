@@ -11,7 +11,7 @@ Welcome to the **Agentic Headless CMS**! This project is a modular, API-first co
 Unlike a traditional CMS (like WordPress or Drupal) where the content database, admin dashboard, and public website templates are tightly coupled, a **Headless CMS** separates the content repository and management backend from the frontend presentation layer:
 
 - **Backend & APIs:** The core CMS validates, manages, and stores content, exposing it through clean REST (`/api/v1`) and GraphQL (`/graphql`) endpoints.
-- **Frontend Independence:** Any client application—a Next.js website, mobile app (iOS/Android), or external service—can fetch and render the exact same content from one central system using our client SDKs (`@repo/sdk-react`, `@repo/sdk-nextjs`, `@repo/sdk-node`, `@repo/sdk-core`).
+- **Frontend Independence:** Any client application—a Next.js website, mobile app (iOS/Android), or external service—can fetch and render the exact same content from one central system using our client SDKs (`@mindfiredigital/sdk-react`, `@mindfiredigital/sdk-nextjs`, `@mindfiredigital/sdk-node`, `@mindfiredigital/sdk-core`).
 
 ---
 
@@ -214,12 +214,12 @@ Run the complete platform via Docker Compose (ideal for pre-release testing, sta
 External frontend applications (React, Next.js, Remix, Astro, Node.js) can consume published content directly using our client SDKs:
 
 ```bash
-npm install @repo/sdk-core @repo/sdk-react
+npm install @mindfiredigital/sdk-core @mindfiredigital/sdk-react
 ```
 
 ````tsx
 import React from 'react';
-import { CmsProvider, useContentList } from '@repo/sdk-react';
+import { CmsProvider, useContentList } from '@mindfiredigital/sdk-react';
 
 function ArticleList() {
   const {

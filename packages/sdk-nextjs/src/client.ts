@@ -1,5 +1,4 @@
-import { AgenticCmsClient } from '@repo/sdk-core';
-import type { ClientConfig } from '@repo/sdk-core';
+import { AgenticCmsClient, type ClientConfig } from '@mindfiredigital/sdk-core';
 import { resolveEnvConfig } from './utils/config.js';
 
 let _client: AgenticCmsClient<Record<string, unknown>> | null = null;

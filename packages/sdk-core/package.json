@@ -1,8 +1,17 @@
 {
-  "name": "@repo/sdk-core",
-  "version": "0.0.0",
+  "name": "@mindfiredigital/sdk-core",
+  "version": "0.1.0",
   "type": "module",
-  "private": true,
+  "license": "MIT",
+  "author": "Mindfire Digital",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mindfiredigital/agentic-headless-cms.git",
+    "directory": "packages/sdk-core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

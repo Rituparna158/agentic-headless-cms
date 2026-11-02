@@ -38,11 +38,11 @@ const SCOPE_PACKAGE_MAP = {
   storage: '@repo/storage',
   config: '@repo/config',
   'plugin-sdk': '@repo/plugin-sdk',
-  'sdk-codegen': '@repo/sdk-codegen',
-  'sdk-core': '@repo/sdk-core',
-  'sdk-nextjs': '@repo/sdk-nextjs',
-  'sdk-node': '@repo/sdk-node',
-  'sdk-react': '@repo/sdk-react',
+  'sdk-codegen': '@mindfiredigital/sdk-codegen',
+  'sdk-core': '@mindfiredigital/sdk-core',
+  'sdk-nextjs': '@mindfiredigital/sdk-nextjs',
+  'sdk-node': '@mindfiredigital/sdk-node',
+  'sdk-react': '@mindfiredigital/sdk-react',
   'typescript-config': '@repo/typescript-config',
   'eslint-config': '@repo/eslint-config',
 };
@@ -130,7 +130,7 @@ for (const line of lines) {
       const mappedPkg = SCOPE_PACKAGE_MAP[scope];
       if (mappedPkg) {
         recordChange(mappedPkg, bumpType, rawDesc.trim());
-      } else if (['all', 'root', 'deps', 'release', 'ci'].includes(scope)) {
+      } else if (['all', 'root', 'deps', 'release', 'ci', 'sdk'].includes(scope)) {
         // Broad scope -> detect touched packages from git diff
         try {
           const diffFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD')

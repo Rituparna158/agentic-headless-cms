@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NodeMediaModule } from '../src/modules/media-node.module.js';
-import type { HttpTransport } from '@repo/sdk-core';
+import type { HttpTransport } from '@mindfiredigital/sdk-core';
 import * as fs from 'fs';
 
 vi.mock('fs', () => ({
