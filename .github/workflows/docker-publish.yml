@@ -30,6 +30,8 @@ jobs:
             dockerfile: apps/worker/Dockerfile
           - service: frontend
             dockerfile: apps/frontend/Dockerfile
+          - service: cms-ui
+            dockerfile: apps/cms-ui/Dockerfile
 
     steps:
       - name: Checkout Code

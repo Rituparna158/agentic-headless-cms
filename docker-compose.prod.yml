@@ -52,7 +52,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-super_secret_jwt_key_at_least_32_characters_long}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-1d}
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3001}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3001,http://localhost:5173}
       - STORAGE_ADAPTER=${STORAGE_ADAPTER:-local}
       - STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
       - STORAGE_LOCAL_BASE_URL=/api/v1/media/file
@@ -95,6 +95,21 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    networks:
+      - agentic-network
+
+  cms-ui:
+    image: ghcr.io/mindfiredigital/agentic-headless-cms/cms-ui:latest
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${CMS_UI_PORT:-5173}:5173"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:3000/api/v1}
+      - VITE_APP_ID=CMS_UI
     networks:
       - agentic-network
 
