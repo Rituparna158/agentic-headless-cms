@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import rateLimit from 'express-rate-limit';
@@ -24,8 +24,8 @@ describe('Auth Rate Limiter Middleware', () => {
       res.status(200).json({ ok: true });
     });
 
-    // Send 15 requests in test mode (max is 10)
-    for (let i = 0; i < 15; i++) {
+    // Send 25 requests in test mode (max is 20)
+    for (let i = 0; i < 25; i++) {
       const res = await request(app).get('/test');
       expect(res.status).toBe(200);
     }
@@ -41,7 +41,7 @@ describe('Auth Rate Limiter Middleware', () => {
       statusCode: 429,
       message: {
         error: {
-          message: 'Too many requests. Please try again after 15 minutes.',
+          message: 'Too many attempts. Please try again after 1 minute.',
           code: 'RATE_LIMIT_EXCEEDED',
         },
       },
@@ -63,5 +63,25 @@ describe('Auth Rate Limiter Middleware', () => {
     const blockedRes = await request(app).get('/test');
     expect(blockedRes.status).toBe(429);
     expect(blockedRes.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
+  });
+
+  it('should not count successful requests when skipSuccessfulRequests is true', async () => {
+    const testLimiter = rateLimit({
+      windowMs: 60 * 1000,
+      max: 2,
+      skipSuccessfulRequests: true,
+      statusCode: 429,
+    });
+
+    const app = express();
+    app.use(testLimiter);
+    app.get('/success', (_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+
+    for (let i = 0; i < 5; i++) {
+      const res = await request(app).get('/success');
+      expect(res.status).toBe(200);
+    }
   });
 });
