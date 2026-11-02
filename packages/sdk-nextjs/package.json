@@ -1,8 +1,17 @@
 {
-  "name": "@repo/sdk-nextjs",
-  "version": "0.0.0",
+  "name": "@mindfiredigital/sdk-nextjs",
+  "version": "0.1.0",
   "type": "module",
-  "private": true,
+  "license": "MIT",
+  "author": "Mindfire Digital",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mindfiredigital/agentic-headless-cms.git",
+    "directory": "packages/sdk-nextjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -22,7 +31,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/sdk-core": "workspace:*",
+    "@mindfiredigital/sdk-core": "workspace:*",
     "@repo/types": "workspace:*"
   },
   "devDependencies": {

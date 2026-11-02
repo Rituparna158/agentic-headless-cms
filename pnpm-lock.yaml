@@ -481,7 +481,7 @@ importers:
         version: 2.1.1
       lucide-react:
         specifier: ^1.65.0
-        version: 1.65.0(@types/react@19.2.18)(react@19.2.0)
+        version: 1.65.0(@types/react@19.3.0)(react@19.2.0)
       prism-react-renderer:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.0)
@@ -965,7 +965,7 @@ importers:
 
   packages/sdk-nextjs:
     dependencies:
-      '@repo/sdk-core':
+      '@mindfiredigital/sdk-core':
         specifier: workspace:*
         version: link:../sdk-core
       '@repo/types':
@@ -996,7 +996,7 @@ importers:
 
   packages/sdk-node:
     dependencies:
-      '@repo/sdk-core':
+      '@mindfiredigital/sdk-core':
         specifier: workspace:*
         version: link:../sdk-core
     devDependencies:
@@ -1024,12 +1024,12 @@ importers:
 
   packages/sdk-react:
     devDependencies:
+      '@mindfiredigital/sdk-core':
+        specifier: workspace:*
+        version: link:../sdk-core
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@repo/sdk-core':
-        specifier: workspace:*
-        version: link:../sdk-core
       '@repo/types':
         specifier: workspace:*
         version: link:../types
@@ -26823,11 +26823,11 @@ snapshots:
     dependencies:
       react: 19.2.0
 
-  lucide-react@1.65.0(@types/react@19.2.18)(react@19.2.0):
+  lucide-react@1.65.0(@types/react@19.3.0)(react@19.2.0):
     dependencies:
       react: 19.2.0
     optionalDependencies:
-      '@types/react': 19.2.18
+      '@types/react': 19.3.0
 
   luxon@3.7.2: {}
 

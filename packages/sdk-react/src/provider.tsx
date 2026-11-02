@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import { createClient, AgenticCmsClient } from '@repo/sdk-core';
+import { createClient, AgenticCmsClient } from '@mindfiredigital/sdk-core';
 
 import type { CmsProviderProps } from './types.js';
 
