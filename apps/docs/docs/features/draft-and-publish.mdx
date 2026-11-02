@@ -12,14 +12,16 @@ The **Draft & Publish** workflow gives editorial teams complete control over whe
 
 | State | Action | Visibility | What Happens |
 | :--- | :--- | :--- | :--- |
-| **Draft** | Save Draft | Dashboard team only | Saves progress privately. Changes are hidden from public visitors and external API requests. |
+| **Draft** | Save Draft | Authorized users & tokens | Saves progress privately. Changes are hidden from public unauthenticated requests. |
 | **Published** | Publish | Everyone (Live) | Makes content publicly live. The publication timestamp is recorded and content is accessible via public APIs. |
-| **Draft (Unpublished)** | Unpublish | Dashboard team only | Retracts a published entry back to Draft status immediately without losing any data or version history. |
+| **Draft (Unpublished)** | Unpublish | Authorized users & tokens | Retracts a published entry back to Draft status immediately without losing any data or version history. |
 
 ---
 
-## Public Content Safety
+## Content Access Control
 
-Public visitors and external API clients only ever see published content.
+Public API queries return only published content by default.
 
-Even if an unauthenticated user or external request queries an entry by its ID, the API returns a `404 Not Found` if the entry is still in draft mode. This guarantees that internal notes, unreleased announcements, or work-in-progress articles are never accidentally exposed.
+Draft entries are protected by authentication and authorization checks:
+- **Unauthenticated requests**: Calls to read private drafts are rejected with `401 Unauthorized` or return `404 Not Found` if querying public endpoints.
+- **API Tokens**: Only API tokens or user sessions with appropriate read permissions can inspect drafts via preview endpoints.

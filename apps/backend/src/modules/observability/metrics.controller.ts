@@ -41,7 +41,10 @@ export function normalizeMetricPath(rawPath: unknown): string {
     return 'unknown';
   }
 
-  const [pathWithoutQuery = ''] = rawPath.trim().split('?');
+  // Cap input length upfront to prevent memory issues from abnormally long inputs
+  const boundedRaw = rawPath.trim().slice(0, 100);
+
+  const [pathWithoutQuery = ''] = boundedRaw.split('?');
   const [cleanPath = ''] = pathWithoutQuery.split('#');
 
   let path = cleanPath;
@@ -58,6 +61,8 @@ export function normalizeMetricPath(rawPath: unknown): string {
   path = path.replace(/\/\d+(?=\/|$)/g, '/:id');
   // Normalize long hex hashes (16+ chars)
   path = path.replace(/\/[0-9a-f]{16,}(?=\/|$)/gi, '/:id');
+  // Normalize long arbitrary dynamic segments (> 32 characters) to :param
+  path = path.replace(/\/[^/?#]{33,}(?=\/|$)/g, '/:param');
 
   // Strip trailing slash unless root /
   if (path.length > 1 && path.endsWith('/')) {
@@ -90,7 +95,7 @@ export function normalizeMetricPath(rawPath: unknown): string {
     if (segments.length > 3) {
       return `/${segments.slice(0, 3).join('/')}/*`;
     }
-    return path;
+    return path.length > 100 ? path.slice(0, 100) : path;
   }
 
   return '/other';

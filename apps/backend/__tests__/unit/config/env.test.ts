@@ -43,10 +43,44 @@ describe('Environment Configuration Schema Validation', () => {
     }
   });
 
+  it('rejects loopback addresses like 127.0.0.1 in production CORS_ORIGIN', () => {
+    const result = envSchema.safeParse({
+      ...validProdEnv,
+      CORS_ORIGIN: 'http://127.0.0.1:3000',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) => i.path.includes('CORS_ORIGIN')),
+      ).toBe(true);
+    }
+  });
+
+  it('allows valid domains containing localhost as a substring in production CORS_ORIGIN', () => {
+    const result = envSchema.safeParse({
+      ...validProdEnv,
+      CORS_ORIGIN: 'https://localhost-cms.example.com',
+    });
+    expect(result.success).toBe(true);
+  });
+
   it('rejects default postgres:postgres database credentials in production', () => {
     const result = envSchema.safeParse({
       ...validProdEnv,
       DATABASE_URL: 'postgresql://postgres:postgres@prod-db:5432/agentic_cms',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) => i.path.includes('DATABASE_URL')),
+      ).toBe(true);
+    }
+  });
+
+  it('rejects percent-encoded postgres:postgres database credentials in production', () => {
+    const result = envSchema.safeParse({
+      ...validProdEnv,
+      DATABASE_URL: 'postgresql://postgres:%70ostgres@prod-db:5432/agentic_cms',
     });
     expect(result.success).toBe(false);
     if (!result.success) {

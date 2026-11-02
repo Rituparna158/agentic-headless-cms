@@ -19,9 +19,19 @@ export function Typewriter({
   const [wordIndex, setWordIndex] = useState(0);
   const [text, setText] = useState(words && words.length > 0 ? words[0] : '');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    if (!words || words.length === 0) return;
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setPrefersReducedMotion(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion || !words || words.length === 0) return;
 
     const currentWord = words[wordIndex % words.length];
 
@@ -51,12 +61,32 @@ export function Typewriter({
     );
 
     return () => clearTimeout(timer);
-  }, [text, isDeleting, wordIndex, words, typingSpeed, deletingSpeed, pauseDuration]);
+  }, [
+    text,
+    isDeleting,
+    wordIndex,
+    words,
+    typingSpeed,
+    deletingSpeed,
+    pauseDuration,
+    prefersReducedMotion,
+  ]);
+
+  if (prefersReducedMotion) {
+    const staticWord = words && words.length > 0 ? words[0] : '';
+    return (
+      <span className={styles.typewriterWrapper}>
+        <span className={className}>{staticWord}</span>
+      </span>
+    );
+  }
 
   return (
     <span className={styles.typewriterWrapper}>
       <span className={className}>{text || '\u00A0'}</span>
-      <span className={styles.cursor} aria-hidden="true">|</span>
+      <span className={styles.cursor} aria-hidden="true">
+        |
+      </span>
     </span>
   );
 }

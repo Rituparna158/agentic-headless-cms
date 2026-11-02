@@ -131,25 +131,48 @@ export const envSchema = baseEnvSchema.superRefine((data, ctx) => {
       });
     }
 
-    if (
-      data.CORS_ORIGIN.includes('localhost') &&
-      process.env.ALLOW_LOCALHOST_CORS !== 'true'
-    ) {
+    const origins = data.CORS_ORIGIN.split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+
+    const hasLoopbackOrigin = origins.some((origin) => {
+      if (origin === '*') return false;
+      try {
+        const parsed = new URL(origin);
+        return ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(
+          parsed.hostname.toLowerCase(),
+        );
+      } catch {
+        return (
+          origin.toLowerCase().includes('localhost') ||
+          origin.includes('127.0.0.1')
+        );
+      }
+    });
+
+    if (hasLoopbackOrigin && process.env.ALLOW_LOCALHOST_CORS !== 'true') {
       ctx.addIssue({
         code: 'custom',
         path: ['CORS_ORIGIN'],
         message:
-          'CORS_ORIGIN must be set to a valid production domain, not localhost',
+          'CORS_ORIGIN must be set to a valid production domain, not localhost or loopback addresses',
       });
     }
 
-    if (data.DATABASE_URL.includes('postgres:postgres@')) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['DATABASE_URL'],
-        message:
-          'Default database credentials (postgres:postgres) are not permitted in production',
-      });
+    try {
+      const dbUrl = new URL(data.DATABASE_URL);
+      const decodedUser = decodeURIComponent(dbUrl.username);
+      const decodedPass = decodeURIComponent(dbUrl.password);
+      if (decodedUser === 'postgres' && decodedPass === 'postgres') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['DATABASE_URL'],
+          message:
+            'Default database credentials (postgres:postgres) are not permitted in production',
+        });
+      }
+    } catch {
+      // Handled by base schema protocol check
     }
 
     const INSECURE_PASSWORDS = [
@@ -184,6 +207,7 @@ export const envSchema = baseEnvSchema.superRefine((data, ctx) => {
       });
     }
   }
+
   if (data.STORAGE_ADAPTER === 's3') {
     if (!data.STORAGE_S3_BUCKET) {
       ctx.addIssue({

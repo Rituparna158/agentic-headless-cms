@@ -14,21 +14,27 @@ export function ScrollReveal({
   className = '',
   style = {},
 }: ScrollRevealProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setIsClient(true);
     if (!ref.current) return;
 
-    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
-      setIsVisible(true);
+    if (
+      typeof window === 'undefined' ||
+      !('IntersectionObserver' in window) ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setIsRevealed(true);
       return;
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          setIsRevealed(true);
           observer.disconnect();
         }
       },
@@ -43,17 +49,20 @@ export function ScrollReveal({
     return () => observer.disconnect();
   }, []);
 
+  // Before hydration / if JS is disabled, content remains visible by default.
+  // Once hydrated and observer is attached, non-revealed sections receive the hidden class until scrolled into view.
+  const isHidden = isClient && !isRevealed;
+
   return (
     <div
       ref={ref}
-      className={`${styles.revealWrapper} ${isVisible ? styles.visible : ''} ${className}`}
+      className={`${styles.revealWrapper} ${isHidden ? styles.hidden : styles.visible} ${className}`}
       style={{
         ...style,
-        transitionDelay: `${delay}ms`,
+        transitionDelay: isRevealed && delay > 0 ? `${delay}ms` : undefined,
       }}
     >
       {children}
     </div>
   );
 }
-
