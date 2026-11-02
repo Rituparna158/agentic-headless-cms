@@ -1,13 +1,13 @@
-# @repo/sdk-nextjs
+# @mindfiredigital/sdk-nextjs
 
 The official Next.js App Router SDK for **Agentic Headless CMS**, designed for React Server Components, Server Actions, and Draft Mode preview.
 
 ## Installation
 
 ```bash
-npm install @repo/sdk-nextjs @repo/sdk-core
+npm install @mindfiredigital/sdk-nextjs @mindfiredigital/sdk-core
 # or
-pnpm add @repo/sdk-nextjs @repo/sdk-core
+pnpm add @mindfiredigital/sdk-nextjs @mindfiredigital/sdk-core
 ```
 
 ## Configuration
@@ -27,7 +27,7 @@ CMS_APP_ID=HEADLESS_CMS
 Fetch content directly inside any React Server Component:
 
 ```tsx
-import { getContentList, getContentEntry } from '@repo/sdk-nextjs';
+import { getContentList, getContentEntry } from '@mindfiredigital/sdk-nextjs';
 
 export default async function BlogPage() {
   const { data: articles } = await getContentList('articles', {
@@ -67,7 +67,7 @@ Pass `draft: true` when Draft Mode is enabled to preview unpublished content:
 
 ```tsx
 import { draftMode } from 'next/headers';
-import { getContentEntry } from '@repo/sdk-nextjs';
+import { getContentEntry } from '@mindfiredigital/sdk-nextjs';
 
 export default async function ArticlePage({
   params,
@@ -97,7 +97,7 @@ export default async function ArticlePage({
 Relation fields store the **UUID of the related entry**:
 
 ```tsx
-import { getContentEntry } from '@repo/sdk-nextjs';
+import { getContentEntry } from '@mindfiredigital/sdk-nextjs';
 
 export default async function Article({ id }: { id: string }) {
   const article = await getContentEntry('articles', id);

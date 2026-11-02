@@ -43,7 +43,6 @@ const SCOPE_PACKAGE_MAP = {
   'sdk-nextjs': '@mindfiredigital/sdk-nextjs',
   'sdk-node': '@mindfiredigital/sdk-node',
   'sdk-react': '@mindfiredigital/sdk-react',
-  sdk: '@mindfiredigital/sdk-core',
   'typescript-config': '@repo/typescript-config',
   'eslint-config': '@repo/eslint-config',
 };
@@ -131,7 +130,7 @@ for (const line of lines) {
       const mappedPkg = SCOPE_PACKAGE_MAP[scope];
       if (mappedPkg) {
         recordChange(mappedPkg, bumpType, rawDesc.trim());
-      } else if (['all', 'root', 'deps', 'release', 'ci'].includes(scope)) {
+      } else if (['all', 'root', 'deps', 'release', 'ci', 'sdk'].includes(scope)) {
         // Broad scope -> detect touched packages from git diff
         try {
           const diffFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD')

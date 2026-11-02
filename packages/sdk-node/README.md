@@ -1,13 +1,13 @@
-# @repo/sdk-node
+# @mindfiredigital/sdk-node
 
 The official Node.js server-side SDK for **Agentic Headless CMS**, featuring filesystem media streaming, administrative management, and script automation.
 
 ## Installation
 
 ```bash
-npm install @repo/sdk-node @repo/sdk-core
+npm install @mindfiredigital/sdk-node @mindfiredigital/sdk-core
 # or
-pnpm add @repo/sdk-node @repo/sdk-core
+pnpm add @mindfiredigital/sdk-node @mindfiredigital/sdk-core
 ```
 
 ## Quickstart
@@ -15,7 +15,7 @@ pnpm add @repo/sdk-node @repo/sdk-core
 Configure environment variables or pass options to `createNodeClient`:
 
 ```typescript
-import { createNodeClient } from '@repo/sdk-node';
+import { createNodeClient } from '@mindfiredigital/sdk-node';
 
 // Automatically resolves CMS_API_URL and CMS_API_TOKEN from process.env
 const client = createNodeClient();

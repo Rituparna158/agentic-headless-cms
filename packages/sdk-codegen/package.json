@@ -24,10 +24,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "commander": "^12.1.0",
-    "@repo/types": "workspace:*"
+    "commander": "^12.1.0"
   },
   "devDependencies": {
+    "@repo/types": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.0.0",
     "tsup": "^8.3.5",

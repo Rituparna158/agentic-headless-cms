@@ -1,19 +1,19 @@
-# @repo/sdk-core
+# @mindfiredigital/sdk-core
 
 The official core TypeScript/JavaScript client SDK for **Agentic Headless CMS**.
 
 ## Installation
 
 ```bash
-npm install @repo/sdk-core
+npm install @mindfiredigital/sdk-core
 # or
-pnpm add @repo/sdk-core
+pnpm add @mindfiredigital/sdk-core
 ```
 
 ## Quickstart
 
 ```typescript
-import { createClient } from '@repo/sdk-core';
+import { createClient } from '@mindfiredigital/sdk-core';
 
 const client = createClient({
   baseUrl: 'http://localhost:3000/api/v1',
@@ -76,4 +76,4 @@ const author = await client.content.findOne('authors', authorId);
 console.log(author.data.name);
 ```
 
-_(Deep auto-joins via `?populate=_` are planned for the upcoming v2 release).\*
+_(Deep auto-joins via `?populate=*` are planned for the upcoming v2 release)._

@@ -1,13 +1,13 @@
-# @repo/sdk-react
+# @mindfiredigital/sdk-react
 
 The official React hooks and provider for **Agentic Headless CMS**, powered by TanStack React Query.
 
 ## Installation
 
 ```bash
-npm install @repo/sdk-react @repo/sdk-core @tanstack/react-query
+npm install @mindfiredigital/sdk-react @mindfiredigital/sdk-core @tanstack/react-query
 # or
-pnpm add @repo/sdk-react @repo/sdk-core @tanstack/react-query
+pnpm add @mindfiredigital/sdk-react @mindfiredigital/sdk-core @tanstack/react-query
 ```
 
 ## Quickstart
@@ -18,7 +18,7 @@ Wrap your application tree in `<CmsProvider>`:
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { CmsProvider } from '@repo/sdk-react';
+import { CmsProvider } from '@mindfiredigital/sdk-react';
 import App from './App';
 
 const queryClient = new QueryClient();
@@ -43,7 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 By default, the `useContentList` hook retrieves **only published entries** for public consumers:
 
 ```tsx
-import { useContentList } from '@repo/sdk-react';
+import { useContentList } from '@mindfiredigital/sdk-react';
 
 function BlogFeed() {
   // Returns published articles by default
@@ -74,7 +74,7 @@ function BlogFeed() {
 Relation fields in Agentic CMS store the UUID of the related entry:
 
 ```tsx
-import { useContentEntry } from '@repo/sdk-react';
+import { useContentEntry } from '@mindfiredigital/sdk-react';
 
 function ArticleWithAuthor({ articleId }: { articleId: string }) {
   const { data: article } = useContentEntry('articles', articleId);
