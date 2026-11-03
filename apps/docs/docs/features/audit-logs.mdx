@@ -1,0 +1,30 @@
+---
+title: Audit Logs
+description: Track administrative actions, content updates, and security events.
+sidebar_position: 4
+---
+
+The **Audit Log** provides a detailed record of administrative and editorial actions across your CMS workspace. Located at `/audit-log` in the admin dashboard, it gives teams visibility into content changes, schema modifications, and user access updates.
+
+---
+
+## Tracked Activities
+
+Administrative and editorial operations dispatch asynchronous audit events that are stored in the audit repository:
+
+| Category | Tracked Actions | Details Captured |
+| :--- | :--- | :--- |
+| **Content** | Create, Update, Publish, Unpublish, Revert, Delete | Content type, entry ID, author email, and locale |
+| **Schemas** | Create, Update, Delete | Field additions, validation rules, and schema changes |
+| **Security & Access** | User Invites, Role Changes, API Tokens | User emails, assigned roles, and token labels |
+
+
+---
+
+## Viewing Event Details
+
+Clicking any row in the log table opens a side drawer with complete event details:
+
+- **Actor and time**: See who performed the action (name, email, actor type) and the exact timestamp.
+- **Diff View**: Compare the previous and new values side-by-side to see what was modified.
+- **Raw JSON**: View the full before-and-after JSON payloads for technical auditing.

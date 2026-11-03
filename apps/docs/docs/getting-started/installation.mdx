@@ -1,0 +1,159 @@
+---
+id: installation
+title: Installation
+description: Install and run Agentic Headless CMS via local monorepo or pre-built Docker containers
+sidebar_position: 2
+---
+
+# Installation
+
+**Agentic Headless CMS** can be installed and run using two primary methods depending on your workflow:
+
+- **[Method 1: Local Monorepo Setup](#method-1-local-monorepo-setup)**: Best for developers who want full access to the source code, custom schema extensions, and client SDK packages.
+- **[Method 2: Docker & GHCR Image](#method-2-self-hosted-docker-deployment)**: Best for quick evaluation, staging, or production deployments with zero local Node.js or database setup required.
+
+---
+
+## System Requirements
+
+Before starting, ensure your environment meets the minimum requirements:
+
+| Dependency | Minimum Version | Recommended | Notes |
+| :--- | :--- | :--- | :--- |
+| **Node.js** | `v20.9.0` | `v22.x LTS` | Required only for local monorepo development |
+| **pnpm** | `v9.0.0` | `v9.15.x` | Monorepo package manager (`npm i -g pnpm`) |
+| **Docker & Compose** | `v24.0+` | Latest | Runs PostgreSQL and Redis containers |
+| **PostgreSQL** | `v15.0+` | `v16.x` | Primary relational database |
+| **Redis** | `v7.0+` | `v7.2+` | Cache layer and BullMQ queues |
+
+---
+
+## Method 1: Local Monorepo Setup
+
+This method installs the complete Turborepo workspace, allowing you to develop backend endpoints, customize the admin dashboard, and test client SDKs simultaneously.
+
+### 1. Clone & Install Dependencies
+
+```bash
+git clone https://github.com/mindfiredigital/agentic-headless-cms.git
+cd agentic-headless-cms
+pnpm install
+```
+
+### 2. Start PostgreSQL & Redis via Docker
+
+Launch local database and distributed cache instances in detached mode:
+
+```bash
+docker compose up -d postgres redis
+```
+
+- **PostgreSQL**: Port `5432` (Default database: `agentic_cms`)
+- **Redis**: Port `6379`
+
+### 3. Configure Environment & Initialize Database
+
+Copy the example environment files for the backend API and admin dashboard:
+
+```bash
+# Copy backend environment defaults
+cp apps/backend/.env.example apps/backend/.env
+
+# Copy frontend environment defaults
+cp apps/frontend/.env.example apps/frontend/.env.local
+```
+
+Execute database migrations and seed the initial administrator:
+
+```bash
+# Run Drizzle schema migrations
+pnpm db:migrate
+
+# Seed default administrator account
+pnpm seed:admin
+```
+
+### 4. Start Development Servers
+
+Launch all applications concurrently using Turborepo:
+
+```bash
+pnpm dev
+```
+
+All services are now live:
+- **Admin Dashboard**: [http://localhost:3001](http://localhost:3001)
+- **Backend API**: [http://localhost:3000](http://localhost:3000)
+- **Documentation Portal**: [http://localhost:3002](http://localhost:3002)
+
+---
+
+## Method 2: Self-Hosted Docker Deployment
+
+This method is designed for production servers and users who want to run the platform without cloning the source code or installing Node.js/pnpm. The container images are pulled directly from the **GitHub Container Registry (GHCR)** (`ghcr.io/mindfiredigital/agentic-headless-cms/...`).
+
+### Step 1: Download Deployment Files
+Create a dedicated deployment directory and download the production compose configuration and environment template:
+
+```bash
+mkdir agentic-cms && cd agentic-cms
+
+# 1. Download production Docker Compose file
+curl -O https://raw.githubusercontent.com/mindfiredigital/agentic-headless-cms/main/docker-compose.prod.yml
+
+# 2. Download environment template
+curl -O https://raw.githubusercontent.com/mindfiredigital/agentic-headless-cms/main/.env.example
+cp .env.example .env
+```
+
+### Step 2: Configure Environment Secrets
+
+The downloaded `.env.example` file is already pre-populated with working defaults. Open your copied `.env` file in an editor. Update the following essential security variables before launching:
+
+- **`POSTGRES_PASSWORD`**: Replace with a strong, secure database password.
+- **`JWT_SECRET`**: Provide a secure random string (at least 32 characters) used to sign user authentication tokens.
+- **`SEED_ADMIN_EMAIL` & `SEED_ADMIN_PASSWORD`**: Set the initial superadministrator email and password for your first login.
+- *(Optional)* **Ports**: Adjust `PORT` (API default `3000`) or `FRONTEND_PORT` (Admin UI default `3001`) if needed to avoid port conflicts on your host server. All other variables can be left at their defaults.
+
+### Step 3: Launch the Platform
+
+Launches the Backend API, Next.js Admin Dashboard, PostgreSQL, Redis, and Worker:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+- **Admin Dashboard**: [http://localhost:3001](http://localhost:3001)
+- **Headless API**: [http://localhost:3000/api/v1](http://localhost:3000/api/v1)
+- **Interactive Swagger Docs**: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+- **GraphQL Playground**: [http://localhost:3000/graphql](http://localhost:3000/graphql)
+
+---
+
+## Update & Maintenance Lifecycle
+
+Upgrading to a new release requires zero manual database maintenance:
+
+```bash
+# 1. Pull the latest hardened images from GHCR
+docker compose -f docker-compose.prod.yml pull
+
+# 2. Recreate containers with zero data loss
+docker compose -f docker-compose.prod.yml up -d
+```
+
+---
+
+## Verification & First Login
+
+Once running, verify your installation:
+
+### 1. Check API Health
+Send a health probe to confirm the backend and database connection:
+
+```bash
+curl http://localhost:3000/api/v1/health
+```
+
+### 2. Sign In to Admin Dashboard
+Open **[http://localhost:3001/login](http://localhost:3001/login)** in your browser and sign in.

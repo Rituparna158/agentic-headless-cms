@@ -1,0 +1,1 @@
+ALTER TYPE "public"."permission_action" ADD VALUE '*' BEFORE 'read';

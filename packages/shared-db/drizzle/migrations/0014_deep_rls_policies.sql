@@ -1,0 +1,38 @@
+-- Enable RLS on all child tables
+ALTER TABLE "api_tokens" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "agents" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "permissions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "fields" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "relation_defs" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "schema_versions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "content_versions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "entry_localizations" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "entry_relations" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "media_tags" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "media_asset_tags" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "approvals" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "audit_logs" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "agent_interactions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "agent_operations" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "webhooks" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "webhook_deliveries" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "locales" ENABLE ROW LEVEL SECURITY;
+-- Create policies scoped to app.current_application_id
+CREATE POLICY "app_isolation_api_tokens" ON "api_tokens" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_agents" ON "agents" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_permissions" ON "permissions" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_fields" ON "fields" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_relation_defs" ON "relation_defs" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_schema_versions" ON "schema_versions" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_content_versions" ON "content_versions" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_entry_localizations" ON "entry_localizations" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_entry_relations" ON "entry_relations" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_media_tags" ON "media_tags" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_media_asset_tags" ON "media_asset_tags" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_approvals" ON "approvals" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_audit_logs" ON "audit_logs" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_agent_interactions" ON "agent_interactions" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_agent_operations" ON "agent_operations" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_webhooks" ON "webhooks" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_webhook_deliveries" ON "webhook_deliveries" USING (application_id = current_setting('app.current_application_id', true)::uuid);
+CREATE POLICY "app_isolation_locales" ON "locales" USING (application_id = current_setting('app.current_application_id', true)::uuid);

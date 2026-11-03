@@ -1,0 +1,49 @@
+{
+  "name": "@mindfiredigital/sdk-nextjs",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "author": "Mindfire Digital",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mindfiredigital/agentic-headless-cms.git",
+    "directory": "packages/sdk-nextjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mindfiredigital/sdk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/types": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "next": "^16.2.0",
+    "tsup": "^8.3.5",
+    "typescript": "5.9.2",
+    "vitest": "^2.1.8"
+  },
+  "peerDependencies": {
+    "next": ">=14.0.0"
+  }
+}

@@ -1,0 +1,7 @@
+Hello {{firstName}},
+
+You have been invited to join Agentic CMS. Please click the link below to set your password and activate your account:
+
+{{inviteUrl}}
+
+This link will expire in 48 hours.

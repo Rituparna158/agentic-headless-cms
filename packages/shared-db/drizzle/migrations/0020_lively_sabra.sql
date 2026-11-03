@@ -1,0 +1,3 @@
+CREATE INDEX IF NOT EXISTS "content_entries_schema_id_idx" ON "content_entries" USING btree ("schema_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "content_entries_app_schema_deleted_idx" ON "content_entries" USING btree ("application_id","schema_id","deleted_at");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "entry_localizations_scheduled_publish_idx" ON "entry_localizations" USING btree ("status","scheduled_publish_at");

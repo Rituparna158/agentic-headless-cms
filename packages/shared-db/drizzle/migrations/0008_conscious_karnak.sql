@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "user_roles_user_app_role_unique" ON "user_roles" USING btree ("user_application_id","role_id");

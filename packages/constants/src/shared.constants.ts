@@ -1,0 +1,75 @@
+export const ERROR_MESSAGES = {
+  AUTH: {
+    UNAUTHORIZED: 'Unauthorized',
+    NOT_AUTHENTICATED: 'Unauthorized: User not authenticated',
+    NO_TOKEN: 'Unauthorized: No token provided',
+    INVALID_TOKEN: 'Unauthorized: Invalid token',
+    INVALID_CREDENTIALS: 'Invalid email or password',
+  },
+  RBAC: {
+    FORBIDDEN: 'Forbidden: Insufficient permissions',
+  },
+  ACCESS: {
+    USER_ALREADY_EXISTS: 'User already exists',
+    EMAIL_AND_ROLE_REQUIRED: 'Email and roleId are required',
+    FAILED_TO_INVITE_USER: 'Failed to invite user',
+    TOKEN_AND_PASSWORD_REQUIRED: 'Token and newPassword are required',
+    PASSWORD_TOO_SHORT: 'Password must be at least 8 characters long',
+    INVITE_NOT_FOUND: 'Invalid or expired invitation token',
+    ROLE_NOT_FOUND: 'Role not found',
+    USER_NOT_FOUND: 'User not found',
+    CANNOT_DELETE_SELF: 'You cannot delete your own account',
+    CANNOT_DELETE_LAST_ADMIN: 'Cannot delete the last active administrator',
+  },
+  CONTENT: {
+    ENTRY_NOT_FOUND: 'Entry not found',
+    INVALID_VERSION_NO: 'Invalid versionNo',
+    FAILED_TO_CREATE_ENTRY: 'Failed to create entry',
+  },
+  MEDIA: {
+    ASSET_NOT_FOUND: 'Media asset not found',
+    NO_FILE_UPLOADED:
+      'No file was uploaded. Attach one under the "file" field.',
+    INVALID_RESIZE_PARAMS: 'Invalid resize query params',
+  },
+  WEBHOOKS: {
+    NOT_FOUND: 'Webhook not found',
+    NAME_URL_EVENTS_REQUIRED: 'name, url and events are required',
+  },
+  LOCALES: {
+    NOT_FOUND: 'Locale not found',
+    CODE_NAME_REQUIRED: 'code and name are required',
+    CODE_ALREADY_EXISTS: 'A locale with this code already exists',
+  },
+} as const;
+
+export const DEFAULT_LOCALE = 'en';
+
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  INTERNAL_SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+} as const;
+
+export const AUTH_COOKIES = {
+  PREFIX: 'token_',
+  MAX_AGE_MS: 24 * 60 * 60 * 1000, // 1 day
+} as const;
+
+export const ADMIN_ROLES = ['admin', 'super_admin'] as const;
+export type AdminRole = (typeof ADMIN_ROLES)[number];
+
+export const EMAIL_TEMPLATES = {
+  INVITE: {
+    SUBJECT: 'You have been invited to Agentic CMS',
+    HTML: `<p>Hello {{firstName}},</p><p>You have been invited to join Agentic CMS. Please click the link below to set your password and activate your account:</p><p><a href="{{inviteUrl}}">{{inviteUrl}}</a></p><p>This link will expire in 48 hours.</p>`,
+    TEXT: `Hello {{firstName}},\n\nYou have been invited to join Agentic CMS. Please click the link below to set your password and activate your account:\n\n{{inviteUrl}}\n\nThis link will expire in 48 hours.`,
+  },
+} as const;

@@ -1,0 +1,158 @@
+---
+id: how-to-contribute
+title: How to Contribute
+description: Complete step-by-step guide to contributing to Agentic Headless CMS
+---
+
+# How to Contribute
+
+We are thrilled that you are interested in contributing to **Agentic Headless CMS**! Your contributions are invaluable in making this platform more robust, performant, and developer-friendly for everyone. This guide walks you through the entire process, from setting up your local environment to submitting a high-quality pull request.
+
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Finding Something to Work On](#finding-something-to-work-on)
+- [Contribution Workflow](#contribution-workflow)
+  - [1. Setup Your Environment](#1-setup-your-environment)
+  - [2. Create a Branch](#2-create-a-branch)
+  - [3. Local Development](#3-local-development)
+  - [4. Add Documentation](#4-add-documentation)
+  - [5. Run Quality Checks and Tests](#5-run-quality-checks-and-tests)
+  - [6. Commit and Push Your Changes](#6-commit-and-push-your-changes)
+  - [7. Create a Pull Request](#7-create-a-pull-request)
+- [Code Review Process](#code-review-process)
+- [Licensing](#licensing)
+
+---
+
+## Code of Conduct
+
+We are committed to fostering a welcoming and inclusive community. Before contributing, please take a moment to review our [Code of Conduct](/docs/contribution-guide/code-of-conduct).
+
+---
+
+## Finding Something to Work On
+
+1. **Explore the Issues**: Head over to our [GitHub Issue Tracker](https://github.com/mindfiredigital/agentic-headless-cms/issues). This is the best place to find prioritized tasks, bugs, and enhancements.
+2. **Propose an Idea**: If you have an idea for a new feature or architectural enhancement, please open a GitHub issue or discussion first. This ensures alignment with the project roadmap before writing code.
+
+---
+
+## Contribution Workflow
+
+### 1. Setup Your Environment
+
+First, get the monorepo running on your local machine:
+
+1. **Fork the repository**: Click the "Fork" button at the top-right of the [Agentic Headless CMS repository](https://github.com/mindfiredigital/agentic-headless-cms).
+2. **Clone your forked repository**:
+   ```bash
+   git clone https://github.com/your-username/agentic-headless-cms.git
+   cd agentic-headless-cms
+   ```
+3. **Install dependencies**: This project uses `pnpm` workspaces:
+   ```bash
+   pnpm install
+   ```
+4. **Start local infrastructure (PostgreSQL & Redis)**:
+   ```bash
+   docker compose up -d postgres redis
+   ```
+5. **Copy environment variables**:
+   ```bash
+   cp apps/backend/.env.example apps/backend/.env
+   cp apps/frontend/.env.example apps/frontend/.env.local
+   ```
+
+### 2. Create a Branch
+
+Create a new branch for your changes with a descriptive prefix:
+
+- For new features: `feature/short-feature-description`
+- For bug fixes: `fix/short-bug-description`
+- For documentation: `docs/short-docs-description`
+
+```bash
+# Example for a new feature
+git checkout -b feature/add-webhook-retry-policy
+
+# Example for a bug fix
+git checkout -b fix/redis-cache-invalidation-key
+```
+
+### 3. Local Development
+
+You can run individual workspaces or launch the whole platform concurrently:
+
+```bash
+# Start all apps concurrently via Turborepo
+pnpm dev
+
+# Or start specific services independently:
+pnpm --filter backend dev   # Backend API on port 3000
+pnpm --filter frontend dev  # Admin CMS UI on port 3001
+pnpm --filter worker dev    # Background worker service
+pnpm docs:dev               # Documentation portal on port 3002
+```
+
+### 4. Add Documentation
+
+If you are introducing new capabilities, endpoints, or SDK methods:
+- Add or update the relevant guides inside `apps/docs/docs/`.
+- Verify internal cross-links and formatting.
+- Preview your documentation locally with `pnpm docs:dev`.
+
+### 5. Run Quality Checks and Tests
+
+Ensure that your code adheres to all monorepo type contracts and passes all tests before submitting:
+
+```bash
+# Verify TypeScript types across all 25+ packages
+pnpm check-types
+
+# Run unit and integration tests
+pnpm test
+
+# Run ESLint across packages
+pnpm lint
+```
+
+### 6. Commit and Push Your Changes
+
+Stage your modifications and write commit messages following the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```bash
+git add .
+git commit -m "feat(backend): implement automated webhook retry backoff policy"
+```   
+
+Push your branch to your GitHub fork:
+```bash
+git push origin feature/add-webhook-retry-policy
+```
+
+### 7. Create a Pull Request
+
+1. Navigate to your forked repository on GitHub and click **Compare & pull request**.
+2. Set the base repository to `mindfiredigital/agentic-headless-cms` and base branch to `development` (or `main`).
+3. Fill out the PR description with:
+   - Summary of changes
+   - Related issue numbers
+   - Testing steps performed
+4. Submit the pull request for review.
+
+---
+
+## Code Review Process
+
+- Once submitted, automated CI checks will run type verification, linting, and unit tests.
+- One or more maintainers will review your pull request and provide feedback.
+- If revisions are requested, push new commits to your branch; the PR updates automatically.
+- Once approved and all checks pass, your contribution will be merged into the project! 🎉
+
+---
+
+## Licensing
+
+By contributing to **Agentic Headless CMS**, you agree that your contributions will be licensed under the project's [MIT License](https://opensource.org/licenses/MIT).
+

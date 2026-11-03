@@ -1,0 +1,57 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "concurrency": "30",
+  "ui": "tui",
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "PORT",
+    "APP_URL",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_USER",
+    "SMTP_PASS",
+    "EMAIL_FROM",
+    "SEED_ADMIN_EMAIL",
+    "SEED_ADMIN_PASSWORD",
+    "E2E_FRONTEND_URL",
+    "E2E_BACKEND_URL",
+    "E2E_DATABASE_URL",
+    "API_INTERNAL_URL",
+    "NEXT_PUBLIC_API_URL",
+    "SUPPORT_EMAIL",
+    "MODE",
+    "DATABASE_URL",
+    "MIGRATIONS_FOLDER",
+    "AUTO_MIGRATE",
+    "VITE_API_URL",
+    "VITE_APP_ID",
+    "ANALYZE",
+    "CMS_UI_URL",
+    "COOKIE_SECURE",
+    "PROD",
+    "DEV"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
+    },
+    "lint": {
+      "dependsOn": ["^build", "^lint"]
+    },
+    "check-types": {
+      "dependsOn": ["^build", "^check-types"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

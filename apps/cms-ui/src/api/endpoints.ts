@@ -1,0 +1,52 @@
+export const ENDPOINTS = {
+  AUTH: {
+    LOGIN: '/auth/login',
+    LOGOUT: '/auth/logout',
+    ME: '/auth/me',
+    ACCEPT_INVITE: '/auth/accept-invite',
+    SSO: '/auth/sso',
+    SSO_CALLBACK: '/auth/sso/callback',
+    MFA_ENROLL: '/auth/mfa/enroll',
+    MFA_VERIFY: '/auth/mfa/verify',
+    MFA_CHALLENGE: '/auth/mfa/challenge',
+    MFA_DISABLE: '/auth/mfa/disable',
+    MFA_RESET_REQUEST: '/auth/mfa/reset-request',
+    MFA_RESET_COMPLETE: '/auth/mfa/reset-complete',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
+  },
+  ACCESS: {
+    ROLES: '/access/roles',
+    USERS: '/access/users',
+    TOKENS: '/access/tokens',
+    MFA_REQUESTS: '/access/mfa-requests',
+  },
+  SCHEMAS: {
+    BASE: '/schemas',
+    BY_SLUG: (slug: string) => `/schemas/slug/${slug}`,
+  },
+  CONTENT: {
+    BASE: '/content',
+    BY_SCHEMA: (schemaSlug: string) => `/content/${schemaSlug}`,
+    ENTRY: (schemaSlug: string, entryId: string) =>
+      `/content/${schemaSlug}/${entryId}`,
+    VERSIONS: (schemaSlug: string, entryId: string) =>
+      `/content/${schemaSlug}/${entryId}/versions`,
+    REVERT: (schemaSlug: string, entryId: string) =>
+      `/content/${schemaSlug}/${entryId}/revert`,
+  },
+  AUDIT_LOGS: {
+    BASE: '/audit-logs',
+    BY_ID: (id: string) => `/audit-logs/${id}`,
+  },
+  MEDIA: {
+    BASE: '/media',
+    BY_ID: (id: string) => `/media/${id}`,
+    FILE: (key: string) => `/media/file/${key}`,
+    BULK_DELETE: '/media/bulk-delete',
+  },
+  MEDIA_FOLDERS: {
+    BASE: '/media-folders',
+    BY_ID: (id: string) => `/media-folders/${id}`,
+  },
+} as const;

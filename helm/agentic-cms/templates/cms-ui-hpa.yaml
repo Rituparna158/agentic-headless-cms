@@ -1,0 +1,23 @@
+{{- if and .Values.cmsUI.enabled .Values.cmsUI.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "agentic-cms.componentName" (dict "context" . "component" "cms-ui") }}
+  labels:
+    {{- include "agentic-cms.labels" . | nindent 4 }}
+    {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "cms-ui") | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "agentic-cms.componentName" (dict "context" . "component" "cms-ui") }}
+  minReplicas: {{ .Values.cmsUI.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.cmsUI.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.cmsUI.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}

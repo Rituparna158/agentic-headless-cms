@@ -1,0 +1,59 @@
+---
+title: Internationalization (i18n)
+sidebar_label: Internationalization
+description: Deliver multi-lingual digital experiences with field-level localization and fallback locales.
+sidebar_position: 5
+---
+
+Agentic Headless CMS provides built-in internationalization (**i18n**) support, allowing teams to author, manage, and deliver content in multiple languages from a single workspace.
+
+Managing multi-language content follows a straightforward **3-step editorial workflow**:
+
+1. Register your supported languages in **Settings**.
+2. Mark which fields need translation in the **Schema Builder**.
+3. Author the translated content per locale in the **Content Manager**.
+
+---
+
+## Step 1: Configure Locales in Settings
+
+Before translating content, an administrator must register the languages your workspace supports:
+
+1. Navigate to **Settings** &rarr; **Locales** (`/settings?tab=locales`).
+2. Click **Add Locale**.
+3. Provide the locale details:
+   - **Code**: The standard ISO language tag (e.g., `fr`, `es`, `de`, `ja`).
+   - **Name**: The display name (e.g., `French`, `Spanish`, `German`, `Japanese`).
+4. Set one locale as the **Default Locale** (e.g., English `en`). This serves as the primary editing language and the fallback for untranslated content.
+
+Without configuring locales here first, the content editor will only show the single default language.
+
+---
+
+## Step 2: Enable Localized Fields in Schemas
+
+Rather than forcing you to duplicate entire content schemas for each language, localization in Agentic CMS operates at the **field level**:
+
+- **Shared Fields:** Fields such as SKU, prices, release dates, relations, or internal slugs share the same value across all languages.
+- **Localized Fields:** Fields such as article titles, rich text bodies, summaries, and SEO metadata maintain distinct values for each language.
+
+To designate a field for translation:
+
+1. Open **Schema Builder** (`/content-types`) and edit your content type.
+2. Select or create a text, rich text, or media field.
+3. In the field settings panel, check **Localized Field**.
+4. Save the schema.
+
+---
+
+## Step 3: Author Translations in Content Manager
+
+Selecting a different language in the editor **does not perform automated machine translation**; it provides dedicated fields for translators and editors to author the localized copy:
+
+1. In the **Content Manager**, open an entry. By default, it loads in your workspace's default locale (e.g., English).
+2. Author and save your default language content.
+3. To add a translation, click the **Locale Selector** dropdown in the editor toolbar and choose your target language (e.g., `French (fr)`).
+4. The localized fields update to display the French version (which will be blank for a new translation), while shared fields (like SKU or dates) remain visible and synchronized.
+5. Enter the French translation into the localized fields.
+6. Click **Save** to store the French translation for that entry.
+

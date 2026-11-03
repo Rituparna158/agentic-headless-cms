@@ -1,0 +1,1 @@
+ALTER TABLE "schemas" ADD COLUMN "description" text;

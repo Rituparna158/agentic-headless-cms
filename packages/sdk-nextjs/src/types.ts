@@ -1,0 +1,28 @@
+export interface NextFetchOptions {
+  tags: string[];
+  revalidate?: number | false;
+}
+
+export interface FetchConfig {
+  baseUrl: string;
+  apiToken: string;
+  appId?: string;
+  apiKey?: string;
+}
+
+export interface CmsMetadata {
+  title?: string | null;
+  description?: string | null;
+  openGraph?: {
+    title?: string | null;
+    description?: string | null;
+    images?: { url: string }[];
+  };
+}
+
+export interface ActionState<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  validationErrors?: Record<string, string[]>;
+}

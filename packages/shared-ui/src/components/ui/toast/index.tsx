@@ -1,0 +1,817 @@
+'use client';
+
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
+import {
+  CrossCircledIcon,
+  CheckCircledIcon,
+  ExclamationTriangleIcon,
+  InfoCircledIcon,
+} from '@radix-ui/react-icons';
+import type { ToastVariantTypes, ToastAnimationTypes } from './types';
+import { cn } from '../../../utils/cn';
+
+interface ToastContainerData {
+  id: number;
+  message: string;
+  variant: ToastVariantTypes;
+  animation: ToastAnimationTypes;
+  mode?: 'dark' | 'light';
+  icon?: React.ReactNode;
+  appearance?: 'glow' | 'gradient' | 'glassmorphism' | 'premium' | 'neon';
+  gradientColor?: string;
+  duration?: number;
+  size?: 'sm' | 'md' | 'lg';
+  position?:
+    | 'top-right'
+    | 'top-left'
+    | 'bottom-right'
+    | 'bottom-left'
+    | 'top-center'
+    | 'bottom-center';
+  showProgress?: boolean;
+  pauseOnHover?: boolean;
+  actionButton?: {
+    label: string;
+    onClick: () => void;
+  };
+  dismissible?: boolean;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+}
+
+interface ToastNotificationProps extends ToastContainerData {
+  onClose: (id: number) => void;
+  timeoutMapRef: React.RefObject<Map<number, ReturnType<typeof setTimeout>>>;
+  index: number;
+}
+
+export type ToastDataArgs = Omit<ToastContainerData, 'id'>;
+
+export interface ToastManagerRef {
+  addToast: (data: ToastDataArgs) => void;
+  removeToast: (id: number) => void;
+  clearAll: () => void;
+}
+
+const variantColors = {
+  success: {
+    primary: 'var(--success, #10b981)',
+    secondary: 'var(--success, #34d399)',
+    light: 'var(--success, #6ee7b7)',
+    dark: 'var(--success, #047857)',
+  },
+  error: {
+    primary: 'var(--destructive, #ef4444)',
+    secondary: 'var(--destructive, #f87171)',
+    light: 'var(--destructive, #fca5a5)',
+    dark: 'var(--destructive, #b91c1c)',
+  },
+  warning: {
+    primary: 'var(--warning, #f59e0b)',
+    secondary: 'var(--warning, #fbbf24)',
+    light: 'var(--warning, #fcd34d)',
+    dark: 'var(--warning, #b45309)',
+  },
+  info: {
+    primary: 'var(--info, #3b82f6)',
+    secondary: 'var(--info, #60a5fa)',
+    light: 'var(--info, #93c5fd)',
+    dark: 'var(--info, #1d4ed8)',
+  },
+  default: {
+    primary: 'var(--muted-foreground)',
+    secondary: 'var(--muted)',
+    light: 'var(--muted)',
+    dark: 'var(--muted-foreground)',
+  },
+};
+
+export const ToastContext = React.createContext<ToastManagerRef | undefined>(
+  undefined,
+);
+
+const animationVariants: Record<ToastAnimationTypes, Variants> = {
+  slide: {
+    hidden: {
+      x: '120%',
+      opacity: 0,
+      scale: 0.8,
+      filter: 'blur(8px)',
+    },
+    visible: (index: number) => ({
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      filter: 'blur(0px)',
+      transition: {
+        type: 'spring',
+        stiffness: 300,
+        damping: 25,
+        mass: 0.8,
+        delay: index * 0.1,
+      },
+    }),
+    exit: {
+      x: '120%',
+      opacity: 0,
+      scale: 0.8,
+      filter: 'blur(8px)',
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 1, 1],
+      },
+    },
+  },
+  fade: {
+    hidden: {
+      opacity: 0,
+      scale: 0.95,
+      filter: 'blur(4px)',
+    },
+    visible: (index: number) => ({
+      opacity: 1,
+      scale: 1,
+      filter: 'blur(0px)',
+      transition: {
+        duration: 0.4,
+        ease: [0.4, 0, 0.2, 1],
+        delay: index * 0.05,
+      },
+    }),
+    exit: {
+      opacity: 0,
+      scale: 0.95,
+      filter: 'blur(4px)',
+      transition: {
+        duration: 0.2,
+        ease: [0.4, 0, 1, 1],
+      },
+    },
+  },
+  bounce: {
+    hidden: {
+      y: -100,
+      opacity: 0,
+      scale: 0.3,
+    },
+    visible: (index: number) => ({
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 400,
+        damping: 15,
+        mass: 0.6,
+        delay: index * 0.1,
+      },
+    }),
+    exit: {
+      y: -100,
+      opacity: 0,
+      scale: 0.3,
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 1, 1],
+      },
+    },
+  },
+  pop: {
+    hidden: {
+      opacity: 0,
+      scale: 0,
+      filter: 'brightness(0.5)',
+    },
+    visible: (index: number) => ({
+      opacity: 1,
+      scale: 1,
+      filter: 'brightness(1)',
+      transition: {
+        type: 'spring',
+        stiffness: 500,
+        damping: 20,
+        mass: 0.5,
+        delay: index * 0.08,
+      },
+    }),
+    exit: {
+      opacity: 0,
+      scale: 0,
+      filter: 'brightness(0.5)',
+      transition: {
+        duration: 0.2,
+        ease: [0.4, 0, 1, 1],
+      },
+    },
+  },
+  elastic: {
+    hidden: {
+      opacity: 0,
+      scale: 0,
+      x: -50,
+    },
+    visible: (index: number) => ({
+      opacity: 1,
+      scale: 1,
+      x: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 300,
+        damping: 12,
+        mass: 0.8,
+        delay: index * 0.1,
+      },
+    }),
+    exit: {
+      opacity: 0,
+      scale: 0,
+      x: 50,
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 1, 1],
+      },
+    },
+  },
+  flip: {
+    hidden: {
+      opacity: 0,
+      rotateX: -90,
+      scale: 0.8,
+    },
+    visible: (index: number) => ({
+      opacity: 1,
+      rotateX: 0,
+      scale: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 300,
+        damping: 20,
+        delay: index * 0.08,
+      },
+    }),
+    exit: {
+      opacity: 0,
+      rotateX: 90,
+      scale: 0.8,
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 1, 1],
+      },
+    },
+  },
+};
+
+const withAlpha = (cssVar: string, alpha: number): string =>
+  `color-mix(in srgb, ${cssVar} ${Math.round(alpha * 100)}%, transparent)`;
+
+const getEnhancedVariantStyles = (
+  appearance: ToastContainerData['appearance'],
+  variant: ToastVariantTypes,
+  size: 'sm' | 'md' | 'lg' = 'md',
+): { className: string; style: React.CSSProperties } => {
+  const sizeStyles = {
+    sm: 'min-w-[280px] max-w-[320px] p-3',
+    md: 'min-w-[320px] max-w-[400px] p-4',
+    lg: 'min-w-[400px] max-w-[500px] p-5',
+  };
+
+  const baseStyles = cn(
+    'relative overflow-hidden backdrop-blur-sm border rounded-xl shadow-lg',
+    'transform-gpu will-change-transform',
+    sizeStyles[size],
+  );
+
+  const colors =
+    variantColors[variant as keyof typeof variantColors] ||
+    variantColors.default;
+
+  switch (appearance) {
+    case 'premium':
+      return {
+        className: cn(baseStyles, 'shadow-2xl'),
+        style: {
+          background: `linear-gradient(135deg, var(--card) 0%, ${withAlpha(colors.primary, 0.08)} 100%)`,
+          border: `1px solid ${withAlpha(colors.primary, 0.25)}`,
+          borderLeft: `4px solid ${colors.primary}`,
+          boxShadow: `
+            0 20px 25px -5px ${withAlpha(colors.primary, 0.18)},
+            0 8px 10px -6px ${withAlpha(colors.primary, 0.1)},
+            inset 0 1px 0 ${withAlpha('var(--primary-foreground)', 0.06)}
+          `,
+          color: 'var(--card-foreground)',
+        },
+      };
+
+    case 'gradient':
+      return {
+        className: cn(baseStyles, 'border-0'),
+        style: {
+          background: `linear-gradient(135deg, ${withAlpha(colors.primary, 0.9)} 0%, ${withAlpha(colors.secondary, 0.95)} 100%)`,
+          border: `1px solid ${withAlpha(colors.primary, 0.3)}`,
+          boxShadow: `
+            0 12px 28px -5px ${withAlpha(colors.primary, 0.5)},
+            0 4px 10px -5px ${withAlpha(colors.primary, 0.3)},
+            inset 0 1px 0 rgba(255,255,255,0.2),
+            inset 0 -1px 0 rgba(0,0,0,0.1)
+          `,
+          color: 'var(--primary-foreground)',
+        },
+      };
+
+    case 'glassmorphism':
+      return {
+        className: cn(baseStyles),
+        style: {
+          background: `linear-gradient(135deg, ${withAlpha('var(--card)', 0.6)} 0%, ${withAlpha(colors.primary, 0.08)} 100%)`,
+          backdropFilter: 'blur(16px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+          border: `1px solid ${withAlpha('var(--border)', 0.6)}`,
+          borderTop: `1px solid ${withAlpha('var(--border)', 0.8)}`,
+          borderLeft: `2px solid ${withAlpha(colors.primary, 0.5)}`,
+          boxShadow: `
+            0 8px 32px -4px ${withAlpha(colors.primary, 0.2)},
+            0 2px 8px -2px ${withAlpha('var(--foreground)', 0.1)},
+            inset 0 1px 0 ${withAlpha('var(--primary-foreground)', 0.08)}
+          `,
+          color: 'var(--card-foreground)',
+        },
+      };
+
+    case 'neon':
+      return {
+        className: cn(baseStyles),
+        style: {
+          background: `linear-gradient(135deg, var(--background) 0%, ${withAlpha(colors.primary, 0.15)} 100%)`,
+          border: `1px solid ${withAlpha(colors.primary, 0.7)}`,
+          borderLeft: `3px solid ${colors.primary}`,
+          boxShadow: `
+            0 0 0 1px ${withAlpha(colors.primary, 0.3)},
+            0 0 12px 2px ${withAlpha(colors.primary, 0.35)},
+            0 0 30px 4px ${withAlpha(colors.primary, 0.15)},
+            inset 0 0 20px 0px ${withAlpha(colors.primary, 0.07)}
+          `,
+          color: 'var(--foreground)',
+          textShadow: `0 0 8px ${withAlpha(colors.primary, 0.8)}`,
+        },
+      };
+
+    case 'glow':
+      return {
+        className: cn(baseStyles, 'shadow-2xl'),
+        style: {
+          background: `linear-gradient(135deg, var(--card) 0%, ${withAlpha(colors.primary, 0.06)} 50%)`,
+          border: `1px solid ${withAlpha(colors.primary, 0.3)}`,
+          boxShadow: `
+            0 0 0 1px ${withAlpha(colors.primary, 0.15)},
+            0 0 20px 4px ${withAlpha(colors.primary, 0.25)},
+            0 0 60px 8px ${withAlpha(colors.primary, 0.1)},
+            0 10px 25px -5px ${withAlpha(colors.primary, 0.3)},
+            inset 0 1px 0 ${withAlpha('var(--primary-foreground)', 0.06)}
+          `,
+          color: 'var(--card-foreground)',
+        },
+      };
+
+    default:
+      return {
+        className: cn(baseStyles, 'shadow-xl'),
+        style: {
+          background: 'var(--card)',
+          border: `1px solid ${withAlpha(colors.primary, 0.2)}`,
+          borderLeft: `4px solid ${colors.primary}`,
+          boxShadow: `0 10px 15px -3px ${withAlpha(colors.primary, 0.1)}`,
+          color: 'var(--card-foreground)',
+        },
+      };
+  }
+};
+
+const positionConfig = {
+  'top-right': 'top-4 right-4',
+  'top-left': 'top-4 left-4',
+  'bottom-right': 'bottom-4 right-4',
+  'bottom-left': 'bottom-4 left-4',
+  'top-center': 'top-4 left-1/2 -translate-x-1/2',
+  'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+};
+
+export const ToastProvider = ({
+  children,
+  maxToasts = 5,
+  defaultPosition = 'top-right',
+}: {
+  children: React.ReactNode;
+  maxToasts?: number;
+  defaultPosition?: keyof typeof positionConfig;
+}) => {
+  const [toasts, setToasts] = useState<ToastContainerData[]>([]);
+  const timeoutMapRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
+
+  const removeToast = useCallback((id: number) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
+    const timeout = timeoutMapRef.current.get(id);
+    if (timeout) {
+      clearTimeout(timeout);
+      timeoutMapRef.current.delete(id);
+    }
+  }, []);
+
+  const clearAll = useCallback(() => {
+    setToasts([]);
+    timeoutMapRef.current.forEach((timeout) => clearTimeout(timeout));
+    timeoutMapRef.current.clear();
+  }, []);
+
+  const addToast = useCallback(
+    (data: ToastDataArgs) => {
+      const {
+        message,
+        variant,
+        animation,
+        mode,
+        icon,
+        appearance = 'premium',
+        gradientColor,
+        duration = 4000,
+        size = 'md',
+        position = defaultPosition,
+        showProgress = true,
+        pauseOnHover = true,
+        actionButton,
+        dismissible = true,
+        priority = 'normal',
+      } = data;
+
+      const newToast: ToastContainerData = {
+        id: Date.now() + Math.random(),
+        message,
+        variant,
+        animation,
+        mode,
+        icon,
+        appearance,
+        gradientColor:
+          gradientColor ??
+          variantColors[variant as keyof typeof variantColors]?.primary ??
+          variantColors.default.primary,
+        duration,
+        size,
+        position,
+        showProgress,
+        pauseOnHover,
+        actionButton,
+        dismissible,
+        priority,
+      };
+
+      setToasts((prevToasts) => {
+        let updatedToasts = [newToast, ...prevToasts];
+
+        if (priority === 'urgent') {
+          const urgentToasts = [newToast];
+          const nonUrgentToasts = prevToasts.filter(
+            (t) => t.priority !== 'urgent',
+          );
+          updatedToasts = [...urgentToasts, ...nonUrgentToasts];
+        }
+
+        if (updatedToasts.length > maxToasts) {
+          const overflow = updatedToasts[maxToasts];
+          if (overflow) {
+            const timeout = timeoutMapRef.current.get(overflow.id);
+            if (timeout) {
+              clearTimeout(timeout);
+              timeoutMapRef.current.delete(overflow.id);
+            }
+          }
+          updatedToasts = updatedToasts.slice(0, maxToasts);
+        }
+
+        return updatedToasts;
+      });
+    },
+    [maxToasts, defaultPosition],
+  );
+
+  const positionGroups = toasts.reduce<Record<string, ToastContainerData[]>>(
+    (acc, toast) => {
+      const pos = toast.position ?? defaultPosition;
+      if (!acc[pos]) acc[pos] = [];
+      acc[pos].push(toast);
+      return acc;
+    },
+    {},
+  );
+
+  return (
+    <ToastContext.Provider value={{ addToast, removeToast, clearAll }}>
+      {children}
+      {(
+        Object.entries(positionGroups) as [
+          keyof typeof positionConfig,
+          ToastContainerData[],
+        ][]
+      ).map(([position, group]) => (
+        <div
+          key={position}
+          className={cn(
+            'fixed flex flex-col gap-3 pointer-events-none z-[9999]',
+            positionConfig[position],
+          )}
+        >
+          <AnimatePresence initial={false}>
+            {group.map((toast, index) => (
+              <motion.div
+                key={toast.id}
+                layout="position"
+                className="pointer-events-auto"
+              >
+                <Toast
+                  {...toast}
+                  index={index}
+                  onClose={removeToast}
+                  timeoutMapRef={timeoutMapRef}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      ))}
+    </ToastContext.Provider>
+  );
+};
+
+const TICK = 50;
+
+const Toast = ({
+  message,
+  onClose,
+  id,
+  animation,
+  variant = 'default',
+  mode = 'light',
+  icon,
+  appearance = 'premium',
+  duration = 4000,
+  size = 'md',
+  showProgress = true,
+  pauseOnHover = true,
+  actionButton,
+  dismissible = true,
+  index,
+  timeoutMapRef,
+}: ToastNotificationProps) => {
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(100);
+
+  const remainingRef = useRef<number>(duration);
+  const lastTickRef = useRef<number>(Date.now());
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleTimeout = useCallback(
+    (remaining: number) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => onClose(id), remaining);
+      timeoutMapRef.current?.set(id, timeoutRef.current);
+    },
+    [id, onClose, timeoutMapRef],
+  );
+  useEffect(() => {
+    if (!showProgress || duration <= 0 || isPaused) return;
+
+    lastTickRef.current = Date.now();
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = now - lastTickRef.current;
+      lastTickRef.current = now;
+
+      remainingRef.current = Math.max(0, remainingRef.current - elapsed);
+      setProgress((remainingRef.current / duration) * 100);
+    }, TICK);
+
+    return () => clearInterval(interval);
+  }, [isPaused, duration, showProgress]);
+
+  useEffect(() => {
+    if (duration <= 0) return;
+
+    if (isPaused) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+        timeoutMapRef.current?.delete(id);
+      }
+    } else {
+      scheduleTimeout(remainingRef.current);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+        timeoutMapRef.current?.delete(id);
+      }
+    };
+  }, [isPaused, duration, id, scheduleTimeout, timeoutMapRef]);
+
+  const handleMouseEnter = () => {
+    if (pauseOnHover) setIsPaused(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (pauseOnHover) setIsPaused(false);
+  };
+
+  const getDefaultIcon = (variant: ToastVariantTypes) => {
+    const iconClass = 'h-5 w-5';
+    switch (variant) {
+      case 'success':
+        return (
+          <CheckCircledIcon
+            className={iconClass}
+            style={{ color: 'var(--success, #10b981)' }}
+          />
+        );
+      case 'error':
+        return (
+          <CrossCircledIcon
+            className={iconClass}
+            style={{ color: 'var(--destructive, #ef4444)' }}
+          />
+        );
+      case 'warning':
+        return (
+          <ExclamationTriangleIcon
+            className={iconClass}
+            style={{ color: 'var(--warning, #f59e0b)' }}
+          />
+        );
+      case 'info':
+        return (
+          <InfoCircledIcon
+            className={iconClass}
+            style={{ color: 'var(--info, #3b82f6)' }}
+          />
+        );
+      default:
+        return (
+          <InfoCircledIcon
+            className={iconClass}
+            style={{ color: 'var(--primary)' }}
+          />
+        );
+    }
+  };
+
+  const displayIcon = icon || getDefaultIcon(variant);
+  const styles = getEnhancedVariantStyles(appearance, variant, size);
+
+  return (
+    <motion.div
+      className={styles.className}
+      style={
+        {
+          ...styles.style,
+          pointerEvents: 'auto',
+        } as import('framer-motion').MotionStyle
+      }
+      variants={animationVariants[animation]}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      custom={index}
+      layout="position"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      whileHover={{
+        scale: 1.02,
+        transition: { duration: 0.2 },
+      }}
+      aria-live="assertive"
+      role="alert"
+    >
+      {showProgress && duration > 0 && (
+        <motion.div
+          className="absolute top-0 left-0 h-1 rounded-t-xl"
+          style={{ background: 'rgba(0,0,0,0.2)' }}
+          initial={{ width: '100%' }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.1, ease: 'linear' }}
+        />
+      )}
+
+      <div className="flex items-start gap-3 relative z-[1]">
+        <motion.div
+          className="flex-shrink-0 mt-0.5"
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{
+            type: 'spring',
+            stiffness: 400,
+            damping: 15,
+            delay: 0.1,
+          }}
+        >
+          {displayIcon}
+        </motion.div>
+
+        <div className="flex-1 min-w-0">
+          <motion.p
+            className="text-sm font-medium leading-relaxed"
+            style={{ color: mode === 'dark' ? 'var(--foreground)' : 'inherit' }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            {message}
+          </motion.p>
+
+          {actionButton && (
+            <motion.button
+              className="mt-2 px-3 py-1 text-xs font-medium rounded-md transition-colors duration-200"
+              style={{
+                background: withAlpha('var(--foreground)', 0.1),
+                color: 'inherit',
+              }}
+              onClick={actionButton.onClick}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {actionButton.label}
+            </motion.button>
+          )}
+        </div>
+
+        {dismissible && (
+          <motion.button
+            onClick={() => onClose(id)}
+            className="flex-shrink-0 p-1 rounded-md transition-all duration-200"
+            style={{
+              color: 'inherit',
+              opacity: 0.6,
+              background: 'transparent',
+            }}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+            whileHover={{
+              scale: 1.1,
+              background: withAlpha('var(--foreground)', 0.1),
+            }}
+            whileTap={{ scale: 0.9 }}
+            aria-label="Close notification"
+          >
+            <CrossCircledIcon className="h-4 w-4" />
+          </motion.button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+export const useToast = () => {
+  const context = React.useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+
+  return {
+    ...context,
+    success: (message: string, options?: Partial<ToastDataArgs>) =>
+      context.addToast({
+        message,
+        variant: 'success',
+        animation: 'slide',
+        ...options,
+      }),
+    error: (message: string, options?: Partial<ToastDataArgs>) =>
+      context.addToast({
+        message,
+        variant: 'error',
+        animation: 'bounce',
+        ...options,
+      }),
+    warning: (message: string, options?: Partial<ToastDataArgs>) =>
+      context.addToast({
+        message,
+        variant: 'warning',
+        animation: 'pop',
+        ...options,
+      }),
+    info: (message: string, options?: Partial<ToastDataArgs>) =>
+      context.addToast({
+        message,
+        variant: 'info',
+        animation: 'fade',
+        ...options,
+      }),
+  };
+};
+
+export default { ToastProvider, useToast };

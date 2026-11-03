@@ -1,0 +1,88 @@
+---
+id: admin-panel
+title: Admin Panel
+description: Visual control center for content creators, schema architects, and administrators
+sidebar_position: 3
+---
+
+# Admin Panel
+
+The **Admin Panel** is the visual control center of Agentic Headless CMS. Built with **Next.js 15 (App Router)**, it gives content creators an intuitive workspace to author entries, while providing administrators with complete governance over schemas, roles, and security.
+
+---
+
+## Accessing the Admin Panel
+
+Once your local servers or Docker containers are running, navigate to:
+
+```text
+http://localhost:3001/login
+```
+
+Sign in with the default administrator credentials:
+
+- **Email**: `admin@mindfire.com`
+- **Password**: `Admin@123456`
+
+:::tip Secure Your Account
+Navigate to **Settings** &rarr; **Security** to configure Two-Factor Authentication (MFA) via TOTP.
+:::
+
+---
+
+## Navigation & Workspaces
+
+The sidebar organizes your workflow into 5 dedicated zones:
+
+### 1. Schema Builder (`/content-types`)
+The architectural foundation of your CMS. Visually design relational content models without touching SQL or database migrations.
+- **Field Palette**: Add fields for `Text`, `Number`, `Boolean`, `Rich Text`, `Date`, `Media`, and `Relations`.
+- **Validation Engine**: Enforce `Required`, `Unique`, min/max constraints, and custom regex rules per field.
+- **Zero-Downtime Compilation**: Saving a schema compiles runtime Zod validators and exposes new REST & GraphQL endpoints on the fly.
+
+### 2. Content Manager (`/content`)
+The daily authoring environment for editorial teams.
+- **Draft & Publish Engine**: Safely draft, stage, preview, and selectively publish content to production.
+- **Multi-Locale Switcher**: Toggle between languages with automatic fallback to your default locale.
+- **Search & Filter**: Server-side full-text search, multi-criteria filtering, and column sorting.
+
+### 3. Media Library (`/media`)
+Unified asset management for images, documents, and videos.
+- Drag-and-drop file uploads with automatic thumbnail generation.
+- Responsive preview drawer with file metadata and CDN/API URLs ready to copy.
+
+### 4. Audit Log (`/audit-log`)
+Operational transparency and compliance out of the box.
+- Real-time immutable activity stream capturing every `CREATE`, `UPDATE`, `DELETE`, and `PUBLISH` event.
+- Filter by actor, resource type, or date range, with a sliding drawer showing before/after change snapshots.
+
+### 5. Roles & Access Control (`/roles-access`)
+Enterprise-grade permission governance.
+- Configure granular role permissions (`Super Admin`, `Admin`, `Editor`, `Viewer`) down to specific content operations.
+- Send email invitations to onboard new team members seamlessly.
+
+---
+
+## Instance Settings (`/settings`)
+
+Manage global instance configurations and security across 3 dedicated tabs:
+
+### 1. System Info
+Inspect instance overview, system health, deployment environment, and platform metadata.
+
+### 2. Locales
+Register, configure, and manage content languages:
+- View enabled locales with code and display name (e.g., `en-US`, `es-ES`, `fr-FR`).
+- Add new target languages for multi-locale content authoring.
+
+### 3. Security (MFA)
+Protect your administrator account with standard TOTP two-factor authentication:
+1. Navigate to **Settings** &rarr; **Security**.
+2. Click **Enable MFA** to generate your secure QR code.
+3. Scan with any authenticator app (Google Authenticator, 1Password, Authy) and confirm with the 6-digit verification code.
+
+---
+
+## Theme & Display
+
+The admin interface automatically adapts to your system preferences, or you can manually toggle between **Dark Mode** and **Light Mode** using the theme switcher in the top navigation bar.

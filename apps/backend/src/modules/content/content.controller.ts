@@ -1,0 +1,388 @@
+import { Request, Response, RequestHandler } from 'express';
+import { ContentService } from './content.service.js';
+import { parseContentQuery } from './query/content-query.util.js';
+import { logger } from '@repo/logger';
+import { asyncHandler, ApiResponse, ApiError } from '@repo/utils';
+import { DEFAULT_LOCALE, ERROR_MESSAGES } from '@repo/constants';
+import type { SchemaDefinition } from '@repo/types';
+import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
+const contentService = new ContentService();
+function checkAuthorizedForDrafts(req: Request, schemaId?: string): boolean {
+  const userRoles = (req.user?.roles || []).map((r: string) => r.toLowerCase());
+  if (
+    userRoles.some((r: string) =>
+      ['admin', 'super_admin', 'editor', 'author'].includes(r),
+    )
+  ) {
+    return true;
+  }
+  const userPerms = (req.user?.permissions || []) as Array<{
+    action: string;
+    schemaId?: string | null;
+    effect?: string;
+  }>;
+  return userPerms.some((p) => {
+    const actionMatches =
+      p.action === '*' ||
+      p.action === 'read' ||
+      p.action === 'create' ||
+      p.action === 'update';
+    const schemaMatches =
+      !schemaId ||
+      !p.schemaId ||
+      p.schemaId === null ||
+      p.schemaId === schemaId;
+    return actionMatches && schemaMatches && p.effect !== 'deny';
+  });
+}
+
+export const listEntries: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const schemaId = req.schemaId!;
+    logger.info({ schemaId }, 'ContentController: listEntries start');
+    const { fields } = req.schema!.definition as SchemaDefinition;
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+
+    // Check user authorization for draft access
+    const isAuthorizedForDrafts = checkAuthorizedForDrafts(req, schemaId);
+
+    // Reject unauthorized requests trying to view draft or all entries
+    const requestedStatus =
+      typeof req.query.status === 'string'
+        ? req.query.status.toLowerCase()
+        : undefined;
+    const filterStatus =
+      req.query.filters && typeof req.query.filters === 'object'
+        ? (req.query.filters as Record<string, unknown>).status
+        : undefined;
+
+    if (!isAuthorizedForDrafts) {
+      if (requestedStatus === 'draft' || requestedStatus === 'all') {
+        throw new ApiError(
+          403,
+          'Unauthorized: Viewing draft content requires editor or admin permissions.',
+        );
+      }
+      if (filterStatus && typeof filterStatus === 'object') {
+        const statusFilters = filterStatus as Record<string, unknown>;
+        if (
+          statusFilters.$eq === 'draft' ||
+          statusFilters.$ne === 'published'
+        ) {
+          throw new ApiError(
+            403,
+            'Unauthorized: Viewing draft content requires editor or admin permissions.',
+          );
+        }
+      }
+    }
+
+    const defaultStatus = 'published';
+    const contentQuery = parseContentQuery(req.query, fields, defaultStatus);
+    logger.debug(
+      { schemaId, locale, page: contentQuery.page },
+      'ContentController: fetching entries and count',
+    );
+    const [entries, total] = await Promise.all([
+      contentService.listEntries(
+        schemaId,
+        locale,
+        contentQuery,
+        req.context?.applicationId,
+      ),
+      contentService.countEntries(
+        schemaId,
+        locale,
+        contentQuery,
+        req.context?.applicationId,
+      ),
+    ]);
+    logger.info({ schemaId }, 'ContentController: listEntries end');
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          data: entries,
+          meta: {
+            pagination: {
+              page: contentQuery.page,
+              pageSize: contentQuery.pageSize,
+              total,
+              pageCount: Math.ceil(total / contentQuery.pageSize),
+            },
+          },
+        },
+        'Entries listed successfully',
+      ),
+    );
+  },
+);
+export const getEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: getEntry start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    logger.debug(
+      { entryId, locale },
+      'ContentController: fetching entry by ID',
+    );
+    const entry = await contentService.getEntryById(
+      entryId as string,
+      locale,
+      req.schemaId,
+      req.context?.applicationId,
+    );
+    if (!entry) {
+      logger.error({ entryId }, 'ContentController: entry not found');
+      throw new ApiError(404, ERROR_MESSAGES.CONTENT.ENTRY_NOT_FOUND);
+    }
+    const isAuthorizedForDrafts = checkAuthorizedForDrafts(req, req.schemaId);
+    if (entry.status === 'draft' && !isAuthorizedForDrafts) {
+      logger.warn(
+        { entryId },
+        'ContentController: draft entry requested by unauthorized consumer',
+      );
+      throw new ApiError(404, ERROR_MESSAGES.CONTENT.ENTRY_NOT_FOUND);
+    }
+    logger.info({ entryId }, 'ContentController: getEntry end');
+    res
+      .status(200)
+      .json(new ApiResponse(200, entry, 'Entry retrieved successfully'));
+  },
+);
+export const listVersions: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: listVersions start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    logger.debug(
+      { entryId, locale },
+      'ContentController: fetching entry versions',
+    );
+    const versions = await contentService.listEntryVersions(
+      entryId as string,
+      locale,
+    );
+    logger.info({ entryId }, 'ContentController: listVersions end');
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, versions, 'Entry versions listed successfully'),
+      );
+  },
+);
+export const createDraft: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const schemaId = req.schemaId!;
+    logger.info({ schemaId }, 'ContentController: createDraft start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
+    logger.debug({ schemaId, userId }, 'ContentController: creating draft');
+    const entry = await contentService.createDraft(
+      schemaId,
+      req.body as Record<string, unknown>,
+      userId,
+      locale,
+      req.context?.applicationId,
+      userEmail,
+    );
+    logger.info(
+      { schemaId, entryId: entry.id },
+      'ContentController: createDraft end',
+    );
+    res
+      .status(201)
+      .json(new ApiResponse(201, entry, 'Draft created successfully'));
+  },
+);
+export const updateDraft: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: updateDraft start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
+    logger.debug({ entryId, userId }, 'ContentController: updating draft');
+    const entry = await contentService.updateDraft(
+      entryId as string,
+      req.body as Record<string, unknown>,
+      userId,
+      locale,
+      userEmail,
+    );
+    logger.info({ entryId }, 'ContentController: updateDraft end');
+    void webhookDispatcher.dispatch(
+      'content.updated',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, entry, 'Draft updated successfully'));
+  },
+);
+export const updatePartialEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: updatePartialEntry start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
+    logger.debug(
+      { entryId, userId },
+      'ContentController: partially updating entry',
+    );
+    const entry = await contentService.updatePartial(
+      entryId as string,
+      req.body as Record<string, unknown>,
+      userId,
+      locale,
+      userEmail,
+    );
+    logger.info({ entryId }, 'ContentController: updatePartialEntry end');
+    void webhookDispatcher.dispatch(
+      'content.updated',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, entry, 'Entry partially updated successfully'),
+      );
+  },
+);
+export const publishEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: publishEntry start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
+    logger.debug({ entryId, userId }, 'ContentController: publishing entry');
+    const entry = await contentService.publishEntry(
+      entryId as string,
+      userId,
+      locale,
+      userEmail,
+    );
+    logger.info({ entryId }, 'ContentController: publishEntry end');
+    void webhookDispatcher.dispatch(
+      'content.published',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, entry, 'Entry published successfully'));
+  },
+);
+export const unpublishEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: unpublishEntry start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+    const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
+    logger.debug({ entryId, userId }, 'ContentController: unpublishing entry');
+    const entry = await contentService.unpublishEntry(
+      entryId as string,
+      userId,
+      locale,
+      userEmail,
+    );
+    logger.info({ entryId }, 'ContentController: unpublishEntry end');
+    void webhookDispatcher.dispatch(
+      'content.unpublish',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, entry, 'Entry unpublished successfully'));
+  },
+);
+export const revertEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: revertEntry start');
+    const locale =
+      typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;
+    const userId = req.user!.id;
+    const versionNo = parseInt(
+      (req.body as Record<string, unknown>).versionNo as string,
+      10,
+    );
+    if (isNaN(versionNo)) {
+      logger.error('ContentController: invalid version number');
+      throw new ApiError(400, ERROR_MESSAGES.CONTENT.INVALID_VERSION_NO);
+    }
+    logger.debug({ entryId, versionNo }, 'ContentController: reverting entry');
+    const entry = await contentService.revertEntry(
+      entryId as string,
+      versionNo,
+      userId,
+      locale,
+    );
+    logger.info({ entryId }, 'ContentController: revertEntry end');
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          entry,
+          `Reverted to version ${versionNo} successfully`,
+        ),
+      );
+  },
+);
+export const deleteEntry: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    logger.info({ entryId }, 'ContentController: deleteEntry start');
+    logger.debug({ entryId }, 'ContentController: deleting entry');
+    await contentService.deleteEntry(
+      entryId as string,
+      req.context?.applicationId,
+    );
+    logger.info({ entryId }, 'ContentController: deleteEntry end');
+    void webhookDispatcher.dispatch(
+      'content.deleted',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId,
+      },
+      req.context?.applicationId,
+    );
+    res.status(204).end();
+  },
+);

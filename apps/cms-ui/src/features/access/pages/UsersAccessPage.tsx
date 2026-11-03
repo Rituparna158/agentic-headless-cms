@@ -1,0 +1,298 @@
+import { useState } from 'react';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from '@tanstack/react-query';
+import { accessApi } from '../api/access.api';
+import { User, Role } from '../types/access.types';
+import { Button, Typography, DataTable } from '@repo/shared-ui';
+import { Plus, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
+import { InviteUserDialog } from '../components/InviteUserDialog';
+import { useAuthStore } from '../../auth/store/auth.store';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import {
+  USER_SORTABLE_COLUMNS,
+  USER_SEARCHABLE_LABEL,
+  isUserAdmin,
+} from '../constants/access.constants';
+
+export const UsersAccessPage = () => {
+  const currentUser = useAuthStore((state) => state.user);
+  const isSuperAdmin = isUserAdmin(currentUser?.roles);
+  const queryClient = useQueryClient();
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sort, setSort] = useState('createdAt:desc');
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
+
+  const {
+    data: usersResponse,
+    isLoading: usersLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ['users', page, pageSize, sort, debouncedSearch],
+    queryFn: () =>
+      accessApi.getUsers({
+        page,
+        pageSize,
+        sort,
+        search: debouncedSearch,
+      }),
+    placeholderData: keepPreviousData,
+  });
+  const { data: rolesResponse } = useQuery({
+    queryKey: ['roles'],
+    queryFn: () => accessApi.getRoles({ page: 1, pageSize: 100 }),
+  });
+  const users = usersResponse?.data?.data || [];
+  const pagination = usersResponse?.data?.meta?.pagination;
+  const roles = rolesResponse?.data?.data || [];
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => accessApi.deleteUser(id),
+    onSuccess: () => {
+      setDeleteError(null);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err) => {
+      setDeleteError(
+        (err as { message?: string })?.message ||
+          'Failed to delete user. Please try again.',
+      );
+    },
+  });
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, roleId }: { id: string; roleId: string }) =>
+      accessApi.updateUserRole(id, roleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+  const isSelf = (user: User) => user.id === currentUser?.id;
+  const visibleAdminIds = new Set(
+    users
+      .map((user: User & { roleId?: string }) => {
+        const roleId = user.roleId || user.roles?.[0]?.id;
+        const role = roles.find((r: Role) => r.id === roleId);
+        return role?.name && isUserAdmin([role.name]) ? user.id : null;
+      })
+      .filter((id): id is string => Boolean(id)),
+  );
+  const isLastVisibleAdmin =
+    !debouncedSearch &&
+    (pagination?.pageCount ?? 1) <= 1 &&
+    visibleAdminIds.size === 1;
+  const getDeleteBlockReason = (
+    user: User & { roleId?: string },
+  ): string | null => {
+    if (isSelf(user)) return 'You cannot delete your own account';
+    if (isLastVisibleAdmin && visibleAdminIds.has(user.id))
+      return 'Cannot delete the last active administrator';
+    return null;
+  };
+  const handleDelete = (id: string, blockReason: string | null) => {
+    if (blockReason) {
+      setDeleteError(blockReason);
+      return;
+    }
+    if (confirm('Are you sure you want to remove this user?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+  const handleRoleChange = (userId: string, newRoleId: string) => {
+    updateRoleMutation.mutate({ id: userId, roleId: newRoleId });
+  };
+  return (
+    <div className="flex flex-col h-full bg-background animate-in fade-in duration-300">
+      <div className="flex items-center justify-between p-6 border-b border-border/40">
+        <div>
+          <Typography variant="h3" className="font-semibold text-foreground">
+            All Users
+          </Typography>
+          <Typography variant="body" className="text-muted-foreground mt-1">
+            Manage your team members and their roles.
+          </Typography>
+        </div>
+        <Button onClick={() => setIsInviteDialogOpen(true)} className="gap-2">
+          <Plus size={16} />
+          Invite User
+        </Button>
+      </div>
+      <div className="flex-1 overflow-auto p-6">
+        {usersLoading ? (
+          <div className="p-8 text-center text-muted-foreground">
+            Loading users...
+          </div>
+        ) : (
+          <>
+            {deleteError && (
+              <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                <span className="flex items-center gap-2">
+                  <AlertCircle size={16} className="shrink-0" />
+                  {deleteError}
+                </span>
+                <button
+                  onClick={() => setDeleteError(null)}
+                  className="shrink-0 hover:opacity-70 transition-opacity"
+                  title="Dismiss"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+            {isFetching && (
+              <div className="flex items-center gap-2 justify-end pb-3 text-xs text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" />
+                Updating...
+              </div>
+            )}
+            <DataTable
+              className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden"
+              columns={[
+                { key: 'email', label: 'USER', sortable: true },
+                { key: 'role', label: 'ROLE', sortable: false },
+                { key: 'status', label: 'STATUS', sortable: true },
+                { key: 'createdAt', label: 'JOINED', sortable: true },
+                { key: 'actions', label: 'ACTIONS', sortable: false },
+              ]}
+              rows={users.map((user: User & { roleId?: string }) => {
+                const currentRoleId = user.roleId || user.roles?.[0]?.id;
+                const userRole = roles.find(
+                  (r: Role) => r.id === currentRoleId,
+                );
+                const canEditRole = isSuperAdmin && user.id !== currentUser?.id;
+                return {
+                  id: user.id,
+                  email: (
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                        {user.firstName
+                          ? user.firstName.charAt(0).toUpperCase()
+                          : user.email.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div className="text-muted-foreground text-xs">
+                          {user.email}
+                        </div>
+                      </div>
+                    </div>
+                  ),
+                  role: canEditRole ? (
+                    <select
+                      className="bg-transparent border border-transparent hover:border-input focus:border-input rounded px-2 py-1 -ml-2 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring text-sm"
+                      value={currentRoleId || ''}
+                      onChange={(e) =>
+                        handleRoleChange(user.id, e.target.value)
+                      }
+                      disabled={updateRoleMutation.isPending}
+                    >
+                      <option value="" disabled>
+                        No Role
+                      </option>
+                      {roles.map((role: Role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="font-medium text-foreground text-sm">
+                      {userRole?.name || 'No Role'}
+                    </span>
+                  ),
+                  status: (
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                        user.status === 'active'
+                          ? 'bg-green-500/10 text-green-500'
+                          : 'bg-yellow-500/10 text-yellow-500'
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          user.status === 'active'
+                            ? 'bg-green-500'
+                            : 'bg-yellow-500'
+                        }`}
+                      />
+                      {user.status.charAt(0).toUpperCase() +
+                        user.status.slice(1)}
+                    </span>
+                  ),
+                  createdAt: (
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </span>
+                  ),
+                  actions: (() => {
+                    const blockReason = getDeleteBlockReason(user);
+                    const deletable = !blockReason;
+                    return (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => handleDelete(user.id, blockReason)}
+                          disabled={!deletable}
+                          className={`transition-colors p-2 rounded-md ${
+                            deletable
+                              ? 'text-muted-foreground hover:text-destructive hover:bg-muted cursor-pointer'
+                              : 'text-muted-foreground/40 cursor-not-allowed'
+                          }`}
+                          title={blockReason ? blockReason : 'Remove user'}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    );
+                  })(),
+                };
+              })}
+              enablePagination
+              manualPagination
+              page={page}
+              pageCount={pagination?.pageCount ?? 1}
+              totalCount={pagination?.total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+              enableSorting
+              manualSorting
+              defaultSortKey={sort.split(':')[0]}
+              defaultSortDirection={sort.split(':')[1] as 'asc' | 'desc'}
+              onSortChange={(key, direction) => {
+                if (
+                  USER_SORTABLE_COLUMNS.includes(
+                    key as (typeof USER_SORTABLE_COLUMNS)[number],
+                  )
+                ) {
+                  setSort(`${String(key)}:${direction}`);
+                  setPage(1);
+                }
+              }}
+              enableFiltering
+              manualFiltering
+              filterPlaceholder={USER_SEARCHABLE_LABEL}
+              onSearchChange={(value) => {
+                setSearch(value);
+                setPage(1);
+              }}
+            />
+          </>
+        )}
+      </div>
+      {isInviteDialogOpen && (
+        <InviteUserDialog onClose={() => setIsInviteDialogOpen(false)} />
+      )}
+    </div>
+  );
+};

@@ -1,0 +1,56 @@
+---
+title: Roles & Permissions
+sidebar_label: Roles & Permissions
+description: Configure role-based access control (RBAC), custom roles, and fine-grained permissions.
+sidebar_position: 6
+---
+
+Role-Based Access Control (**RBAC**) allows administrators to define exactly what actions team members and automated systems can perform across your CMS workspace. Located at **Roles & Access** (`/roles-access`) in the admin dashboard, you can assign preconfigured roles or create custom roles with field-level permissions.
+
+---
+
+## Standard Roles
+
+Every workspace includes default system roles suited for common team workflows:
+
+| Role | Description | Default Privileges |
+| :--- | :--- | :--- |
+| **Administrator** | Full system control | Unrestricted access to schemas, content, users, API tokens, webhooks, and audit logs. |
+| **Editor** | Content lead | Can create, edit, delete, and publish content across all schemas; manage media assets. |
+| **Author** | Content creator | Can create and edit draft content; cannot publish or delete schemas. |
+| **Viewer** | Read-only consumer | Can view published content and inspect schemas without edit capabilities. |
+
+---
+
+## Granular Permission Model
+
+Permissions in Agentic CMS are evaluated against an `[action]:[resource]` structure with an optional `schemaId` target:
+
+- **Actions:** `read`, `create`, `update`, `delete`, `publish`, `manage`, or `*` (wildcard).
+- **Target Schema:** A permission can apply globally across all content types (`schemaId: null`) or be restricted to a specific schema (e.g., only the `blog_posts` collection).
+- **Effect:** Explicit `allow` or `deny` rules.
+
+---
+
+## Creating and Managing Custom Roles
+
+To create a tailored role for your organization:
+
+1. Navigate to **Roles & Access** &rarr; **Roles**.
+2. Click **Create Role** and enter a name (e.g., `Regional Reviewer`) and description.
+3. Configure the **Require MFA** toggle if users assigned to this role must have Two-Factor Authentication active to log in.
+4. Set permissions for each content type:
+   - Check the actions permitted for this role (`Read`, `Create`, `Update`, `Delete`, `Publish`).
+5. Save the role. You can now assign users to this role from the **Users** tab.
+
+---
+
+## Enforcement Layers
+
+Access control is enforced at both the presentation layer and the API gateway:
+
+- **Admin UI Guards:** Navigation links (such as `/audit-log`, `/webhooks`, and schema builder routes) and action buttons (e.g., "Publish" or "Delete") are hidden from users lacking the required permissions.
+- **Backend API Middlewares:** Every REST endpoint and GraphQL mutation validates the incoming user or token session before execution:
+
+If an unauthorized request is made, the API returns a structured `403 Forbidden` response.
+

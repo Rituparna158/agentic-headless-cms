@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agentic-cms.componentName" (dict "context" . "component" "frontend") }}
+  labels:
+    {{- include "agentic-cms.labels" . | nindent 4 }}
+    {{- include "agentic-cms.selectorLabels" (dict "context" . "component" "frontend") | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.frontend.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

@@ -1,0 +1,130 @@
+/* ─── Clean Feature Grid Section (Matches Theme Navbar) ────────────────── */
+.section {
+  position: relative;
+  width: 100%;
+  padding: 5.5rem 1.5rem;
+  background: var(--background);
+  color: var(--foreground);
+  border-top: 1px solid var(--border);
+}
+
+.inner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 3rem auto;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ff3344;
+  margin-bottom: 0.85rem;
+  padding: 0.35rem 0.95rem;
+  border-radius: 9999px;
+  background: rgba(255, 51, 68, 0.08);
+  border: 1px solid rgba(255, 51, 68, 0.25);
+}
+
+.title {
+  font-size: clamp(2rem, 3.8vw, 2.9rem);
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+  margin: 0 0 0.85rem 0;
+  line-height: 1.15;
+}
+
+.gradientWord {
+  color: #ff3344;
+}
+
+.subtitle {
+  font-size: 1.08rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ─── 3x2 Grid ─────────────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Feature Card ─────────────────────────────────────────────────────── */
+.card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 2rem 1.75rem;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 51, 68, 0.4);
+  box-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(255, 51, 68, 0.1);
+}
+
+.iconBox {
+  width: 46px;
+  height: 46px;
+  border-radius: 0.75rem;
+  background: rgba(255, 51, 68, 0.1);
+  border: 1px solid rgba(255, 51, 68, 0.25);
+  color: #ff3344;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.card:hover .iconBox {
+  background: #ff3344;
+  border-color: #e11d48;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(255, 51, 68, 0.35);
+}
+
+.cardTitle {
+  font-size: 1.15rem;
+  font-weight: 750;
+  color: var(--foreground);
+  margin: 0 0 0.65rem 0;
+  line-height: 1.3;
+}
+
+.cardDesc {
+  font-size: 0.92rem;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  margin: 0;
+}

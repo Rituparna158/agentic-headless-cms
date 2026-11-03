@@ -1,0 +1,62 @@
+.section {
+  width: 100%;
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ctaCard {
+  position: relative;
+  width: 100%;
+  max-width: 920px;
+  padding: 3rem 2rem;
+  border-radius: 1.25rem;
+  text-align: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.05) 0%, rgba(255, 238, 240, 0.75) 50%, rgba(255, 248, 249, 0.9) 100%);
+  border: 1px solid rgba(255, 0, 0, 0.16);
+  box-shadow: 0 10px 30px rgba(255, 0, 0, 0.04);
+}
+
+[data-theme='dark'] .ctaCard {
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.1) 0%, rgba(22, 10, 12, 0.8) 100%);
+  border: 1px solid rgba(255, 0, 0, 0.24);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+}
+
+.innerContent {
+  position: relative;
+  z-index: 10;
+}
+
+.title {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+  color: var(--foreground);
+}
+
+.titleHighlight {
+  color: #ff0000;
+}
+
+.description {
+  font-size: 1.05rem;
+  color: var(--muted-foreground);
+  max-width: 600px;
+  margin: 0 auto 1.75rem auto;
+  line-height: 1.55;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+

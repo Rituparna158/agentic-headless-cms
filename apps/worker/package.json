@@ -1,0 +1,26 @@
+{
+  "name": "worker",
+  "version": "0.0.0",
+  "description": "Background Queue Worker application",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "retry-failed": "tsx --env-file=../../.env src/scripts/retry-failed.ts",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "bullmq": "^5.80.5",
+    "@repo/config": "workspace:*",
+    "@repo/logger": "workspace:*",
+    "@repo/storage": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.23.0",
+    "typescript": "5.9.2"
+  }
+}

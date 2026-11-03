@@ -1,0 +1,7 @@
+{
+  "extends": "./packages/typescript-config/base.json",
+  "compilerOptions": {
+    "types": ["vitest/globals"]
+  },
+  "include": ["vitest.config.ts"]
+}
