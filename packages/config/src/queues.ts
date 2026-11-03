@@ -5,9 +5,20 @@ import { logger } from '@repo/logger';
 
 export const QUEUE_NAMES = {
   MEDIA_PROCESSING: 'media-processing',
+  WEBHOOK_DISPATCH: 'webhook-dispatch',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
+
+export interface WebhookJobData {
+  webhookId: string;
+  applicationId?: string;
+  url: string;
+  secretKey: string;
+  eventType: string;
+  payload: Record<string, unknown>;
+  deliveryId?: string;
+}
 
 const queues = new Map<QueueName, Queue>();
 const workers = new Map<QueueName, Worker>();

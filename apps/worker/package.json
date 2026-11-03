@@ -9,18 +9,23 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "retry-failed": "tsx --env-file=../../.env src/scripts/retry-failed.ts",
-    "check-types": "tsc --noEmit"
+    "benchmark": "tsx --env-file=../../.env src/scripts/benchmark-webhooks.ts",
+    "send-live": "tsx --env-file=../../.env src/scripts/send-test-webhook.ts",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "bullmq": "^5.80.5",
     "@repo/config": "workspace:*",
     "@repo/logger": "workspace:*",
-    "@repo/storage": "workspace:*"
+    "@repo/repository": "workspace:*",
+    "@repo/storage": "workspace:*",
+    "bullmq": "^5.80.5"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.0.0",
     "tsx": "^4.23.0",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vitest": "^4.1.10"
   }
 }

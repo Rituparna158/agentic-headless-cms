@@ -1,4 +1,5 @@
 import { setupMediaWorker } from './media.worker.js';
+import { setupWebhookWorker } from './webhook.worker.js';
 import {
   assertMinimumRedisVersion,
   closeRedisConnection,
@@ -17,9 +18,12 @@ try {
   process.exit(1);
 }
 
-// Start the worker
-const _worker = setupMediaWorker();
+// Start workers
+const _mediaWorker = setupMediaWorker();
 logger.info('Media Worker registered and listening for jobs.');
+
+const _webhookWorker = setupWebhookWorker();
+logger.info('Webhook Worker registered and listening for jobs.');
 
 let shuttingDown = false;
 
