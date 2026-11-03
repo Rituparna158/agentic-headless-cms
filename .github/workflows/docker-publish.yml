@@ -59,6 +59,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ steps.repo_owner.outputs.OWNER }}/agentic-headless-cms/${{ matrix.service }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Agentic Headless CMS ${{ matrix.service }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
