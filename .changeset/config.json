@@ -10,7 +10,7 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [],
+  "ignore": ["@repo/shared-ui"],
   "privatePackages": {
     "version": true,
     "tag": true
