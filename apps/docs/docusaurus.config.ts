@@ -4,11 +4,12 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Agentic Headless CMS',
-  tagline: 'Enterprise-grade, API-first Headless CMS built for modern web architectures and autonomous AI agents.',
+  tagline:
+    'Enterprise-grade, API-first Headless CMS built for modern web architectures and autonomous AI agents.',
   favicon: 'img/logo.png',
 
-  url: 'https://mindfiredigital.github.io',
-  baseUrl: '/',
+  url: process.env.DOCS_URL || 'https://mindfiredigital.github.io',
+  baseUrl: process.env.DOCS_BASE_URL || process.env.BASE_URL || '/',
 
   organizationName: 'mindfiredigital',
   projectName: 'agentic-headless-cms',
@@ -106,4 +107,3 @@ const config: Config = {
 };
 
 export default config;
-
