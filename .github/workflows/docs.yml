@@ -1,0 +1,80 @@
+name: Release Docs Workflow
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: 'Build Docusaurus Documentation'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Docusaurus documentation
+        env:
+          DOCS_URL: 'https://mindfiredigital.github.io'
+          DOCS_BASE_URL: '/agentic-headless-cms/'
+        run: pnpm --filter docs run build
+
+      - name: Fetch origin
+        run: git fetch origin
+
+      - name: Set Git user name and email
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Copy Docusaurus build artifacts to gh-pages branch
+        run: |
+          mkdir -p /tmp/docs-build
+          shopt -s dotglob
+          cp -r apps/docs/build/* /tmp/docs-build/
+          shopt -u dotglob
+          git stash push || true
+          git checkout gh-pages || git checkout -b gh-pages
+          rm -rf *
+          cp -r /tmp/docs-build/* .
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add . -f
+            git commit -m "chore(docs): copy docusaurus build artifacts to gh-pages branch [skip ci]" --no-verify
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Push to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push origin gh-pages --force || echo "No changes to push"
+
+      - name: Switch back to main branch
+        if: always()
+        run: |
+          git checkout main || true
+          git stash pop || true
