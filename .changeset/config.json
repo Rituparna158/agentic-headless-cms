@@ -12,7 +12,7 @@
   "updateInternalDependencies": "patch",
   "ignore": ["@repo/shared-ui"],
   "privatePackages": {
-    "version": true,
-    "tag": true
+    "version": false,
+    "tag": false
   }
 }
