@@ -13,8 +13,8 @@ import {
   Home,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@repo/shared-ui';
-import { Input } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
+import { Input } from '@mindfiredigital/shared-ui';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import type { FolderNodeProps } from '@/types/component.types';

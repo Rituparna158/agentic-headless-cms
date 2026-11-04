@@ -5,7 +5,12 @@ import Link from 'next/link';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { Button, Modal, Dropdown, DropdownItem } from '@repo/shared-ui';
+import {
+  Button,
+  Modal,
+  Dropdown,
+  DropdownItem,
+} from '@mindfiredigital/shared-ui';
 import { deleteContentEntry } from '@/lib/api/content';
 import { useHasPermission } from '@/hooks/use-permissions';
 

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/validation",
+  "name": "@mindfiredigital/validation",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -17,12 +17,12 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@repo/constants": "workspace:*",
-    "@repo/types": "workspace:*",
+    "@mindfiredigital/constants": "workspace:*",
+    "@mindfiredigital/types": "workspace:*",
     "zod": "^4.4.3"
   }
 }

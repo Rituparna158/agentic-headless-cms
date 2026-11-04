@@ -3,7 +3,7 @@ import {
   type HttpTransport,
   type UploadMediaOptions,
 } from '@mindfiredigital/sdk-core';
-import type { MediaAsset } from '@repo/types';
+import type { MediaAsset } from '@mindfiredigital/types';
 import { readFileSync } from 'fs';
 import { basename } from 'path';
 

@@ -1,1 +1,1 @@
-export * from '@repo/shared-ui';
+export * from '@mindfiredigital/shared-ui';

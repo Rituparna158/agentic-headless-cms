@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Badge, Button, DataTable } from '@repo/shared-ui';
+import { Badge, Button, DataTable } from '@mindfiredigital/shared-ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@repo/shared-ui';
-import { Tabs } from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
+import { Tabs } from '@mindfiredigital/shared-ui';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';

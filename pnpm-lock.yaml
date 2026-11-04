@@ -24,7 +24,7 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.2.0
         version: 21.2.0
-      '@repo/eslint-config':
+      '@mindfiredigital/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
       '@vitest/coverage-v8':
@@ -69,48 +69,48 @@ importers:
       '@inquirer/prompts':
         specifier: ^8.5.2
         version: 8.5.2(@types/node@24.13.3)
+      '@mindfiredigital/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@mindfiredigital/constants':
+        specifier: workspace:*
+        version: link:../../packages/constants
+      '@mindfiredigital/context':
+        specifier: workspace:*
+        version: link:../../packages/context
+      '@mindfiredigital/events':
+        specifier: workspace:*
+        version: link:../../packages/events
+      '@mindfiredigital/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@mindfiredigital/middlewares':
+        specifier: workspace:*
+        version: link:../../packages/middlewares
+      '@mindfiredigital/repository':
+        specifier: workspace:*
+        version: link:../../packages/repository
+      '@mindfiredigital/shared-db':
+        specifier: workspace:*
+        version: link:../../packages/shared-db
+      '@mindfiredigital/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
+      '@mindfiredigital/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@mindfiredigital/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      '@mindfiredigital/validation':
+        specifier: workspace:*
+        version: link:../../packages/validation
       '@opentelemetry/auto-instrumentations-node':
         specifier: ^0.78.0
         version: 0.78.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))
       '@opentelemetry/sdk-node':
         specifier: ^0.220.0
         version: 0.220.0(@opentelemetry/api@1.9.1)
-      '@repo/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@repo/constants':
-        specifier: workspace:*
-        version: link:../../packages/constants
-      '@repo/context':
-        specifier: workspace:*
-        version: link:../../packages/context
-      '@repo/events':
-        specifier: workspace:*
-        version: link:../../packages/events
-      '@repo/logger':
-        specifier: workspace:*
-        version: link:../../packages/logger
-      '@repo/middlewares':
-        specifier: workspace:*
-        version: link:../../packages/middlewares
-      '@repo/repository':
-        specifier: workspace:*
-        version: link:../../packages/repository
-      '@repo/shared-db':
-        specifier: workspace:*
-        version: link:../../packages/shared-db
-      '@repo/storage':
-        specifier: workspace:*
-        version: link:../../packages/storage
-      '@repo/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@repo/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-      '@repo/validation':
-        specifier: workspace:*
-        version: link:../../packages/validation
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -205,7 +205,7 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/bcrypt':
@@ -301,19 +301,19 @@ importers:
       '@hookform/resolvers':
         specifier: ^6.0.0
         version: 6.0.0(@sinclair/typebox@0.27.12)(@standard-schema/spec@1.1.0)(ajv-formats@3.0.1(ajv@8.20.0))(ajv@8.20.0)(joi@17.13.9)(react-hook-form@7.81.0(react@19.2.0))(zod@4.4.3)
+      '@mindfiredigital/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@mindfiredigital/page-builder-react':
         specifier: ^1.2.19
         version: 1.2.19(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@repo/logger':
-        specifier: workspace:*
-        version: link:../../packages/logger
-      '@repo/shared-ui':
+      '@mindfiredigital/shared-ui':
         specifier: workspace:*
         version: link:../../packages/shared-ui
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:^
         version: link:../../packages/types
-      '@repo/validation':
+      '@mindfiredigital/validation':
         specifier: workspace:^
         version: link:../../packages/validation
       '@tanstack/react-query':
@@ -383,15 +383,15 @@ importers:
       '@axe-core/react':
         specifier: ^4.14.0
         version: 4.14.0
+      '@mindfiredigital/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@mindfiredigital/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       '@playwright/test':
         specifier: ^1.62.0
         version: 1.62.0
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../packages/eslint-config
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
       '@size-limit/preset-app':
         specifier: ^14.2.0
         version: 14.2.0(size-limit@14.2.0)
@@ -540,22 +540,22 @@ importers:
       '@lexical/utils':
         specifier: ^0.47.0
         version: 0.47.0(typescript@5.9.2)
+      '@mindfiredigital/constants':
+        specifier: workspace:*
+        version: link:../../packages/constants
       '@mindfiredigital/ignix-ui':
         specifier: ^1.4.3
         version: 1.4.3(framer-motion@12.43.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@repo/constants':
-        specifier: workspace:*
-        version: link:../../packages/constants
-      '@repo/shared-ui':
+      '@mindfiredigital/shared-ui':
         specifier: workspace:*
         version: link:../../packages/shared-ui
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@repo/utils':
+      '@mindfiredigital/utils':
         specifier: workspace:*
         version: link:../../packages/utils
-      '@repo/validation':
+      '@mindfiredigital/validation':
         specifier: workspace:*
         version: link:../../packages/validation
       '@tanstack/react-query':
@@ -601,15 +601,15 @@ importers:
         specifier: ^5.0.14
         version: 5.0.14(@types/react@19.2.2)(react@19.2.0)(use-sync-external-store@1.7.0(react@19.2.0))
     devDependencies:
+      '@mindfiredigital/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@mindfiredigital/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       '@playwright/test':
         specifier: ^1.62.0
         version: 1.62.0
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../../packages/eslint-config
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
       '@tailwindcss/postcss':
         specifier: ^4.3.2
         version: 4.3.2
@@ -670,20 +670,20 @@ importers:
 
   apps/worker:
     dependencies:
-      '@repo/config':
+      '@mindfiredigital/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@repo/logger':
+      '@mindfiredigital/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@repo/storage':
+      '@mindfiredigital/storage':
         specifier: workspace:*
         version: link:../../packages/storage
       bullmq:
         specifier: ^5.80.5
         version: 5.80.5
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
       '@types/node':
@@ -698,13 +698,13 @@ importers:
 
   packages/config:
     dependencies:
-      '@repo/logger':
+      '@mindfiredigital/logger':
         specifier: workspace:*
         version: link:../logger
-      '@repo/shared-db':
+      '@mindfiredigital/shared-db':
         specifier: workspace:*
         version: link:../shared-db
-      '@repo/storage':
+      '@mindfiredigital/storage':
         specifier: workspace:*
         version: link:../storage
       bullmq:
@@ -717,7 +717,7 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -726,7 +726,7 @@ importers:
 
   packages/constants:
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -735,7 +735,7 @@ importers:
 
   packages/context:
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
@@ -783,23 +783,23 @@ importers:
 
   packages/events:
     dependencies:
-      '@repo/config':
+      '@mindfiredigital/config':
         specifier: workspace:*
         version: link:../config
-      '@repo/constants':
+      '@mindfiredigital/constants':
         specifier: workspace:*
         version: link:../constants
-      '@repo/repository':
+      '@mindfiredigital/repository':
         specifier: workspace:*
         version: link:../repository
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
       eventemitter2:
         specifier: ^6.4.9
         version: 6.4.9
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -812,7 +812,7 @@ importers:
         specifier: ^9.0.0
         version: 9.14.0
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/pino':
@@ -827,28 +827,28 @@ importers:
 
   packages/middlewares:
     dependencies:
-      '@repo/config':
+      '@mindfiredigital/config':
         specifier: workspace:*
         version: link:../config
-      '@repo/constants':
+      '@mindfiredigital/constants':
         specifier: workspace:*
         version: link:../constants
-      '@repo/context':
+      '@mindfiredigital/context':
         specifier: workspace:*
         version: link:../context
-      '@repo/logger':
+      '@mindfiredigital/logger':
         specifier: workspace:*
         version: link:../logger
-      '@repo/shared-db':
+      '@mindfiredigital/shared-db':
         specifier: workspace:*
         version: link:../shared-db
-      '@repo/storage':
+      '@mindfiredigital/storage':
         specifier: workspace:*
         version: link:../storage
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
-      '@repo/utils':
+      '@mindfiredigital/utils':
         specifier: workspace:*
         version: link:../utils
       drizzle-orm:
@@ -867,7 +867,7 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/express':
@@ -885,32 +885,32 @@ importers:
 
   packages/repository:
     dependencies:
-      '@repo/config':
+      '@mindfiredigital/config':
         specifier: workspace:*
         version: link:../config
-      '@repo/constants':
+      '@mindfiredigital/constants':
         specifier: workspace:*
         version: link:../constants
-      '@repo/context':
+      '@mindfiredigital/context':
         specifier: workspace:*
         version: link:../context
-      '@repo/logger':
+      '@mindfiredigital/logger':
         specifier: workspace:*
         version: link:../logger
-      '@repo/shared-db':
+      '@mindfiredigital/shared-db':
         specifier: workspace:*
         version: link:../shared-db
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
-      '@repo/utils':
+      '@mindfiredigital/utils':
         specifier: workspace:*
         version: link:../utils
       drizzle-orm:
         specifier: ^0.36.4
         version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.3.0)(pg@8.22.0)(react@19.2.0)
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:
@@ -923,10 +923,10 @@ importers:
         specifier: ^12.1.0
         version: 12.1.0
     devDependencies:
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
@@ -944,10 +944,10 @@ importers:
 
   packages/sdk-core:
     devDependencies:
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
@@ -969,13 +969,13 @@ importers:
         specifier: workspace:*
         version: link:../sdk-core
     devDependencies:
-      '@repo/eslint-config':
+      '@mindfiredigital/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
@@ -1000,13 +1000,13 @@ importers:
         specifier: workspace:*
         version: link:../sdk-core
     devDependencies:
-      '@repo/eslint-config':
+      '@mindfiredigital/eslint-config':
         specifier: workspace:*
         version: link:../eslint-config
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
@@ -1024,16 +1024,16 @@ importers:
 
   packages/sdk-react:
     devDependencies:
+      '@mindfiredigital/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@mindfiredigital/sdk-core':
         specifier: workspace:*
         version: link:../sdk-core
-      '@repo/eslint-config':
-        specifier: workspace:*
-        version: link:../eslint-config
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@tanstack/react-query':
@@ -1069,10 +1069,10 @@ importers:
 
   packages/shared-db:
     dependencies:
-      '@repo/context':
+      '@mindfiredigital/context':
         specifier: workspace:*
         version: link:../context
-      '@repo/logger':
+      '@mindfiredigital/logger':
         specifier: workspace:^
         version: link:../logger
       bcrypt:
@@ -1085,10 +1085,10 @@ importers:
         specifier: ^8.13.1
         version: 8.22.0
     devDependencies:
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/bcrypt':
@@ -1182,14 +1182,14 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1087.0
         version: 3.1087.0
-      '@repo/constants':
+      '@mindfiredigital/constants':
         specifier: workspace:*
         version: link:../constants
       sharp:
         specifier: ^0.35.3
         version: 0.35.3(@types/node@24.13.3)
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
@@ -1201,14 +1201,14 @@ importers:
 
   packages/types:
     dependencies:
-      '@repo/constants':
+      '@mindfiredigital/constants':
         specifier: workspace:*
         version: link:../constants
       drizzle-orm:
         specifier: ^0.36.4
         version: 0.36.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(@types/react@19.3.0)(pg@8.22.0)(react@19.2.0)
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/node':
@@ -1222,17 +1222,17 @@ importers:
 
   packages/utils:
     dependencies:
-      '@repo/shared-db':
+      '@mindfiredigital/shared-db':
         specifier: workspace:*
         version: link:../shared-db
-      '@repo/storage':
+      '@mindfiredigital/storage':
         specifier: workspace:*
         version: link:../storage
       express:
         specifier: ^5.2.1
         version: 5.2.1
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       '@types/express':
@@ -1244,17 +1244,17 @@ importers:
 
   packages/validation:
     dependencies:
-      '@repo/constants':
+      '@mindfiredigital/constants':
         specifier: workspace:*
         version: link:../constants
-      '@repo/types':
+      '@mindfiredigital/types':
         specifier: workspace:*
         version: link:../types
       zod:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@repo/typescript-config':
+      '@mindfiredigital/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:

@@ -6,10 +6,10 @@ import { ImageIcon, Trash2Icon, PencilIcon } from 'lucide-react';
 
 import { getMediaAsset, mediaFileUrl } from '@/lib/api/media';
 import { cn } from '@/lib/utils';
-import { Button, Modal } from '@repo/shared-ui';
+import { Button, Modal } from '@mindfiredigital/shared-ui';
 import Image from 'next/image';
 import type { MediaPickerFieldProps } from '@/types/component.types';
-import type { MediaAsset } from '@repo/types';
+import type { MediaAsset } from '@mindfiredigital/types';
 import { MediaLibrary } from './media-library';
 
 //Media Picker Field

@@ -2,7 +2,7 @@ import type {
   ContentEntryRecord,
   ListContentEntriesOptions,
   ListContentEntriesResult,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 import { cmsServerFetch, type NextFetchOptions } from '../fetch.js';
 import { contentListTags, contentEntryTags } from '../cache.js';
 

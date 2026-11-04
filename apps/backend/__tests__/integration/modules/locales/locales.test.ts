@@ -13,8 +13,8 @@ vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
 }));
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
-import { env } from '@repo/config';
-import { ERROR_MESSAGES } from '@repo/constants';
+import { env } from '@mindfiredigital/config';
+import { ERROR_MESSAGES } from '@mindfiredigital/constants';
 import { LocalesService } from '../../../../src/modules/locales/locales.service.js';
 vi.mock('../../../../src/modules/locales/locales.service.js', () => {
   const LocalesService = vi.fn();

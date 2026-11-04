@@ -5,7 +5,7 @@ import type {
   TokenRecord,
   PaginatedResult,
   BaseQueryOptions,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 export class AdminModule {
   constructor(private transport: HttpTransport) {}

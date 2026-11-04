@@ -4,7 +4,7 @@ import type {
   UpdateSchemaInput,
   BaseQueryOptions,
   PaginatedResult,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 import { API_PATHS } from '@/lib/constants/api-paths';
 import { apiFetch, buildQueryString } from '@/lib/api-client';
 

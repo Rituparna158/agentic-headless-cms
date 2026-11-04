@@ -1,6 +1,6 @@
 import { SQL, asc, desc, ilike, or } from 'drizzle-orm';
 import type { AnyColumn } from 'drizzle-orm';
-import type { BaseQueryOptions } from '@repo/types';
+import type { BaseQueryOptions } from '@mindfiredigital/types';
 import type { PaginationOptions } from './pagination.types.js';
 
 /**

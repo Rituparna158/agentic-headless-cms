@@ -1,13 +1,13 @@
 import type { Request, Response, RequestHandler } from 'express';
-import { ERROR_MESSAGES } from '@repo/constants';
-import { ApiError, ApiResponse, asyncHandler } from '@repo/utils';
-import { logger } from '@repo/logger';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES } from '@repo/constants';
+import { ERROR_MESSAGES } from '@mindfiredigital/constants';
+import { ApiError, ApiResponse, asyncHandler } from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
+import { eventBus } from '@mindfiredigital/events';
+import { EVENT_NAMES } from '@mindfiredigital/constants';
 import { MediaService } from './media.service.js';
-import { parseResizeQuery, extractStorageKey } from '@repo/storage';
-import { parsePositiveIntParam } from '@repo/utils';
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@repo/constants';
+import { parseResizeQuery, extractStorageKey } from '@mindfiredigital/storage';
+import { parsePositiveIntParam } from '@mindfiredigital/utils';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@mindfiredigital/constants';
 import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
 const mediaService = new MediaService();
 export const uploadMedia: RequestHandler = asyncHandler(

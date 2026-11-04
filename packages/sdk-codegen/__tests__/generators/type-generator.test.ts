@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { SchemaRecord } from '@repo/types';
+import type { SchemaRecord } from '@mindfiredigital/types';
 import {
   generateTypes,
   toPascalCase,

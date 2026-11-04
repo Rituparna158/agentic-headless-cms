@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 import { cmsServerFetch } from '../fetch.js';
 import { contentListTags, entryTag } from '../cache.js';
-import type { ContentEntryRecord } from '@repo/types';
+import type { ContentEntryRecord } from '@mindfiredigital/types';
 import type { ActionState } from '../types.js';
 import { parsePayload, extractEntryId } from '../utils/actions.js';
 

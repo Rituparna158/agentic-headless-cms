@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
-import { loginSchema } from '@repo/validation';
+import { loginSchema } from '@mindfiredigital/validation';
 
 import {
   Button,
@@ -10,7 +10,7 @@ import {
   Form,
   FormField,
   Typography,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 
 import { useLoginMutation } from '../hooks/useAuthMutations';
 import { authApi } from '../api/auth.api';

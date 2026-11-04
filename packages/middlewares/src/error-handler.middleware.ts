@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { MulterError } from 'multer';
-import { DatabaseError } from '@repo/shared-db';
-import { env } from '@repo/config';
-import { StorageError } from '@repo/storage';
-import { logger } from '@repo/logger';
+import { DatabaseError } from '@mindfiredigital/shared-db';
+import { env } from '@mindfiredigital/config';
+import { StorageError } from '@mindfiredigital/storage';
+import { logger } from '@mindfiredigital/logger';
 import {
   mapDatabaseErrorToHttpError,
   mapStorageErrorToHttpError,
@@ -12,7 +12,7 @@ import {
   HttpError,
   InternalServerError,
   ApiError,
-} from '@repo/utils';
+} from '@mindfiredigital/utils';
 
 export interface ErrorResponseBody {
   error: {

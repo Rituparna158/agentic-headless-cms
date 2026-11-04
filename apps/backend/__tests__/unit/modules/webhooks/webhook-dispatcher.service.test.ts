@@ -3,10 +3,10 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { WebhookDispatcherService } from '../../../../src/modules/webhooks/webhook-dispatcher.service.js';
-import { WebhooksRepository } from '@repo/repository';
+import { WebhooksRepository } from '@mindfiredigital/repository';
 import crypto from 'node:crypto';
 
-vi.mock('@repo/repository');
+vi.mock('@mindfiredigital/repository');
 
 describe('WebhookDispatcherService', () => {
   let dispatcher: WebhookDispatcherService;

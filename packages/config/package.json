@@ -1,5 +1,5 @@
 {
-  "name": "@repo/config",
+  "name": "@mindfiredigital/config",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -17,15 +17,15 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "typescript": "5.9.2"
   },
   "dependencies": {
     "zod": "^4.4.3",
     "ioredis": "^5.11.1",
     "bullmq": "^5.80.5",
-    "@repo/shared-db": "workspace:*",
-    "@repo/logger": "workspace:*",
-    "@repo/storage": "workspace:*"
+    "@mindfiredigital/shared-db": "workspace:*",
+    "@mindfiredigital/logger": "workspace:*",
+    "@mindfiredigital/storage": "workspace:*"
   }
 }

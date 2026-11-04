@@ -1,6 +1,6 @@
 import type { HttpTransport } from '../transport/http.js';
 import type { ApiResponse, LoginResult } from '../types/index.js';
-import type { LoginInput, AuthenticatedUser } from '@repo/types';
+import type { LoginInput, AuthenticatedUser } from '@mindfiredigital/types';
 
 export class AuthClient {
   private apiToken: string | undefined;

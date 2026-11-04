@@ -1,6 +1,6 @@
 import type { GraphQLFormattedError } from 'graphql';
 import { unwrapResolverError } from '@apollo/server/errors';
-import { HttpError } from '@repo/utils';
+import { HttpError } from '@mindfiredigital/utils';
 
 // Format GraphQL error codes
 export function formatGraphQLError(

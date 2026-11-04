@@ -35,8 +35,8 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/types": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/types": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "@types/node": "^24.0.0",
     "tsup": "^8.3.5",
     "typescript": "5.9.2",

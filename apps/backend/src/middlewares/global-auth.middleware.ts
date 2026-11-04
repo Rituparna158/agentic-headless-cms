@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { getDatabaseAdapter } from '@repo/config';
-import { applications } from '@repo/shared-db';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { applications } from '@mindfiredigital/shared-db';
 import { eq } from 'drizzle-orm';
-import { logger } from '@repo/logger';
-import { HTTP_STATUS } from '@repo/constants';
+import { logger } from '@mindfiredigital/logger';
+import { HTTP_STATUS } from '@mindfiredigital/constants';
 import crypto from 'crypto';
 export const globalAuthMiddleware = async (
   req: Request & { context?: { applicationId?: string } },

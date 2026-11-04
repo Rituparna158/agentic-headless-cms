@@ -9,7 +9,7 @@ import {
   Dropdown,
   DropdownItem,
   DatePicker,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { LexicalRichTextField } from './lexical-rich-text-field';
 import { MediaPickerField } from './media-picker-field';
 import { RelationPickerField } from './relation-picker-field';

@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt';
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
-import { env, getDatabaseAdapter } from '@repo/config';
-import { authRepository, AccessRepository } from '@repo/repository';
-import type { LoginInput } from '@repo/types';
-import { userApplications } from '@repo/shared-db';
+import { env, getDatabaseAdapter } from '@mindfiredigital/config';
+import { authRepository, AccessRepository } from '@mindfiredigital/repository';
+import type { LoginInput } from '@mindfiredigital/types';
+import { userApplications } from '@mindfiredigital/shared-db';
 import { Issuer, Client, generators, custom } from 'openid-client';
 // Increase the default timeout for OIDC requests to Google (default is 3500ms)
 custom.setHttpOptionsDefaults({
@@ -25,10 +25,10 @@ import {
   ApiError,
   BadRequestError,
   InternalServerError,
-} from '@repo/utils';
-import { logger } from '@repo/logger';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
+} from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
+import { eventBus } from '@mindfiredigital/events';
+import { EVENT_NAMES, AUDIT_ACTIONS } from '@mindfiredigital/constants';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 export class AuthService {

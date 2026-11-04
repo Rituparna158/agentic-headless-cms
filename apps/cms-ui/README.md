@@ -32,7 +32,7 @@ A high-performance, dark-mode native visual content studio and administration in
 
 - **Build Engine**: [Vite 6](https://vitejs.dev/) with Rollup-level manual chunking for aggressive vendor code-splitting.
 - **Rendering & UI Runtime**: [React 19](https://react.dev/) + [React Router v7](https://reactrouter.com/) (route-level lazy loading via `React.lazy()` and `Suspense`).
-- **Styling & Design System**: [Tailwind CSS v3](https://tailwindcss.com/) paired with `@repo/shared-ui` design primitives, Lucide icons, and sleek dark-mode glassmorphism.
+- **Styling & Design System**: [Tailwind CSS v3](https://tailwindcss.com/) paired with `@mindfiredigital/shared-ui` design primitives, Lucide icons, and sleek dark-mode glassmorphism.
 - **Server-State Management**: [TanStack Query v5](https://tanstack.com/query/latest) with 5-minute stale-time caching, query cancellation, and optimistic UI mutations.
 - **Client-State Management**: [Zustand v5](https://zustand-demo.pmnd.rs/) for lightweight, persistent client stores (session status, canvas history, autosave state).
 - **Visual Builder Engine**: [GrapesJS v0.23](https://grapesjs.com/) embedded in a sandboxed iframe with custom block registration, responsive viewport switching, and DOM-isolated styles.
@@ -75,7 +75,7 @@ From the root of the repository:
 
    ```bash
    docker compose up -d
-   pnpm --filter @repo/shared-db run db:migrate
+   pnpm --filter @mindfiredigital/shared-db run db:migrate
    pnpm --filter backend run seed:admin
    ```
 

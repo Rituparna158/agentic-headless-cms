@@ -1,1 +1,1 @@
-declare module '@repo/shared-ui';
+declare module '@mindfiredigital/shared-ui';

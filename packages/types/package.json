@@ -1,5 +1,5 @@
 {
-  "name": "@repo/types",
+  "name": "@mindfiredigital/types",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -17,12 +17,12 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "@types/node": "^24.0.0",
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@repo/constants": "workspace:*",
+    "@mindfiredigital/constants": "workspace:*",
     "drizzle-orm": "^0.36.4"
   }
 }

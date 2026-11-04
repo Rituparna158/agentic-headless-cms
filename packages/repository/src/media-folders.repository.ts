@@ -3,11 +3,11 @@ import {
   mediaFolders,
   RecordNotFoundError,
   withTransaction,
-} from '@repo/shared-db';
-import { getDatabaseAdapter } from '@repo/config';
-import { logger } from '@repo/logger';
-import { ApiError } from '@repo/utils';
-import type { CreateMediaFolderInput } from '@repo/types';
+} from '@mindfiredigital/shared-db';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
+import { ApiError } from '@mindfiredigital/utils';
+import type { CreateMediaFolderInput } from '@mindfiredigital/types';
 export type MediaFolderRecord = typeof mediaFolders.$inferSelect;
 export class MediaFoldersRepository {
   private get db() {

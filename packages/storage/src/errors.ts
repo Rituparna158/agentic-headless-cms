@@ -1,5 +1,5 @@
 /**
- * Typed error hierarchy for storage failures — mirrors `@repo/shared-db`'s
+ * Typed error hierarchy for storage failures — mirrors `@mindfiredigital/shared-db`'s
  * `DatabaseError` hierarchy so callers can `instanceof`-narrow instead of
  * parsing adapter-specific error shapes (a Node `fs` errno vs. an AWS SDK
  * `ServiceException`).

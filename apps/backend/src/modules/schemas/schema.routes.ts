@@ -1,6 +1,9 @@
-import { createSchemaSchema, updateSchemaSchema } from '@repo/validation';
+import {
+  createSchemaSchema,
+  updateSchemaSchema,
+} from '@mindfiredigital/validation';
 import { Router } from 'express';
-import { authenticateToken, validateBody } from '@repo/middlewares';
+import { authenticateToken, validateBody } from '@mindfiredigital/middlewares';
 import { requirePermission } from '../auth/rbac.middleware.js';
 import {
   createSchema,

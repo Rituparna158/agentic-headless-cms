@@ -19,7 +19,7 @@ import {
   Dropdown,
   DropdownItem,
   DataTable,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import {
   deleteUser,
   inviteUser,
@@ -28,7 +28,7 @@ import {
   updateUserRole,
 } from '@/lib/api/access';
 import { UsersTabProps } from '@/types/component.types';
-import type { UserRecord } from '@repo/types';
+import type { UserRecord } from '@mindfiredigital/types';
 
 export function UsersTab({ isAdmin = false }: UsersTabProps) {
   const queryClient = useQueryClient();

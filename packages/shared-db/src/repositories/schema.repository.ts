@@ -10,7 +10,7 @@ import {
 import type { actorTypeEnum, schemaTypeEnum } from '../schema/enums.js';
 import { withTransaction } from '../transaction.js';
 import { buildPaginationOptions } from '../queries/pagination.js';
-import type { BaseQueryOptions } from '@repo/types';
+import type { BaseQueryOptions } from '@mindfiredigital/types';
 
 export interface SchemaFieldInput {
   apiId: string;

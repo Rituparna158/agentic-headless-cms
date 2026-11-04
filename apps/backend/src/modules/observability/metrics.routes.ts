@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { getMetrics, recordWebVitals } from './metrics.controller.js';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 import rateLimit from 'express-rate-limit';
 
 const router = Router();

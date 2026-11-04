@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
   Badge,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import {
   Server,
   Globe,

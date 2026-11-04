@@ -1,5 +1,5 @@
 import { Component, ErrorInfo } from 'react';
-import { browserLogger } from '@repo/logger/browser';
+import { browserLogger } from '@mindfiredigital/logger/browser';
 import type {
   ErrorBoundaryProps,
   ErrorBoundaryState,

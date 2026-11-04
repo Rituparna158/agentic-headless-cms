@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { AuthenticatedUser, LoginInput } from '@repo/types';
+import type { AuthenticatedUser, LoginInput } from '@mindfiredigital/types';
 import { requestHandler } from '@/api/requestHandler';
 import { ENDPOINTS } from '@/api/endpoints';
 import { env } from '@/config/env';

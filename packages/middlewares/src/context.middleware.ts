@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { contextStorage, RequestContext } from '@repo/context';
+import { contextStorage, RequestContext } from '@mindfiredigital/context';
 export const contextMiddleware = (
   req: Request,
   res: Response,

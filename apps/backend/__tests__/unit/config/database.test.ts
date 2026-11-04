@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getDatabaseAdapter, resetDatabaseAdapterForTest } from '@repo/config';
-import { PostgresAdapter } from '@repo/shared-db';
-import { env } from '@repo/config';
+import {
+  getDatabaseAdapter,
+  resetDatabaseAdapterForTest,
+} from '@mindfiredigital/config';
+import { PostgresAdapter } from '@mindfiredigital/shared-db';
+import { env } from '@mindfiredigital/config';
 
-vi.mock('@repo/shared-db', () => {
+vi.mock('@mindfiredigital/shared-db', () => {
   const PostgresAdapter = vi.fn();
   return { PostgresAdapter };
 });
 
-// No mock needed for @repo/config, direct mutation of imported env works due to ESM reference sharing.
+// No mock needed for @mindfiredigital/config, direct mutation of imported env works due to ESM reference sharing.
 
 describe('Database Configuration DI', () => {
   beforeEach(() => {

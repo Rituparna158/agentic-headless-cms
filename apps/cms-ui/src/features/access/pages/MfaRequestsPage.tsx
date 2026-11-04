@@ -20,7 +20,7 @@ import {
   Typography,
   DataTable,
   Tabs,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { accessApi } from '../api/access.api';
 import {
   MfaRequestRecord,

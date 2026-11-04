@@ -1,5 +1,5 @@
-import type { AuthenticatedUser } from '@repo/types';
-import type { loginSchema } from '@repo/validation';
+import type { AuthenticatedUser } from '@mindfiredigital/types';
+import type { loginSchema } from '@mindfiredigital/validation';
 import type { z } from 'zod';
 
 export type LoginInputValues = z.input<typeof loginSchema>;

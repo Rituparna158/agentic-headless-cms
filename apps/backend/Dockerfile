@@ -5,7 +5,7 @@
 #
 # A pnpm/Turborepo monorepo can't be Docker-built the way a single-package
 # app can — `pnpm install` needs the *whole* workspace's package.json files
-# to resolve `workspace:*` dependencies (@repo/shared-db, @repo/shared-types),
+# to resolve `workspace:*` dependencies (@mindfiredigital/shared-db, @mindfiredigital/shared-types),
 # so the build context has to be the repo root, not apps/backend/.
 
 FROM node:24-alpine AS base
@@ -38,14 +38,14 @@ WORKDIR /app
 COPY --from=installer /app/ .
 COPY --from=pruner /app/out/full/ .
 # --filter=backend... (the "..." includes backend's workspace dependencies)
-# builds @repo/shared-db and @repo/shared-types first, then backend itself,
+# builds @mindfiredigital/shared-db and @mindfiredigital/shared-types first, then backend itself,
 # in the correct topological order.
 RUN pnpm turbo run build --filter=backend...
 # `pnpm prune --prod` only looks at the manifest in the current directory and
 # has no workspace-recursive mode, so it can't strip devDependencies (typescript,
 # vitest, drizzle-kit, ...) from every workspace package. `pnpm deploy` is
 # pnpm's purpose-built answer for monorepos: it resolves backend's workspace
-# dependencies (@repo/shared-db, @repo/shared-types) down to their built
+# dependencies (@mindfiredigital/shared-db, @mindfiredigital/shared-types) down to their built
 # output plus prod-only deps, into one self-contained directory.
 RUN pnpm --filter=backend deploy --prod /app/deploy
 RUN cp -r packages/shared-db/drizzle /app/deploy/drizzle

@@ -1,4 +1,4 @@
-import type { SchemaRecord, PaginatedResult } from '@repo/types';
+import type { SchemaRecord, PaginatedResult } from '@mindfiredigital/types';
 import { cmsServerFetch, type NextFetchOptions } from '../fetch.js';
 import { schemasListTags, schemaTags } from '../cache.js';
 

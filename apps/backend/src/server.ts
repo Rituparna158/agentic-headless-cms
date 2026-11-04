@@ -1,10 +1,13 @@
 import './instrumentation.js';
 import { sdk } from './instrumentation.js';
 import { createApp } from './app.js';
-import { env } from '@repo/config';
-import { logger } from '@repo/logger';
-import { getDatabaseAdapter } from '@repo/config';
-import { assertMinimumRedisVersion, closeRedisConnection } from '@repo/config';
+import { env } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import {
+  assertMinimumRedisVersion,
+  closeRedisConnection,
+} from '@mindfiredigital/config';
 
 const app = createApp();
 

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/repository",
+  "name": "@mindfiredigital/repository",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -17,17 +17,17 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@repo/context": "workspace:*",
-    "@repo/shared-db": "workspace:*",
-    "@repo/logger": "workspace:*",
-    "@repo/config": "workspace:*",
-    "@repo/utils": "workspace:*",
-    "@repo/types": "workspace:*",
-    "@repo/constants": "workspace:*",
+    "@mindfiredigital/context": "workspace:*",
+    "@mindfiredigital/shared-db": "workspace:*",
+    "@mindfiredigital/logger": "workspace:*",
+    "@mindfiredigital/config": "workspace:*",
+    "@mindfiredigital/utils": "workspace:*",
+    "@mindfiredigital/types": "workspace:*",
+    "@mindfiredigital/constants": "workspace:*",
     "drizzle-orm": "^0.36.4"
   }
 }

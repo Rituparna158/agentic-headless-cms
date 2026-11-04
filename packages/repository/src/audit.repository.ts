@@ -15,16 +15,16 @@ import {
   users,
   withTransaction,
   auditActionEnum,
-} from '@repo/shared-db';
-import { getDatabaseAdapter } from '@repo/config';
-import { logger } from '@repo/logger';
+} from '@mindfiredigital/shared-db';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
 import type {
   CreateAuditLogInput,
   GetAuditLogsQuery,
   PaginatedAuditLogsResponse,
   AuditLogRecord,
-} from '@repo/types';
-import { ApiError } from '@repo/utils';
+} from '@mindfiredigital/types';
+import { ApiError } from '@mindfiredigital/utils';
 import { REPO_ERRORS } from './error-constants.js';
 
 export class AuditRepository {

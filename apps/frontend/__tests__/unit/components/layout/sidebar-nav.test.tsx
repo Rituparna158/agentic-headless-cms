@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AnchorHTMLAttributes } from 'react';
 
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 
@@ -32,14 +31,18 @@ vi.mock(
         children,
         onClick,
         ...rest
-      }: AnchorHTMLAttributes<HTMLAnchorElement>) => (
+      }: {
+        href?: string;
+        children?: React.ReactNode;
+        onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+      } & Record<string, unknown>) => (
         <a
           href={href}
           onClick={(e) => {
             e.preventDefault();
             onClick?.(e);
           }}
-          {...rest}
+          {...(rest as Record<string, unknown>)}
         >
           {children}
         </a>

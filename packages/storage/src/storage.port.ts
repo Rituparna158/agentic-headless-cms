@@ -6,7 +6,7 @@ export interface StorageWriteResult {
 }
 
 /**
- * Unified storage interface — mirrors `@repo/shared-db`'s `DatabasePort`
+ * Unified storage interface — mirrors `@mindfiredigital/shared-db`'s `DatabasePort`
  * pattern so callers depend on this abstraction, never on
  * `LocalAdapter`/`S3Adapter` directly.
  */

@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Badge, Card, DataTable } from '@repo/shared-ui';
+import { Badge, Card, DataTable } from '@mindfiredigital/shared-ui';
 import { listContentEntries } from '@/lib/api/content';
 import type { ContentEntryListProps } from '@/types/component.types';
 import { pickTitleField } from '@/utils/schema';

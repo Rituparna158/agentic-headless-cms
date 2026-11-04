@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { AUTH_COOKIES } from '@repo/constants';
+import { AUTH_COOKIES } from '@mindfiredigital/constants';
 
 const AUTH_ROUTES = [
   '/login',

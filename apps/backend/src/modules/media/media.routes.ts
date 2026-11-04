@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as mediaController from './media.controller.js';
 import { upload } from './upload.middleware.js';
-import { authenticateToken } from '@repo/middlewares';
+import { authenticateToken } from '@mindfiredigital/middlewares';
 import { requirePermission } from '../auth/rbac.middleware.js';
 export const mediaRoutes = Router();
 // Specific routes before generic (Public)

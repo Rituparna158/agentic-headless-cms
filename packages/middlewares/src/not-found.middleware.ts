@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { NotFoundError } from '@repo/utils';
+import { NotFoundError } from '@mindfiredigital/utils';
 
 export function notFoundMiddleware(
   req: Request,

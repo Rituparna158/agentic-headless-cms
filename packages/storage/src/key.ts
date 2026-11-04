@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { ERROR_MESSAGES } from '@repo/constants';
+import { ERROR_MESSAGES } from '@mindfiredigital/constants';
 import { StorageNotFoundError } from './errors.js';
 
 export function buildStorageKey(originalFilename: string): string {

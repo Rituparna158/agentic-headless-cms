@@ -1,7 +1,7 @@
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES } from '@repo/constants';
-import { logger } from '@repo/logger';
-import { getQueue, QUEUE_NAMES } from '@repo/config';
+import { eventBus } from '@mindfiredigital/events';
+import { EVENT_NAMES } from '@mindfiredigital/constants';
+import { logger } from '@mindfiredigital/logger';
+import { getQueue, QUEUE_NAMES } from '@mindfiredigital/config';
 export interface MediaThumbnailJobData {
   assetId: string;
   storageKey: string;

@@ -1,4 +1,4 @@
-import type { SchemaRecord, SchemaField } from '@repo/types';
+import type { SchemaRecord, SchemaField } from '@mindfiredigital/types';
 
 export function toPascalCase(str: string): string {
   return str

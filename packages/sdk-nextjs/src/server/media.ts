@@ -1,4 +1,4 @@
-import type { MediaAsset, ListMediaResult } from '@repo/types';
+import type { MediaAsset, ListMediaResult } from '@mindfiredigital/types';
 import { cmsServerFetch, type NextFetchOptions } from '../fetch.js';
 import { CMS_TAG } from '../constants.js';
 import { mediaTag, mediaListTag } from '../cache.js';

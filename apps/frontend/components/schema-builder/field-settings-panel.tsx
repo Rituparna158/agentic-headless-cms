@@ -1,10 +1,10 @@
 'use client';
 
-import { schemaFieldDataTypes } from '@repo/validation';
+import { schemaFieldDataTypes } from '@mindfiredigital/validation';
 import { Controller, useWatch } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { listSchemas } from '@/lib/api/schemas';
-import type { SchemaRecord } from '@repo/types';
+import type { SchemaRecord } from '@mindfiredigital/types';
 import {
   Button,
   Card,
@@ -16,7 +16,7 @@ import {
   DropdownItem,
   Input,
   Typography,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 
 import type {
   FieldSettingsPanelProps,

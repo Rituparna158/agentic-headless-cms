@@ -1,14 +1,14 @@
-import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
+import { ERROR_MESSAGES, HTTP_STATUS } from '@mindfiredigital/constants';
 import { Request, Response, RequestHandler } from 'express';
-import { env } from '@repo/config';
-import { PermissionData } from '@repo/types';
+import { env } from '@mindfiredigital/config';
+import { PermissionData } from '@mindfiredigital/types';
 import {
   NotFoundError,
   BadRequestError,
   asyncHandler,
   ApiResponse,
-} from '@repo/utils';
-import { logger } from '@repo/logger';
+} from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
 import { AccessService } from './access.service.js';
 import {
   parseQueryOptions,
@@ -31,12 +31,7 @@ export const listRoles: RequestHandler = asyncHandler(
       .json(
         new ApiResponse(
           200,
-          formatPaginatedResponse(
-            roles,
-            total,
-            options.page!,
-            options.pageSize!,
-          ),
+          formatPaginatedResponse(roles, total, options.page, options.pageSize),
           'Roles listed successfully',
         ),
       );
@@ -119,12 +114,7 @@ export const listUsers: RequestHandler = asyncHandler(
       .json(
         new ApiResponse(
           200,
-          formatPaginatedResponse(
-            users,
-            total,
-            options.page!,
-            options.pageSize!,
-          ),
+          formatPaginatedResponse(users, total, options.page, options.pageSize),
           'Users listed successfully',
         ),
       );
@@ -219,8 +209,8 @@ export const listTokens: RequestHandler = asyncHandler(
           formatPaginatedResponse(
             tokens,
             total,
-            options.page!,
-            options.pageSize!,
+            options.page,
+            options.pageSize,
           ),
           'Tokens listed successfully',
         ),

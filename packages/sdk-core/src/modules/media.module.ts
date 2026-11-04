@@ -4,7 +4,7 @@ import type {
   MediaAsset,
   ListMediaOptions,
   ListMediaResult,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 import type { UploadMediaOptions } from '../types/index.js';
 

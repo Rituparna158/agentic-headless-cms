@@ -2,31 +2,31 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { BaseQueryOptions } from '@repo/types';
+import type { BaseQueryOptions } from '@mindfiredigital/types';
 import {
   EMAIL_TEMPLATES,
   ERROR_MESSAGES,
   EVENT_NAMES,
   AUDIT_ACTIONS,
-} from '@repo/constants';
+} from '@mindfiredigital/constants';
 import nodemailer from 'nodemailer';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 import {
   CreateRoleInput,
   CreateTokenInput,
   UpdateRoleInput,
-} from '@repo/types';
-import { AccessRepository, authRepository } from '@repo/repository';
+} from '@mindfiredigital/types';
+import { AccessRepository, authRepository } from '@mindfiredigital/repository';
 import {
   BadRequestError,
   InternalServerError,
   ApiError,
   UnauthorizedError,
   NotFoundError,
-} from '@repo/utils';
+} from '@mindfiredigital/utils';
 import { authenticator } from 'otplib';
-import { logger } from '@repo/logger';
-import { eventBus } from '@repo/events';
+import { logger } from '@mindfiredigital/logger';
+import { eventBus } from '@mindfiredigital/events';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 import { formatPaginatedResponse } from '../../utils/pagination.util.js';

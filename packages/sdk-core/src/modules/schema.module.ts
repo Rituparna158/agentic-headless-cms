@@ -4,9 +4,9 @@ import type {
   SchemaRecord,
   CreateSchemaInput,
   UpdateSchemaInput,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
-import type { BaseQueryOptions, PaginatedResult } from '@repo/types';
+import type { BaseQueryOptions, PaginatedResult } from '@mindfiredigital/types';
 
 export class SchemaModule {
   constructor(private transport: HttpTransport) {}

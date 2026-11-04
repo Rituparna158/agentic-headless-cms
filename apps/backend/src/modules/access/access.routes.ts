@@ -16,7 +16,10 @@ import {
   approveMfaResetRequest,
   rejectMfaResetRequest,
 } from './access.controller.js';
-import { authenticateToken, requireAdminOrSupport } from '@repo/middlewares';
+import {
+  authenticateToken,
+  requireAdminOrSupport,
+} from '@mindfiredigital/middlewares';
 import { requirePermission } from '../auth/rbac.middleware.js';
 import { schemaService } from '../schemas/schema.service.js';
 import type { Request, Response, NextFunction } from 'express';

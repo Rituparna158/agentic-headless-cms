@@ -1,5 +1,5 @@
 {
-  "name": "@repo/utils",
+  "name": "@mindfiredigital/utils",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -21,13 +21,13 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "typescript": "5.9.2",
     "@types/express": "^5.0.0"
   },
   "dependencies": {
     "express": "^5.2.1",
-    "@repo/shared-db": "workspace:*",
-    "@repo/storage": "workspace:*"
+    "@mindfiredigital/shared-db": "workspace:*",
+    "@mindfiredigital/storage": "workspace:*"
   }
 }

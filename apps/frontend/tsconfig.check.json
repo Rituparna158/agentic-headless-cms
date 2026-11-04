@@ -1,10 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "declaration": false,
+    "declarationMap": false,
     "paths": {
       "@/*": ["./*"],
-      "@repo/utils/rbac": ["../../packages/utils/src/rbac.util.ts"],
-      "@repo/shared-ui": ["./types/shared-ui-mock.d.ts"]
+      "@mindfiredigital/utils/rbac": ["../../packages/utils/src/rbac.util.ts"],
+      "@mindfiredigital/shared-ui": ["./types/shared-ui-mock.d.ts"]
     },
     "types": ["vitest/globals", "@testing-library/jest-dom/vitest"]
   }

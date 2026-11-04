@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { PlusIcon } from 'lucide-react';
-import { Button, Badge } from '@repo/shared-ui';
+import { Button, Badge } from '@mindfiredigital/shared-ui';
 import { useAuthStore } from '@/stores/auth-store';
 
 export function ContentTypeHeader() {

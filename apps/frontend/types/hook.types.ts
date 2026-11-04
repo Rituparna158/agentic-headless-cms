@@ -1,4 +1,4 @@
-import { ContentEntryRecord } from '@repo/types';
+import { ContentEntryRecord } from '@mindfiredigital/types';
 
 export interface RecentActivityItem {
   entryId: string;

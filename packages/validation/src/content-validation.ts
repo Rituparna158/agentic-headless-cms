@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { SchemaDefinition, SchemaField } from '@repo/types';
+import type { SchemaDefinition, SchemaField } from '@mindfiredigital/types';
 
 export function compileZodSchema(
   definition: SchemaDefinition,

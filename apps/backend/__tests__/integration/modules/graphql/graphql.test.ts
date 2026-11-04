@@ -15,7 +15,7 @@ vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
 }));
 import jwt from 'jsonwebtoken';
 import { createApp } from '../../../../src/app.js';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
 const { testSchema } = vi.hoisted(() => ({
   testSchema: {
@@ -58,14 +58,15 @@ vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
     getUserPermissions: vi.fn(),
   },
 }));
-vi.mock('@repo/shared-db', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@repo/shared-db')>();
+vi.mock('@mindfiredigital/shared-db', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@mindfiredigital/shared-db')>();
   return {
     ...actual,
     listSchemas: vi.fn().mockResolvedValue([[testSchema], 1]),
   };
 });
-vi.mock('@repo/repository', () => {
+vi.mock('@mindfiredigital/repository', () => {
   return {
     ContentRepository: vi.fn().mockImplementation(function () {
       return {

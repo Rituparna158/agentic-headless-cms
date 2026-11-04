@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { InvalidResizeError } from './errors.js';
-import { ERROR_MESSAGES } from '@repo/constants';
+import { ERROR_MESSAGES } from '@mindfiredigital/constants';
 
 const RESIZE_FIT_VALUES = [
   'cover',

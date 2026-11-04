@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { envSchema } from '@repo/config';
+import { envSchema } from '@mindfiredigital/config';
 
 describe('Environment Configuration Schema Validation', () => {
   const validProdEnv = {

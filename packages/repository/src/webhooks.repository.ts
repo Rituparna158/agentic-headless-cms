@@ -1,15 +1,15 @@
 import { eq, sql, and, desc } from 'drizzle-orm';
-import type { BaseQueryOptions } from '@repo/types';
-import { getDatabaseAdapter } from '@repo/config';
-import { logger } from '@repo/logger';
+import type { BaseQueryOptions } from '@mindfiredigital/types';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
 import {
   webhooks,
   webhookDeliveries,
   RecordNotFoundError,
   buildPaginationOptions,
   withTransaction,
-} from '@repo/shared-db';
-import { ApiError } from '@repo/utils';
+} from '@mindfiredigital/shared-db';
+import { ApiError } from '@mindfiredigital/utils';
 import { REPO_ERRORS } from './error-constants.js';
 export class WebhooksRepository {
   private get db() {

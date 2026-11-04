@@ -1,13 +1,13 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
-import { listSchemas } from '@repo/shared-db';
+import { listSchemas } from '@mindfiredigital/shared-db';
 import { Router } from 'express';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES } from '@repo/constants';
+import { eventBus } from '@mindfiredigital/events';
+import { EVENT_NAMES } from '@mindfiredigital/constants';
 
-import type { AuditEventPayload } from '@repo/types';
-import { authenticateToken } from '@repo/middlewares';
-import { getDatabaseAdapter } from '@repo/config';
+import type { AuditEventPayload } from '@mindfiredigital/types';
+import { authenticateToken } from '@mindfiredigital/middlewares';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
 import { GraphQLContext } from '../../types/graphql.types.js';
 import { formatGraphQLError } from './format-error.js';
 import { buildGraphQLSchema } from './schema-builder.js';

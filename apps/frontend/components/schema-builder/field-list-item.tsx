@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { AlertCircle, GripVertical, Trash2 } from 'lucide-react';
 import { useWatch } from 'react-hook-form';
 
-import { Button, Badge } from '@repo/shared-ui';
+import { Button, Badge } from '@mindfiredigital/shared-ui';
 import { cn } from '@/lib/utils';
 
 import type {

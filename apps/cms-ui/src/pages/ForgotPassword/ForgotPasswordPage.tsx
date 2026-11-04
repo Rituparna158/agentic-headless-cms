@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Input, Form, FormField, Typography } from '@repo/shared-ui';
+import {
+  Button,
+  Input,
+  Form,
+  FormField,
+  Typography,
+} from '@mindfiredigital/shared-ui';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { forgotPasswordSchema } from '@repo/validation';
+import { forgotPasswordSchema } from '@mindfiredigital/validation';
 import { authApi } from '../../features/auth/api/auth.api';
 export const ForgotPasswordPage = () => {
   const [success, setSuccess] = useState(false);

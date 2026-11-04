@@ -1,14 +1,18 @@
 'use client';
 
-import type { PermissionRecord, RoleRecord, SchemaRecord } from '@repo/types';
+import type {
+  PermissionRecord,
+  RoleRecord,
+  SchemaRecord,
+} from '@mindfiredigital/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button, Input, Checkbox, Textarea } from '@repo/shared-ui';
+import { Button, Input, Checkbox, Textarea } from '@mindfiredigital/shared-ui';
 import { createRole, listRoles, updateRole } from '@/lib/api/access';
 import { listSchemas } from '@/lib/api/schemas';
-import { DataTable } from '@repo/shared-ui';
+import { DataTable } from '@mindfiredigital/shared-ui';
 
 export function RolesTab() {
   const queryClient = useQueryClient();

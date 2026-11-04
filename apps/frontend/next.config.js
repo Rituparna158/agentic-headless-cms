@@ -2,11 +2,11 @@
 const nextConfig = {
   output: 'standalone',
   transpilePackages: [
-    '@repo/constants',
-    '@repo/types',
-    '@repo/utils',
-    '@repo/validation',
-    '@repo/shared-ui',
+    '@mindfiredigital/constants',
+    '@mindfiredigital/types',
+    '@mindfiredigital/utils',
+    '@mindfiredigital/validation',
+    '@mindfiredigital/shared-ui',
   ],
   typescript: {
     ignoreBuildErrors: true,

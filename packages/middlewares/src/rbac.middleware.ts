@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
-import { hasPermission, Permission } from '@repo/utils/rbac';
+import { ERROR_MESSAGES, HTTP_STATUS } from '@mindfiredigital/constants';
+import { hasPermission, Permission } from '@mindfiredigital/utils/rbac';
 function errorJson(res: Response, status: number, message: string) {
   const req = res.req as unknown as Request;
   const requestId = req && typeof req.id === 'string' ? req.id : undefined;

@@ -18,7 +18,7 @@ import {
   getMediaFileUrl,
   getMimeCategory,
 } from '../utils/media.util';
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 
 export const MediaAssetDetailModal: React.FC<MediaAssetDetailModalProps> = ({
   asset,

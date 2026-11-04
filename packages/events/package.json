@@ -1,5 +1,5 @@
 {
-  "name": "@repo/events",
+  "name": "@mindfiredigital/events",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -17,14 +17,14 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "typescript": "5.9.2"
   },
   "dependencies": {
     "eventemitter2": "^6.4.9",
-    "@repo/config": "workspace:*",
-    "@repo/types": "workspace:*",
-    "@repo/constants": "workspace:*",
-    "@repo/repository": "workspace:*"
+    "@mindfiredigital/config": "workspace:*",
+    "@mindfiredigital/types": "workspace:*",
+    "@mindfiredigital/constants": "workspace:*",
+    "@mindfiredigital/repository": "workspace:*"
   }
 }

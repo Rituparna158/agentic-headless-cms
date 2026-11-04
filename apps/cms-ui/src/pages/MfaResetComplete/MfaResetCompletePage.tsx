@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Button } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
 import { CheckCircle2, ShieldAlert, Loader2 } from 'lucide-react';
 import { authApi } from '../../features/auth/api/auth.api';
 

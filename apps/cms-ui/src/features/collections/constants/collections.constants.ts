@@ -14,7 +14,7 @@ export const DEFAULT_PRODUCT_FALLBACK_IMAGE =
 export const FALLBACK_AUTHOR_NAME = 'Author';
 export const DEFAULT_DYNAMIC_CONTENT_TITLE = 'Universal Showcase Product';
 
-import type { SchemaField } from '@repo/types';
+import type { SchemaField } from '@mindfiredigital/types';
 
 export const DEFAULT_PAGE_FIELDS: SchemaField[] = [
   {
@@ -65,7 +65,7 @@ export const CANVAS_DRAFT_STORE_NAME = 'canvas_drafts';
 export const CANVAS_AUTO_SAVE_INTERVAL_MS = 15000;
 export const CANVAS_STALE_DRAFT_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 
-import type { AdvancedTableColumn } from '@repo/shared-ui';
+import type { AdvancedTableColumn } from '@mindfiredigital/shared-ui';
 
 export const COLLECTIONS_LIST_TABLE_COLUMNS: AdvancedTableColumn[] = [
   { key: 'name', label: 'Name', sortable: true },

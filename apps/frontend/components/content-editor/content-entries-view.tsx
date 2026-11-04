@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { LayersIcon, PlusIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
-import { Badge, Button, Card, CardContent } from '@repo/shared-ui';
+import { Badge, Button, Card, CardContent } from '@mindfiredigital/shared-ui';
 import { useAuthStore } from '@/stores/auth-store';
 import { useHasPermission } from '@/hooks/use-permissions';
 import { ContentEntryList } from './content-entry-list';

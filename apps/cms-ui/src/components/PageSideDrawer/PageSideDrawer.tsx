@@ -14,7 +14,7 @@ import type {
   PageSideDrawerView,
 } from './drawer.types';
 import { slugify } from '@/utils/slugify.util';
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 import { PageMetaDrawerHeader } from './PageMetaDrawerHeader';
 import { PageSchemaList } from './PageSchemaList';
 import { PageSchemaBuilder } from './PageSchemaBuilder';

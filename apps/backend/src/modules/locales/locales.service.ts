@@ -1,9 +1,16 @@
-import { LocalesRepository } from '@repo/repository';
-import type { CreateLocaleInput, BaseQueryOptions } from '@repo/types';
-import { ERROR_MESSAGES, EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
-import { ConflictError, ApiError } from '@repo/utils';
-import { logger } from '@repo/logger';
-import { eventBus } from '@repo/events';
+import { LocalesRepository } from '@mindfiredigital/repository';
+import type {
+  CreateLocaleInput,
+  BaseQueryOptions,
+} from '@mindfiredigital/types';
+import {
+  ERROR_MESSAGES,
+  EVENT_NAMES,
+  AUDIT_ACTIONS,
+} from '@mindfiredigital/constants';
+import { ConflictError, ApiError } from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
+import { eventBus } from '@mindfiredigital/events';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 export class LocalesService {

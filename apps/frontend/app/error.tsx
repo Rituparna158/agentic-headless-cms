@@ -11,7 +11,7 @@ import {
   ErrorPageLinks,
   ErrorPageIcons,
   ButtonWithIcon,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { AlertCircle, RotateCcw, Home } from 'lucide-react';
 
 interface ErrorProps {

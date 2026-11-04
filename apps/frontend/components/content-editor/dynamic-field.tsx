@@ -3,7 +3,7 @@
 import { PlusIcon, Trash2 } from 'lucide-react';
 import { type Control, useFieldArray, useFormContext } from 'react-hook-form';
 
-import { Button, Typography } from '@repo/shared-ui';
+import { Button, Typography } from '@mindfiredigital/shared-ui';
 import { Controller } from 'react-hook-form';
 import type { DynamicFieldProps } from '@/types/component.types';
 import { FieldTypeInput } from './field-type-input';

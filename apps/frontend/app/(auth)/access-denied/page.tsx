@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
 
 import { Suspense } from 'react';
 

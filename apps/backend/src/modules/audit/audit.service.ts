@@ -1,12 +1,12 @@
-import { AuditRepository } from '@repo/repository';
+import { AuditRepository } from '@mindfiredigital/repository';
 import type {
   GetAuditLogsQuery,
   PaginatedAuditLogsResponse,
   AuditLogRecord,
-} from '@repo/types';
-import { ApiError, NotFoundError } from '@repo/utils';
-import { logger } from '@repo/logger';
-import { getRedisConnection } from '@repo/config';
+} from '@mindfiredigital/types';
+import { ApiError, NotFoundError } from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
+import { getRedisConnection } from '@mindfiredigital/config';
 
 const DEFAULT_PAGE1_CACHE_KEY = 'audit:logs:default_page1';
 const CACHE_TTL_SECONDS = 30;

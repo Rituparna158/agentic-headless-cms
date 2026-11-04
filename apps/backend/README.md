@@ -1,6 +1,6 @@
 # Backend — Agentic Headless CMS API
 
-Express + TypeScript core API server for the Agentic Headless CMS. Powered by `@repo/shared-db` (Drizzle ORM) for PostgreSQL persistence and BullMQ/Redis for asynchronous job processing.
+Express + TypeScript core API server for the Agentic Headless CMS. Powered by `@mindfiredigital/shared-db` (Drizzle ORM) for PostgreSQL persistence and BullMQ/Redis for asynchronous job processing.
 
 > **First time setting up the whole project?** Follow the root [README.md](../../README.md#getting-started-first-time-setup) — it covers Docker, environment variables, migrations, and seeding for the full stack. This document covers backend-specific details.
 

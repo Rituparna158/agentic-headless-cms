@@ -6,13 +6,13 @@ import {
   userRoles,
   permissions,
   userApplications,
-} from '@repo/shared-db';
+} from '@mindfiredigital/shared-db';
 import { and, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import { logger } from '@repo/logger';
+import { logger } from '@mindfiredigital/logger';
 import { input, password } from '@inquirer/prompts';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';

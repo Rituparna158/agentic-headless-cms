@@ -1,5 +1,5 @@
 {
-  "name": "@repo/logger",
+  "name": "@mindfiredigital/logger",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -22,7 +22,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "typescript": "5.9.2",
     "pino-pretty": "^11.0.0",
     "@types/pino": "^7.0.5"

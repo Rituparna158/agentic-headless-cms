@@ -10,7 +10,7 @@ import {
 import { useUploadMedia } from '../hooks/useMediaQueries';
 import type { MediaUploadZoneProps, QueuedFile } from '../types/media.types';
 import { formatBytes } from '../utils/media.util';
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 
 export const MediaUploadZone: React.FC<MediaUploadZoneProps> = ({
   currentFolderId,

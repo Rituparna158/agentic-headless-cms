@@ -9,7 +9,7 @@ import {
   RecordNotFoundError,
   SerializationFailureError,
   UniqueConstraintViolationError,
-} from '@repo/shared-db';
+} from '@mindfiredigital/shared-db';
 import {
   BadRequestError,
   ConflictError,
@@ -20,7 +20,7 @@ import {
 } from './http-error.js';
 
 /**
- * Translates `@repo/shared-db`'s typed database errors into typed HTTP
+ * Translates `@mindfiredigital/shared-db`'s typed database errors into typed HTTP
  * errors.
  */
 export function mapDatabaseErrorToHttpError(error: DatabaseError): HttpError {

@@ -20,7 +20,7 @@ import { MediaFoldersSidebar } from '../components/MediaFoldersSidebar';
 import { MediaGrid } from '../components/MediaGrid';
 import { MediaUploadZone } from '../components/MediaUploadZone';
 import { MediaAssetDetailModal } from '../components/MediaAssetDetailModal';
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 
 export const MediaLibraryPage: React.FC = () => {
   const toast = useToast();

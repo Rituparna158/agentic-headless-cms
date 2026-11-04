@@ -1,14 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import { eq } from 'drizzle-orm';
-import { getDatabaseAdapter } from '@repo/config';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
 import {
   runMigrations,
   applications,
   schemas,
   Database,
-} from '@repo/shared-db';
-import { logger } from '@repo/logger';
+} from '@mindfiredigital/shared-db';
+import { logger } from '@mindfiredigital/logger';
 
 function resolveMigrationsFolder(): string {
   if (

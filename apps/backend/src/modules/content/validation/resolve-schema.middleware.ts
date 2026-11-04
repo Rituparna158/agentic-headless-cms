@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { ContentRepository } from '@repo/repository';
-import { NotFoundError } from '@repo/utils';
+import { ContentRepository } from '@mindfiredigital/repository';
+import { NotFoundError } from '@mindfiredigital/utils';
 const repository = new ContentRepository();
 /** Resolve schema to request */
 export const resolveSchema = async (

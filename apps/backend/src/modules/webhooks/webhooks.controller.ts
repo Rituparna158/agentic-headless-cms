@@ -1,8 +1,12 @@
 import { Request, Response, RequestHandler } from 'express';
 import { WebhooksService } from './webhooks.service.js';
-import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/constants';
-import { asyncHandler, BadRequestError, ApiResponse } from '@repo/utils';
-import { logger } from '@repo/logger';
+import { HTTP_STATUS, ERROR_MESSAGES } from '@mindfiredigital/constants';
+import {
+  asyncHandler,
+  BadRequestError,
+  ApiResponse,
+} from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
 import {
   parseQueryOptions,
   formatPaginatedResponse,
@@ -28,8 +32,8 @@ export const listWebhooks: RequestHandler = asyncHandler(
           formatPaginatedResponse(
             webhooks,
             total,
-            options.page!,
-            options.pageSize!,
+            options.page,
+            options.pageSize,
           ),
           'Webhooks listed successfully',
         ),

@@ -1,8 +1,8 @@
 import { SQL, and, asc, desc, or, sql } from 'drizzle-orm';
-import type { SchemaField } from '@repo/types';
-import { contentEntries, entryLocalizations } from '@repo/shared-db';
-import { BadRequestError } from '@repo/utils';
-import { ContentQueryOptions } from '@repo/types';
+import type { SchemaField } from '@mindfiredigital/types';
+import { contentEntries, entryLocalizations } from '@mindfiredigital/shared-db';
+import { BadRequestError } from '@mindfiredigital/utils';
+import { ContentQueryOptions } from '@mindfiredigital/types';
 
 const FILTER_OPERATORS = [
   '$eq',
@@ -233,7 +233,7 @@ function parseFilters(
           ),
         );
       } else {
-        clauses.push(buildComparison(field!, op as FilterOperator, value));
+        clauses.push(buildComparison(field, op as FilterOperator, value));
       }
     }
   }
@@ -295,7 +295,7 @@ function parseSort(
           if (matchingField) {
             return jsonFieldExpr(matchingField);
           }
-          return jsonFieldExpr(findField(fields, apiId!));
+          return jsonFieldExpr(findField(fields, apiId));
         })();
 
       return direction === 'desc' ? desc(expr) : asc(expr);

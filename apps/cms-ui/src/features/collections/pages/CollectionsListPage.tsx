@@ -12,7 +12,7 @@ import {
   type SchemaEntry,
   type PaginatedResponse,
 } from '../api/collections.api';
-import { useToast, AdvancedTable } from '@repo/shared-ui';
+import { useToast, AdvancedTable } from '@mindfiredigital/shared-ui';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { normalizeCollaborator } from '../utils/collaborator.util';

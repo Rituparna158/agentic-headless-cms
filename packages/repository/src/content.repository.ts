@@ -1,7 +1,7 @@
 import { eq, and, or, isNull, sql, desc, SQL } from 'drizzle-orm';
-import { getDatabaseAdapter } from '@repo/config';
-import { logger } from '@repo/logger';
-import { ApiError } from '@repo/utils';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
+import { ApiError } from '@mindfiredigital/utils';
 import {
   schemas,
   contentEntries,
@@ -11,9 +11,9 @@ import {
   createEntryVersion,
   withTransaction,
   RecordNotFoundError,
-} from '@repo/shared-db';
-import { DEFAULT_LOCALE } from '@repo/constants';
-import type { ContentQueryOptions } from '@repo/types';
+} from '@mindfiredigital/shared-db';
+import { DEFAULT_LOCALE } from '@mindfiredigital/constants';
+import type { ContentQueryOptions } from '@mindfiredigital/types';
 import { isDeepStrictEqual } from 'node:util';
 import { REPO_ERRORS } from './error-constants.js';
 export class ContentRepository {

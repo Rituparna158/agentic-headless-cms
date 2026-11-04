@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as mediaFoldersController from './media-folders.controller.js';
-import { authenticateToken } from '@repo/middlewares';
+import { authenticateToken } from '@mindfiredigital/middlewares';
 import { requirePermission } from '../auth/rbac.middleware.js';
 export const mediaFoldersRoutes = Router();
 mediaFoldersRoutes.use(authenticateToken);

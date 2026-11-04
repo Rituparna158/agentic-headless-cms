@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { browserLogger } from '@repo/logger/browser';
+import { browserLogger } from '@mindfiredigital/logger/browser';
 
 import {
   collectionsApi,
@@ -41,7 +41,7 @@ import {
 } from '../../utils/pageEditorSchema.util';
 import { usePageBuilderStore } from '../../components/page-builder/stores/pageBuilderStore';
 import { useCanvasAutoSave } from '../../hooks/useCanvasAutoSave';
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 import { slugify } from '../../utils/slugify.util';
 import { InlineErrorAlert } from '@/components/ui/InlineErrorAlert';
 import { useLiveAnnouncer } from '@/components/ui/LiveAnnouncer';

@@ -10,7 +10,7 @@ import {
   userApplications,
   applications,
 } from '../index.js';
-import { logger } from '@repo/logger';
+import { logger } from '@mindfiredigital/logger';
 import * as dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });

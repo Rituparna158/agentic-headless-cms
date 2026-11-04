@@ -17,7 +17,7 @@ import {
   secondaryNavItems,
 } from '@/components/layout/nav-items';
 import { listSchemas } from '@/lib/api/schemas';
-import { Badge, ScrollArea } from '@repo/shared-ui';
+import { Badge, ScrollArea } from '@mindfiredigital/shared-ui';
 import { useAuthStore } from '@/stores/auth-store';
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {

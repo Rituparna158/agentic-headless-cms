@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCmsClient } from '../provider.js';
-import type { ListContentEntriesOptions } from '@repo/types';
+import type { ListContentEntriesOptions } from '@mindfiredigital/types';
 
 import { contentKeys } from '../constants.js';
 

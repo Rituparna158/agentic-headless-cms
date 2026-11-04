@@ -69,8 +69,9 @@ vi.mock('framer-motion', async () => {
 });
 
 // Mock AnimatedInput which causes jsdom/vitest to hang and throw act warnings
-vi.mock('@repo/shared-ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@repo/shared-ui')>();
+vi.mock('@mindfiredigital/shared-ui', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@mindfiredigital/shared-ui')>();
   const React = await import('react');
   return {
     ...actual,

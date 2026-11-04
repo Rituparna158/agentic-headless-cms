@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Tabs } from '@repo/shared-ui';
+import { Tabs } from '@mindfiredigital/shared-ui';
 import { GeneralSettingsTab } from '@/components/settings/general-settings-tab';
 import { LocalesTab } from '@/components/settings/locales-tab';
 import { SecurityTab } from '@/components/settings/security-tab';

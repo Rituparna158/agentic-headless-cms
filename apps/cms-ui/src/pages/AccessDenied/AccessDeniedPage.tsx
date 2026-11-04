@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
   Button,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLogoutMutation } from '../../features/auth/hooks/useAuthMutations';
 

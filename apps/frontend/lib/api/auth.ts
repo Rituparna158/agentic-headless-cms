@@ -1,4 +1,4 @@
-import type { AuthenticatedUser, LoginInput } from '@repo/types';
+import type { AuthenticatedUser, LoginInput } from '@mindfiredigital/types';
 import { API_PATHS } from '@/lib/constants/api-paths';
 import { apiFetch } from '@/lib/api-client';
 

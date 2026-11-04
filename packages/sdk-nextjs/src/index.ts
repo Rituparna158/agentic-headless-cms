@@ -48,4 +48,4 @@ export type {
   MediaAsset,
   ListMediaResult,
   PaginatedResult,
-} from '@repo/types';
+} from '@mindfiredigital/types';

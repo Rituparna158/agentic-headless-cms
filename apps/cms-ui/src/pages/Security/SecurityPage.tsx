@@ -24,7 +24,7 @@ import {
   CardHeader,
   CardTitle,
   Typography,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { useAuthStore } from '../../features/auth/store/auth.store';
 import { authApi } from '../../features/auth/api/auth.api';
 

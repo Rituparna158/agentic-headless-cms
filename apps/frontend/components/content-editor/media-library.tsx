@@ -6,8 +6,8 @@ import { SearchIcon, CheckIcon, UploadIcon } from 'lucide-react';
 
 import { listMedia, mediaFileUrl } from '@/lib/api/media';
 import { cn } from '@/lib/utils';
-import { Input } from '@repo/shared-ui';
-import type { MediaAsset } from '@repo/types';
+import { Input } from '@mindfiredigital/shared-ui';
+import type { MediaAsset } from '@mindfiredigital/types';
 import Image from 'next/image';
 
 import type { MediaLibraryProps } from '@/types/component.types';

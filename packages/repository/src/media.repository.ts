@@ -3,11 +3,14 @@ import {
   mediaAssets,
   RecordNotFoundError,
   withTransaction,
-} from '@repo/shared-db';
-import { getDatabaseAdapter } from '@repo/config';
-import { logger } from '@repo/logger';
-import type { CreateMediaAssetInput, ListMediaOptions } from '@repo/types';
-import { ApiError } from '@repo/utils';
+} from '@mindfiredigital/shared-db';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
+import type {
+  CreateMediaAssetInput,
+  ListMediaOptions,
+} from '@mindfiredigital/types';
+import { ApiError } from '@mindfiredigital/utils';
 import { REPO_ERRORS } from './error-constants.js';
 export type MediaAssetRecord = typeof mediaAssets.$inferSelect;
 export class MediaRepository {

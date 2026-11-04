@@ -3,7 +3,7 @@ import type {
   AuditLogRecord,
   GetAuditLogsQuery,
   PaginatedAuditLogsResponse,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 export type { AuditLogRecord, GetAuditLogsQuery, PaginatedAuditLogsResponse };
 

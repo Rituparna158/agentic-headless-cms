@@ -7,7 +7,7 @@ import {
   getMediaFileUrl,
   getMimeCategory,
 } from '../utils/media.util';
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 
 export const MediaAssetCard: React.FC<MediaAssetCardProps> = ({
   asset,

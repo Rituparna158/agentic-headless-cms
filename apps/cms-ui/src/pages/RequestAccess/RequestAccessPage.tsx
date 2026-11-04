@@ -7,7 +7,7 @@ import {
   Mail,
   ArrowLeft,
 } from 'lucide-react';
-import { Button, Input, Typography } from '@repo/shared-ui';
+import { Button, Input, Typography } from '@mindfiredigital/shared-ui';
 import { authApi } from '../../features/auth/api/auth.api';
 
 export const RequestAccessPage = () => {

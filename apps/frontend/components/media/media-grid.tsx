@@ -1,6 +1,6 @@
 'use client';
 
-import type { MediaAsset } from '@repo/types';
+import type { MediaAsset } from '@mindfiredigital/types';
 import {
   keepPreviousData,
   useMutation,
@@ -13,8 +13,8 @@ import { useState, useCallback } from 'react';
 
 import { useHasPermission } from '@/hooks/use-permissions';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Button } from '@repo/shared-ui';
-import { Card, CardContent } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
+import { Card, CardContent } from '@mindfiredigital/shared-ui';
 import {
   bulkDeleteMedia,
   deleteMedia,

@@ -1,5 +1,5 @@
-import type { StoragePort } from '@repo/storage';
-import { LocalAdapter, S3Adapter } from '@repo/storage';
+import type { StoragePort } from '@mindfiredigital/storage';
+import { LocalAdapter, S3Adapter } from '@mindfiredigital/storage';
 import { env } from './env.js';
 
 let adapterInstance: StoragePort | null = null;

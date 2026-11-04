@@ -3,13 +3,17 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AccessService } from '../../../../src/modules/access/access.service.js';
-import { AccessRepository, authRepository } from '@repo/repository';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES, AUDIT_ACTIONS, ERROR_MESSAGES } from '@repo/constants';
+import { AccessRepository, authRepository } from '@mindfiredigital/repository';
+import { eventBus } from '@mindfiredigital/events';
+import {
+  EVENT_NAMES,
+  AUDIT_ACTIONS,
+  ERROR_MESSAGES,
+} from '@mindfiredigital/constants';
 import nodemailer from 'nodemailer';
 import fs from 'node:fs/promises';
-vi.mock('@repo/repository');
-vi.mock('@repo/events', () => ({
+vi.mock('@mindfiredigital/repository');
+vi.mock('@mindfiredigital/events', () => ({
   eventBus: { emit: vi.fn() },
 }));
 vi.mock('../../../../src/utils/audit.js', () => ({
@@ -31,7 +35,7 @@ vi.mock('nodemailer', () => ({
     }),
   },
 }));
-vi.mock('@repo/config', () => ({
+vi.mock('@mindfiredigital/config', () => ({
   env: {
     CORS_ORIGIN: 'http://localhost:3001',
     APP_URL: 'http://localhost:3000',

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCmsClient } from '../provider.js';
-import type { LoginInput } from '@repo/types';
+import type { LoginInput } from '@mindfiredigital/types';
 
 import { authKeys } from '../constants.js';
 

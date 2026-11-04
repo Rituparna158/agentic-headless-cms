@@ -1,4 +1,4 @@
-import type { ListContentEntriesResult } from '@repo/types';
+import type { ListContentEntriesResult } from '@mindfiredigital/types';
 import { cmsServerFetch } from '../fetch.js';
 import { CMS_TAG } from '../constants.js';
 import { contentTag } from '../cache.js';

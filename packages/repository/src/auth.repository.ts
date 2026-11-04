@@ -1,7 +1,7 @@
 import { eq, ne, and, inArray, sql, getTableColumns } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import { getDatabaseAdapter } from '@repo/config';
-import { logger } from '@repo/logger';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
 import {
   users,
   userRoles,
@@ -15,9 +15,9 @@ import {
   applications,
   withTransaction,
   buildPaginationOptions,
-} from '@repo/shared-db';
-import { ApiError } from '@repo/utils';
-import type { BaseQueryOptions } from '@repo/types';
+} from '@mindfiredigital/shared-db';
+import { ApiError } from '@mindfiredigital/utils';
+import type { BaseQueryOptions } from '@mindfiredigital/types';
 import { REPO_ERRORS } from './error-constants.js';
 export class AuthRepository {
   async getUserByEmail(email: string) {

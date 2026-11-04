@@ -1,5 +1,5 @@
 import { Queue } from 'bullmq';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 
 async function run() {
   const mediaQueue = new Queue('media-processing', {

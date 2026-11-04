@@ -1,4 +1,4 @@
-import type { WebhookRecord } from '@repo/types';
+import type { WebhookRecord } from '@mindfiredigital/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

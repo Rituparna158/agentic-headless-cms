@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodTypeAny, ZodError } from 'zod';
-import { ApiError } from '@repo/utils';
+import { ApiError } from '@mindfiredigital/utils';
 
 export const validate = (schema: ZodTypeAny) => {
   return async (req: Request, res: Response, next: NextFunction) => {

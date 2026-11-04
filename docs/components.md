@@ -7,7 +7,7 @@ This document catalogs the design system, reusable UI primitives, layout contain
 ## Table of Contents
 
 - [1. Design Tokens & Styling Philosophy](#1-design-tokens--styling-philosophy)
-- [2. Primitives (`@repo/shared-ui`)](#2-primitives-reposhared-ui)
+- [2. Primitives (`@mindfiredigital/shared-ui`)](#2-primitives-reposhared-ui)
   - [Button](#button)
   - [Input & Textarea](#input--textarea)
   - [Badge](#badge)
@@ -40,7 +40,7 @@ The CMS Studio uses a tailored dark-mode aesthetic built on **Tailwind CSS v3**:
 
 ---
 
-## 2. Primitives (`@repo/shared-ui`)
+## 2. Primitives (`@mindfiredigital/shared-ui`)
 
 Exported from `packages/shared-ui` for consistency across all apps.
 
@@ -49,7 +49,7 @@ Exported from `packages/shared-ui` for consistency across all apps.
 Interactive action trigger supporting multiple semantic visual variants.
 
 ```tsx
-import { Button } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
 
 <Button variant="primary" size="md" onClick={handleSave}>
   Save Changes
@@ -67,7 +67,7 @@ import { Button } from '@repo/shared-ui';
 Form controls with integrated error handling, labels, and placeholder support.
 
 ```tsx
-import { Input, Textarea } from '@repo/shared-ui';
+import { Input, Textarea } from '@mindfiredigital/shared-ui';
 
 <Input
   id="slug"
@@ -83,7 +83,7 @@ import { Input, Textarea } from '@repo/shared-ui';
 Compact visual indicator for entity status, taxonomy, or roles.
 
 ```tsx
-import { Badge } from '@repo/shared-ui';
+import { Badge } from '@mindfiredigital/shared-ui';
 
 <Badge variant="success">Published</Badge>
 <Badge variant="neutral">Draft</Badge>
@@ -95,7 +95,7 @@ import { Badge } from '@repo/shared-ui';
 A full-featured tabular data grid supporting client/server pagination, multi-column sorting, and debounce search filtering.
 
 ```tsx
-import { AdvancedTable } from '@repo/shared-ui';
+import { AdvancedTable } from '@mindfiredigital/shared-ui';
 
 <AdvancedTable
   rows={tableRows}
@@ -118,7 +118,7 @@ import { AdvancedTable } from '@repo/shared-ui';
 Global notification system mounted at application root.
 
 ```tsx
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 
 function ExampleComponent() {
   const toast = useToast();

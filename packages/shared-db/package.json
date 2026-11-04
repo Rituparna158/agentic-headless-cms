@@ -1,5 +1,5 @@
 {
-  "name": "@repo/shared-db",
+  "name": "@mindfiredigital/shared-db",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -26,15 +26,15 @@
     "seed:e2e-expired-invite": "tsx --env-file=../../.env src/scripts/seed-e2e-expired-invite.ts"
   },
   "dependencies": {
-    "@repo/logger": "workspace:^",
-    "@repo/context": "workspace:*",
+    "@mindfiredigital/logger": "workspace:^",
+    "@mindfiredigital/context": "workspace:*",
     "bcrypt": "^6.0.0",
     "drizzle-orm": "^0.36.4",
     "pg": "^8.13.1"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "@repo/types": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
+    "@mindfiredigital/types": "workspace:*",
     "@types/bcrypt": "^6.0.0",
     "@types/pg": "^8.11.10",
     "dotenv": "^16.6.1",

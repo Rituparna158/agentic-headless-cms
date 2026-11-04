@@ -18,7 +18,7 @@ import { postsApi, extractArrayPayload } from '../api/posts.api';
 import type { PageEntry, ContentCollectionMeta } from '@/types/content.types';
 import { PageSideDrawer } from '@/components/PageSideDrawer';
 import { slugify } from '@/utils/slugify.util';
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 import { InlineErrorAlert } from '@/components/ui/InlineErrorAlert';
 import { EmptyStateCard } from '@/components/ui/EmptyStateCard';
 import { DeletePageModal } from '@/components/modals/DeletePageModal';

@@ -35,7 +35,7 @@ import type {
   ContentCollectionMeta,
 } from '@/types/content.types';
 import { CreatePageDialog } from '../components/CreatePageDialog';
-import { useToast, AdvancedTable } from '@repo/shared-ui';
+import { useToast, AdvancedTable } from '@mindfiredigital/shared-ui';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { normalizeCollaborator } from '../utils/collaborator.util';

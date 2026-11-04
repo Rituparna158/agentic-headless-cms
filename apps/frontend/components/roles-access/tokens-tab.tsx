@@ -16,7 +16,7 @@ import {
   Dropdown,
   DropdownItem,
   DataTable,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import {
   createToken,
   listRoles,

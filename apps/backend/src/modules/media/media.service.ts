@@ -1,22 +1,25 @@
-import { ERROR_MESSAGES } from '@repo/constants';
-import { getStorageAdapter } from '@repo/config';
-import { NotFoundError, ApiError } from '@repo/utils';
-import { logger } from '@repo/logger';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
-import { MediaRepository, type MediaAssetRecord } from '@repo/repository';
+import { ERROR_MESSAGES } from '@mindfiredigital/constants';
+import { getStorageAdapter } from '@mindfiredigital/config';
+import { NotFoundError, ApiError } from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
+import { eventBus } from '@mindfiredigital/events';
+import { EVENT_NAMES, AUDIT_ACTIONS } from '@mindfiredigital/constants';
+import {
+  MediaRepository,
+  type MediaAssetRecord,
+} from '@mindfiredigital/repository';
 import type {
   UploadMediaInput,
   ServedFile,
   ListMediaOptions,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 import {
   readImageDimensions,
   resizeImage,
   type ResizeOptions,
   buildStorageKey,
   extractStorageKey,
-} from '@repo/storage';
+} from '@mindfiredigital/storage';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 export class MediaService {

@@ -13,16 +13,21 @@ vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
 }));
 import jwt from 'jsonwebtoken';
 import { createApp } from '../../../../src/app.js';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
-import { createSchema, listSchemas, updateSchema } from '@repo/shared-db';
+import {
+  createSchema,
+  listSchemas,
+  updateSchema,
+} from '@mindfiredigital/shared-db';
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   authService: {
     getUserPermissions: vi.fn(),
   },
 }));
-vi.mock('@repo/shared-db', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@repo/shared-db')>();
+vi.mock('@mindfiredigital/shared-db', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@mindfiredigital/shared-db')>();
   return {
     ...actual,
     createSchema: vi.fn(),
@@ -230,7 +235,7 @@ describe('Schemas Module', () => {
         status: 'draft',
         version: 1,
       };
-      const { getSchemaById } = await import('@repo/shared-db');
+      const { getSchemaById } = await import('@mindfiredigital/shared-db');
       vi.mocked(getSchemaById).mockResolvedValue(beforeState as never);
       const updated = {
         id: 'schema-1',

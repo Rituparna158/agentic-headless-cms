@@ -2,12 +2,12 @@ import type {
   CreateSchemaInput,
   UpdateSchemaInput,
   BaseQueryOptions,
-} from '@repo/types';
-import { SchemaRepository } from '@repo/repository';
-import { logger } from '@repo/logger';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
-import { ApiError } from '@repo/utils';
+} from '@mindfiredigital/types';
+import { SchemaRepository } from '@mindfiredigital/repository';
+import { logger } from '@mindfiredigital/logger';
+import { eventBus } from '@mindfiredigital/events';
+import { EVENT_NAMES, AUDIT_ACTIONS } from '@mindfiredigital/constants';
+import { ApiError } from '@mindfiredigital/utils';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 export class SchemaService {

@@ -1,5 +1,5 @@
-import { HTTP_STATUS } from '@repo/constants';
-import { logger } from '@repo/logger';
+import { HTTP_STATUS } from '@mindfiredigital/constants';
+import { logger } from '@mindfiredigital/logger';
 import { Request, Response } from 'express';
 import {
   register,

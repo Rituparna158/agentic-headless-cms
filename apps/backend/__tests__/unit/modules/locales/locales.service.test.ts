@@ -3,13 +3,17 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LocalesService } from '../../../../src/modules/locales/locales.service.js';
-import { LocalesRepository } from '@repo/repository';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES, AUDIT_ACTIONS, ERROR_MESSAGES } from '@repo/constants';
-import { ConflictError } from '@repo/utils';
+import { LocalesRepository } from '@mindfiredigital/repository';
+import { eventBus } from '@mindfiredigital/events';
+import {
+  EVENT_NAMES,
+  AUDIT_ACTIONS,
+  ERROR_MESSAGES,
+} from '@mindfiredigital/constants';
+import { ConflictError } from '@mindfiredigital/utils';
 
-vi.mock('@repo/repository');
-vi.mock('@repo/events', () => ({
+vi.mock('@mindfiredigital/repository');
+vi.mock('@mindfiredigital/events', () => ({
   eventBus: { emit: vi.fn() },
 }));
 vi.mock('../../../../src/utils/audit.js', () => ({

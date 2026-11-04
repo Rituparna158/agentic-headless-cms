@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
 import { apiFetch } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';
 import { toast } from 'sonner';

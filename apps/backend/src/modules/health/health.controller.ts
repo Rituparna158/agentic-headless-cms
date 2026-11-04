@@ -1,7 +1,7 @@
 import type { Request, Response, RequestHandler } from 'express';
 import { checkReadiness } from './health.service.js';
-import { asyncHandler } from '@repo/utils';
-import { logger } from '@repo/logger';
+import { asyncHandler } from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
 export const liveness: RequestHandler = asyncHandler(
   (_req: Request, res: Response) => {
     logger.info('HealthController: liveness start');

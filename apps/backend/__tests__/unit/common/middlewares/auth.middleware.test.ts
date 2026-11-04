@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { authenticateToken } from '@repo/middlewares';
-import { getDatabaseAdapter } from '@repo/config';
+import { authenticateToken } from '@mindfiredigital/middlewares';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
 
 vi.mock('jsonwebtoken', () => ({
   default: {
@@ -10,7 +10,7 @@ vi.mock('jsonwebtoken', () => ({
   },
 }));
 
-vi.mock('@repo/config', () => ({
+vi.mock('@mindfiredigital/config', () => ({
   env: {
     JWT_SECRET: 'test-secret-that-is-at-least-32-chars-long',
   },

@@ -1,13 +1,13 @@
 import type * as React from 'react';
 import type { Control, FieldValues } from 'react-hook-form';
-import type { createSchemaSchema } from '@repo/validation';
+import type { createSchemaSchema } from '@mindfiredigital/validation';
 import type {
   ContentEntryRecord,
   SchemaField,
   SchemaRecord,
   MediaAsset,
   MediaFolder,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 import type { z } from 'zod';
 
 export type SchemaBuilderFieldValues = z.input<typeof createSchemaSchema>;

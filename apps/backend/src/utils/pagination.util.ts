@@ -1,5 +1,5 @@
-import { BadRequestError } from '@repo/utils';
-import type { BaseQueryOptions } from '@repo/types';
+import { BadRequestError } from '@mindfiredigital/utils';
+import type { BaseQueryOptions } from '@mindfiredigital/types';
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;

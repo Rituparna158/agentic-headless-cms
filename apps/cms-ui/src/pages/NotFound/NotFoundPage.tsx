@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
 import { ArrowLeft, Home, SearchX } from 'lucide-react';
 
 export const NotFoundPage = () => {

@@ -8,7 +8,7 @@ Background worker application for the Agentic Headless CMS. Powered by **BullMQ*
 
 1. **Asynchronous Media Processing:**
    - Listens on BullMQ queues for newly uploaded media assets.
-   - Generates responsive thumbnails and multi-resolution variants using **Sharp** via `@repo/storage`.
+   - Generates responsive thumbnails and multi-resolution variants using **Sharp** via `@mindfiredigital/storage`.
    - Converts formats (WebP, AVIF) and extracts image dimensions/metadata.
 2. **Event & Webhook Processing:**
    - Dispatches outbound webhooks to third-party endpoints with retry logic and exponential backoff.

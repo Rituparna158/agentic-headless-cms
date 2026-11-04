@@ -4,7 +4,7 @@ import {
   GraphQLID,
   GraphQLString,
 } from 'graphql';
-import type { SchemaField } from '@repo/types';
+import type { SchemaField } from '@mindfiredigital/types';
 import { jsonScalarConfig } from './json-scalar.js';
 // Map schema field to GraphQL type
 function baseTypeName(field: SchemaField): string {

@@ -3,7 +3,12 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { listSchemas } from '@/lib/api/schemas';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@mindfiredigital/shared-ui';
 
 /** Landing page for /content — pick which content type's entries to browse. */
 export function ContentTypeList() {

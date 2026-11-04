@@ -4,7 +4,7 @@ import type {
   LocaleRecord,
   BaseQueryOptions,
   PaginatedResult,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 export function listLocales(
   options?: BaseQueryOptions,

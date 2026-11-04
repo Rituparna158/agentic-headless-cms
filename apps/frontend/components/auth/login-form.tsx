@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { loginSchema } from '@repo/validation';
-import { type LoginInput } from '@repo/types';
+import { loginSchema } from '@mindfiredigital/validation';
+import { type LoginInput } from '@mindfiredigital/types';
 
 import {
   Button,
@@ -15,7 +15,7 @@ import {
   Form,
   FormField,
   Typography,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { Controller } from 'react-hook-form';
 import { API_BASE_URL } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';

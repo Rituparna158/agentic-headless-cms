@@ -22,29 +22,29 @@ const SCOPE_PACKAGE_MAP = {
   worker: 'worker',
 
   // Shared packages
-  'shared-ui': '@repo/shared-ui',
-  ui: '@repo/shared-ui',
-  types: '@repo/types',
-  utils: '@repo/utils',
-  'shared-db': '@repo/shared-db',
-  db: '@repo/shared-db',
-  validation: '@repo/validation',
-  constants: '@repo/constants',
-  logger: '@repo/logger',
-  middlewares: '@repo/middlewares',
-  context: '@repo/context',
-  events: '@repo/events',
-  repository: '@repo/repository',
-  storage: '@repo/storage',
-  config: '@repo/config',
-  'plugin-sdk': '@repo/plugin-sdk',
+  'shared-ui': '@mindfiredigital/shared-ui',
+  ui: '@mindfiredigital/shared-ui',
+  types: '@mindfiredigital/types',
+  utils: '@mindfiredigital/utils',
+  'shared-db': '@mindfiredigital/shared-db',
+  db: '@mindfiredigital/shared-db',
+  validation: '@mindfiredigital/validation',
+  constants: '@mindfiredigital/constants',
+  logger: '@mindfiredigital/logger',
+  middlewares: '@mindfiredigital/middlewares',
+  context: '@mindfiredigital/context',
+  events: '@mindfiredigital/events',
+  repository: '@mindfiredigital/repository',
+  storage: '@mindfiredigital/storage',
+  config: '@mindfiredigital/config',
+  'plugin-sdk': '@mindfiredigital/plugin-sdk',
   'sdk-codegen': '@mindfiredigital/sdk-codegen',
   'sdk-core': '@mindfiredigital/sdk-core',
   'sdk-nextjs': '@mindfiredigital/sdk-nextjs',
   'sdk-node': '@mindfiredigital/sdk-node',
   'sdk-react': '@mindfiredigital/sdk-react',
-  'typescript-config': '@repo/typescript-config',
-  'eslint-config': '@repo/eslint-config',
+  'typescript-config': '@mindfiredigital/typescript-config',
+  'eslint-config': '@mindfiredigital/eslint-config',
 };
 
 // Helper: map modified file path to workspace package name
@@ -57,7 +57,7 @@ function getPackageFromFilePath(filePath) {
   const pkgMatch = filePath.match(/^packages\/([^/]+)\//);
   if (pkgMatch) {
     const pkgFolder = pkgMatch[1];
-    return SCOPE_PACKAGE_MAP[pkgFolder] || `@repo/${pkgFolder}`;
+    return SCOPE_PACKAGE_MAP[pkgFolder] || `@mindfiredigital/${pkgFolder}`;
   }
   return null;
 }

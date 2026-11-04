@@ -1,6 +1,6 @@
 import { HttpTransport } from '../transport/http.js';
 import type { ApiResponse, SearchOptions } from '../types/index.js';
-import type { ListContentEntriesResult } from '@repo/types';
+import type { ListContentEntriesResult } from '@mindfiredigital/types';
 
 export class SearchModule {
   constructor(private transport: HttpTransport) {}

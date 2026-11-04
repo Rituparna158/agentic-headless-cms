@@ -9,7 +9,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 
 export default function AuditLogPage() {
   const user = useAuthStore((state) => state.user);

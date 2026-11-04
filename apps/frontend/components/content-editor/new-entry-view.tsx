@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
   Skeleton,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { useHasPermission } from '@/hooks/use-permissions';
 import { ShieldAlert } from 'lucide-react';
 import { ContentEntryForm } from './content-entry-form';

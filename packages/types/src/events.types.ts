@@ -1,4 +1,4 @@
-import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
+import { EVENT_NAMES, AUDIT_ACTIONS } from '@mindfiredigital/constants';
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
 

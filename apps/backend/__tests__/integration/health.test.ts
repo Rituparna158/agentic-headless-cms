@@ -11,7 +11,7 @@ interface ErrorBody {
   error: { message: string; requestId: string };
 }
 
-import { getDatabaseAdapter } from '@repo/config';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
 
 // GET /health/ready lazily creates the database client/pool on first call.
 // Close it once the suite finishes rather than leaving it for process exit

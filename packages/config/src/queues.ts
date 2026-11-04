@@ -1,7 +1,7 @@
 import { Queue, Worker, type Processor, type WorkerOptions } from 'bullmq';
 import { getRedisConnection } from './redis.js';
 import { env } from './env.js';
-import { logger } from '@repo/logger';
+import { logger } from '@mindfiredigital/logger';
 
 export const QUEUE_NAMES = {
   MEDIA_PROCESSING: 'media-processing',

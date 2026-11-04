@@ -1,6 +1,6 @@
 'use client';
 
-import { Modal } from '@repo/shared-ui';
+import { Modal } from '@mindfiredigital/shared-ui';
 
 import type { ConfirmDialogProps } from '@/types/component.types';
 

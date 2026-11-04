@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { browserLogger } from '@repo/logger/browser';
+import { browserLogger } from '@mindfiredigital/logger/browser';
 import { accessApi } from '../api/access.api';
 import {
   InviteUserPayload,
   Role,
   InviteUserDialogProps,
 } from '../types/access.types';
-import { Button, FormField, Typography } from '@repo/shared-ui';
+import { Button, FormField, Typography } from '@mindfiredigital/shared-ui';
 import { X, Copy, Check } from 'lucide-react';
 
 export const InviteUserDialog = ({ onClose }: InviteUserDialogProps) => {

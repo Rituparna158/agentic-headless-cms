@@ -5,7 +5,7 @@ import type {
   ContentVersionRecord,
   ListContentEntriesOptions,
   PaginationMeta,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 type InferEntryType<TMap, TSlug extends string> = TSlug extends keyof TMap
   ? unknown extends TMap[TSlug]

@@ -3,8 +3,8 @@ import {
   assertMinimumRedisVersion,
   closeRedisConnection,
   closeAllQueues,
-} from '@repo/config';
-import { logger } from '@repo/logger';
+} from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
 
 logger.info('Starting Background Worker...');
 

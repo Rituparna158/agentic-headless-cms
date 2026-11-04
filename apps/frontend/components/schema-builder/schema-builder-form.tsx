@@ -13,8 +13,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createSchemaSchema, schemaTypeValues } from '@repo/validation';
-import { type CreateSchemaInput, type SchemaRecord } from '@repo/types';
+import {
+  createSchemaSchema,
+  schemaTypeValues,
+} from '@mindfiredigital/validation';
+import {
+  type CreateSchemaInput,
+  type SchemaRecord,
+} from '@mindfiredigital/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
@@ -39,7 +45,7 @@ import {
   Dropdown,
   DropdownItem,
   Typography,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { createSchema, updateSchema } from '@/lib/api/schemas';
 import { ApiError } from '@/lib/api-client';
 import type { SchemaBuilderFieldValues } from '@/types/component.types';

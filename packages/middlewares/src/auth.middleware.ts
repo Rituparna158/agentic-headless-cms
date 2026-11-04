@@ -1,17 +1,17 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import type { AuthenticatedUser } from '@repo/types';
-import { env, getDatabaseAdapter } from '@repo/config';
+import type { AuthenticatedUser } from '@mindfiredigital/types';
+import { env, getDatabaseAdapter } from '@mindfiredigital/config';
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   AUTH_COOKIES,
   ADMIN_ROLES,
-} from '@repo/constants';
-import { apiTokens, roles, permissions } from '@repo/shared-db';
+} from '@mindfiredigital/constants';
+import { apiTokens, roles, permissions } from '@mindfiredigital/shared-db';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'node:crypto';
-import type { Permission } from '@repo/utils/rbac';
+import type { Permission } from '@mindfiredigital/utils/rbac';
 
 function errorJson(res: Response, status: number, message: string) {
   const req = res.req as unknown as Request;

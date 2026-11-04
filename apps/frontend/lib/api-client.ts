@@ -74,7 +74,7 @@ export async function apiFetch<T>(
   return body.data;
 }
 export function buildQueryString(
-  options?: import('@repo/types').BaseQueryOptions,
+  options?: import('@mindfiredigital/types').BaseQueryOptions,
 ) {
   if (!options) return '';
   const params = new URLSearchParams();

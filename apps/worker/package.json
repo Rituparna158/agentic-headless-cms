@@ -13,12 +13,12 @@
   },
   "dependencies": {
     "bullmq": "^5.80.5",
-    "@repo/config": "workspace:*",
-    "@repo/logger": "workspace:*",
-    "@repo/storage": "workspace:*"
+    "@mindfiredigital/config": "workspace:*",
+    "@mindfiredigital/logger": "workspace:*",
+    "@mindfiredigital/storage": "workspace:*"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "@types/node": "^24.0.0",
     "tsx": "^4.23.0",
     "typescript": "5.9.2"

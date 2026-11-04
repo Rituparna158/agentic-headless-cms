@@ -11,5 +11,5 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   minify: false,
-  noExternal: ['@repo/types'],
+  noExternal: ['@mindfiredigital/types'],
 });

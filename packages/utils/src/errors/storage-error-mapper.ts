@@ -2,7 +2,7 @@ import {
   StorageError,
   StorageNotFoundError,
   InvalidResizeError,
-} from '@repo/storage';
+} from '@mindfiredigital/storage';
 import {
   HttpError,
   InternalServerError,
@@ -11,7 +11,7 @@ import {
 } from './http-error.js';
 
 /**
- * Translates `@repo/storage`'s typed storage errors into typed HTTP errors.
+ * Translates `@mindfiredigital/storage`'s typed storage errors into typed HTTP errors.
  */
 export function mapStorageErrorToHttpError(error: StorageError): HttpError {
   if (error instanceof StorageNotFoundError) {

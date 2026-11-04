@@ -8,7 +8,7 @@ import {
   keepPreviousData,
 } from '@tanstack/react-query';
 import { listWebhooks, createWebhook, deleteWebhook } from '@/lib/api/webhooks';
-import { WebhookRecord } from '@repo/types';
+import { WebhookRecord } from '@mindfiredigital/types';
 import {
   Button,
   Input,
@@ -18,7 +18,7 @@ import {
   Dropdown,
   DropdownItem,
   Badge,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2, History, MoreVertical, Radio, Plus } from 'lucide-react';
 import { WebhookDeliveriesDrawer } from './webhook-deliveries-drawer';

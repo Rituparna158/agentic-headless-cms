@@ -15,7 +15,7 @@ vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
 }));
 import jwt from 'jsonwebtoken';
 import { createApp } from '../../../../src/app.js';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
 const { testAsset } = vi.hoisted(() => ({
   testAsset: {
@@ -37,7 +37,7 @@ const { testAsset } = vi.hoisted(() => ({
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   authService: { getUserPermissions: vi.fn() },
 }));
-vi.mock('@repo/repository', () => ({
+vi.mock('@mindfiredigital/repository', () => ({
   MediaRepository: vi.fn().mockImplementation(function () {
     return {
       create: vi.fn().mockResolvedValue(testAsset),
@@ -66,8 +66,8 @@ const { mockQueueAdd, mockStorageWrite, mockStorageRead, mockStorageDelete } =
     mockStorageRead: vi.fn().mockResolvedValue(Buffer.from('fake-image-bytes')),
     mockStorageDelete: vi.fn().mockResolvedValue(undefined),
   }));
-vi.mock('@repo/config', async (importActual) => {
-  const actual = await importActual<typeof import('@repo/config')>();
+vi.mock('@mindfiredigital/config', async (importActual) => {
+  const actual = await importActual<typeof import('@mindfiredigital/config')>();
   return {
     ...actual,
     getStorageAdapter: vi.fn().mockReturnValue({

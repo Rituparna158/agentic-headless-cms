@@ -3,7 +3,7 @@
 import { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { SchemaRecord } from '@repo/types';
+import type { SchemaRecord } from '@mindfiredigital/types';
 import { generateTypes } from './generators/type-generator.js';
 
 interface ProgramOptions {

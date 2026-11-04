@@ -5,7 +5,7 @@ import {
   validatePartialContentPayload,
 } from './validation/content-validation.middleware.js';
 import { resolveSchema } from './validation/resolve-schema.middleware.js';
-import { authenticateToken } from '@repo/middlewares';
+import { authenticateToken } from '@mindfiredigital/middlewares';
 import { requirePermission } from '../auth/rbac.middleware.js';
 
 export const contentRoutes = Router();

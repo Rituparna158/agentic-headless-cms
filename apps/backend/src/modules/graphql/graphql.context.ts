@@ -1,7 +1,7 @@
-import { ERROR_MESSAGES } from '@repo/constants';
+import { ERROR_MESSAGES } from '@mindfiredigital/constants';
 import { authService } from '../auth/auth.service.js';
-import { hasPermission } from '@repo/utils/rbac';
-import { ForbiddenError, UnauthorizedError } from '@repo/utils';
+import { hasPermission } from '@mindfiredigital/utils/rbac';
+import { ForbiddenError, UnauthorizedError } from '@mindfiredigital/utils';
 import { GraphQLContext } from '../../types/graphql.types.js';
 
 /** Check GraphQL permissions */

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { browserLogger } from '@repo/logger/browser';
+import { browserLogger } from '@mindfiredigital/logger/browser';
 
 const envSchema = z
   .object({

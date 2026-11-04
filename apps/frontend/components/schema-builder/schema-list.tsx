@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import Link from 'next/link';
 import { listSchemas } from '@/lib/api/schemas';
-import { Badge, Card, CardContent, DataTable } from '@repo/shared-ui';
+import {
+  Badge,
+  Card,
+  CardContent,
+  DataTable,
+} from '@mindfiredigital/shared-ui';
 import { SchemaRowActions } from './schema-row-actions';
 
 export function SchemaList() {

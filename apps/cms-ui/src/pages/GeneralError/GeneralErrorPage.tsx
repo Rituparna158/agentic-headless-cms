@@ -1,4 +1,4 @@
-import { Button } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 
 export const GeneralErrorPage = () => {

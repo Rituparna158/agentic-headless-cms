@@ -1,5 +1,5 @@
 /** generateMetadataFromEntry — builds a Next.js Metadata object from a CMS entry. */
-import type { ContentEntryRecord, SchemaRecord } from '@repo/types';
+import type { ContentEntryRecord, SchemaRecord } from '@mindfiredigital/types';
 import type { CmsMetadata } from '../types.js';
 import { extractMetaFields } from '../utils/metadata.js';
 import { getContentEntry } from './content.js';

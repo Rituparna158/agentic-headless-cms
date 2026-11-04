@@ -17,8 +17,8 @@ import {
   VersionHistoryDrawerProps,
   ContentVersionRecord,
 } from '../../types/template.types';
-import { useToast } from '@repo/shared-ui';
-import { browserLogger } from '@repo/logger/browser';
+import { useToast } from '@mindfiredigital/shared-ui';
+import { browserLogger } from '@mindfiredigital/logger/browser';
 import { SnapshotDetailDeck } from './SnapshotDetailDeck';
 
 export const VersionHistoryDrawer: React.FC<VersionHistoryDrawerProps> = ({

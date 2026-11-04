@@ -1,4 +1,4 @@
-import { config as nodeConfig } from '@repo/eslint-config/node';
+import { config as nodeConfig } from '@mindfiredigital/eslint-config/node';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import tseslint from 'typescript-eslint';
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateToken } from '@repo/middlewares';
+import { authenticateToken } from '@mindfiredigital/middlewares';
 import {
   authRateLimiter,
   passwordResetRateLimiter,

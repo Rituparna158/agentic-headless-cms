@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listLocales, createLocale, deleteLocale } from '@/lib/api/locales';
-import { Button, Input, Modal, DataTable } from '@repo/shared-ui';
+import { Button, Input, Modal, DataTable } from '@mindfiredigital/shared-ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
-import { LocaleRecord } from '@repo/types';
+import { LocaleRecord } from '@mindfiredigital/types';
 
 export function LocalesTab() {
   const queryClient = useQueryClient();

@@ -38,9 +38,9 @@
   },
   "devDependencies": {
     "@mindfiredigital/sdk-core": "workspace:*",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/types": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
+    "@mindfiredigital/eslint-config": "workspace:*",
+    "@mindfiredigital/types": "workspace:*",
+    "@mindfiredigital/typescript-config": "workspace:*",
     "@tanstack/react-query": "^5.28.4",
     "@testing-library/react": "^14.2.1",
     "@types/react": "^18.2.65",

@@ -46,7 +46,7 @@ import {
 import type * as React from 'react';
 import type { LexicalRichTextFieldProps } from '@/types/component.types';
 
-import { Button } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
 import { cn } from '@/lib/utils';
 
 function Toolbar({ disabled }: { disabled?: boolean }) {

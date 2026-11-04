@@ -5,13 +5,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Link2, Trash2, Search, Check, Layers } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
 import { listContentEntries, getContentEntry } from '@/lib/api/content';
-import { Button, Modal, Input, Badge } from '@repo/shared-ui';
+import { Button, Modal, Input, Badge } from '@mindfiredigital/shared-ui';
 import { cn } from '@/lib/utils';
 import type {
   SchemaField,
   ContentEntryRecord,
   SchemaRecord,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 export interface RelationPickerFieldProps {
   field: SchemaField;

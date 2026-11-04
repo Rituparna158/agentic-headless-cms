@@ -1,8 +1,8 @@
 import type { Request, Response, RequestHandler } from 'express';
 import { auditService } from './audit.service.js';
-import { asyncHandler, ApiResponse } from '@repo/utils';
-import { logger } from '@repo/logger';
-import type { GetAuditLogsQuery } from '@repo/types';
+import { asyncHandler, ApiResponse } from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
+import type { GetAuditLogsQuery } from '@mindfiredigital/types';
 
 export const listAuditLogs: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
@@ -25,9 +25,13 @@ export const listAuditLogs: RequestHandler = asyncHandler(
       search: (req.query.search || req.query.searchQuery) as string | undefined,
       sortBy: (req.query.sortBy || req.query.sortKey) as string | undefined,
       sortOrder: (req.query.sortOrder || req.query.sortDirection) as
-        'asc' | 'desc' | undefined,
+        | 'asc'
+        | 'desc'
+        | undefined,
       sortDirection: (req.query.sortDirection || req.query.sortOrder) as
-        'asc' | 'desc' | undefined,
+        | 'asc'
+        | 'desc'
+        | undefined,
     };
 
     const result = await auditService.list(query);

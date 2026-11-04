@@ -1,9 +1,9 @@
-import { getDatabaseAdapter } from '@repo/config';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
 import type {
   DependencyStatus,
   ReadinessResult,
 } from '../../types/health.types.js';
-import { ApiError } from '@repo/utils';
+import { ApiError } from '@mindfiredigital/utils';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 // Kubernetes readiness check
 export async function checkReadiness(): Promise<ReadinessResult> {

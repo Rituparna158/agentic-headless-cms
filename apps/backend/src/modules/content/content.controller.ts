@@ -1,10 +1,10 @@
 import { Request, Response, RequestHandler } from 'express';
 import { ContentService } from './content.service.js';
 import { parseContentQuery } from './query/content-query.util.js';
-import { logger } from '@repo/logger';
-import { asyncHandler, ApiResponse, ApiError } from '@repo/utils';
-import { DEFAULT_LOCALE, ERROR_MESSAGES } from '@repo/constants';
-import type { SchemaDefinition } from '@repo/types';
+import { logger } from '@mindfiredigital/logger';
+import { asyncHandler, ApiResponse, ApiError } from '@mindfiredigital/utils';
+import { DEFAULT_LOCALE, ERROR_MESSAGES } from '@mindfiredigital/constants';
+import type { SchemaDefinition } from '@mindfiredigital/types';
 import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
 const contentService = new ContentService();
 function checkAuthorizedForDrafts(req: Request, schemaId?: string): boolean {
@@ -38,7 +38,7 @@ function checkAuthorizedForDrafts(req: Request, schemaId?: string): boolean {
 
 export const listEntries: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const schemaId = req.schemaId!;
+    const schemaId = req.schemaId;
     logger.info({ schemaId }, 'ContentController: listEntries start');
     const { fields } = req.schema!.definition as SchemaDefinition;
     const locale =
@@ -176,7 +176,7 @@ export const listVersions: RequestHandler = asyncHandler(
 );
 export const createDraft: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const schemaId = req.schemaId!;
+    const schemaId = req.schemaId;
     logger.info({ schemaId }, 'ContentController: createDraft start');
     const locale =
       typeof req.query.locale === 'string' ? req.query.locale : DEFAULT_LOCALE;

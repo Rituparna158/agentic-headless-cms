@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
   Skeleton,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { ContentEntryForm } from './content-entry-form';
 
 export function EditEntryView({

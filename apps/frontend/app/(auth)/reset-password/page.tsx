@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { ResetPasswordForm } from '@/components/auth/reset-password-form';
 
 export const metadata: Metadata = {

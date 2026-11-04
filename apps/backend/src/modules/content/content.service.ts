@@ -1,10 +1,10 @@
-import { ContentRepository } from '@repo/repository';
-import { DEFAULT_LOCALE } from '@repo/constants';
-import { logger } from '@repo/logger';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
-import type { ContentQueryOptions } from '@repo/types';
-import { ApiError } from '@repo/utils';
+import { ContentRepository } from '@mindfiredigital/repository';
+import { DEFAULT_LOCALE } from '@mindfiredigital/constants';
+import { logger } from '@mindfiredigital/logger';
+import { eventBus } from '@mindfiredigital/events';
+import { EVENT_NAMES, AUDIT_ACTIONS } from '@mindfiredigital/constants';
+import type { ContentQueryOptions } from '@mindfiredigital/types';
+import { ApiError } from '@mindfiredigital/utils';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 export class ContentService {

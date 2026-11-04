@@ -1,8 +1,8 @@
 import { Request, Response, RequestHandler } from 'express';
 import { LocalesService } from './locales.service.js';
-import { HTTP_STATUS, ERROR_MESSAGES } from '@repo/constants';
-import { asyncHandler, ApiResponse } from '@repo/utils';
-import { logger } from '@repo/logger';
+import { HTTP_STATUS, ERROR_MESSAGES } from '@mindfiredigital/constants';
+import { asyncHandler, ApiResponse } from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
 import {
   parseQueryOptions,
   formatPaginatedResponse,
@@ -28,8 +28,8 @@ export const listLocales: RequestHandler = asyncHandler(
           formatPaginatedResponse(
             locales,
             total,
-            options.page!,
-            options.pageSize!,
+            options.page,
+            options.pageSize,
           ),
           'Locales listed successfully',
         ),

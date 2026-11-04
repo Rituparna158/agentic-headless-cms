@@ -1,5 +1,5 @@
 import { RolesTab } from '../components/RolesTab';
-import { Typography } from '@repo/shared-ui';
+import { Typography } from '@mindfiredigital/shared-ui';
 export const RolesAccessPage = () => {
   return (
     <div className="flex flex-col h-full bg-background animate-in fade-in duration-500">

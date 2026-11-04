@@ -1,4 +1,4 @@
-import type { ContentEntryRecord, SchemaRecord } from '@repo/types';
+import type { ContentEntryRecord, SchemaRecord } from '@mindfiredigital/types';
 import { toPlainText } from './text.js';
 
 /** Extracts title, description, and imageUrl from a content entry using schema field definitions. */

@@ -10,7 +10,7 @@ import {
   MaintenancePageHeading,
   MaintenancePageDesc,
   Button,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 
 export interface UnderImplementationProps {
   icon?: LucideIcon;

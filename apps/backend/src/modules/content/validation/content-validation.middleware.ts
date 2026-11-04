@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import type { SchemaDefinition } from '@repo/types';
-import { compileZodSchema } from '@repo/validation';
+import type { SchemaDefinition } from '@mindfiredigital/types';
+import { compileZodSchema } from '@mindfiredigital/validation';
 
 /** Validate request body */
 export const validateContentPayload = (

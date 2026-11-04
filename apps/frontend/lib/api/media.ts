@@ -5,7 +5,7 @@ import type {
   ListMediaResult,
   MediaAsset,
   MediaFolder,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 export function mediaFileUrl(asset: MediaAsset): string {
   return `${API_BASE_URL}${asset.url}`;
 }

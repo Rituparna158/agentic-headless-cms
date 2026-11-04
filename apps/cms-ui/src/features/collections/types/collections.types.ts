@@ -123,7 +123,7 @@ import type {
   SchemaField,
   PaginationMeta,
   AuthenticatedUser,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 export interface SchemaEntry {
   id: string;

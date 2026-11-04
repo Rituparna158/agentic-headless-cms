@@ -9,8 +9,8 @@ import {
   Card,
   Avatar,
   ScrollArea,
-} from '@repo/shared-ui';
-import type { AuditLogRecord } from '@repo/types';
+} from '@mindfiredigital/shared-ui';
+import type { AuditLogRecord } from '@mindfiredigital/types';
 import { Clock, Bot, Globe, Shield, FileText } from 'lucide-react';
 
 interface AuditDetailDrawerProps {

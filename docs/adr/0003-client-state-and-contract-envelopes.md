@@ -101,6 +101,6 @@ graph TD
 ### Trade-offs & Mitigations
 
 - **Schema Overhead**: Every backend entity needs a corresponding Zod contract in `src/features/*/validate/`.
-  - _Mitigation_: Shared Zod contracts are imported directly from `@repo/validation` where possible, keeping client schemas lean.
+  - _Mitigation_: Shared Zod contracts are imported directly from `@mindfiredigital/validation` where possible, keeping client schemas lean.
 - **Mocking Precision in Tests**: Tests and Playwright E2E suites must mock the `{ success: true, data: T }` envelope to pass `requestHandler` parsing.
   - _Mitigation_: Standardized test fixtures and mock generators ensure all unit and E2E suites match the production envelope seamlessly.

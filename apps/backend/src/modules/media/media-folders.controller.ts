@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { HTTP_STATUS } from '@repo/constants';
+import { HTTP_STATUS } from '@mindfiredigital/constants';
 import { MediaFoldersService } from './media-folders.service.js';
 const mediaFoldersService = new MediaFoldersService();
 export const createFolder = async (

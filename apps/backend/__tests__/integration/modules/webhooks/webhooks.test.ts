@@ -13,7 +13,7 @@ vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
 }));
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 vi.mock('../../../../src/modules/webhooks/webhooks.service.js', () => {
   const WebhooksService = vi.fn();
   WebhooksService.prototype.list = vi.fn().mockResolvedValue([

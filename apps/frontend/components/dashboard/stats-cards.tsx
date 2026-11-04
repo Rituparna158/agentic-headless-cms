@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { listMedia } from '@/lib/api/media';
 import { useDashboardOverview } from '@/lib/hooks/use-dashboard-overview';
-import { Card, CardContent, CardHeader } from '@repo/shared-ui';
+import { Card, CardContent, CardHeader } from '@mindfiredigital/shared-ui';
 
 export function StatsCards() {
   const { data, isLoading, isError } = useDashboardOverview();

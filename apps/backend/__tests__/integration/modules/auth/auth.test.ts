@@ -14,14 +14,14 @@ vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
   },
 }));
 import { createApp } from '../../../../src/app.js';
-import { authRepository } from '@repo/repository';
+import { authRepository } from '@mindfiredigital/repository';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 const { mockGetAdminUsers } = vi.hoisted(() => ({
   mockGetAdminUsers: vi.fn().mockResolvedValue([]),
 }));
-vi.mock('@repo/config', () => ({
+vi.mock('@mindfiredigital/config', () => ({
   env: {
     CORS_ORIGIN: 'http://localhost:3001',
     NODE_ENV: 'test',
@@ -52,7 +52,7 @@ vi.mock('nodemailer', () => ({
     }),
   },
 }));
-vi.mock('@repo/repository', () => ({
+vi.mock('@mindfiredigital/repository', () => ({
   authRepository: {
     getUserByEmail: vi.fn(),
     getUserRoles: vi.fn(),

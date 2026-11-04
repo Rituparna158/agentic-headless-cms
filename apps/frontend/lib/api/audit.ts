@@ -5,7 +5,7 @@ import type {
   GetAuditLogsQuery,
   PaginatedAuditLogsResponse,
   AuditLogRecord,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 export function buildAuditQueryString(options?: GetAuditLogsQuery): string {
   if (!options) return '';

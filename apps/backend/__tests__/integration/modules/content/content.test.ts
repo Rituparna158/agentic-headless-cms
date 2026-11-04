@@ -15,7 +15,7 @@ vi.mock('../../../../src/middlewares/global-auth.middleware', () => ({
 }));
 import { createApp } from '../../../../src/app.js';
 import jwt from 'jsonwebtoken';
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 import { authService } from '../../../../src/modules/auth/auth.service.js';
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   authService: {
@@ -58,7 +58,7 @@ const { repoMocks } = vi.hoisted(() => ({
     deleteEntry: vi.fn(),
   },
 }));
-vi.mock('@repo/repository', () => {
+vi.mock('@mindfiredigital/repository', () => {
   return {
     ContentRepository: vi.fn().mockImplementation(function () {
       return repoMocks;

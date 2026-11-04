@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateToken, requireAdmin } from '@repo/middlewares';
+import { authenticateToken, requireAdmin } from '@mindfiredigital/middlewares';
 import { listAuditLogs, getAuditLog } from './audit.controller.js';
 
 export const auditRouter = Router();

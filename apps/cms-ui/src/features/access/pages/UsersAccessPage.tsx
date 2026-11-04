@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query';
 import { accessApi } from '../api/access.api';
 import { User, Role } from '../types/access.types';
-import { Button, Typography, DataTable } from '@repo/shared-ui';
+import { Button, Typography, DataTable } from '@mindfiredigital/shared-ui';
 import { Plus, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
 import { InviteUserDialog } from '../components/InviteUserDialog';
 import { useAuthStore } from '../../auth/store/auth.store';

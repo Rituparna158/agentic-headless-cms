@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { Button, Drawer } from '@repo/shared-ui';
+import { Button, Drawer } from '@mindfiredigital/shared-ui';
 import { listContentVersions, revertContentEntry } from '@/lib/api/content';
 import type { VersionHistoryDrawerProps } from '@/types/component.types';
 import { formatFieldValue } from '@/utils/lexical';

@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@mindfiredigital/shared-ui';
 import { SchemaBuilderForm } from '@/components/schema-builder/schema-builder-form';
 
 export const metadata: Metadata = {

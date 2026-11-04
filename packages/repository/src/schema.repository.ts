@@ -6,16 +6,16 @@ import {
   updateSchema as updateSchemaRecord,
   deleteSchema as deleteSchemaRecord,
   type Database,
-} from '@repo/shared-db';
-import { contextStorage } from '@repo/context';
+} from '@mindfiredigital/shared-db';
+import { contextStorage } from '@mindfiredigital/context';
 import type {
   CreateSchemaInput,
   UpdateSchemaInput,
   BaseQueryOptions,
-} from '@repo/types';
-import { getDatabaseAdapter } from '@repo/config';
-import { logger } from '@repo/logger';
-import { ApiError } from '@repo/utils';
+} from '@mindfiredigital/types';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
+import { ApiError } from '@mindfiredigital/utils';
 import { REPO_ERRORS } from './error-constants.js';
 export class SchemaRepository {
   private getDb(): Database {

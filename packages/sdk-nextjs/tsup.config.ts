@@ -11,5 +11,5 @@ export default defineConfig({
   minify: false,
   target: 'node18',
   external: ['next'],
-  noExternal: ['@repo/types'],
+  noExternal: ['@mindfiredigital/types'],
 });

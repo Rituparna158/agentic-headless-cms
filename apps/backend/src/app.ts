@@ -4,15 +4,15 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
-import { logger } from '@repo/logger';
+import { logger } from '@mindfiredigital/logger';
 import {
   errorHandlerMiddleware,
   notFoundMiddleware,
   requestIdMiddleware,
   contextMiddleware,
-} from '@repo/middlewares';
-import { env } from '@repo/config';
-import { setupAuditListener } from '@repo/events';
+} from '@mindfiredigital/middlewares';
+import { env } from '@mindfiredigital/config';
+import { setupAuditListener } from '@mindfiredigital/events';
 import { graphqlRouter } from './modules/graphql/graphql.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { metricsRouter } from './modules/observability/metrics.routes.js';

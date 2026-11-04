@@ -1,9 +1,9 @@
-import { logger } from '@repo/logger';
-import { ApiError } from '@repo/utils';
+import { logger } from '@mindfiredigital/logger';
+import { ApiError } from '@mindfiredigital/utils';
 import {
   MediaFoldersRepository,
   type MediaFolderRecord,
-} from '@repo/repository';
+} from '@mindfiredigital/repository';
 export class MediaFoldersService {
   private repository = new MediaFoldersRepository();
   async create(

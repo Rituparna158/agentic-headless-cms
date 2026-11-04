@@ -11,7 +11,7 @@ import {
   DropdownItem,
   Input,
   Drawer,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { useAuthStore } from '@/stores/auth-store';
 

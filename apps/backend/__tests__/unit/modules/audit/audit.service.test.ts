@@ -3,10 +3,10 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuditService } from '../../../../src/modules/audit/audit.service.js';
-import { AuditRepository } from '@repo/repository';
-import { NotFoundError } from '@repo/utils';
+import { AuditRepository } from '@mindfiredigital/repository';
+import { NotFoundError } from '@mindfiredigital/utils';
 
-vi.mock('@repo/repository');
+vi.mock('@mindfiredigital/repository');
 
 describe('AuditService', () => {
   let auditService: AuditService;

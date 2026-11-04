@@ -3,12 +3,12 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WebhooksService } from '../../../../src/modules/webhooks/webhooks.service.js';
-import { WebhooksRepository } from '@repo/repository';
-import { eventBus } from '@repo/events';
-import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
+import { WebhooksRepository } from '@mindfiredigital/repository';
+import { eventBus } from '@mindfiredigital/events';
+import { EVENT_NAMES, AUDIT_ACTIONS } from '@mindfiredigital/constants';
 
-vi.mock('@repo/repository');
-vi.mock('@repo/events', () => ({
+vi.mock('@mindfiredigital/repository');
+vi.mock('@mindfiredigital/events', () => ({
   eventBus: { emit: vi.fn() },
 }));
 vi.mock('../../../../src/utils/audit.js', () => ({

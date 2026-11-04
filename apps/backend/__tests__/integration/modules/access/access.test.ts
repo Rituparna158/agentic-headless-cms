@@ -20,7 +20,7 @@ vi.mock('../../../../src/modules/schemas/schema.service.ts', () => ({
       .mockResolvedValue({ id: 'schema-id', slug: 'mock-slug' }),
   },
 }));
-import { env } from '@repo/config';
+import { env } from '@mindfiredigital/config';
 vi.mock('../../../../src/modules/auth/auth.service.js', () => ({
   authService: {
     getUserPermissions: vi.fn().mockImplementation(async (userId) => {

@@ -1,4 +1,4 @@
-import type { SchemaDefinition } from '@repo/types';
+import type { SchemaDefinition } from '@mindfiredigital/types';
 
 export function buildDefaultValues(
   definition: SchemaDefinition,

@@ -6,7 +6,7 @@ import {
   testWebhook,
   listWebhookDeliveries,
 } from './webhooks.controller.js';
-import { authenticateToken, requireAdmin } from '@repo/middlewares';
+import { authenticateToken, requireAdmin } from '@mindfiredigital/middlewares';
 export const webhooksRouter = Router();
 webhooksRouter.use(authenticateToken, requireAdmin);
 webhooksRouter.get('/', listWebhooks);

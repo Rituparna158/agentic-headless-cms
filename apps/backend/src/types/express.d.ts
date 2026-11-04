@@ -1,6 +1,6 @@
-import type { AuthenticatedUser } from '@repo/types';
-import type { SchemaRecord } from '@repo/shared-db';
-import type { RequestContext } from '@repo/context';
+import type { AuthenticatedUser } from '@mindfiredigital/types';
+import type { SchemaRecord } from '@mindfiredigital/shared-db';
+import type { RequestContext } from '@mindfiredigital/context';
 declare global {
   namespace Express {
     export interface Request {

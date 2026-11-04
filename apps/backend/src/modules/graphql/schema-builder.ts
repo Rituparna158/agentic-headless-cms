@@ -1,7 +1,7 @@
 import { SchemaComposer } from 'graphql-compose';
 import type { GraphQLSchema } from 'graphql';
-import type { SchemaDefinition } from '@repo/types';
-import type { SchemaRecord } from '@repo/shared-db';
+import type { SchemaDefinition } from '@mindfiredigital/types';
+import type { SchemaRecord } from '@mindfiredigital/shared-db';
 import { ContentService } from '../content/content.service.js';
 import { parseContentQuery } from '../content/query/content-query.util.js';
 import { fieldTypeSpec } from './type-mapper.js';
@@ -29,7 +29,7 @@ function toEntryPayload(raw: {
   updatedAt?: string | Date | null;
 }): EntryPayload {
   return {
-    id: raw.entryId ?? raw.id!,
+    id: raw.entryId ?? raw.id,
     status: raw.status,
     data: raw.data,
     publishedData: raw.publishedData ?? null,

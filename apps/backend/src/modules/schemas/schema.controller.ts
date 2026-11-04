@@ -1,8 +1,11 @@
 import type { Request, Response, RequestHandler } from 'express';
-import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/types';
-import { ERROR_MESSAGES } from '@repo/constants';
-import { ApiError, ApiResponse, asyncHandler } from '@repo/utils';
-import { logger } from '@repo/logger';
+import type {
+  CreateSchemaInput,
+  UpdateSchemaInput,
+} from '@mindfiredigital/types';
+import { ERROR_MESSAGES } from '@mindfiredigital/constants';
+import { ApiError, ApiResponse, asyncHandler } from '@mindfiredigital/utils';
+import { logger } from '@mindfiredigital/logger';
 import { schemaService } from './schema.service.js';
 import {
   parseQueryOptions,
@@ -50,8 +53,8 @@ export const listSchemas: RequestHandler = asyncHandler(
           formatPaginatedResponse(
             schemas,
             total,
-            options.page!,
-            options.pageSize!,
+            options.page,
+            options.pageSize,
           ),
           'Schemas listed successfully',
         ),

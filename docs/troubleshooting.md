@@ -229,19 +229,19 @@ Synchronous imports of heavy third-party canvas dependencies (`grapesjs`, plugin
 ### Symptom: Turborepo Fails with Missing Type Declarations
 
 ```text
-Cannot find module '@repo/types' or its corresponding type declarations.
+Cannot find module '@mindfiredigital/types' or its corresponding type declarations.
 ```
 
 #### Cause
 
-Internal monorepo packages (`@repo/types`, `@repo/validation`, `@repo/shared-db`) have not been built before running the application.
+Internal monorepo packages (`@mindfiredigital/types`, `@mindfiredigital/validation`, `@mindfiredigital/shared-db`) have not been built before running the application.
 
 #### Remediation
 
 Run a monorepo build for dependency packages:
 
 ```bash
-pnpm --filter "@repo/*" run build
+pnpm --filter "@mindfiredigital/*" run build
 ```
 
 Turborepo will compile TypeScript declarations to their respective `dist/` folders and cache the output.

@@ -1,6 +1,11 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@mindfiredigital/shared-ui';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
 import { SchemaBuilderForm } from './schema-builder-form';
 

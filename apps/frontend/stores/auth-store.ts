@@ -7,7 +7,7 @@ import {
 } from '@/lib/api/auth';
 import { AuthState } from '@/types/store.types';
 import { ApiError } from '@/lib/api-client';
-import type { AuthenticatedUser } from '@repo/types';
+import type { AuthenticatedUser } from '@mindfiredigital/types';
 
 /**
  * No persist middleware here deliberately: the session itself lives in an

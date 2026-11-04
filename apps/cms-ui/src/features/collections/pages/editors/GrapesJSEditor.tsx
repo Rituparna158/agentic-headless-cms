@@ -6,7 +6,7 @@ import {
   useImperativeHandle,
 } from 'react';
 import type { Editor } from 'grapesjs';
-import { browserLogger } from '@repo/logger/browser';
+import { browserLogger } from '@mindfiredigital/logger/browser';
 import {
   CustomBlocksPlugin,
   register_universal_cms_traits,

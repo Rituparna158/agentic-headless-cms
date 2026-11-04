@@ -4,7 +4,7 @@ import type {
   MediaFolder,
   CreateMediaFolderInput,
   ListMediaOptions,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 export type {
   MediaAsset,

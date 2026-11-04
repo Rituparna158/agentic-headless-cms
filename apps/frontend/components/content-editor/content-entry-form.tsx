@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { compileZodSchema } from '@repo/validation';
-import { DEFAULT_LOCALE } from '@repo/constants';
+import { compileZodSchema } from '@mindfiredigital/validation';
+import { DEFAULT_LOCALE } from '@mindfiredigital/constants';
 
 import {
   createContentEntry,
@@ -24,8 +24,8 @@ import {
   Dropdown,
   DropdownItem,
   Skeleton,
-} from '@repo/shared-ui';
-import type { SchemaField } from '@repo/types';
+} from '@mindfiredigital/shared-ui';
+import type { SchemaField } from '@mindfiredigital/types';
 import { ChevronDown, Globe, History, Trash2, Undo2 } from 'lucide-react';
 import { FormProvider } from 'react-hook-form';
 import { toast } from 'sonner';

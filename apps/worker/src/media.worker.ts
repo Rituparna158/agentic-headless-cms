@@ -1,8 +1,8 @@
 import path from 'node:path';
 import type { Job } from 'bullmq';
-import { getStorageAdapter, registerWorker, QUEUE_NAMES } from '@repo/config';
-import { resizeImage } from '@repo/storage';
-import { logger } from '@repo/logger';
+import { getStorageAdapter, registerWorker, QUEUE_NAMES } from '@mindfiredigital/config';
+import { resizeImage } from '@mindfiredigital/storage';
+import { logger } from '@mindfiredigital/logger';
 
 export interface MediaThumbnailJobData {
   assetId: string;

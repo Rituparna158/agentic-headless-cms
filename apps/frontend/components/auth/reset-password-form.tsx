@@ -5,10 +5,16 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { resetPasswordSchema } from '@repo/validation';
+import { resetPasswordSchema } from '@mindfiredigital/validation';
 import { z } from 'zod';
 
-import { Button, Input, Form, FormField, Typography } from '@repo/shared-ui';
+import {
+  Button,
+  Input,
+  Form,
+  FormField,
+  Typography,
+} from '@mindfiredigital/shared-ui';
 import { Controller } from 'react-hook-form';
 import { resetPassword } from '@/lib/api/auth';
 

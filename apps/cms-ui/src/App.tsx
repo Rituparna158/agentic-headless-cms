@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ToastProvider, DialogProvider } from '@repo/shared-ui';
+import { ToastProvider, DialogProvider } from '@mindfiredigital/shared-ui';
 import { LiveAnnouncerProvider } from './components/ui/LiveAnnouncer';
 import { AuthLayout } from './components/Layout/AuthLayout';
 import { AuthGuard } from './components/Guard/AuthGuard';

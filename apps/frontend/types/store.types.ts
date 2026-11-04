@@ -1,5 +1,5 @@
-import { AuthenticatedUser } from '@repo/types';
-import { LoginInput } from '@repo/types';
+import { AuthenticatedUser } from '@mindfiredigital/types';
+import { LoginInput } from '@mindfiredigital/types';
 
 export interface AuthState {
   user: AuthenticatedUser | null;

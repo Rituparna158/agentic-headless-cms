@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Button } from '@repo/shared-ui';
+import { Button } from '@mindfiredigital/shared-ui';
 import { AlertCircle, RotateCcw } from 'lucide-react';
 
 interface ErrorProps {

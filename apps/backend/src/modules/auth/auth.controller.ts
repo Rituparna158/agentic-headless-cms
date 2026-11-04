@@ -4,18 +4,22 @@ import {
   mfaChallengeSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
-} from '@repo/validation';
-import { AUTH_COOKIES, ERROR_MESSAGES, HTTP_STATUS } from '@repo/constants';
-import type { AuthenticatedUser } from '@repo/types';
+} from '@mindfiredigital/validation';
+import {
+  AUTH_COOKIES,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+} from '@mindfiredigital/constants';
+import type { AuthenticatedUser } from '@mindfiredigital/types';
 import { Request, Response, RequestHandler } from 'express';
 import {
   UnauthorizedError,
   BadRequestError,
   asyncHandler,
   ApiResponse,
-} from '@repo/utils';
-import { env } from '@repo/config';
-import { logger } from '@repo/logger';
+} from '@mindfiredigital/utils';
+import { env } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
 import { authService } from './auth.service.js';
 
 function isSecureCookie(req: Request): boolean {

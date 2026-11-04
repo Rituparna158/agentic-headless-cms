@@ -8,7 +8,7 @@ import type { ContentVersionRecord } from '../../../../src/features/collections/
 // Mock dependencies
 const toastSuccessMock = vi.fn();
 const toastErrorMock = vi.fn();
-vi.mock('@repo/shared-ui', () => ({
+vi.mock('@mindfiredigital/shared-ui', () => ({
   useToast: () => ({
     success: toastSuccessMock,
     error: toastErrorMock,

@@ -5,9 +5,14 @@ import Link from 'next/link';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { Button, Modal, Dropdown, DropdownItem } from '@repo/shared-ui';
+import {
+  Button,
+  Modal,
+  Dropdown,
+  DropdownItem,
+} from '@mindfiredigital/shared-ui';
 import { deleteSchema } from '@/lib/api/schemas';
-import type { SchemaRecord } from '@repo/types';
+import type { SchemaRecord } from '@mindfiredigital/types';
 import { useHasPermission } from '@/hooks/use-permissions';
 
 export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {

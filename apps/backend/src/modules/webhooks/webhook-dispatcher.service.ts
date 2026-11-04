@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
-import { WebhooksRepository } from '@repo/repository';
-import { logger } from '@repo/logger';
-import { ApiError } from '@repo/utils';
+import { WebhooksRepository } from '@mindfiredigital/repository';
+import { logger } from '@mindfiredigital/logger';
+import { ApiError } from '@mindfiredigital/utils';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
 
 export interface WebhookTestResult {

@@ -10,5 +10,5 @@ export default defineConfig({
   sourcemap: true,
   minify: false,
   target: 'node18',
-  noExternal: ['@repo/types'],
+  noExternal: ['@mindfiredigital/types'],
 });

@@ -1,4 +1,4 @@
-import { config as reactInternal } from '@repo/eslint-config/react-internal';
+import { config as reactInternal } from '@mindfiredigital/eslint-config/react-internal';
 import boundaries from 'eslint-plugin-boundaries';
 
 /** @type {import("eslint").Linter.Config[]} */

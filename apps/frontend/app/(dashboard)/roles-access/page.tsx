@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Tabs } from '@repo/shared-ui';
+import { Tabs } from '@mindfiredigital/shared-ui';
 import { RolesTab } from '@/components/roles-access/roles-tab';
 import { UsersTab } from '@/components/roles-access/users-tab';
 import { TokensTab } from '@/components/roles-access/tokens-tab';

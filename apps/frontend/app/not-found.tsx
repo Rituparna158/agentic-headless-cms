@@ -9,8 +9,8 @@ import {
   ErrorPageFooter,
   ErrorPageLinks,
   ErrorPageIcons,
-} from '@repo/shared-ui';
-import { ButtonWithIcon } from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
+import { ButtonWithIcon } from '@mindfiredigital/shared-ui';
 import {
   Home,
   ArrowLeft,

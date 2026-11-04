@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useAuthStore } from '@/features/auth/store/auth.store';
-import type { AuthenticatedUser } from '@repo/types';
+import type { AuthenticatedUser } from '@mindfiredigital/types';
 
 describe('useAuthStore', () => {
   const dummyUser: AuthenticatedUser = {

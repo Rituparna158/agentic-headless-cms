@@ -4,14 +4,14 @@ import { useReducer } from 'react';
 import Image from 'next/image';
 import { ShieldAlert, ShieldCheck, QrCode, Key, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Input } from '@repo/shared-ui';
+import { Button, Input } from '@mindfiredigital/shared-ui';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
 import { useAuthStore } from '@/stores/auth-store';
 import { enrollMfa, verifyMfa, disableMfa } from '@/lib/api/auth';
 

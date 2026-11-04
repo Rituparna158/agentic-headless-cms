@@ -4,10 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { forgotPasswordSchema } from '@repo/validation';
+import { forgotPasswordSchema } from '@mindfiredigital/validation';
 import { z } from 'zod';
 
-import { Button, Input, Form, FormField, Typography } from '@repo/shared-ui';
+import {
+  Button,
+  Input,
+  Form,
+  FormField,
+  Typography,
+} from '@mindfiredigital/shared-ui';
 import { Controller } from 'react-hook-form';
 import { requestPasswordReset } from '@/lib/api/auth';
 

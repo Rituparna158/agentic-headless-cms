@@ -5,7 +5,7 @@ import {
   closeRedisConnection,
   assertMinimumRedisVersion,
   UnsupportedRedisVersionError,
-} from '@repo/config';
+} from '@mindfiredigital/config';
 
 const { mockRedisInstance, RedisMock } = vi.hoisted(() => {
   const mockRedisInstance = {
@@ -62,7 +62,8 @@ describe('config/redis', () => {
 
   describe('assertMinimumRedisVersion', () => {
     it('resolves when the server reports a version >= 5.0.0', async () => {
-      const { assertMinimumRedisVersion } = await import('@repo/config');
+      const { assertMinimumRedisVersion } =
+        await import('@mindfiredigital/config');
       mockRedisInstance.info.mockResolvedValueOnce('redis_version:7.2.4\r\n');
 
       await expect(assertMinimumRedisVersion()).resolves.toBeUndefined();

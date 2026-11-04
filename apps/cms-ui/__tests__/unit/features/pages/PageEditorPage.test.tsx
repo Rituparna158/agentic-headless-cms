@@ -18,7 +18,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
   };
 });
 
-vi.mock('@repo/shared-ui', () => ({
+vi.mock('@mindfiredigital/shared-ui', () => ({
   useToast: () => ({
     success: vi.fn(),
     error: vi.fn(),

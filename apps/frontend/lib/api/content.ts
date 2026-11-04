@@ -3,7 +3,7 @@ import type {
   ContentVersionRecord,
   ListContentEntriesOptions,
   ListContentEntriesResult,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 import { API_PATHS } from '@/lib/constants/api-paths';
 
 import { apiFetch } from '@/lib/api-client';

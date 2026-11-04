@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
-import type { LoginInput, AuthenticatedUser } from '@repo/types';
+import type { LoginInput, AuthenticatedUser } from '@mindfiredigital/types';
 
 export const useLoginMutation = () => {
   const setAuthData = useAuthStore((state) => state.setAuthData);

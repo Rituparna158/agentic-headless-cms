@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores/auth-store';
-import { hasPermission } from '@repo/utils/rbac';
+import { hasPermission } from '@mindfiredigital/utils/rbac';
 
 export function useHasPermission(
   action: string,

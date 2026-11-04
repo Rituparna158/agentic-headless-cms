@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Input } from '@repo/shared-ui';
+import { Button, Input } from '@mindfiredigital/shared-ui';
 import { useAuthStore } from '../store/auth.store';
 import { useVerifyMfaMutation } from '../hooks/useAuthMutations';
 

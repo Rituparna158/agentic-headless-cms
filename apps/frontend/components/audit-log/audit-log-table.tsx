@@ -7,8 +7,8 @@ import {
   Dropdown,
   DropdownItem,
   Button,
-} from '@repo/shared-ui';
-import type { AuditLogRecord, GetAuditLogsQuery } from '@repo/types';
+} from '@mindfiredigital/shared-ui';
+import type { AuditLogRecord, GetAuditLogsQuery } from '@mindfiredigital/types';
 import { useAuditLogs } from '@/lib/api/audit';
 import { AuditDetailDrawer } from './audit-detail-drawer';
 import {
@@ -22,7 +22,10 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-import { AUDIT_ACTION_LIST as ACTIONS, RESOURCE_TYPES } from '@repo/constants';
+import {
+  AUDIT_ACTION_LIST as ACTIONS,
+  RESOURCE_TYPES,
+} from '@mindfiredigital/constants';
 
 type BadgeVariant = React.ComponentProps<typeof Badge>['variant'];
 

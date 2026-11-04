@@ -1,7 +1,7 @@
 import { eventBus } from './event-bus.js';
-import { EVENT_NAMES } from '@repo/constants';
-import { AuditRepository } from '@repo/repository';
-import { getRedisConnection } from '@repo/config';
+import { EVENT_NAMES } from '@mindfiredigital/constants';
+import { AuditRepository } from '@mindfiredigital/repository';
+import { getRedisConnection } from '@mindfiredigital/config';
 
 export function setupAuditListener() {
   const repository = new AuditRepository();

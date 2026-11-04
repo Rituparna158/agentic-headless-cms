@@ -45,7 +45,7 @@ vi.mock('drizzle-orm/node-postgres', () => ({
   }),
 }));
 
-vi.mock('@repo/db/schema', () => ({
+vi.mock('@mindfiredigital/db/schema', () => ({
   users: { id: 'users' },
   applications: { id: 'applications' },
   roles: { id: 'roles' },
@@ -54,7 +54,7 @@ vi.mock('@repo/db/schema', () => ({
   permissions: { id: 'permissions' },
 }));
 
-vi.mock('@repo/logger', () => ({
+vi.mock('@mindfiredigital/logger', () => ({
   logger: {
     info: vi.fn(),
     error: vi.fn(),

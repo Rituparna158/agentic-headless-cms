@@ -4,7 +4,7 @@ import type {
   WebhookRecord,
   BaseQueryOptions,
   PaginatedResult,
-} from '@repo/types';
+} from '@mindfiredigital/types';
 
 export function listWebhooks(
   options?: BaseQueryOptions,

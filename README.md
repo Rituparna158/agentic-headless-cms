@@ -135,14 +135,14 @@ You can run the platform in two ways:
 4. **Run database migrations**:
 
    ```bash
-   pnpm --filter @repo/shared-db run db:migrate
+   pnpm --filter @mindfiredigital/shared-db run db:migrate
    ```
 
 5. **Seed initial admin account & system schemas**:
 
    ```bash
-   pnpm --filter @repo/shared-db run seed:admin
-   pnpm --filter @repo/shared-db run seed:system-schemas
+   pnpm --filter @mindfiredigital/shared-db run seed:admin
+   pnpm --filter @mindfiredigital/shared-db run seed:system-schemas
    ```
 
    Default login: `admin@agentic-cms.com` / `Password123!` (or configured `SEED_ADMIN_PASSWORD`).
@@ -181,7 +181,7 @@ Run the complete platform via Docker Compose (ideal for pre-release testing, sta
 3. **Apply migrations and seed initial admin**:
 
    ```bash
-   pnpm --filter @repo/shared-db run db:migrate
+   pnpm --filter @mindfiredigital/shared-db run db:migrate
    pnpm --filter backend run seed:admin
    # Or run directly inside the running backend container:
    docker compose exec backend pnpm --filter backend run seed:admin

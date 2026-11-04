@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { fieldTypeSpec } from '../../../../src/modules/graphql/type-mapper.js';
-import type { SchemaField } from '@repo/types';
+import type { SchemaField } from '@mindfiredigital/types';
 
 function field(overrides: Partial<SchemaField>): SchemaField {
   return {

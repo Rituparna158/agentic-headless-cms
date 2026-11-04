@@ -17,7 +17,7 @@ export default defineConfig({
     fileParallelism: false,
     server: {
       deps: {
-        inline: ['@repo/shared-ui'],
+        inline: ['@mindfiredigital/shared-ui'],
       },
     },
   },

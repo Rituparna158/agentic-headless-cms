@@ -1,7 +1,7 @@
 import { eq, and, sql, inArray } from 'drizzle-orm';
-import type { BaseQueryOptions } from '@repo/types';
-import { getDatabaseAdapter } from '@repo/config';
-import { logger } from '@repo/logger';
+import type { BaseQueryOptions } from '@mindfiredigital/types';
+import { getDatabaseAdapter } from '@mindfiredigital/config';
+import { logger } from '@mindfiredigital/logger';
 import {
   roles,
   permissions,
@@ -13,9 +13,9 @@ import {
   RecordNotFoundError,
   buildPaginationOptions,
   applications,
-} from '@repo/shared-db';
-import type { PermissionData } from '@repo/types';
-import { ApiError } from '@repo/utils';
+} from '@mindfiredigital/shared-db';
+import type { PermissionData } from '@mindfiredigital/types';
+import { ApiError } from '@mindfiredigital/utils';
 import { REPO_ERRORS } from './error-constants.js';
 export class AccessRepository {
   private get db() {

@@ -3,12 +3,12 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Drawer, Badge, Button, Card } from '@repo/shared-ui';
+import { Drawer, Badge, Button, Card } from '@mindfiredigital/shared-ui';
 import {
   listWebhookDeliveries,
   type WebhookDeliveryRecord,
 } from '@/lib/api/webhooks';
-import type { WebhookRecord } from '@repo/types';
+import type { WebhookRecord } from '@mindfiredigital/types';
 import {
   CheckCircle2,
   XCircle,

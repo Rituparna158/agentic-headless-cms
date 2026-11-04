@@ -41,7 +41,7 @@ export default async function globalSetup() {
   } as NodeJS.ProcessEnv;
 
   // drizzle-kit directly, not the `db:migrate` package script - that script
-  // rebuilds @repo/shared-db first, and this runs concurrently with the
+  // rebuilds @mindfiredigital/shared-db first, and this runs concurrently with the
   // backend webServer (already started, in `tsx watch` mode against the
   // same workspace symlink), so a rebuild here restarts it mid-run.
   execSync('pnpm exec drizzle-kit migrate', {
@@ -50,19 +50,22 @@ export default async function globalSetup() {
     env: testDbEnv,
   });
 
-  execSync('pnpm --filter @repo/shared-db run seed:admin', {
+  execSync('pnpm --filter @mindfiredigital/shared-db run seed:admin', {
     cwd: repoRoot,
     stdio: 'inherit',
     env: testDbEnv,
   });
-  execSync('pnpm --filter @repo/shared-db run seed:system-schemas', {
+  execSync('pnpm --filter @mindfiredigital/shared-db run seed:system-schemas', {
     cwd: repoRoot,
     stdio: 'inherit',
     env: testDbEnv,
   });
-  execSync('pnpm --filter @repo/shared-db run seed:e2e-expired-invite', {
-    cwd: repoRoot,
-    stdio: 'inherit',
-    env: testDbEnv,
-  });
+  execSync(
+    'pnpm --filter @mindfiredigital/shared-db run seed:e2e-expired-invite',
+    {
+      cwd: repoRoot,
+      stdio: 'inherit',
+      env: testDbEnv,
+    },
+  );
 }

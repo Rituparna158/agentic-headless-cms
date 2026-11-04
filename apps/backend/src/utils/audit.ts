@@ -1,4 +1,4 @@
-import { contextStorage } from '@repo/context';
+import { contextStorage } from '@mindfiredigital/context';
 
 export function getAuditContext() {
   const store = contextStorage.getStore();

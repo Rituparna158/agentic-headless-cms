@@ -1,5 +1,9 @@
-import { PostgresAdapter, DatabasePort, Database } from '@repo/shared-db';
-import { logger } from '@repo/logger';
+import {
+  PostgresAdapter,
+  DatabasePort,
+  Database,
+} from '@mindfiredigital/shared-db';
+import { logger } from '@mindfiredigital/logger';
 import { env } from './env.js';
 
 let adapterInstance: DatabasePort<Database> | null = null;

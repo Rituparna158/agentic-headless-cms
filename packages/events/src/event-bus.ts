@@ -1,4 +1,4 @@
-import type { AppEvents } from '@repo/types';
+import type { AppEvents } from '@mindfiredigital/types';
 import EventEmitter2Package from 'eventemitter2';
 const { EventEmitter2 } = EventEmitter2Package;
 

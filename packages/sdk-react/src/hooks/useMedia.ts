@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCmsClient } from '../provider.js';
-import type { ListMediaOptions } from '@repo/types';
+import type { ListMediaOptions } from '@mindfiredigital/types';
 
 import { mediaKeys } from '../constants.js';
 

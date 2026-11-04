@@ -1,4 +1,4 @@
-import { type AuthenticatedUser } from '@repo/types';
+import { type AuthenticatedUser } from '@mindfiredigital/types';
 export interface GraphQLContext {
   user?: AuthenticatedUser;
   appId: string;

@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/typescript-config/nextjs.json",
+  "extends": "@mindfiredigital/typescript-config/nextjs.json",
   "compilerOptions": {
     "plugins": [
       {
@@ -10,7 +10,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@repo/utils/rbac": ["../../packages/utils/src/rbac.util.ts"]
+      "@mindfiredigital/utils/rbac": ["../../packages/utils/src/rbac.util.ts"]
     }
   },
   "include": [

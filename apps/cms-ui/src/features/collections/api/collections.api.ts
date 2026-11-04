@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { SchemaField } from '@repo/types';
+import type { SchemaField } from '@mindfiredigital/types';
 import { requestHandler } from '@/api/requestHandler';
 import { ENDPOINTS } from '@/api/endpoints';
 import type { ContentVersionRecord } from '../types/template.types';

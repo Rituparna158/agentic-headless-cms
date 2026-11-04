@@ -9,8 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@repo/shared-ui';
-import { Button, Input, Typography } from '@repo/shared-ui';
+} from '@mindfiredigital/shared-ui';
+import { Button, Input, Typography } from '@mindfiredigital/shared-ui';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';

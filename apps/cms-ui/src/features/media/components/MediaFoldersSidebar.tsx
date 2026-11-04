@@ -15,7 +15,7 @@ import type {
   MediaFoldersSidebarProps,
 } from '../types/media.types';
 import { useCreateFolder, useDeleteFolder } from '../hooks/useMediaQueries';
-import { useToast } from '@repo/shared-ui';
+import { useToast } from '@mindfiredigital/shared-ui';
 
 export const MediaFoldersSidebar: React.FC<MediaFoldersSidebarProps> = ({
   folders,

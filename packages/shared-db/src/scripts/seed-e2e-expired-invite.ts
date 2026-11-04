@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import { users } from '../index.js';
-import { logger } from '@repo/logger';
+import { logger } from '@mindfiredigital/logger';
 
 // E2E expired invite fixture
 export const EXPIRED_INVITE_EMAIL = 'expired-invite-e2e@agentic-cms.com';

@@ -1,4 +1,4 @@
-import type { SchemaDefinition } from '@repo/types';
+import type { SchemaDefinition } from '@mindfiredigital/types';
 
 /**
  * If the schema has no text field, fall back to the first media field

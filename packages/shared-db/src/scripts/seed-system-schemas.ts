@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import { schemas, applications } from '../index.js';
-import { logger } from '@repo/logger';
+import { logger } from '@mindfiredigital/logger';
 import { eq } from 'drizzle-orm';
 import * as dotenv from 'dotenv';
 import path from 'path';
