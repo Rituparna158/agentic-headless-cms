@@ -45,6 +45,7 @@ module.exports = {
         'repository',
         'storage',
         'config',
+        'webhooks',
         'plugin-sdk',
         'sdk-codegen',
         'sdk-core',

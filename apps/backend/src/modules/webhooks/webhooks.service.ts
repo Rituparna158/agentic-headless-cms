@@ -7,6 +7,7 @@ import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
 import { ApiError } from '@repo/utils';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
+import { validateWebhookUrl } from './webhook-validator.util.js';
 export class WebhooksService {
   constructor(
     private readonly repository: WebhooksRepository = new WebhooksRepository(),
@@ -25,6 +26,7 @@ export class WebhooksService {
   async create(data: CreateWebhookInput, applicationId?: string) {
     try {
       logger.info({ name: data.name }, 'WebhooksService: create start');
+      validateWebhookUrl(data.url);
       const secretKey = crypto.randomBytes(24).toString('hex');
       const result = await this.repository.create({
         name: data.name,
@@ -56,6 +58,7 @@ export class WebhooksService {
       });
       return result;
     } catch (error) {
+      if (error instanceof ApiError) throw error;
       logger.error({ err: error }, 'WebhooksService Error in create:');
       throw new ApiError(500, SERVICE_ERRORS.CREATE_WEBHOOK_FAILED);
     }

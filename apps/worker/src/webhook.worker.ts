@@ -10,6 +10,40 @@ import { logger } from '@repo/logger';
 
 const repository = new WebhooksRepository();
 
+function isSafeUrlForDelivery(urlString: string): boolean {
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.ENFORCE_SSRF_PROTECTION !== 'true'
+  ) {
+    return true;
+  }
+  try {
+    const parsed = new URL(urlString);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '169.254.169.254' ||
+      hostname.endsWith('.internal') ||
+      hostname.startsWith('169.254.')
+    ) {
+      return false;
+    }
+    const isPrivateIpv4 =
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^127\./.test(hostname) ||
+      /^0\./.test(hostname);
+    return !isPrivateIpv4;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Delivers an HTTP webhook payload with an HMAC-SHA256 signature
  * and logs the delivery attempt in PostgreSQL.
@@ -33,6 +67,12 @@ export async function processWebhookJob(
   const bodyString = JSON.stringify(payload);
 
   try {
+    if (!isSafeUrlForDelivery(url)) {
+      throw new Error(
+        'Webhook delivery aborted: target URL is an internal or private address (SSRF protected)',
+      );
+    }
+
     const signature = crypto
       .createHmac('sha256', secretKey)
       .update(bodyString)
@@ -45,6 +85,7 @@ export async function processWebhookJob(
         'x-agentic-signature': signature,
         'x-agentic-event': eventType,
         'x-agentic-delivery-id': deliveryId || job.id || crypto.randomUUID(),
+        'x-agentic-timestamp': startTime.toString(),
         'User-Agent': 'Agentic-CMS-Webhook/1.0',
       },
       body: bodyString,

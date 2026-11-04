@@ -61,6 +61,7 @@ describe('Webhook Worker (processWebhookJob)', () => {
     expect(calledOptions?.method).toBe('POST');
     expect((calledOptions?.headers as Record<string, string>)['x-agentic-event']).toBe('content.published');
     expect((calledOptions?.headers as Record<string, string>)['x-agentic-delivery-id']).toBe('deliv-xyz');
+    expect((calledOptions?.headers as Record<string, string>)['x-agentic-timestamp']).toBeDefined();
 
     // Verify HMAC-SHA256 signature
     const expectedSig = crypto
@@ -145,5 +146,25 @@ describe('Webhook Worker (processWebhookJob)', () => {
         deliveredAt: null,
       }),
     );
+  });
+
+  it('blocks deliveries to private IP ranges in production mode (SSRF protection)', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      const jobData: WebhookJobData = {
+        webhookId: 'wh-ssrf',
+        url: 'http://169.254.169.254/latest/meta-data',
+        secretKey: 'key',
+        eventType: 'test',
+        payload: {},
+      };
+      const mockJob = { id: 'job-ssrf', data: jobData, attemptsMade: 0 } as unknown as Job<WebhookJobData>;
+
+      await expect(processWebhookJob(mockJob)).rejects.toThrow(/SSRF protected/);
+      expect(global.fetch).not.toHaveBeenCalled();
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
   });
 });
