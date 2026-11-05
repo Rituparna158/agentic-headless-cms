@@ -217,6 +217,7 @@ interface TableRowProps {
    * Current filter query for highlighting.
    */
   filterQuery: string;
+  onRowClick?: (row: AdvancedTableRow, index: number) => void;
 }
 
 /**
@@ -226,13 +227,15 @@ interface TableRowProps {
  * @internal
  */
 const TableRow: React.FC<TableRowProps> = memo(
-  ({ row, rowIndex, columns, filterQuery }) => {
+  ({ row, rowIndex, columns, filterQuery, onRowClick }) => {
     return (
       <tr
+        onClick={onRowClick ? () => onRowClick(row, rowIndex) : undefined}
         className={cn(
           'border-b border-border transition-colors',
           rowIndex % 2 === 1 ? 'bg-muted/40' : 'bg-background',
           'hover:bg-primary/5',
+          onRowClick && 'cursor-pointer',
         )}
       >
         {columns.map((column) => {
@@ -523,6 +526,7 @@ export interface AdvancedTableProps {
    * Default: "No rows match your filter."
    */
   emptyMessage?: React.ReactNode;
+  onRowClick?: (row: AdvancedTableRow, index: number) => void;
 }
 
 /**
@@ -593,6 +597,7 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
   onSearchChange: manualOnSearchChange,
   searchValue,
   emptyMessage = 'No rows match your filter.',
+  onRowClick,
 }) => {
   const effectiveRows = rows;
   const effectiveColumns = columns;
@@ -1039,6 +1044,7 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
                     rowIndex={rowIndex}
                     columns={effectiveColumns}
                     filterQuery={enableFiltering ? filterQuery : ''}
+                    onRowClick={onRowClick}
                   />
                 ))
               )}
