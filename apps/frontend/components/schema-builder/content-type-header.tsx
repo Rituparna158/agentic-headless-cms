@@ -27,7 +27,7 @@ export function ContentTypeHeader() {
         <Button asChild>
           <Link href="/content-types/new">
             <PlusIcon className="size-4 mr-1.5" />
-            New Content Type
+            New Type
           </Link>
         </Button>
       ) : (

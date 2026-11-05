@@ -182,9 +182,7 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
-    await user.click(
-      screen.getByRole('button', { name: /create (content type|schema)/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('name is required')).toBeInTheDocument();
@@ -196,9 +194,7 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
-    await user.click(
-      screen.getByRole('button', { name: /create (content type|schema)/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('name is required')).toBeInTheDocument();
@@ -231,9 +227,7 @@ describe('SchemaBuilderForm', () => {
     await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
-    await user.click(
-      screen.getByRole('button', { name: /create (content type|schema)/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => {
       expect(mockCreateSchema).toHaveBeenCalledTimes(1);
@@ -266,9 +260,7 @@ describe('SchemaBuilderForm', () => {
     await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
-    await user.click(
-      screen.getByRole('button', { name: /create (content type|schema)/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
 
     await waitFor(() => {
       expect(
@@ -295,9 +287,7 @@ describe('SchemaBuilderForm', () => {
     await user.click(screen.getByText('Title'));
 
     // Attempt to submit the form
-    await user.click(
-      screen.getByRole('button', { name: /create (content type|schema)/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
 
     // It should automatically switch focus to Field 2 and show the error inline in the settings panel
     await waitFor(() => {

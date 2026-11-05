@@ -198,7 +198,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
           disabled={mutation.isPending}
           className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium rounded-md transition-colors disabled:opacity-50"
         >
-          {mutation.isPending ? 'Saving...' : 'Save Role'}
+          {mutation.isPending ? 'Saving...' : 'Save'}
         </button>
       </div>
       {/* Content */}

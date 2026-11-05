@@ -235,7 +235,7 @@ function RoleDetails({
           {selectedRoleId === 'new' ? 'New Role' : `Role: ${activeRole.name}`}
         </h2>
         <Button onClick={onSave} disabled={isSaving || !activeRole.name}>
-          {isSaving ? 'Saving...' : 'Save Role'}
+          {isSaving ? 'Saving...' : 'Save'}
         </Button>
       </div>
 

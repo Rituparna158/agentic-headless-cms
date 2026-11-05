@@ -62,7 +62,7 @@ describe('RolesTab', () => {
   it('defaults to the "New Role" form', async () => {
     renderTab();
     expect(await screen.findByText('New Role')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Save Role' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
   it('shows an existing role when selected from the list', async () => {
     const user = userEvent.setup();
@@ -81,7 +81,7 @@ describe('RolesTab', () => {
     );
     const row = screen.getByRole('row', { name: /Blog Post/ });
     await user.click(within(row).getAllByRole('checkbox')[0]!);
-    await user.click(screen.getByRole('button', { name: 'Save Role' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() =>
       expect(mockCreateRole).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -99,7 +99,7 @@ describe('RolesTab', () => {
     const user = userEvent.setup();
     renderTab();
     await user.click(await screen.findByRole('button', { name: 'Editor' }));
-    await user.click(screen.getByRole('button', { name: 'Save Role' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() =>
       expect(mockUpdateRole).toHaveBeenCalledWith(
         'role-1',

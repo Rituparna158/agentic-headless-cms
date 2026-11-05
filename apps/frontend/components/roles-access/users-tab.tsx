@@ -133,7 +133,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
     <div className="space-y-4">
       {isAdmin && (
         <div className="flex justify-end">
-          <Button onClick={() => setIsInviteOpen(true)}>+ Invite User</Button>
+          <Button onClick={() => setIsInviteOpen(true)}>+ Invite</Button>
           <Modal
             isOpen={isInviteOpen}
             onClose={() => setIsInviteOpen(false)}

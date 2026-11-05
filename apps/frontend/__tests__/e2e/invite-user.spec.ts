@@ -11,7 +11,7 @@ test('admin can invite a user, and the invited user can accept and log in', asyn
 
   await page.goto('/roles-access');
   await page.getByRole('button', { name: 'Users', exact: true }).click();
-  await page.getByRole('button', { name: '+ Invite User' }).click();
+  await page.getByRole('button', { name: '+ Invite' }).click();
 
   await page.locator('#email').fill(email);
   await page.locator('#firstName').fill('Test');

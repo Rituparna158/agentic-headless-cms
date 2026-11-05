@@ -118,7 +118,7 @@ describe('ContentEntriesView', () => {
       expect(screen.getByText('No content types defined')).toBeInTheDocument();
     });
     expect(
-      screen.getByRole('link', { name: /create content type/i }),
+      screen.getByRole('link', { name: /create type/i }),
     ).toBeInTheDocument();
   });
 
@@ -133,7 +133,7 @@ describe('ContentEntriesView', () => {
     });
 
     expect(
-      screen.getByRole('link', { name: /new articles entry/i }),
+      screen.getByRole('link', { name: /new entry/i }),
     ).toBeInTheDocument();
   });
 
@@ -149,7 +149,7 @@ describe('ContentEntriesView', () => {
     });
 
     expect(
-      screen.getByRole('link', { name: /new products entry/i }),
+      screen.getByRole('link', { name: /new entry/i }),
     ).toBeInTheDocument();
   });
 });

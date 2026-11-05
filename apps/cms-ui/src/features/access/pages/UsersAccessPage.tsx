@@ -120,7 +120,7 @@ export const UsersAccessPage = () => {
         </div>
         <Button onClick={() => setIsInviteDialogOpen(true)} className="gap-2">
           <Plus size={16} />
-          Invite User
+          Invite
         </Button>
       </div>
       <div className="flex-1 overflow-auto p-6">

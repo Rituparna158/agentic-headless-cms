@@ -64,7 +64,7 @@ describe('LocalesTab', () => {
     renderTab();
     await screen.findByText('No locales configured yet.');
 
-    await user.click(screen.getByRole('button', { name: 'Add Locale' }));
+    await user.click(screen.getByRole('button', { name: '+ Add' }));
     const addButton = screen.getByRole('button', { name: 'Add' });
     expect(addButton).toBeDisabled();
 
@@ -81,7 +81,7 @@ describe('LocalesTab', () => {
     renderTab();
     await screen.findByText('No locales configured yet.');
 
-    await user.click(screen.getByRole('button', { name: 'Add Locale' }));
+    await user.click(screen.getByRole('button', { name: '+ Add' }));
     await user.type(screen.getByPlaceholderText('e.g. fr-FR'), 'fr-FR');
     await user.type(screen.getByPlaceholderText('e.g. French'), 'French');
     await user.click(screen.getByRole('button', { name: 'Add' }));
