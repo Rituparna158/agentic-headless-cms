@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
 import { getContentEntry } from '@/lib/api/content';
 import {
+  Breadcrumbs,
   Card,
   CardContent,
   CardHeader,
@@ -147,6 +148,17 @@ export function EditEntryView({
 
   return (
     <div className="grid gap-6">
+      <Breadcrumbs
+        variant="text"
+        size="sm"
+        className="p-0 bg-transparent"
+        items={[
+          { label: 'Content' },
+          { label: schema.name, href: `/content/${schema.slug}` },
+          { label: title },
+        ]}
+      />
+
       <h1 className="text-2xl font-semibold">{title}</h1>
 
       <Card>

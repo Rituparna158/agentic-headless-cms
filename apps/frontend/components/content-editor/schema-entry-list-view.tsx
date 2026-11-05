@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { PlusIcon } from 'lucide-react';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
-import { Button } from '@repo/shared-ui';
+import { Breadcrumbs, Button } from '@repo/shared-ui';
 import { ContentEntryList } from './content-entry-list';
 
 export function SchemaEntryListView({ schemaSlug }: { schemaSlug: string }) {
@@ -23,6 +23,13 @@ export function SchemaEntryListView({ schemaSlug }: { schemaSlug: string }) {
 
   return (
     <div className="grid gap-6">
+      <Breadcrumbs
+        variant="text"
+        size="sm"
+        className="p-0 bg-transparent"
+        items={[{ label: 'Content' }, { label: schema.name }]}
+      />
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{schema.name}</h1>
         <Button asChild>
