@@ -92,7 +92,9 @@ describe('ContentEntryList', () => {
     const user = userEvent.setup();
     renderList();
     await waitFor(() => {
-      expect(screen.getByText(/search by title/i)).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText(/search by title/i),
+      ).toBeInTheDocument();
     });
     await user.type(screen.getByRole('textbox'), 'World');
     await waitFor(() => {

@@ -33,6 +33,7 @@ export function Topbar() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -103,10 +104,10 @@ export function Topbar() {
       {hasRoles && (
         <div className="relative ml-2 hidden max-w-sm flex-1 md:block">
           <Input
-            value=""
-            onChange={() => {}}
-            placeholder="Search"
-            variant="default"
+            value={searchQuery}
+            onChange={(val: string) => setSearchQuery(val)}
+            placeholder="Search..."
+            variant="search"
             icon={Search}
             className="mb-0"
           />

@@ -939,12 +939,12 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
                 <div className="relative">
                   <AnimatedInput
                     placeholder={filterPlaceholder}
-                    variant="clean"
+                    variant="search"
                     value={filterQuery}
                     onChange={handleFilterChange}
                     size="md"
                     icon={Search}
-                    labelClassName="ms-5"
+                    className="mb-0"
                   />
                 </div>
               </div>
