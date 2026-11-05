@@ -10,13 +10,14 @@ export interface BreadcrumbsProps
   extends
     Omit<
       React.HTMLAttributes<HTMLDivElement>,
-      'onAnimationStart' | 'onDragStart' | 'onDragEnd' | 'onDrag'
+      'onAnimationStart' | 'onDragStart' | 'onDragEnd' | 'onDrag' | 'style'
     >,
     VariantProps<typeof breadcrumbsVariants> {
   items?: { label: string; href?: string; icon?: React.ElementType }[];
   separatorIcon?: React.ElementType;
   steps?: string[];
   currentStep?: number;
+  style?: any;
 }
 
 const breadcrumbsVariants = cva('w-full', {
@@ -482,7 +483,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       aria-label="Breadcrumb navigation"
-      {...props}
+      {...(props as any)}
     >
       {variant === 'text' && processedItems.length > 0 && (
         <>

@@ -31,7 +31,7 @@ interface AnimatedInputProps {
 }
 
 interface InputVariant {
-  label: Variants;
+  label?: Variants;
   input: Variants;
   extra?: Variants;
   container?: Variants;
