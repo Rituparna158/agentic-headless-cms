@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 
 // Styling variants using CVA
 const dropdownVariants = cva(
-  'z-50 min-w-[10rem] border p-2 shadow-lg outline-none',
+  'z-50 min-w-[10rem] max-h-80 overflow-y-auto border p-2 shadow-lg outline-none',
   {
     variants: {
       size: {

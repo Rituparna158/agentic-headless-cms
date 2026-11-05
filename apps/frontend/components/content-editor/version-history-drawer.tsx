@@ -127,7 +127,14 @@ export function VersionHistoryDrawer({
               >
                 <div className="text-sm font-medium">v{version.versionNo}</div>
                 <div className="text-xs text-muted-foreground">
-                  {new Date(version.createdAt).toLocaleString()}
+                  {new Intl.DateTimeFormat('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(new Date(version.createdAt))}
                 </div>
                 <div className="text-xs mt-1 capitalize text-muted-foreground">
                   By {version.actorType}
