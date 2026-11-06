@@ -226,7 +226,7 @@ const BreadcrumbItem: React.FC<{
       {item.href && !isLast ? (
         <a
           href={item.href}
-          className="group relative inline-block focus:outline-none"
+          className="group relative inline-block focus:outline-none cursor-pointer"
         >
           {ItemContent}
           {variant === 'text' && (
