@@ -522,9 +522,16 @@ export async function testTranslationProvider(
       config,
     });
 
+    const providerLabel =
+      config.provider === 'free'
+        ? 'Standard Engine'
+        : config.provider === 'openai'
+          ? 'OpenAI'
+          : 'Custom Endpoint';
+
     return {
       success: true,
-      message: `Successfully connected to ${config.provider} provider.`,
+      message: `Successfully connected to ${providerLabel}.`,
       sample,
     };
   } catch (err) {

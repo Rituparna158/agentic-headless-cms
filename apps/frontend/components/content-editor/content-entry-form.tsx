@@ -325,17 +325,10 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         });
       });
 
-      const providerLabel =
-        result.provider === 'openai'
-          ? 'OpenAI'
-          : result.provider === 'custom'
-            ? 'Custom Endpoint'
-            : 'Free API';
-
       toast.success(
         `Auto-translated ${result.translatedCount} field${
           result.translatedCount === 1 ? '' : 's'
-        } from ${defaultLocale.toUpperCase()} to ${selectedLocale.toUpperCase()} via ${providerLabel}`,
+        } from ${defaultLocale.toUpperCase()} to ${selectedLocale.toUpperCase()}.`,
       );
     } catch (err) {
       toast.error(
@@ -698,9 +691,11 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                     <div className="flex items-center gap-2 text-xs">
                       <Settings2 className="size-3.5 text-muted-foreground" />
                       <span>
-                        Provider:{' '}
+                        Engine:{' '}
                         <span className="font-semibold capitalize">
-                          {translationConfig.provider}
+                          {translationConfig.provider === 'free'
+                            ? 'Standard'
+                            : translationConfig.provider}
                         </span>
                         ...
                       </span>

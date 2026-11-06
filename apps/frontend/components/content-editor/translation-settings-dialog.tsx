@@ -78,7 +78,7 @@ export function TranslationSettingsDialog({
   function handleSave() {
     if (provider === 'openai' && !apiKey.trim()) {
       toast.error(
-        'Please enter an OpenAI API Key or switch to Free translation.',
+        'Please enter an OpenAI API Key or select the Standard engine.',
       );
       return;
     }
@@ -97,9 +97,9 @@ export function TranslationSettingsDialog({
     saveTranslationConfig(newConfig);
     onConfigChange?.(newConfig);
     toast.success(
-      `Translation provider set to ${
+      `Translation engine set to ${
         provider === 'free'
-          ? 'Free Machine Translation'
+          ? 'Standard Engine'
           : provider === 'openai'
             ? 'OpenAI'
             : 'Custom Endpoint'
@@ -112,7 +112,7 @@ export function TranslationSettingsDialog({
     <Modal
       isOpen={open}
       onClose={() => onOpenChange(false)}
-      title="Translation Provider Settings"
+      title="Translation Engine Settings"
       showFooter={false}
     >
       <div className="space-y-5 py-3 text-sm">
@@ -124,10 +124,10 @@ export function TranslationSettingsDialog({
         {/* Provider Option Cards */}
         <div className="grid gap-2.5">
           <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-            Select Provider
+            Select Translation Engine
           </label>
 
-          {/* Option: Free Zero-Config */}
+          {/* Option: Standard Engine */}
           <div
             onClick={() => setProvider('free')}
             className={`cursor-pointer rounded-lg border p-3 transition-colors flex items-start gap-3 ${
@@ -147,19 +147,20 @@ export function TranslationSettingsDialog({
               <div className="flex items-center gap-2">
                 <Globe className="size-4 text-primary" />
                 <span className="font-semibold text-foreground text-xs">
-                  Free Machine Translation (Zero-Config)
+                  Standard Translation Engine
                 </span>
                 <Badge
                   variant="outline"
                   size="sm"
                   className="text-xs font-medium px-2 py-0.5"
                 >
-                  Default
+                  Built-in
                 </Badge>
               </div>
               <p className="text-muted-foreground text-xs">
-                No API keys required. Ready to translate immediately in standard
-                locales using public translation gateways.
+                High-performance built-in machine translation engine. Works
+                out-of-the-box across standard locales without requiring
+                external credentials.
               </p>
             </div>
           </div>

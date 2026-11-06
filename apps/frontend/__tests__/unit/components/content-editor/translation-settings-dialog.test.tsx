@@ -44,12 +44,8 @@ describe('TranslationSettingsDialog', () => {
   it('renders modal dialog when open is true', () => {
     render(<TranslationSettingsDialog open={true} onOpenChange={vi.fn()} />);
 
-    expect(
-      screen.getByText('Translation Provider Settings'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Free Machine Translation (Zero-Config)'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Translation Engine Settings')).toBeInTheDocument();
+    expect(screen.getByText('Standard Translation Engine')).toBeInTheDocument();
     expect(
       screen.getByText('OpenAI (GPT-4o / GPT-4o-mini)'),
     ).toBeInTheDocument();
@@ -91,7 +87,7 @@ describe('TranslationSettingsDialog', () => {
       }),
     );
     expect(mockToastSuccess).toHaveBeenCalledWith(
-      expect.stringContaining('Translation provider set to OpenAI'),
+      expect.stringContaining('Translation engine set to OpenAI'),
     );
     expect(mockOnOpenChange).toHaveBeenCalledWith(false);
   });
