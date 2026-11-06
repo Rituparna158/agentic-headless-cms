@@ -13,6 +13,16 @@ export function formatLogActor(log: AuditLogRecord): string {
 }
 
 /**
+ * Safely normalizes date/timestamp into an ISO string.
+ */
+export function formatTimestamp(timestamp: string | Date): string {
+  if (timestamp instanceof Date) {
+    return timestamp.toISOString();
+  }
+  return String(timestamp);
+}
+
+/**
  * Escapes a cell value for RFC 4180 CSV compliance.
  */
 export function escapeCsvCell(value: unknown): string {
@@ -42,7 +52,7 @@ export function generateCsv(logs: AuditLogRecord[]): string {
 
   const rows = logs.map((log) => [
     escapeCsvCell(log.id),
-    escapeCsvCell(log.timestamp),
+    escapeCsvCell(formatTimestamp(log.timestamp)),
     escapeCsvCell(log.action.toUpperCase()),
     escapeCsvCell(log.resourceType),
     escapeCsvCell(log.resourceId),
@@ -86,7 +96,7 @@ export function generateExcel(logs: AuditLogRecord[]): string {
       (log) => `
       <tr>
         <td>${escapeHtml(log.id)}</td>
-        <td>${escapeHtml(log.timestamp)}</td>
+        <td>${escapeHtml(formatTimestamp(log.timestamp))}</td>
         <td>${escapeHtml(log.action.toUpperCase())}</td>
         <td>${escapeHtml(log.resourceType)}</td>
         <td>${escapeHtml(log.resourceId)}</td>
@@ -250,6 +260,8 @@ export function generatePdf(
     let y = 482;
     for (let rIdx = pageStart; rIdx < pageEnd; rIdx++) {
       const log = logs[rIdx];
+      if (!log) continue;
+
       // Alternating row background
       if (rIdx % 2 === 1) {
         streamCmds.push(`0.96 0.96 0.96 rg 50 ${y - 3} 742 18 re f`);
@@ -259,8 +271,9 @@ export function generatePdf(
       const resourceText = sanitizePdfText(log.resourceType, 20);
       const resourceIdText = sanitizePdfText(log.resourceId, 28);
       const actorText = sanitizePdfText(formatLogActor(log), 30);
+      const rawTime = formatTimestamp(log.timestamp);
       const timestampText = sanitizePdfText(
-        log.timestamp.slice(0, 19).replace('T', ' '),
+        rawTime.slice(0, 19).replace('T', ' '),
         22,
       );
 
@@ -367,7 +380,7 @@ export function exportAuditLogs(
     case 'pdf': {
       const pdfBytes = generatePdf(logs);
       downloadBlob(
-        new Blob([pdfBytes], { type: 'application/pdf' }),
+        new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' }),
         `${filenamePrefix}-${dateStr}.pdf`,
       );
       break;

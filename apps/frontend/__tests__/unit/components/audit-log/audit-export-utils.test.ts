@@ -3,6 +3,7 @@ import type { AuditLogRecord } from '@repo/types';
 import {
   escapeCsvCell,
   formatLogActor,
+  formatTimestamp,
   generateCsv,
   generateJson,
   generateExcel,
@@ -10,40 +11,41 @@ import {
   exportAuditLogs,
 } from '@/components/audit-log/audit-export-utils';
 
-const sampleLogs: AuditLogRecord[] = [
-  {
-    id: 'log-001',
-    applicationId: 'app-001',
-    actorType: 'user',
-    actorUserId: 'user-001',
-    action: 'create',
-    resourceType: 'content',
-    resourceId: 'article-123',
-    beforeState: null,
-    afterState: { title: 'New Post' },
-    context: { ip: '127.0.0.1' },
-    timestamp: '2026-11-06T12:00:00.000Z',
-    actorEmail: 'admin@example.com',
-    actorFirstName: 'Admin',
-    actorLastName: 'User',
-  },
-  {
-    id: 'log-002',
-    applicationId: 'app-001',
-    actorType: 'agent',
-    actorAgentId: 'agent-ai',
-    action: 'update',
-    resourceType: 'schema',
-    resourceId: 'schema-456',
-    beforeState: { field: 'old' },
-    afterState: { field: 'new, "quoted"' },
-    context: null,
-    timestamp: '2026-11-06T12:30:00.000Z',
-    actorEmail: undefined,
-    actorFirstName: undefined,
-    actorLastName: undefined,
-  },
-];
+const sampleLog1: AuditLogRecord = {
+  id: 'log-001',
+  applicationId: 'app-001',
+  actorType: 'user',
+  actorUserId: 'user-001',
+  action: 'create',
+  resourceType: 'content',
+  resourceId: 'article-123',
+  beforeState: null,
+  afterState: { title: 'New Post' },
+  context: { ip: '127.0.0.1' },
+  timestamp: '2026-11-06T12:00:00.000Z',
+  actorEmail: 'admin@example.com',
+  actorFirstName: 'Admin',
+  actorLastName: 'User',
+};
+
+const sampleLog2: AuditLogRecord = {
+  id: 'log-002',
+  applicationId: 'app-001',
+  actorType: 'agent',
+  actorAgentId: 'agent-ai',
+  action: 'update',
+  resourceType: 'schema',
+  resourceId: 'schema-456',
+  beforeState: { field: 'old' },
+  afterState: { field: 'new, "quoted"' },
+  context: null,
+  timestamp: '2026-11-06T12:30:00.000Z',
+  actorEmail: null,
+  actorFirstName: null,
+  actorLastName: null,
+};
+
+const sampleLogs: AuditLogRecord[] = [sampleLog1, sampleLog2];
 
 describe('audit-export-utils', () => {
   beforeEach(() => {
@@ -52,21 +54,31 @@ describe('audit-export-utils', () => {
 
   describe('formatLogActor', () => {
     it('returns combined first and last name when present', () => {
-      expect(formatLogActor(sampleLogs[0])).toBe('Admin User');
+      expect(formatLogActor(sampleLog1)).toBe('Admin User');
     });
 
     it('returns actorType Agent when names and email are missing for agent actor', () => {
-      expect(formatLogActor(sampleLogs[1])).toBe('Agent');
+      expect(formatLogActor(sampleLog2)).toBe('Agent');
     });
 
     it('returns actorEmail when name is missing', () => {
       const logWithEmailOnly: AuditLogRecord = {
-        ...sampleLogs[0],
-        actorFirstName: undefined,
-        actorLastName: undefined,
+        ...sampleLog1,
+        actorFirstName: null,
+        actorLastName: null,
         actorEmail: 'editor@example.com',
       };
       expect(formatLogActor(logWithEmailOnly)).toBe('editor@example.com');
+    });
+  });
+
+  describe('formatTimestamp', () => {
+    it('formats string timestamp as-is and Date object as ISO string', () => {
+      expect(formatTimestamp('2026-11-06T12:00:00.000Z')).toBe(
+        '2026-11-06T12:00:00.000Z',
+      );
+      const date = new Date('2026-11-06T12:00:00.000Z');
+      expect(formatTimestamp(date)).toBe('2026-11-06T12:00:00.000Z');
     });
   });
 
@@ -140,7 +152,7 @@ describe('audit-export-utils', () => {
     it('handles multi-page generation when records exceed page capacity', () => {
       // 25 logs should span across 2 pages (capacity is 22 per page)
       const manyLogs: AuditLogRecord[] = Array.from({ length: 25 }, (_, i) => ({
-        ...sampleLogs[0],
+        ...sampleLog1,
         id: `log-multi-${i + 1}`,
         resourceId: `res-${i + 1}`,
       }));
@@ -156,7 +168,7 @@ describe('audit-export-utils', () => {
     it('sanitizes unicode characters such as em-dashes and smart quotes to clean ASCII without tofu characters', () => {
       const logsWithUnicode: AuditLogRecord[] = [
         {
-          ...sampleLogs[0],
+          ...sampleLog1,
           resourceId: 'article—with—em-dash and “quotes”',
         },
       ];
