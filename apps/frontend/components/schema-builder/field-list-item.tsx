@@ -142,6 +142,7 @@ export function FieldListItem({
           )}
 
           <span
+            data-slot="field-name"
             className={cn(
               'font-medium truncate',
               hasError && 'text-destructive',

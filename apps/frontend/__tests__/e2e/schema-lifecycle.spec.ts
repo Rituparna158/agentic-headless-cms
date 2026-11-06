@@ -31,7 +31,7 @@ test('admin can create a schema with two fields and reorder them via drag-and-dr
   await expect(page.getByRole('dialog')).not.toBeVisible();
 
   const rowNames = page.locator(
-    '[data-slot="field-list-item"] span.font-medium',
+    '[data-slot="field-list-item"] [data-slot="field-name"]',
   );
   await expect(rowNames).toHaveText(['Alpha Field', 'Beta Field']);
 
