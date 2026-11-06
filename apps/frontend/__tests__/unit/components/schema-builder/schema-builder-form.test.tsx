@@ -47,11 +47,13 @@ describe('SchemaBuilderForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders with a single default field row, selected in the settings panel', () => {
+  it('renders empty fields state initially and opens drawer when Add Field is clicked', async () => {
+    const user = userEvent.setup();
     renderForm();
-    // Master-detail layout: only the selected field's full config is
-    // rendered at a time, so "Display Name" appears once (in the settings
-    // panel for the auto-selected first field), not once per field row.
+
+    expect(screen.getByText(/no fields added yet/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
+
     expect(screen.getAllByLabelText(/display name/i)).toHaveLength(1);
     expect(screen.getByLabelText('Remove field 1')).toBeInTheDocument();
   });
@@ -60,8 +62,12 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
-    // Click "Add field" while field 1 is empty
-    await user.click(screen.getByRole('button', { name: /add field/i }));
+    // Click "Add field" to add field 1 (opens drawer)
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
+    expect(screen.getByLabelText('Remove field 1')).toBeInTheDocument();
+
+    // Click "Add field" again while field 1 is empty
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
 
     // Field 2 must NOT be added
     expect(screen.queryByLabelText('Remove field 2')).not.toBeInTheDocument();
@@ -87,8 +93,11 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
+    // Click "Add field" to add field 1
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
+
     // Click "Add field" while field 1 is empty to trigger validation
-    await user.click(screen.getByRole('button', { name: /add field/i }));
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Display Name is required')).toBeInTheDocument();
@@ -134,11 +143,14 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
+    // Click "Add field" to add field 1
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
+
     // Fill current field with valid inputs
     await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
-    await user.click(screen.getByRole('button', { name: /add field/i }));
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
 
     expect(screen.getByLabelText('Remove field 1')).toBeInTheDocument();
     expect(screen.getByLabelText('Remove field 2')).toBeInTheDocument();
@@ -151,10 +163,11 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
     await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
-    await user.click(screen.getByRole('button', { name: /add field/i }));
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
     expect(screen.getByLabelText('Remove field 2')).toBeInTheDocument();
 
     await user.click(screen.getByLabelText('Remove field 2'));
@@ -166,10 +179,11 @@ describe('SchemaBuilderForm', () => {
     const user = userEvent.setup();
     renderForm();
 
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
     await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
-    await user.click(screen.getByRole('button', { name: /add field/i }));
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
     await user.type(screen.getByLabelText(/display name/i), 'Views');
 
     // Selecting field 1 again should show ITS displayName input with "Title",
@@ -224,6 +238,7 @@ describe('SchemaBuilderForm', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Blog Post');
     await user.type(screen.getByLabelText('Slug'), 'blog-post');
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
     await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
@@ -257,6 +272,7 @@ describe('SchemaBuilderForm', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Blog Post');
     await user.type(screen.getByLabelText('Slug'), 'blog-post');
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
     await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
@@ -276,11 +292,12 @@ describe('SchemaBuilderForm', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Blog Post');
     await user.type(screen.getByLabelText('Slug'), 'blog-post');
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
     await user.type(screen.getByLabelText(/display name/i), 'Title');
     await user.type(screen.getByLabelText('API ID'), 'title');
 
     // Add field 2
-    await user.click(screen.getByRole('button', { name: /add field/i }));
+    await user.click(screen.getByRole('button', { name: /^add field$/i }));
     expect(screen.getByLabelText('Remove field 2')).toBeInTheDocument();
 
     // Switch back to Field 1, leaving Field 2 incomplete and unselected

@@ -7,9 +7,9 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../../utils/cn';
 import type { ReactNode } from 'react';
 
-// Styling variants using CVA
+// Styling variants using CVA - z-[1100] ensures dropdown renders on top of Drawers/Modals (which use z-1000)
 const dropdownVariants = cva(
-  'z-50 min-w-[10rem] max-h-80 overflow-y-auto border p-2 shadow-lg outline-none',
+  'z-[1100] min-w-[10rem] max-h-80 overflow-y-auto border p-2 shadow-lg outline-none',
   {
     variants: {
       size: {
@@ -120,6 +120,8 @@ export const Dropdown = ({
   );
 };
 
+export const DropdownGroup = DropdownMenu.Group;
+
 export const DropdownItem = ({
   children,
   className,
@@ -130,7 +132,7 @@ export const DropdownItem = ({
 } & React.ComponentProps<typeof DropdownMenu.Item>) => (
   <DropdownMenu.Item
     className={cn(
-      'relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-sm outline-transparent focus:bg-accent focus:text-accent-foreground text-foreground',
+      'relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground text-foreground',
       className,
     )}
     {...props}
@@ -138,6 +140,7 @@ export const DropdownItem = ({
     {children}
   </DropdownMenu.Item>
 );
+
 export const DropdownCheckboxItem = ({
   children,
   className,
@@ -148,7 +151,7 @@ export const DropdownCheckboxItem = ({
 } & React.ComponentProps<typeof DropdownMenu.CheckboxItem>) => (
   <DropdownMenu.CheckboxItem
     className={cn(
-      'relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-foreground',
+      'relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-foreground',
       className,
     )}
     {...props}
