@@ -9,7 +9,7 @@ import {
   Button,
 } from '@repo/shared-ui';
 import type { AuditLogRecord, GetAuditLogsQuery } from '@repo/types';
-import { useAuditLogs } from '@/lib/api/audit';
+import { listAuditLogs, useAuditLogs } from '@/lib/api/audit';
 import { AuditDetailDrawer } from './audit-detail-drawer';
 import {
   Filter,
@@ -20,7 +20,14 @@ import {
   Layers,
   ChevronDown,
   RotateCcw,
+  Download,
+  FileText,
+  FileIcon,
+  Table,
+  Code,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { exportAuditLogs, type ExportFormat } from './audit-export-utils';
 
 import { AUDIT_ACTION_LIST as ACTIONS, RESOURCE_TYPES } from '@repo/constants';
 
@@ -106,6 +113,7 @@ export function AuditLogTable() {
     null,
   );
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [isExporting, setIsExporting] = React.useState(false);
 
   const queryParams: GetAuditLogsQuery = React.useMemo(() => {
     const params: GetAuditLogsQuery = {
@@ -234,9 +242,63 @@ export function AuditLogTable() {
     }));
   }, [formattedLogs, handleRowClick]);
 
+  const handleExport = React.useCallback(
+    async (format: ExportFormat) => {
+      if (displayLogs.length === 0) return;
+      setIsExporting(true);
+      const toastId = toast.loading(
+        `Preparing ${format.toUpperCase()} export…`,
+      );
+
+      try {
+        let exportData = displayLogs;
+
+        // If total matching records exceed current page, fetch all matching filtered records
+        if (data?.total && data.total > displayLogs.length) {
+          try {
+            const fetchParams: GetAuditLogsQuery = {
+              ...queryParams,
+              page: 1,
+              limit: 100,
+            };
+            const firstPage = await listAuditLogs(fetchParams);
+            let all = [...(firstPage.data || [])];
+            const totalPages = firstPage.totalPages || 1;
+
+            if (totalPages > 1) {
+              for (let p = 2; p <= Math.min(totalPages, 10); p++) {
+                const nextPage = await listAuditLogs({
+                  ...fetchParams,
+                  page: p,
+                });
+                all = all.concat(nextPage.data || []);
+              }
+            }
+            if (all.length > 0) {
+              exportData = all;
+            }
+          } catch {
+            exportData = displayLogs;
+          }
+        }
+
+        exportAuditLogs(format, exportData);
+        toast.success(
+          `Exported ${exportData.length} ${exportData.length === 1 ? 'record' : 'records'} as ${format.toUpperCase()}`,
+          { id: toastId },
+        );
+      } catch {
+        toast.error('Failed to export audit logs', { id: toastId });
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    [displayLogs, data?.total, queryParams],
+  );
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Category Dropdown Filters */}
+      {/* Category Dropdown Filters & Export */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-card/60 p-3 rounded-xl border border-border/70 backdrop-blur-sm shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           {/* Action Filter Dropdown (ignix-ui) */}
@@ -327,6 +389,53 @@ export function AuditLogTable() {
               Reset Filters
             </Button>
           )}
+        </div>
+
+        {/* Export Dropdown (ignix-ui) */}
+        <div className="flex items-center gap-2">
+          <Dropdown
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 text-xs font-medium cursor-pointer"
+                disabled={displayLogs.length === 0 || isExporting}
+              >
+                <Download className="size-3.5 text-muted-foreground" />
+                <span>{isExporting ? 'Exporting…' : 'Export Logs'}</span>
+                <ChevronDown className="size-3 text-muted-foreground" />
+              </Button>
+            }
+          >
+            <DropdownItem
+              onClick={() => void handleExport('csv')}
+              className="flex items-center gap-2 cursor-pointer text-xs"
+            >
+              <FileText className="size-3.5 text-muted-foreground" />
+              <span>Export as CSV (.csv)</span>
+            </DropdownItem>
+            <DropdownItem
+              onClick={() => void handleExport('excel')}
+              className="flex items-center gap-2 cursor-pointer text-xs"
+            >
+              <Table className="size-3.5 text-muted-foreground" />
+              <span>Export as Excel (.xls)</span>
+            </DropdownItem>
+            <DropdownItem
+              onClick={() => void handleExport('pdf')}
+              className="flex items-center gap-2 cursor-pointer text-xs"
+            >
+              <FileIcon className="size-3.5 text-muted-foreground" />
+              <span>Export as PDF (.pdf)</span>
+            </DropdownItem>
+            <DropdownItem
+              onClick={() => void handleExport('json')}
+              className="flex items-center gap-2 cursor-pointer text-xs"
+            >
+              <Code className="size-3.5 text-muted-foreground" />
+              <span>Export as JSON (.json)</span>
+            </DropdownItem>
+          </Dropdown>
         </div>
       </div>
 

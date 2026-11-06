@@ -1,12 +1,14 @@
 import type { AuditLogRecord, GetAuditLogsQuery } from '@repo/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuditLogTable } from '@/components/audit-log/audit-log-table';
 
-const { mockListAuditLogs } = vi.hoisted(() => ({
+const { mockListAuditLogs, mockExportAuditLogs } = vi.hoisted(() => ({
   mockListAuditLogs: vi.fn(),
+  mockExportAuditLogs: vi.fn(),
 }));
 
 vi.mock('@/lib/api/audit', () => ({
@@ -17,6 +19,18 @@ vi.mock('@/lib/api/audit', () => ({
     isError: false,
     refetch: vi.fn(),
   }),
+}));
+
+vi.mock('@/components/audit-log/audit-export-utils', () => ({
+  exportAuditLogs: mockExportAuditLogs,
+}));
+
+vi.mock('sonner', () => ({
+  toast: {
+    loading: vi.fn(() => 'toast-1'),
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 const sampleLog: AuditLogRecord = {
@@ -135,5 +149,69 @@ describe('AuditLogTable', () => {
     fireEvent.click(detailsButton);
 
     expect(await screen.findByText(/Audit Event Details/i)).toBeInTheDocument();
+  });
+
+  it('disables export button when there are no logs', () => {
+    mockListAuditLogs.mockImplementation(() => ({
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 15,
+      totalPages: 0,
+    }));
+
+    renderComponent();
+
+    const exportButton = screen.getByRole('button', { name: /export logs/i });
+    expect(exportButton).toBeDisabled();
+  });
+
+  it('enables export button and exports CSV when clicked', async () => {
+    const user = userEvent.setup();
+    mockListAuditLogs.mockImplementation(() => ({
+      data: [sampleLog],
+      total: 1,
+      page: 1,
+      limit: 15,
+      totalPages: 1,
+    }));
+
+    renderComponent();
+
+    const exportButton = screen.getByRole('button', { name: /export logs/i });
+    expect(exportButton).not.toBeDisabled();
+
+    // Open the export dropdown menu first
+    await user.click(exportButton);
+
+    // Click Export as CSV option
+    const csvOption = await screen.findByText(/export as csv/i);
+    await user.click(csvOption);
+
+    expect(mockExportAuditLogs).toHaveBeenCalledWith('csv', [sampleLog]);
+  });
+
+  it('exports PDF when PDF option is clicked', async () => {
+    const user = userEvent.setup();
+    mockListAuditLogs.mockImplementation(() => ({
+      data: [sampleLog],
+      total: 1,
+      page: 1,
+      limit: 15,
+      totalPages: 1,
+    }));
+
+    renderComponent();
+
+    const exportButton = screen.getByRole('button', { name: /export logs/i });
+    expect(exportButton).not.toBeDisabled();
+
+    // Open the export dropdown menu first
+    await user.click(exportButton);
+
+    const pdfOption = await screen.findByText(/export as pdf/i);
+    await user.click(pdfOption);
+
+    expect(mockExportAuditLogs).toHaveBeenCalledWith('pdf', [sampleLog]);
   });
 });
