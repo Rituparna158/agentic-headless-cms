@@ -1,6 +1,7 @@
 import type { AuditLogRecord, GetAuditLogsQuery } from '@repo/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AuditLogTable } from '@/components/audit-log/audit-log-table';
@@ -166,6 +167,7 @@ describe('AuditLogTable', () => {
   });
 
   it('enables export button and exports CSV when clicked', async () => {
+    const user = userEvent.setup();
     mockListAuditLogs.mockImplementation(() => ({
       data: [sampleLog],
       total: 1,
@@ -179,14 +181,18 @@ describe('AuditLogTable', () => {
     const exportButton = screen.getByRole('button', { name: /export logs/i });
     expect(exportButton).not.toBeDisabled();
 
+    // Open the export dropdown menu first
+    await user.click(exportButton);
+
     // Click Export as CSV option
-    const csvOption = screen.getByText(/export as csv/i);
-    fireEvent.click(csvOption);
+    const csvOption = await screen.findByText(/export as csv/i);
+    await user.click(csvOption);
 
     expect(mockExportAuditLogs).toHaveBeenCalledWith('csv', [sampleLog]);
   });
 
   it('exports PDF when PDF option is clicked', async () => {
+    const user = userEvent.setup();
     mockListAuditLogs.mockImplementation(() => ({
       data: [sampleLog],
       total: 1,
@@ -197,8 +203,14 @@ describe('AuditLogTable', () => {
 
     renderComponent();
 
-    const pdfOption = screen.getByText(/export as pdf/i);
-    fireEvent.click(pdfOption);
+    const exportButton = screen.getByRole('button', { name: /export logs/i });
+    expect(exportButton).not.toBeDisabled();
+
+    // Open the export dropdown menu first
+    await user.click(exportButton);
+
+    const pdfOption = await screen.findByText(/export as pdf/i);
+    await user.click(pdfOption);
 
     expect(mockExportAuditLogs).toHaveBeenCalledWith('pdf', [sampleLog]);
   });
