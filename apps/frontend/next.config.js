@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  devIndicators: false,
   transpilePackages: [
     '@repo/constants',
     '@repo/types',

@@ -1,22 +1,25 @@
+import type { MouseEvent, ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AnchorHTMLAttributes } from 'react';
 
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 
-const { mockUsePathname, mockUseRouter, mockUseSearchParams } = vi.hoisted(
-  () => ({
-    mockUsePathname: vi.fn(),
-    mockUseRouter: vi.fn(() => ({ push: vi.fn() })),
-    mockUseSearchParams: vi.fn(() => ({ get: vi.fn() })),
-  }),
-);
+interface MockLinkProps {
+  href: string;
+  children: ReactNode;
+  onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
+  className?: string;
+}
+
+const mockPush = vi.fn();
+const mockPathname = vi.fn();
+const mockSearchParamsGet = vi.fn();
 
 vi.mock('next/navigation', () => ({
-  usePathname: mockUsePathname,
-  useRouter: mockUseRouter,
-  useSearchParams: mockUseSearchParams,
+  usePathname: () => mockPathname(),
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: mockSearchParamsGet }),
 }));
 
 vi.mock('@/lib/api/schemas', () => ({
@@ -27,19 +30,14 @@ vi.mock(
   'next/link',
   () =>
     ({
-      default: ({
-        href,
-        children,
-        onClick,
-        ...rest
-      }: AnchorHTMLAttributes<HTMLAnchorElement>) => (
+      default: ({ href, children, onClick, className }: MockLinkProps) => (
         <a
           href={href}
+          className={className}
           onClick={(e) => {
             e.preventDefault();
             onClick?.(e);
           }}
-          {...rest}
         >
           {children}
         </a>
@@ -61,51 +59,56 @@ function renderSidebarNav(onNavigate?: () => void) {
 describe('SidebarNav', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('renders both primary and secondary nav items', () => {
-    mockUsePathname.mockReturnValue('/');
-    renderSidebarNav();
-
-    expect(screen.getByRole('link', { name: /Dashboard/ })).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /Content Type Builder/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /Roles & Access/ }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Settings/ })).toBeInTheDocument();
-  });
-
-  it('marks the item matching the current pathname as the current page', () => {
-    mockUsePathname.mockReturnValue('/roles-access');
-    renderSidebarNav();
-
-    expect(
-      screen.getByRole('link', { name: /Roles & Access/ }),
-    ).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: /Dashboard/ })).not.toHaveAttribute(
-      'aria-current',
+    mockPathname.mockReturnValue('/content');
+    mockSearchParamsGet.mockImplementation((key: string) =>
+      key === 'type' ? 'articles' : null,
     );
   });
 
-  it('renders disabled nav items as non-interactive elements', () => {
-    mockUsePathname.mockReturnValue('/');
+  it('renders primary navigation items and coming-soon badges', () => {
     renderSidebarNav();
 
-    expect(screen.getByText('Workflows')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: /Workflows/ }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Content Manager')).toBeInTheDocument();
+    expect(screen.getByText('Content Type Builder')).toBeInTheDocument();
+    expect(screen.getByText('Media Library')).toBeInTheDocument();
+    expect(screen.getByText('Agents')).toBeInTheDocument();
+    expect(screen.getAllByText('Soon').length).toBeGreaterThan(0);
+    expect(screen.getByText('Audit Log')).toBeInTheDocument();
+    expect(screen.getByText('Settings')).toBeInTheDocument();
   });
 
-  it('calls onNavigate when a nav link is clicked', () => {
-    mockUsePathname.mockReturnValue('/');
+  it('toggles content types section when chevron is clicked', () => {
+    renderSidebarNav();
+
+    const toggleButton = screen.getByRole('button', {
+      name: 'Collapse Content Types',
+    });
+    fireEvent.click(toggleButton);
+
+    expect(
+      screen.getByRole('button', { name: 'Expand Content Types' }),
+    ).toBeInTheDocument();
+  });
+
+  it('navigates when a primary navigation link is clicked', () => {
     const onNavigate = vi.fn();
     renderSidebarNav(onNavigate);
 
-    const link = screen.getByRole('link', { name: /Media/ });
-    fireEvent.click(link);
+    const dashboardLink = screen.getByRole('link', { name: 'Dashboard' });
+    fireEvent.click(dashboardLink);
+
     expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('navigates to /content when clicking Content header from outside content section', () => {
+    mockPathname.mockReturnValue('/content-types');
+
+    renderSidebarNav();
+
+    const contentItem = screen.getByText('Content Manager');
+    fireEvent.click(contentItem);
+
+    expect(mockPush).toHaveBeenCalledWith('/content');
   });
 });

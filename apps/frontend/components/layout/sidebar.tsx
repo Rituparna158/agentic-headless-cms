@@ -15,7 +15,7 @@ export function Sidebar() {
 
   if (!mounted) {
     return (
-      <aside className="bg-background hidden w-64 shrink-0 border-r md:flex md:flex-col">
+      <aside className="bg-sidebar-surface hidden w-64 shrink-0 border-r border-sidebar-border md:flex md:flex-col">
         <Suspense fallback={null}>
           <SidebarNav />
         </Suspense>
@@ -29,7 +29,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="bg-background hidden w-64 shrink-0 border-r md:flex md:flex-col">
+    <aside className="bg-sidebar-surface hidden w-64 shrink-0 border-r border-sidebar-border md:flex md:flex-col">
       <Suspense fallback={null}>
         <SidebarNav />
       </Suspense>
