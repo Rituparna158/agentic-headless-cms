@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import {
   motion,
   AnimatePresence,
@@ -94,6 +95,8 @@ export interface ModalProps {
   bodyClassName?: string;
   /** Custom className for the footer */
   footerClassName?: string;
+  /** Target DOM element to portal the modal into. Defaults to document.body. Set to false to disable portaling. */
+  container?: HTMLElement | null | false;
 }
 
 /**
@@ -677,7 +680,7 @@ type ModalColorSchemeConfig = {
 };
 
 type ModalComponentType = React.MemoExoticComponent<
-  (props: ModalProps) => React.ReactElement
+  (props: ModalProps) => React.ReactElement | null
 > & {
   colorSchemeConfig: Record<ModalColorScheme, ModalColorSchemeConfig>;
 };
@@ -706,7 +709,8 @@ const ModalComponent = React.memo(
     headerClassName,
     bodyClassName,
     footerClassName,
-  }) => {
+    container,
+  }: ModalProps) => {
     const schemeClasses = React.useMemo(
       () => colorSchemeConfig[colorScheme],
       [colorScheme],
@@ -800,7 +804,13 @@ const ModalComponent = React.memo(
       onClose();
     }, [onCancel, onClose]);
 
-    return (
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+      setMounted(true);
+    }, []);
+
+    const modalContent = (
       <AnimatePresence>
         {isOpen && (
           <ModalOverlay
@@ -844,6 +854,17 @@ const ModalComponent = React.memo(
         )}
       </AnimatePresence>
     );
+
+    if (container === false) {
+      return modalContent;
+    }
+
+    if (!mounted || typeof document === 'undefined') {
+      return null;
+    }
+
+    const portalTarget = container || document.body;
+    return createPortal(modalContent, portalTarget);
   },
 ) as ModalComponentType;
 
