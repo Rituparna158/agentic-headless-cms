@@ -95,12 +95,13 @@ export function WebhooksTable() {
           Endpoints listening for content and system mutations
         </div>
         <Button
+          aria-label="+ Register"
           onClick={() => setIsCreateOpen(true)}
           className="gap-1.5"
           size="sm"
         >
           <Plus className="size-4" />
-          <span>Register Webhook</span>
+          <span>Register</span>
         </Button>
       </div>
 

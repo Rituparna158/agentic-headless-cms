@@ -27,3 +27,4 @@ export * from './components/ui/skeleton';
 export * from './templates/errorpage';
 export * from './templates/maintenance-page';
 export * from './tokens/colorTokens';
+export * from './components/ui/breadcrumbs';

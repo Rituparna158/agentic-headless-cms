@@ -12,6 +12,7 @@ import {
   createContentEntry,
   deleteContentEntry,
   getContentEntry,
+  listContentVersions,
   publishContentEntry,
   unpublishContentEntry,
   updateContentEntry,
@@ -201,6 +202,46 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     return undefined;
   }, [entry, localizedEntry, selectedLocale, defaultLocale]);
 
+  // Query historical versions for this entry
+  const { data: versions } = useQuery({
+    queryKey: ['content', schema.slug, 'entry', entry?.id, 'versions'],
+    queryFn: () => listContentVersions(schema.slug, entry!.id),
+    enabled: Boolean(entry?.id),
+  });
+
+  const sortedVersions = useMemo(() => {
+    if (!versions) return [];
+    return [...versions].sort((a, b) => b.versionNo - a.versionNo);
+  }, [versions]);
+
+  const latestVersionNo = useMemo(() => {
+    return sortedVersions[0]?.versionNo ?? 1;
+  }, [sortedVersions]);
+
+  const [selectedVersionNo, setSelectedVersionNo] = useState<number | null>(
+    null,
+  );
+  const [pendingVersionNo, setPendingVersionNo] = useState<number | null>(null);
+  const [isVersionConfirmOpen, setIsVersionConfirmOpen] = useState(false);
+
+  const selectedVersionRecord = useMemo(() => {
+    if (selectedVersionNo === null || !sortedVersions.length) return null;
+    return (
+      sortedVersions.find((v) => v.versionNo === selectedVersionNo) ?? null
+    );
+  }, [selectedVersionNo, sortedVersions]);
+
+  const isViewingHistorical = Boolean(
+    selectedVersionRecord && selectedVersionNo !== latestVersionNo,
+  );
+
+  const activeDisplayData = useMemo(() => {
+    if (isViewingHistorical && selectedVersionRecord) {
+      return selectedVersionRecord.data;
+    }
+    return activeEntryData;
+  }, [isViewingHistorical, selectedVersionRecord, activeEntryData]);
+
   const currentStatus = useMemo(() => {
     if (!entry) return undefined;
     if (selectedLocale === defaultLocale) return entry.status;
@@ -212,20 +253,20 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const form = useForm<Record<string, unknown>>({
     resolver: zodResolver(zodSchema),
     defaultValues: buildDefaultValues(definition, entry?.data),
-    values: buildDefaultValues(definition, activeEntryData),
+    values: buildDefaultValues(definition, activeDisplayData),
     resetOptions: {
       keepDirtyValues: false,
     },
   });
 
   useEffect(() => {
-    if (activeEntryData !== undefined) {
-      form.reset(buildDefaultValues(definition, activeEntryData));
+    if (activeDisplayData !== undefined) {
+      form.reset(buildDefaultValues(definition, activeDisplayData));
     } else if (localizedEntry === null || (!entry && selectedLocale)) {
       form.reset(buildDefaultValues(definition, undefined));
     }
   }, [
-    activeEntryData,
+    activeDisplayData,
     localizedEntry,
     entry,
     selectedLocale,
@@ -241,6 +282,17 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
       return;
     }
     setSelectedLocale(newLocale);
+    setSelectedVersionNo(null);
+  }
+
+  function handleVersionSelect(versionNo: number) {
+    if (versionNo === (selectedVersionNo ?? latestVersionNo)) return;
+    if (form.formState.isDirty) {
+      setPendingVersionNo(versionNo);
+      setIsVersionConfirmOpen(true);
+      return;
+    }
+    setSelectedVersionNo(versionNo === latestVersionNo ? null : versionNo);
   }
 
   function invalidateList() {
@@ -365,7 +417,9 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   }
 
   const { isDirty, isSubmitting } = form.formState;
-  const showSaveDraft = !entry || currentStatus !== 'published' || isDirty;
+  const showSaveDraft =
+    !isViewingHistorical &&
+    (!entry || currentStatus !== 'published' || isDirty);
 
   return (
     <FormProvider {...form}>
@@ -467,6 +521,50 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 ))
               )}
             </Dropdown>
+
+            {/* Version Toggle Dropdown */}
+            {entry && (
+              <Dropdown
+                align="start"
+                className="max-h-60 overflow-y-auto min-w-[7rem] p-1.5"
+                trigger={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2.5 text-xs font-medium border-border/80"
+                    aria-label="Select Version"
+                  >
+                    <span className="font-semibold">
+                      v{selectedVersionNo ?? latestVersionNo}
+                    </span>
+                    <ChevronDown className="size-3 text-muted-foreground ml-0.5 opacity-60" />
+                  </Button>
+                }
+              >
+                <div className="max-h-52 overflow-y-auto flex flex-col gap-0.5 pr-1">
+                  {sortedVersions.length === 0 ? (
+                    <DropdownItem disabled>
+                      <span className="text-xs">v1</span>
+                    </DropdownItem>
+                  ) : (
+                    sortedVersions.map((v) => {
+                      const isSelected =
+                        (selectedVersionNo ?? latestVersionNo) === v.versionNo;
+                      return (
+                        <DropdownItem
+                          key={v.id}
+                          onSelect={() => handleVersionSelect(v.versionNo)}
+                          className={isSelected ? 'font-bold bg-accent' : ''}
+                        >
+                          <span className="text-xs">v{v.versionNo}</span>
+                        </DropdownItem>
+                      );
+                    })
+                  )}
+                </div>
+              </Dropdown>
+            )}
           </div>
 
           {/* Action Buttons Group */}
@@ -554,6 +652,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   size="sm"
                   className="text-xs font-medium"
                   disabled={
+                    isViewingHistorical ||
                     !canPublish ||
                     publishMutation.isPending ||
                     isLocalizedLoading
@@ -577,7 +676,10 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   size="sm"
                   className="text-xs font-medium flex items-center gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
                   disabled={
-                    !canDelete || deleteMutation.isPending || isLocalizedLoading
+                    isViewingHistorical ||
+                    !canDelete ||
+                    deleteMutation.isPending ||
+                    isLocalizedLoading
                   }
                   onClick={() => setIsDeleteConfirmOpen(true)}
                 >
@@ -600,8 +702,30 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           </p>
         ) : null}
 
+        {/* Historical Preview Notice */}
+        {isViewingHistorical && (
+          <div className="flex items-center justify-between p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs">
+            <span>
+              Viewing historical snapshot <strong>v{selectedVersionNo}</strong>{' '}
+              (Read-Only).
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              className="h-7 text-xs bg-background"
+              onClick={() => setSelectedVersionNo(null)}
+            >
+              Back to Latest (v{latestVersionNo})
+            </Button>
+          </div>
+        )}
+
         {/* Dynamic Fields taking full width */}
-        <div className="grid gap-5 w-full">
+        <fieldset
+          disabled={isViewingHistorical}
+          className="grid gap-5 w-full border-none p-0 m-0 disabled:opacity-85"
+        >
           {isLocalizedLoading ? (
             <div
               data-testid="locale-loading-skeleton"
@@ -617,11 +741,34 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 key={field.apiId}
                 field={field}
                 control={form.control}
+                disabled={isViewingHistorical}
               />
             ))
           )}
-        </div>
+        </fieldset>
       </form>
+
+      {/* Version Switch Confirmation Dialog */}
+      <ConfirmDialog
+        open={isVersionConfirmOpen}
+        onOpenChange={(open) => {
+          setIsVersionConfirmOpen(open);
+          if (!open) setPendingVersionNo(null);
+        }}
+        title="Discard Unsaved Changes?"
+        description="You have unsaved changes. Switching versions will discard them. Do you want to continue?"
+        confirmLabel="Discard & Switch"
+        destructive={true}
+        onConfirm={() => {
+          setIsVersionConfirmOpen(false);
+          if (pendingVersionNo !== null) {
+            setSelectedVersionNo(
+              pendingVersionNo === latestVersionNo ? null : pendingVersionNo,
+            );
+            setPendingVersionNo(null);
+          }
+        }}
+      />
 
       {/* Publish Confirmation Dialog */}
       <ConfirmDialog

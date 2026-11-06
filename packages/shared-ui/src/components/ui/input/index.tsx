@@ -31,7 +31,7 @@ interface AnimatedInputProps {
 }
 
 interface InputVariant {
-  label: Variants;
+  label?: Variants;
   input: Variants;
   extra?: Variants;
   container?: Variants;
@@ -187,7 +187,8 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
     <motion.div
       ref={containerRef}
       className={cn(
-        'relative mb-6 group',
+        'relative group',
+        !className.includes('mb-') && 'mb-6',
         disabled && 'opacity-60 cursor-not-allowed',
         className,
       )}
@@ -254,7 +255,10 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
           className={cn(
             // Base enhanced styles
             'w-full bg-background/90 backdrop-blur-sm border border-border/60 rounded-xl',
-            'text-foreground placeholder:text-transparent transition-all duration-300',
+            'text-foreground transition-all duration-300',
+            variants?.label
+              ? 'placeholder:text-transparent'
+              : 'placeholder:text-muted-foreground',
             'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/60',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'shadow-sm hover:shadow-md focus:shadow-lg',
@@ -437,6 +441,35 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
 
 // Enhanced input variants (ALL original variants with premium improvements)
 const inputVariants: Record<string, InputVariant> = {
+  search: {
+    container: {
+      initial: { scale: 1 },
+      animate: { scale: 1 },
+    },
+    input: {
+      initial: {
+        borderColor: 'rgb(226, 232, 240)',
+      },
+      animate: {
+        borderColor: 'var(--primary)',
+      },
+    },
+  },
+
+  default: {
+    container: {
+      initial: { scale: 1 },
+      animate: { scale: 1 },
+    },
+    input: {
+      initial: {
+        borderColor: 'rgb(226, 232, 240)',
+      },
+      animate: {
+        borderColor: 'var(--primary)',
+      },
+    },
+  },
   clean: {
     container: {
       initial: { scale: 1 },

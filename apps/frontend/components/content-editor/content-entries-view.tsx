@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { LayersIcon, PlusIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
-import { Badge, Button, Card, CardContent } from '@repo/shared-ui';
+import { Badge, Breadcrumbs, Button, Card, CardContent } from '@repo/shared-ui';
 import { useAuthStore } from '@/stores/auth-store';
 import { useHasPermission } from '@/hooks/use-permissions';
 import { ContentEntryList } from './content-entry-list';
@@ -95,7 +95,7 @@ export function ContentEntriesView() {
             <Button asChild>
               <Link href="/content-types/new">
                 <PlusIcon className="size-4 mr-2" />
-                Create Content Type
+                Create Type
               </Link>
             </Button>
           </CardContent>
@@ -106,6 +106,13 @@ export function ContentEntriesView() {
 
   return (
     <div className="grid gap-6 w-full">
+      <Breadcrumbs
+        variant="text"
+        size="sm"
+        className="p-0 bg-transparent"
+        items={[{ label: 'Content' }, { label: activeSchema.name }]}
+      />
+
       {/* 100% Full-Width Header Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -125,7 +132,7 @@ export function ContentEntriesView() {
           <Button asChild>
             <Link href={`/content/${activeSchema.slug}/new`}>
               <PlusIcon className="size-4 mr-2" />
-              New {activeSchema.name} Entry
+              New Entry
             </Link>
           </Button>
         ) : (

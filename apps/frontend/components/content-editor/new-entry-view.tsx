@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
 import {
+  Breadcrumbs,
   Button,
   Card,
   CardContent,
@@ -105,6 +106,17 @@ export function NewEntryView({ schemaSlug }: { schemaSlug: string }) {
 
   return (
     <div className="grid gap-6">
+      <Breadcrumbs
+        variant="text"
+        size="sm"
+        className="p-0 bg-transparent"
+        items={[
+          { label: 'Content' },
+          { label: schema.name, href: `/content/${schema.slug}` },
+          { label: `New ${schema.name}` },
+        ]}
+      />
+
       <h1 className="text-2xl font-semibold">New {schema.name}</h1>
 
       <Card>

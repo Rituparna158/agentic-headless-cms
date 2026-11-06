@@ -48,7 +48,7 @@ test('admin can create a role with a content-type permission', async ({
     .nth(0)
     .check({ force: true });
 
-  await page.getByRole('button', { name: 'Save Role', exact: true }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
 
   await expect(page.getByRole('button', { name: roleName })).toBeVisible({
     timeout: 15_000,

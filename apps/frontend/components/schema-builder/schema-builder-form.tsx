@@ -506,7 +506,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                 : 'Creating…'
               : isEditing
                 ? 'Save Changes'
-                : 'Create Content Type'}
+                : 'Create'}
           </Button>
         </div>
       </form>

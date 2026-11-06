@@ -58,7 +58,7 @@ export function LocalesTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setIsCreateOpen(true)}>Add Locale</Button>
+        <Button onClick={() => setIsCreateOpen(true)}>+ Add</Button>
         <Modal
           isOpen={isCreateOpen}
           onClose={closeDialog}

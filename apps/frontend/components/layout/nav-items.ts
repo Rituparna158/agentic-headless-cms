@@ -45,7 +45,13 @@ export const primaryNavItems: NavItem[] = [
     disabled: true,
     disabledBadge: 'Soon',
   },
-  { label: 'Agents', href: '/agents', icon: Bot },
+  {
+    label: 'Agents',
+    href: '/agents',
+    icon: Bot,
+    disabled: true,
+    disabledBadge: 'Soon',
+  },
 ];
 
 /** Secondary navigation — governance/administration surfaces (SRS §4.8–4.9). */

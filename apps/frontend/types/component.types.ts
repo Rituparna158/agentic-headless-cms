@@ -34,6 +34,7 @@ export interface UsersTabProps {
 export interface DynamicFieldProps<T extends FieldValues = FieldValues> {
   field: SchemaField;
   control: Control<T>;
+  disabled?: boolean;
 }
 
 export interface FieldTypeInputProps {

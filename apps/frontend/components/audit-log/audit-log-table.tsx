@@ -223,7 +223,7 @@ export function AuditLogTable() {
               e.stopPropagation();
               handleRowClick(item.rawLog);
             }}
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
             title="View details"
             aria-label="View audit log details"
           >
@@ -362,6 +362,11 @@ export function AuditLogTable() {
           <DataTable
             columns={COLUMNS}
             rows={rows}
+            onRowClick={(_row: unknown, index: number) => {
+              if (displayLogs[index]) {
+                handleRowClick(displayLogs[index]);
+              }
+            }}
             enableFiltering={true}
             manualFiltering={true}
             searchValue={searchQuery}

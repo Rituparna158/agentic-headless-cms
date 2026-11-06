@@ -8,7 +8,7 @@ test('admin can add and delete a locale', async ({ page }) => {
   await page.goto('/settings');
   await page.getByRole('button', { name: 'Locales', exact: true }).click();
 
-  await page.getByRole('button', { name: 'Add Locale' }).click();
+  await page.getByRole('button', { name: '+ Add' }).click();
   await page.getByPlaceholder('e.g. fr-FR').fill(code);
   await page.getByPlaceholder('e.g. French').fill(name);
   await page.getByRole('button', { name: 'Add', exact: true }).click();

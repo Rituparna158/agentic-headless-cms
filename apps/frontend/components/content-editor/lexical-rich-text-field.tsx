@@ -43,11 +43,20 @@ import {
   Link2,
   Pilcrow,
 } from 'lucide-react';
-import type * as React from 'react';
+import * as React from 'react';
+import { useEffect } from 'react';
 import type { LexicalRichTextFieldProps } from '@/types/component.types';
 
 import { Button } from '@repo/shared-ui';
 import { cn } from '@/lib/utils';
+
+function EditablePlugin({ disabled }: { disabled?: boolean }) {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    editor.setEditable(!disabled);
+  }, [editor, disabled]);
+  return null;
+}
 
 function Toolbar({ disabled }: { disabled?: boolean }) {
   const [editor] = useLexicalComposerContext();
@@ -272,7 +281,8 @@ export function LexicalRichTextField({
       <div
         className={cn(
           'rounded-md border bg-background overflow-hidden',
-          disabled && 'opacity-50',
+          disabled &&
+            'opacity-60 pointer-events-none cursor-not-allowed select-none',
         )}
       >
         <Toolbar disabled={disabled} />
@@ -296,6 +306,7 @@ export function LexicalRichTextField({
           <ListPlugin />
           <LinkPlugin />
           <HistoryPlugin />
+          <EditablePlugin disabled={disabled} />
           <OnChangePlugin
             onChange={(editorState: EditorState) =>
               onChange(JSON.stringify(editorState.toJSON()))
