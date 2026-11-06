@@ -27,7 +27,23 @@ import {
   Skeleton,
 } from '@repo/shared-ui';
 import type { SchemaField } from '@repo/types';
-import { ChevronDown, Globe, History, Trash2, Undo2 } from 'lucide-react';
+import {
+  ChevronDown,
+  Globe,
+  History,
+  Languages,
+  Loader2,
+  Settings2,
+  Sparkles,
+  Trash2,
+  Undo2,
+} from 'lucide-react';
+import {
+  translateContentEntry,
+  getTranslationConfig,
+  type TranslationConfig,
+} from '@/lib/services/translation-service';
+import { TranslationSettingsDialog } from './translation-settings-dialog';
 import { FormProvider } from 'react-hook-form';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -153,11 +169,48 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     queryKey: ['locales'],
     queryFn: () => listLocales(),
   });
-  const locales = useMemo(() => localesData?.data ?? [], [localesData]);
+  const rawLocales = useMemo(() => localesData?.data ?? [], [localesData]);
   const defaultLocale = useMemo(() => {
-    const defaultObj = locales.find((l) => l.isDefault);
+    const defaultObj = rawLocales.find((l) => l.isDefault);
     return defaultObj ? defaultObj.code : DEFAULT_LOCALE;
-  }, [locales]);
+  }, [rawLocales]);
+
+  const locales = useMemo(() => {
+    const list = [...rawLocales];
+
+    // Ensure the defaultLocale is always present in the options list
+    const hasDefault = list.some(
+      (l) => l.code.toLowerCase() === defaultLocale.toLowerCase(),
+    );
+    if (!hasDefault) {
+      list.unshift({
+        id: 'system-default-locale',
+        code: defaultLocale,
+        name:
+          defaultLocale === DEFAULT_LOCALE
+            ? 'English'
+            : defaultLocale.toUpperCase(),
+        isDefault: true,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    // Ensure DEFAULT_LOCALE ('en') is also present if defaultLocale is different
+    const hasEn = list.some(
+      (l) => l.code.toLowerCase() === DEFAULT_LOCALE.toLowerCase(),
+    );
+    if (!hasEn && defaultLocale !== DEFAULT_LOCALE) {
+      list.push({
+        id: 'system-en-locale',
+        code: DEFAULT_LOCALE,
+        name: 'English',
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    return list;
+  }, [rawLocales, defaultLocale]);
 
   const [selectedLocale, setSelectedLocale] = useState<string>(DEFAULT_LOCALE);
 
@@ -223,6 +276,75 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   );
   const [pendingVersionNo, setPendingVersionNo] = useState<number | null>(null);
   const [isVersionConfirmOpen, setIsVersionConfirmOpen] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [isTranslationSettingsOpen, setIsTranslationSettingsOpen] =
+    useState(false);
+  const [translationConfig, setTranslationConfig] = useState<TranslationConfig>(
+    () => getTranslationConfig(),
+  );
+
+  async function handleAutoTranslate() {
+    if (selectedLocale === defaultLocale) {
+      toast.info(`You are currently on the default locale (${defaultLocale}).`);
+      return;
+    }
+
+    const sourceData = (entry?.data || form.getValues()) as Record<
+      string,
+      unknown
+    >;
+    if (!sourceData || Object.keys(sourceData).length === 0) {
+      toast.error(
+        `No source content found in default locale (${defaultLocale}) to translate from.`,
+      );
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const result = await translateContentEntry({
+        fields: definition.fields,
+        sourceData,
+        sourceLocale: defaultLocale,
+        targetLocale: selectedLocale,
+        config: translationConfig,
+      });
+
+      if (result.translatedCount === 0) {
+        toast.info(
+          'No translatable text fields with content were found to translate.',
+        );
+        return;
+      }
+
+      Object.entries(result.translatedData).forEach(([key, value]) => {
+        form.setValue(key, value, {
+          shouldDirty: true,
+          shouldValidate: true,
+          shouldTouch: true,
+        });
+      });
+
+      const providerLabel =
+        result.provider === 'openai'
+          ? 'OpenAI'
+          : result.provider === 'custom'
+            ? 'Custom Endpoint'
+            : 'Free API';
+
+      toast.success(
+        `Auto-translated ${result.translatedCount} field${
+          result.translatedCount === 1 ? '' : 's'
+        } from ${defaultLocale.toUpperCase()} to ${selectedLocale.toUpperCase()} via ${providerLabel}`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to auto-translate content',
+      );
+    } finally {
+      setIsTranslating(false);
+    }
+  }
 
   const selectedVersionRecord = useMemo(() => {
     if (selectedVersionNo === null || !sortedVersions.length) return null;
@@ -469,8 +591,10 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   </span>
                   {locales.length > 0 && (
                     <span className="text-muted-foreground text-[11px] font-normal hidden sm:inline">
-                      {locales.find((l) => l.code === selectedLocale)?.name ??
-                        ''}
+                      {locales.find(
+                        (l) =>
+                          l.code.toLowerCase() === selectedLocale.toLowerCase(),
+                      )?.name ?? ''}
                     </span>
                   )}
                   <ChevronDown className="size-3 text-muted-foreground ml-0.5 opacity-60" />
@@ -501,7 +625,10 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                         </span>
                         <span
                           className={
-                            loc.code === selectedLocale ? 'font-semibold' : ''
+                            loc.code.toLowerCase() ===
+                            selectedLocale.toLowerCase()
+                              ? 'font-semibold'
+                              : ''
                           }
                         >
                           {loc.name}
@@ -510,8 +637,8 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                       {loc.isDefault && (
                         <Badge
                           variant="outline"
-                          size="xs"
-                          className="text-[10px]"
+                          size="sm"
+                          className="text-xs font-medium px-2 py-0.5"
                         >
                           Default
                         </Badge>
@@ -521,6 +648,67 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 ))
               )}
             </Dropdown>
+
+            {/* Auto-Translate Action (visible when in secondary locale) */}
+            {selectedLocale !== defaultLocale && (
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAutoTranslate}
+                  disabled={isTranslating}
+                  className="h-8 gap-1.5 px-2.5 text-xs font-medium border-primary/40 bg-primary/5 text-primary hover:bg-primary/15 hover:text-primary transition-all"
+                  aria-label="Auto-translate"
+                  title={`Auto-translate from ${defaultLocale} to ${selectedLocale}`}
+                >
+                  {isTranslating ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Languages className="size-3.5" />
+                  )}
+                  <span>Auto-translate</span>
+                </Button>
+
+                <Dropdown
+                  align="end"
+                  className="min-w-[12rem] p-1.5"
+                  trigger={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                      aria-label="Translation Settings"
+                      title="Translation options & provider settings"
+                    >
+                      <Settings2 className="size-3.5" />
+                    </Button>
+                  }
+                >
+                  <DropdownItem onSelect={handleAutoTranslate}>
+                    <div className="flex items-center gap-2 text-xs">
+                      <Sparkles className="size-3.5 text-primary" />
+                      <span>Translate from {defaultLocale.toUpperCase()}</span>
+                    </div>
+                  </DropdownItem>
+                  <DropdownItem
+                    onSelect={() => setIsTranslationSettingsOpen(true)}
+                  >
+                    <div className="flex items-center gap-2 text-xs">
+                      <Settings2 className="size-3.5 text-muted-foreground" />
+                      <span>
+                        Provider:{' '}
+                        <span className="font-semibold capitalize">
+                          {translationConfig.provider}
+                        </span>
+                        ...
+                      </span>
+                    </div>
+                  </DropdownItem>
+                </Dropdown>
+              </div>
+            )}
 
             {/* Version Toggle Dropdown */}
             {entry && (
@@ -832,6 +1020,13 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
             form.reset(buildDefaultValues(definition, targetData));
           }
         }}
+      />
+
+      {/* Translation Provider Settings Dialog */}
+      <TranslationSettingsDialog
+        open={isTranslationSettingsOpen}
+        onOpenChange={setIsTranslationSettingsOpen}
+        onConfigChange={setTranslationConfig}
       />
 
       {entry ? (
