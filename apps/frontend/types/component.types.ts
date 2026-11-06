@@ -89,6 +89,7 @@ export interface FieldSettingsPanelProps<T extends FieldValues = FieldValues> {
   index: number | null;
   control: Control<T>;
   onRemove: (index: number) => void;
+  onClose?: () => void;
 }
 
 export interface ConfirmDialogProps {

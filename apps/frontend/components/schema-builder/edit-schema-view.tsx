@@ -1,6 +1,12 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/shared-ui';
+import {
+  Breadcrumbs,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@repo/shared-ui';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
 import { SchemaBuilderForm } from './schema-builder-form';
 
@@ -23,6 +29,16 @@ export function EditSchemaView({ slug }: { slug: string }) {
 
   return (
     <div className="grid gap-6">
+      <Breadcrumbs
+        variant="text"
+        size="sm"
+        className="p-0 bg-transparent"
+        items={[
+          { label: 'Content Type Builder', href: '/content-types' },
+          { label: schema.name },
+        ]}
+      />
+
       <h1 className="text-2xl font-semibold">Edit {schema.name}</h1>
 
       <Card>
