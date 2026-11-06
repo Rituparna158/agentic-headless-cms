@@ -12,18 +12,23 @@ test('admin can create a schema with two fields and reorder them via drag-and-dr
   await page.getByPlaceholder('e.g. Blog Post').fill(`E2E Article ${id}`);
   await page.getByPlaceholder('e.g. blog-post').fill(slug);
 
+  // Add first field via slide-over drawer
+  await page.getByRole('button', { name: 'Add field' }).click();
   await page
     .getByPlaceholder('e.g. Title', { exact: true })
-    .nth(0)
     .fill('Alpha Field');
   await page
     .getByPlaceholder('e.g. title', { exact: true })
-    .nth(0)
     .fill('alpha_field');
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
 
+  // Add second field via slide-over drawer
   await page.getByRole('button', { name: 'Add field' }).click();
   await page.getByPlaceholder('e.g. Title', { exact: true }).fill('Beta Field');
   await page.getByPlaceholder('e.g. title', { exact: true }).fill('beta_field');
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
 
   const rowNames = page.locator(
     '[data-slot="field-list-item"] span.font-medium',

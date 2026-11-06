@@ -287,7 +287,7 @@ export function FieldSettingsPanel({
             </label>
             <Input
               id={`display-name-${index}`}
-              placeholder="e.g. Title, Featured Image, Price"
+              placeholder="e.g. Title"
               variant="default"
               {...field}
               value={field.value ?? ''}
@@ -321,7 +321,7 @@ export function FieldSettingsPanel({
             </label>
             <Input
               id={`api-id-${index}`}
-              placeholder="e.g. title, featuredImage, price"
+              placeholder="e.g. title"
               variant="default"
               {...field}
               value={field.value ?? ''}
