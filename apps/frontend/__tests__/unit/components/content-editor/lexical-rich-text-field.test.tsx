@@ -79,6 +79,53 @@ describe('LexicalRichTextField', () => {
     expect(screen.getByText('Hello world')).toBeInTheDocument();
   });
 
+  it('updates the editor state when external value prop changes (e.g. from Auto-Translate)', () => {
+    const { rerender } = render(
+      <LexicalRichTextField
+        value={SERIALIZED_HELLO_WORLD}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Hello world')).toBeInTheDocument();
+
+    const SERIALIZED_HOLA_MUNDO = JSON.stringify({
+      root: {
+        children: [
+          {
+            children: [
+              {
+                detail: 0,
+                format: 0,
+                mode: 'normal',
+                style: '',
+                text: 'Hola mundo',
+                type: 'text',
+                version: 1,
+              },
+            ],
+            direction: 'ltr',
+            format: '',
+            indent: 0,
+            type: 'paragraph',
+            version: 1,
+          },
+        ],
+        direction: 'ltr',
+        format: '',
+        indent: 0,
+        type: 'root',
+        version: 1,
+      },
+    });
+
+    rerender(
+      <LexicalRichTextField value={SERIALIZED_HOLA_MUNDO} onChange={vi.fn()} />,
+    );
+
+    expect(screen.getByText('Hola mundo')).toBeInTheDocument();
+  });
+
   it('disables the content area and toolbar buttons when disabled', () => {
     render(<LexicalRichTextField value="" onChange={vi.fn()} disabled />);
 

@@ -16,6 +16,8 @@ import {
   $getSelection,
   $isRangeSelection,
   $createParagraphNode,
+  $getRoot,
+  $createTextNode,
 } from 'lexical';
 import {
   HeadingNode,
@@ -49,6 +51,47 @@ import type { LexicalRichTextFieldProps } from '@/types/component.types';
 
 import { Button } from '@repo/shared-ui';
 import { cn } from '@/lib/utils';
+
+function ValueSyncPlugin({ value }: { value?: string }) {
+  const [editor] = useLexicalComposerContext();
+  const lastSerializedRef = React.useRef(value);
+
+  useEffect(() => {
+    if (value === undefined) return;
+    if (value === lastSerializedRef.current) return;
+
+    editor.getEditorState().read(() => {
+      const current = JSON.stringify(editor.getEditorState().toJSON());
+      if (current !== value) {
+        lastSerializedRef.current = value;
+        if (!value || value.trim() === '') {
+          editor.update(() => {
+            const root = $getRoot();
+            root.clear();
+            const p = $createParagraphNode();
+            root.append(p);
+          });
+          return;
+        }
+
+        try {
+          const parsed = editor.parseEditorState(value);
+          editor.setEditorState(parsed);
+        } catch {
+          editor.update(() => {
+            const root = $getRoot();
+            root.clear();
+            const p = $createParagraphNode();
+            p.append($createTextNode(value));
+            root.append(p);
+          });
+        }
+      }
+    });
+  }, [editor, value]);
+
+  return null;
+}
 
 function EditablePlugin({ disabled }: { disabled?: boolean }) {
   const [editor] = useLexicalComposerContext();
@@ -307,6 +350,7 @@ export function LexicalRichTextField({
           <LinkPlugin />
           <HistoryPlugin />
           <EditablePlugin disabled={disabled} />
+          <ValueSyncPlugin value={value} />
           <OnChangePlugin
             onChange={(editorState: EditorState) =>
               onChange(JSON.stringify(editorState.toJSON()))
