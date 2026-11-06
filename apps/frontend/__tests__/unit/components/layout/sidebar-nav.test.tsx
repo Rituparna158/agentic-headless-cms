@@ -12,18 +12,14 @@ interface MockLinkProps {
   className?: string;
 }
 
-const { mockUsePathname, mockUseRouter, mockUseSearchParams } = vi.hoisted(
-  () => ({
-    mockUsePathname: vi.fn(),
-    mockUseRouter: vi.fn(() => ({ push: vi.fn() })),
-    mockUseSearchParams: vi.fn(() => ({ get: vi.fn() })),
-  }),
-);
+const mockPush = vi.fn();
+const mockPathname = vi.fn();
+const mockSearchParamsGet = vi.fn();
 
 vi.mock('next/navigation', () => ({
-  usePathname: mockUsePathname,
-  useRouter: mockUseRouter,
-  useSearchParams: mockUseSearchParams,
+  usePathname: () => mockPathname(),
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: mockSearchParamsGet }),
 }));
 
 vi.mock('@/lib/api/schemas', () => ({
@@ -63,8 +59,10 @@ function renderSidebarNav(onNavigate?: () => void) {
 describe('SidebarNav', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUsePathname.mockReturnValue('/content');
-    mockUseSearchParams.mockReturnValue(new URLSearchParams('type=articles'));
+    mockPathname.mockReturnValue('/content');
+    mockSearchParamsGet.mockImplementation((key: string) =>
+      key === 'type' ? 'articles' : null,
+    );
   });
 
   it('renders primary navigation items and coming-soon badges', () => {
@@ -104,15 +102,13 @@ describe('SidebarNav', () => {
   });
 
   it('navigates to /content when clicking Content header from outside content section', () => {
-    mockUsePathname.mockReturnValue('/content-types');
-    const pushMock = vi.fn();
-    mockUseRouter.mockReturnValue({ push: pushMock });
+    mockPathname.mockReturnValue('/content-types');
 
     renderSidebarNav();
 
     const contentItem = screen.getByText('Content Manager');
     fireEvent.click(contentItem);
 
-    expect(pushMock).toHaveBeenCalledWith('/content');
+    expect(mockPush).toHaveBeenCalledWith('/content');
   });
 });
