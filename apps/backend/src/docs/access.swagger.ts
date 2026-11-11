@@ -217,6 +217,80 @@
 
 /**
  * @swagger
+ * /access/users/{id}:
+ *   delete:
+ *     summary: Delete a user
+ *     tags: [Access]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "usr_123"
+ *     responses:
+ *       204:
+ *         description: User deleted successfully
+ *       400:
+ *         description: Cannot delete yourself or the last active administrator
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: User not found
+ */
+
+/**
+ * @swagger
+ * /access/users/{id}/role:
+ *   patch:
+ *     summary: Update a user's role
+ *     tags: [Access]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "usr_123"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - roleId
+ *             properties:
+ *               roleId:
+ *                 type: string
+ *             example:
+ *               roleId: "role_123"
+ *     responses:
+ *       200:
+ *         description: User role updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               example:
+ *                 statusCode: 200
+ *                 data:
+ *                   success: true
+ *                 message: "User role updated successfully"
+ *       400:
+ *         description: Bad Request - roleId is required
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: User or role not found
+ */
+
+/**
+ * @swagger
  * /access/tokens:
  *   get:
  *     summary: List all tokens
