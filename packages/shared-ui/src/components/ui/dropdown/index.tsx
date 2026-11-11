@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 
 // Styling variants using CVA - z-[1100] ensures dropdown renders on top of Drawers/Modals (which use z-1000)
 const dropdownVariants = cva(
-  'z-[1100] min-w-[10rem] max-h-80 overflow-y-auto border p-2 shadow-lg outline-none',
+  'z-[1100] min-w-[10rem] max-h-80 overflow-y-auto overflow-x-hidden border p-2 shadow-lg outline-none',
   {
     variants: {
       size: {
@@ -77,6 +77,7 @@ interface DropdownProps extends VariantProps<typeof dropdownVariants> {
   trigger: ReactNode;
   animation?: AnimationVariant;
   className?: string;
+  style?: React.CSSProperties;
   side?: 'top' | 'bottom' | 'left' | 'right';
   sideOffset?: number;
   align?: 'start' | 'center' | 'end';
@@ -90,6 +91,7 @@ export const Dropdown = ({
   rounded,
   bg,
   className,
+  style,
   side = 'bottom',
   sideOffset = 8,
   align = 'center',
@@ -110,6 +112,7 @@ export const Dropdown = ({
             animate="animate"
             exit="exit"
             data-theme={bg === 'dark' ? 'dark' : undefined}
+            style={style}
             className={cn(dropdownVariants({ size, rounded, bg }), className)}
           >
             {children}
@@ -183,7 +186,7 @@ export const DropdownSeparator = ({
   ...props
 }: React.ComponentPropsWithoutRef<typeof DropdownMenu.Separator>) => (
   <DropdownMenu.Separator
-    className={cn('-mx-2 my-2 h-px bg-border/50', className)}
+    className={cn('my-1 h-px bg-border/50', className)}
     {...props}
   />
 );

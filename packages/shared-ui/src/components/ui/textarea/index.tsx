@@ -14,8 +14,8 @@ import { cn } from '../../../utils/cn';
 interface AnimatedTextareaProps {
   id?: string;
   className?: string;
-  placeholder: string;
-  variant: string;
+  placeholder?: string;
+  variant?: string;
 
   textareaClassName?: string;
   labelClassName?: string;
@@ -220,7 +220,7 @@ const AnimatedTextarea: React.FC<AnimatedTextareaProps> = ({
     <motion.div
       ref={containerRef}
       className={cn(
-        'relative mb-6 group',
+        'relative mb-6 group w-full min-w-0 max-w-full',
         disabled && 'opacity-60 cursor-not-allowed',
         className,
       )}
@@ -281,25 +281,27 @@ const AnimatedTextarea: React.FC<AnimatedTextareaProps> = ({
         />
       )}
 
-      <motion.label
-        className={cn(
-          'absolute left-4 pointer-events-none transition-colors duration-300 z-10 origin-left',
-          'text-muted-foreground group-focus-within:text-primary',
-          error && 'text-red-500',
-          success && 'text-emerald-500',
-          config.label,
-          labelClassName,
-        )}
-        variants={variants?.label}
-        style={{
-          originX: 0,
-          originY: 0.5,
-        }}
-      >
-        {placeholder}
-      </motion.label>
+      {placeholder && variants?.label && (
+        <motion.label
+          className={cn(
+            'absolute left-4 pointer-events-none transition-colors duration-300 z-10 origin-left',
+            'text-muted-foreground group-focus-within:text-primary',
+            error && 'text-red-500',
+            success && 'text-emerald-500',
+            config.label,
+            labelClassName,
+          )}
+          variants={variants?.label}
+          style={{
+            originX: 0,
+            originY: 0.5,
+          }}
+        >
+          {placeholder}
+        </motion.label>
+      )}
 
-      <div className="relative">
+      <div className="relative w-full min-w-0 max-w-full">
         {Icon && (
           <motion.div
             className={cn(
@@ -320,9 +322,12 @@ const AnimatedTextarea: React.FC<AnimatedTextareaProps> = ({
 
         <motion.textarea
           ref={textareaRef}
+          placeholder={variants?.label ? undefined : placeholder}
           className={cn(
-            'w-full bg-background/90 backdrop-blur-sm border border-border/60 rounded-xl resize-none',
-            'text-foreground placeholder:text-transparent transition-all duration-300',
+            'w-full min-w-0 max-w-full bg-background/90 backdrop-blur-sm border border-border/60 rounded-xl resize-none',
+            variants?.label
+              ? 'text-foreground placeholder:text-transparent transition-all duration-300'
+              : 'text-foreground placeholder:text-muted-foreground transition-all duration-300',
             'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/60',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'shadow-sm hover:shadow-md focus:shadow-lg',

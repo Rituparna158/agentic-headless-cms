@@ -221,7 +221,7 @@ const colorSchemeConfig: Record<
     cancelButton:
       'hover:bg-accent/80 hover:text-accent-foreground hover:border-accent/30 focus:ring-accent/50',
     confirmButton:
-      'bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary shadow-primary/25 border-primary/30 focus:ring-primary',
+      'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground hover:from-primary/95 hover:to-primary shadow-primary/25 border-primary/30 focus:ring-primary',
   },
   accent: {
     backdrop:

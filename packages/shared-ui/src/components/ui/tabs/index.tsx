@@ -121,7 +121,7 @@ export const Tabs: React.FC<TabsProps> = ({
   return (
     <div
       className={cn(
-        'relative flex space-x-4',
+        'relative flex space-x-4 overflow-x-auto max-w-full scrollbar-none pb-0.5',
         variant !== 'ghost' ? tabsVariants({ variant, size, theme }) : '',
         className,
       )}
