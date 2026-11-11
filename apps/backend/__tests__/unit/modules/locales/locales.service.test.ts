@@ -6,7 +6,7 @@ import { LocalesService } from '../../../../src/modules/locales/locales.service.
 import { LocalesRepository } from '@repo/repository';
 import { eventBus } from '@repo/events';
 import { EVENT_NAMES, AUDIT_ACTIONS, ERROR_MESSAGES } from '@repo/constants';
-import { ConflictError } from '@repo/utils';
+import { ConflictError, NotFoundError } from '@repo/utils';
 
 vi.mock('@repo/repository');
 vi.mock('@repo/events', () => ({
@@ -95,6 +95,42 @@ describe('LocalesService', () => {
         resourceType: 'locale',
         resourceId: '2',
         beforeState,
+      }),
+    );
+  });
+
+  it('should throw NotFoundError if locale does not exist when setting default', async () => {
+    mockRepository.getById.mockResolvedValue(null as any);
+
+    await expect(localesService.setDefault('missing', 'app-1')).rejects.toThrow(
+      NotFoundError,
+    );
+  });
+
+  it('should set a locale as default and emit audit log', async () => {
+    const beforeState = {
+      id: '2',
+      code: 'fr',
+      name: 'French',
+      isDefault: false,
+      applicationId: 'app-1',
+    };
+    const afterState = { ...beforeState, isDefault: true };
+    mockRepository.getById.mockResolvedValue(beforeState as any);
+    mockRepository.setDefault.mockResolvedValue(afterState as any);
+
+    const result = await localesService.setDefault('2', 'app-1');
+
+    expect(mockRepository.setDefault).toHaveBeenCalledWith('2', 'app-1');
+    expect(result).toEqual(afterState);
+    expect(eventBus.emit).toHaveBeenCalledWith(
+      EVENT_NAMES.AUDIT_LOG,
+      expect.objectContaining({
+        action: AUDIT_ACTIONS.UPDATE,
+        resourceType: 'locale',
+        resourceId: '2',
+        beforeState,
+        afterState,
       }),
     );
   });

@@ -23,6 +23,7 @@ export class LocalesRepository {
           id: locales.id,
           code: locales.code,
           name: locales.name,
+          isDefault: locales.isDefault,
           createdAt: locales.createdAt,
         },
         [locales.code, locales.name],
@@ -112,9 +113,23 @@ export class LocalesRepository {
         { code: data.code, name: data.name },
         'LocalesRepository: creating locale',
       );
-      const [locale] = await withTransaction(this.db, async (tx) => {
-        return await tx.insert(locales).values(data).returning();
-      });
+      const [locale] = await withTransaction(
+        this.db,
+        async (tx) => {
+          if (data.isDefault) {
+            if (data.applicationId) {
+              await tx
+                .update(locales)
+                .set({ isDefault: false })
+                .where(eq(locales.applicationId, data.applicationId));
+            } else {
+              await tx.update(locales).set({ isDefault: false });
+            }
+          }
+          return await tx.insert(locales).values(data).returning();
+        },
+        { applicationId: data.applicationId },
+      );
       logger.debug(
         { code: locale?.code },
         'LocalesRepository: create complete',
@@ -147,6 +162,55 @@ export class LocalesRepository {
       logger.error({ err: error }, 'LocalesRepository Error in delete:');
       if (error instanceof RecordNotFoundError) throw error;
       throw new ApiError(500, REPO_ERRORS.DELETE_LOCALE_FAILED);
+    }
+  }
+  async setDefault(id: string, applicationId?: string) {
+    try {
+      logger.info(
+        { id, applicationId },
+        'LocalesRepository: setting default locale',
+      );
+      const conditions = [eq(locales.id, id)];
+      if (applicationId)
+        conditions.push(eq(locales.applicationId, applicationId));
+
+      const [updated] = await withTransaction(
+        this.db,
+        async (tx) => {
+          const [target] = await tx
+            .select()
+            .from(locales)
+            .where(and(...conditions))
+            .limit(1);
+
+          if (!target) {
+            logger.error(
+              { id, applicationId },
+              'LocalesRepository: locale not found to set default',
+            );
+            throw new RecordNotFoundError('Locale not found');
+          }
+
+          await tx
+            .update(locales)
+            .set({ isDefault: false })
+            .where(eq(locales.applicationId, target.applicationId));
+
+          return await tx
+            .update(locales)
+            .set({ isDefault: true })
+            .where(eq(locales.id, target.id))
+            .returning();
+        },
+        { applicationId },
+      );
+
+      logger.info({ id }, 'LocalesRepository: setDefault complete');
+      return updated;
+    } catch (error) {
+      logger.error({ err: error }, 'LocalesRepository Error in setDefault:');
+      if (error instanceof RecordNotFoundError) throw error;
+      throw new ApiError(500, REPO_ERRORS.SET_DEFAULT_LOCALE_FAILED);
     }
   }
 }
