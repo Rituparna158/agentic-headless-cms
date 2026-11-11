@@ -25,20 +25,22 @@ export function DynamicField({ field, control, disabled }: DynamicFieldProps) {
       control={control}
       name={field.apiId}
       render={({ field: rhfField, fieldState }) => (
-        <div className="grid gap-2">
-          <label htmlFor={field.apiId}>
+        <div className="grid gap-2 w-full min-w-0 max-w-full">
+          <label htmlFor={field.apiId} className="w-full min-w-0">
             <Typography variant="label">
               {field.displayName}
               {field.isRequired ? ' *' : ''}
             </Typography>
           </label>
-          <FieldTypeInput
-            id={field.apiId}
-            field={field}
-            value={rhfField.value}
-            onChange={rhfField.onChange}
-            disabled={disabled}
-          />
+          <div className="w-full min-w-0 max-w-full">
+            <FieldTypeInput
+              id={field.apiId}
+              field={field}
+              value={rhfField.value}
+              onChange={rhfField.onChange}
+              disabled={disabled}
+            />
+          </div>
           {fieldState.error?.message ? (
             <p className="text-sm font-medium text-destructive">
               {fieldState.error.message}
@@ -66,22 +68,22 @@ function RepeatableDynamicField({
   const fieldState = getFieldState(field.apiId);
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2 w-full min-w-0 max-w-full">
       <span className="text-sm font-medium">
         {field.displayName}
         {field.isRequired ? ' *' : ''}
       </span>
 
-      <div className="grid gap-2">
+      <div className="grid gap-2 w-full min-w-0 max-w-full">
         {fieldArray.fields.map((item, index) => (
           <Controller
             key={item.id}
             control={control}
             name={`${field.apiId}.${index}`}
             render={({ field: rhfField, fieldState }) => (
-              <div className="flex flex-col gap-1">
-                <div className="flex flex-row items-start gap-2">
-                  <div className="flex-1">
+              <div className="flex flex-col gap-1 w-full min-w-0 max-w-full">
+                <div className="flex flex-row items-start gap-2 w-full min-w-0 max-w-full">
+                  <div className="flex-1 min-w-0 max-w-full">
                     <FieldTypeInput
                       id={`${field.apiId}-${index}`}
                       field={field}

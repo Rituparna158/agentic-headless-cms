@@ -139,7 +139,7 @@ function Toolbar({ disabled }: { disabled?: boolean }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b bg-muted/20 p-1.5">
+    <div className="flex flex-wrap items-center gap-1 border-b bg-muted/20 p-1.5 w-full min-w-0">
       {/* Inline text formatting */}
       <Button
         type="button"
@@ -323,7 +323,7 @@ export function LexicalRichTextField({
     >
       <div
         className={cn(
-          'rounded-md border bg-background overflow-hidden',
+          'rounded-md border bg-background overflow-hidden w-full min-w-0',
           disabled &&
             'opacity-60 pointer-events-none cursor-not-allowed select-none',
         )}

@@ -3,14 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
 import { getContentEntry } from '@/lib/api/content';
-import {
-  Breadcrumbs,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Skeleton,
-} from '@repo/shared-ui';
+import { Breadcrumbs, Skeleton } from '@repo/shared-ui';
 import { ContentEntryForm } from './content-entry-form';
 
 export function EditEntryView({
@@ -37,18 +30,18 @@ export function EditEntryView({
 
   if (isSchemaLoading || isEntryLoading) {
     return (
-      <div className="grid gap-6">
+      <div className="space-y-6 max-w-5xl mx-auto w-full min-w-0 max-w-full">
         <Skeleton
           variant="text"
           width="220px"
-          height="32px"
+          height="24px"
           className="rounded"
         />
         <div className="rounded-xl border border-border bg-card p-6 space-y-6">
           <Skeleton
             variant="text"
-            width="80px"
-            height="24px"
+            width="120px"
+            height="28px"
             className="rounded"
           />
           <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/20">
@@ -102,20 +95,6 @@ export function EditEntryView({
                 className="rounded-md"
               />
             </div>
-            <div className="space-y-2">
-              <Skeleton
-                variant="text"
-                width="100px"
-                height="16px"
-                className="rounded"
-              />
-              <Skeleton
-                variant="rectangular"
-                width="100%"
-                height="120px"
-                className="rounded-md"
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -147,7 +126,7 @@ export function EditEntryView({
       : entry.id;
 
   return (
-    <div className="grid gap-6">
+    <div className="space-y-6 w-full min-w-0 max-w-full">
       <Breadcrumbs
         variant="text"
         size="sm"
@@ -159,16 +138,16 @@ export function EditEntryView({
         ]}
       />
 
-      <h1 className="text-2xl font-semibold">{title}</h1>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 pb-2 border-b border-border/50">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground truncate max-w-full">
+          {title}
+        </h1>
+        <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/60">
+          {schema.name}
+        </span>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Entry</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ContentEntryForm schema={schema} entry={entry} />
-        </CardContent>
-      </Card>
+      <ContentEntryForm schema={schema} entry={entry} />
     </div>
   );
 }

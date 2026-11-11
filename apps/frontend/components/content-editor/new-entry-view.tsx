@@ -21,18 +21,18 @@ export function NewEntryView({ schemaSlug }: { schemaSlug: string }) {
 
   if (isLoading) {
     return (
-      <div className="grid gap-6">
+      <div className="space-y-6 max-w-5xl mx-auto w-full min-w-0 max-w-full">
         <Skeleton
           variant="text"
           width="180px"
-          height="32px"
+          height="24px"
           className="rounded"
         />
         <div className="rounded-xl border border-border bg-card p-6 space-y-6">
           <Skeleton
             variant="text"
-            width="80px"
-            height="24px"
+            width="120px"
+            height="28px"
             className="rounded"
           />
           <div className="space-y-5">
@@ -105,7 +105,7 @@ export function NewEntryView({ schemaSlug }: { schemaSlug: string }) {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="space-y-6 w-full min-w-0 max-w-full">
       <Breadcrumbs
         variant="text"
         size="sm"
@@ -113,20 +113,25 @@ export function NewEntryView({ schemaSlug }: { schemaSlug: string }) {
         items={[
           { label: 'Content' },
           { label: schema.name, href: `/content/${schema.slug}` },
-          { label: `New ${schema.name}` },
+          { label: 'New' },
         ]}
       />
 
-      <h1 className="text-2xl font-semibold">New {schema.name}</h1>
+      <div className="pb-2 border-b border-border/50">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground truncate">
+            New {schema.name}
+          </h1>
+          <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/60">
+            Draft
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Populate the fields below to create a new content entry.
+        </p>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Entry</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ContentEntryForm schema={schema} />
-        </CardContent>
-      </Card>
+      <ContentEntryForm schema={schema} />
     </div>
   );
 }

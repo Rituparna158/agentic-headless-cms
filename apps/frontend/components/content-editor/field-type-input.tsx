@@ -57,6 +57,7 @@ export function FieldTypeInput({
           disabled={disabled}
           variant="default"
           placeholder={field.displayName}
+          className="w-full min-w-0 max-w-full mb-0"
           value={typeof value === 'number' ? value.toString() : ''}
           onChange={(val: string) =>
             onChange(val === '' ? undefined : Number(val))
@@ -69,6 +70,7 @@ export function FieldTypeInput({
       return (
         <DatePicker
           themeMode="light"
+          className="w-full min-w-0 max-w-full"
           value={typeof value === 'string' && value ? new Date(value) : null}
           onChange={(
             date: Parameters<
@@ -88,6 +90,7 @@ export function FieldTypeInput({
           disabled={disabled}
           variant="default"
           placeholder={field.displayName}
+          className="w-full min-w-0 max-w-full mb-0"
           value={typeof value === 'string' ? value.slice(0, 16) : ''}
           onChange={(val: string) =>
             onChange(val ? new Date(val).toISOString() : '')
@@ -100,10 +103,9 @@ export function FieldTypeInput({
       return (
         <Textarea
           disabled={disabled}
-          className="font-mono text-xs"
+          className="font-mono text-xs w-full min-w-0 max-w-full mb-0"
           minRows={3}
           maxRows={10}
-          placeholder={field.displayName}
           variant="default"
           value={
             typeof value === 'string'
@@ -151,6 +153,7 @@ export function FieldTypeInput({
             disabled={disabled}
             variant="default"
             placeholder={field.displayName}
+            className="w-full min-w-0 max-w-full mb-0"
             value={typeof value === 'string' ? value : ''}
             onChange={(val: string) => onChange(val)}
             {...rest}
@@ -160,10 +163,11 @@ export function FieldTypeInput({
 
       return (
         <Dropdown
+          className="w-full min-w-0"
           trigger={
             <button
               type="button"
-              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full min-w-0 max-w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={disabled}
               {...rest}
             >
@@ -187,6 +191,7 @@ export function FieldTypeInput({
           disabled={disabled}
           variant="default"
           placeholder={field.displayName}
+          className="w-full min-w-0 max-w-full mb-0"
           value={typeof value === 'string' ? value : ''}
           onChange={(val: string) => onChange(val)}
           {...rest}
@@ -200,6 +205,7 @@ export function FieldTypeInput({
           disabled={disabled}
           variant="default"
           placeholder={field.displayName}
+          className="w-full min-w-0 max-w-full mb-0"
           value={typeof value === 'string' ? value : ''}
           onChange={(val: string) => onChange(val)}
           {...rest}
@@ -207,16 +213,46 @@ export function FieldTypeInput({
       );
 
     case 'text':
-    default:
+    default: {
+      const configObj = field.config as
+        | Record<string, unknown>
+        | null
+        | undefined;
+      const isExplicitMultiline = Boolean(configObj?.multiline);
+      const isAutoMultiline = [
+        'excerpt',
+        'description',
+        'summary',
+        'bio',
+        'notes',
+      ].includes(field.apiId.toLowerCase());
+
+      if (isExplicitMultiline || isAutoMultiline) {
+        return (
+          <Textarea
+            disabled={disabled}
+            variant="default"
+            className="w-full min-w-0 max-w-full mb-0 text-sm leading-relaxed"
+            minRows={3}
+            maxRows={8}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(val: string) => onChange(val)}
+            {...rest}
+          />
+        );
+      }
+
       return (
         <Input
           disabled={disabled}
           variant="default"
           placeholder={field.displayName}
+          className="w-full min-w-0 max-w-full mb-0"
           value={typeof value === 'string' ? value : ''}
           onChange={(val: string) => onChange(val)}
           {...rest}
         />
       );
+    }
   }
 }
