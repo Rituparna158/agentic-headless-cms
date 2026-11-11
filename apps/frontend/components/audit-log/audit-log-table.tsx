@@ -36,9 +36,11 @@ type BadgeVariant = React.ComponentProps<typeof Badge>['variant'];
 const ACTION_BADGE_VARIANTS: Record<string, BadgeVariant> = {
   create: 'success',
   update: 'info',
-  publish: 'purple',
+  publish: 'success',
   rollback: 'warning',
+  unpublish: 'warning',
   delete: 'destructive',
+  login: 'default',
 };
 
 const COLUMNS = [
@@ -183,10 +185,12 @@ export function AuditLogTable() {
             {item.resourceType}
           </span>
           <span
-            className="text-[11px] font-mono text-muted-foreground truncate max-w-[180px]"
-            title={item.resourceId}
+            className="text-[11px] font-mono text-muted-foreground truncate max-w-[120px] sm:max-w-[180px]"
+            title={`Resource ID: ${item.resourceId}`}
           >
-            {item.resourceId}
+            {item.resourceId.length > 20
+              ? `${item.resourceId.slice(0, 8)}…${item.resourceId.slice(-6)}`
+              : item.resourceId}
           </span>
         </div>
       ),
@@ -201,7 +205,7 @@ export function AuditLogTable() {
               <User className="size-3.5" />
             </div>
           )}
-          <div className="flex flex-col truncate max-w-[200px]">
+          <div className="flex flex-col truncate max-w-[110px] sm:max-w-[180px]">
             <span className="text-sm font-medium truncate">
               {item.actorName}
             </span>
@@ -440,7 +444,7 @@ export function AuditLogTable() {
       </div>
 
       {/* Main ignix-ui DataTable with Built-in Search Bar */}
-      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm shadow-sm overflow-hidden w-full max-w-full min-w-0">
         {isLoading && !data ? (
           <div className="p-6 space-y-4 animate-pulse">
             <div className="h-8 bg-muted/60 rounded-md w-full" />
