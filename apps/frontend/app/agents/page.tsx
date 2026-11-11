@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AgentsView } from './agents-view';
 
 export const metadata: Metadata = {
-  title: 'Autonomous Agents — Agentic CMS',
+  title: 'Autonomous Agents — Headless CMS',
 };
 
 export default function AgentsPage() {
