@@ -1,6 +1,12 @@
 import type { RoleRecord, SchemaRecord } from '@repo/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RolesTab } from '@/components/roles-access/roles-tab';
@@ -107,5 +113,108 @@ describe('RolesTab', () => {
       ),
     );
     expect(mockCreateRole).not.toHaveBeenCalled();
+  });
+
+  it('allows writing a JSON condition in the Row-Level Condition textarea and includes it in saved permissions', async () => {
+    mockCreateRole.mockResolvedValue({ ...editorRole, id: 'role-3' });
+    const user = userEvent.setup();
+    renderTab();
+
+    await screen.findByText('New Role');
+    await user.type(
+      screen.getByPlaceholderText('e.g. Content Editor'),
+      'Author Only',
+    );
+
+    const conditionTextarea = screen.getByPlaceholderText(
+      'e.g. { "author": "$currentUser" }',
+    );
+    expect(conditionTextarea).toHaveValue('');
+
+    fireEvent.change(conditionTextarea, {
+      target: { value: '{"author":"$currentUser"}' },
+    });
+    expect(conditionTextarea).toHaveValue('{"author":"$currentUser"}');
+
+    const row = screen.getByRole('row', { name: /Blog Post/ });
+    await user.click(within(row).getAllByRole('checkbox')[0]!);
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(mockCreateRole).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Author Only',
+          permissions: [
+            expect.objectContaining({
+              schemaId: 'schema-1',
+              action: 'read',
+              condition: { author: '$currentUser' },
+            }),
+          ],
+        }),
+      ),
+    );
+  });
+
+  it('displays a validation error and disables Save when condition JSON is invalid', async () => {
+    const user = userEvent.setup();
+    renderTab();
+
+    await screen.findByText('New Role');
+    await user.type(
+      screen.getByPlaceholderText('e.g. Content Editor'),
+      'Test Role',
+    );
+
+    const conditionTextarea = screen.getByPlaceholderText(
+      'e.g. { "author": "$currentUser" }',
+    );
+    fireEvent.change(conditionTextarea, {
+      target: { value: '{ author: invalid_json }' },
+    });
+
+    expect(screen.getByText('Invalid JSON format')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('populates row-level condition from an existing role', async () => {
+    const roleWithCondition: RoleRecord = {
+      ...editorRole,
+      id: 'role-restricted',
+      name: 'Restricted Editor',
+      permissions: [
+        {
+          id: 'perm-1',
+          roleId: 'role-restricted',
+          schemaId: 'schema-1',
+          action: 'read',
+          effect: 'allow',
+          fields: null,
+          condition: { author: '$currentUser' },
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    };
+
+    mockListRoles.mockResolvedValue({
+      data: [roleWithCondition],
+      meta: { total: 1 },
+    });
+
+    const user = userEvent.setup();
+    renderTab();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Restricted Editor' }),
+    );
+    expect(screen.getByText('Role: Restricted Editor')).toBeInTheDocument();
+
+    const conditionTextarea = screen.getByPlaceholderText(
+      'e.g. { "author": "$currentUser" }',
+    );
+    expect(conditionTextarea).toHaveValue(
+      JSON.stringify({ author: '$currentUser' }, null, 2),
+    );
   });
 });

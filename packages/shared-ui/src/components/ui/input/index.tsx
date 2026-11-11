@@ -187,7 +187,7 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
     <motion.div
       ref={containerRef}
       className={cn(
-        'relative group',
+        'relative group w-full min-w-0 max-w-full',
         !className.includes('mb-') && 'mb-6',
         disabled && 'opacity-60 cursor-not-allowed',
         className,
@@ -225,7 +225,7 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
       )}
 
       {/* Input Container */}
-      <div className="relative">
+      <div className="relative w-full min-w-0 max-w-full">
         {/* Leading Icon */}
         {Icon && (
           <motion.div
@@ -254,7 +254,7 @@ export const AnimatedInput: React.FC<AnimatedInputProps> = ({
           placeholder={placeholder}
           className={cn(
             // Base enhanced styles
-            'w-full bg-background/90 backdrop-blur-sm border border-border/60 rounded-xl',
+            'w-full min-w-0 max-w-full bg-background/90 backdrop-blur-sm border border-border/60 rounded-xl',
             'text-foreground transition-all duration-300',
             variants?.label
               ? 'placeholder:text-transparent'

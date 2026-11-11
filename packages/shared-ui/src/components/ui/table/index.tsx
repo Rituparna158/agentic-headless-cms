@@ -909,6 +909,19 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
           ? Math.min(activePage * rowsPerPage, totalFilteredCount)
           : totalFilteredCount;
 
+  const isFilterActive =
+    Boolean(filterQuery && filterQuery.trim()) ||
+    (manualFiltering && totalFilteredCount !== totalCount);
+
+  const paginationSummaryText =
+    totalFilteredCount === 0
+      ? isFilterActive
+        ? `Showing 0 filtered results (${totalCount} total)`
+        : 'Showing 0 entries'
+      : isFilterActive
+        ? `Showing ${startRowIndex}–${endRowIndex} of ${totalFilteredCount} filtered results (${totalCount} total)`
+        : `Showing ${startRowIndex}–${endRowIndex} of ${totalFilteredCount} entries`;
+
   /**
    * Array of page numbers for pagination controls.
    * Memoized to avoid recalculating on every render.
@@ -990,10 +1003,7 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
       {/* Summary and responsive table container */}
       <div className="flex flex-col">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-xs text-muted-foreground bg-muted/5 border-b border-border">
-          <span>
-            Showing {startRowIndex}-{endRowIndex} of {totalFilteredCount}{' '}
-            matching rows (total dataset: {totalCount})
-          </span>
+          <span>{paginationSummaryText}</span>
           {enablePagination && (
             <span>
               Page {activePage} of {totalPages}

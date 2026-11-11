@@ -117,6 +117,10 @@ export function WebhooksTable() {
           }
         }}
         onCancel={closeDialog}
+        colorOverrides={{
+          confirmButton:
+            'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border border-primary/20',
+        }}
       >
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -158,7 +162,7 @@ export function WebhooksTable() {
       </Modal>
 
       {/* Main Table Container matching Audit Log */}
-      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm shadow-sm overflow-hidden w-full max-w-full min-w-0">
         {isLoading && !webhooksData ? (
           <div className="p-6 space-y-4 animate-pulse">
             <div className="h-8 bg-muted/60 rounded-md w-full" />
@@ -200,7 +204,7 @@ export function WebhooksTable() {
                 </span>
               ),
               url: (
-                <div className="flex items-center max-w-[180px] sm:max-w-xs min-w-0">
+                <div className="flex items-center max-w-[200px] sm:max-w-xs min-w-0">
                   <span
                     className="truncate font-mono text-xs text-muted-foreground"
                     title={webhook.url}

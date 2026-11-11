@@ -90,3 +90,25 @@
  *       204:
  *         description: Locale deleted
  */
+
+/**
+ * @swagger
+ * /locales/{id}/default:
+ *   patch:
+ *     summary: Set a locale as the default locale
+ *     tags: [Locales]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "loc_456"
+ *     responses:
+ *       200:
+ *         description: Locale set as default successfully
+ *       404:
+ *         description: Locale not found
+ */

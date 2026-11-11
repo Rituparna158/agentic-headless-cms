@@ -48,6 +48,7 @@ export const API_PATHS = {
   LOCALES: {
     BASE: '/api/v1/locales',
     BY_ID: (id: string) => `/api/v1/locales/${id}`,
+    SET_DEFAULT: (id: string) => `/api/v1/locales/${id}/default`,
   },
   CONTENT: {
     BASE: (schemaSlug: string, qs?: string) =>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { loginSchema } from '@repo/validation';
 import { type LoginInput } from '@repo/types';
 
@@ -16,7 +16,7 @@ import {
   FormField,
   Typography,
 } from '@repo/shared-ui';
-import { Controller } from 'react-hook-form';
+import { AlertCircle, KeyRound, Loader2, CheckCircle2 } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';
 import { useAuthStore } from '@/stores/auth-store';
@@ -50,26 +50,28 @@ export function LoginForm() {
         router.push('/');
       }
     } catch {
-      // useAuthStore already recorded a user-facing message; read it back
-      // rather than duplicating the error-shaping logic here.
       setSubmitError(
         useAuthStore.getState().error ?? 'Login failed. Please try again.',
       );
     }
   }
 
+  // Two-Factor Authentication Verification Step
   if (status === 'mfa_challenge_required') {
     return (
-      <div className="grid gap-4">
-        <div className="space-y-1 text-center">
-          <h2 className="text-xl font-semibold tracking-tight">
+      <div className="space-y-5 animate-in fade-in-50">
+        <div className="space-y-1 mb-5 text-left">
+          <Typography
+            variant="h2"
+            className="text-lg font-semibold tracking-tight text-foreground"
+          >
             Two-Factor Authentication
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Enter the 6-digit code from your authenticator app to complete your
-            sign in.
+          </Typography>
+          <p className="text-xs text-muted-foreground">
+            Enter the 6-digit code from your authenticator app.
           </p>
         </div>
+
         <form
           method="POST"
           onSubmit={async (e: React.FormEvent) => {
@@ -88,31 +90,54 @@ export function LoginForm() {
               setVerifying(false);
             }
           }}
-          className="grid gap-4"
+          className="space-y-4"
         >
-          <div className="space-y-2">
+          <div className="space-y-1.5">
+            <label htmlFor="mfa-code" className="sr-only">
+              Security Code
+            </label>
             <Input
+              id="mfa-code"
               placeholder="000000"
               value={code}
-              onChange={(val: string) => setCode(val.replace(/\D/g, ''))}
-              className="text-center text-lg tracking-widest font-mono"
+              onChange={(val: string) =>
+                setCode(val.replace(/\D/g, '').slice(0, 6))
+              }
+              className="text-center text-lg tracking-[0.4em] font-mono h-10"
               variant="default"
+              autoFocus={true}
             />
           </div>
 
           {submitError ? (
-            <p role="alert" className="text-destructive text-sm text-center">
-              {submitError}
-            </p>
+            <div
+              role="alert"
+              className="flex items-center gap-2 p-2.5 text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-md justify-center"
+            >
+              <AlertCircle className="size-4 shrink-0" />
+              <span>{submitError}</span>
+            </div>
           ) : null}
 
-          <Button type="submit" disabled={verifying || code.length !== 6}>
-            {verifying ? 'Verifying…' : 'Verify'}
+          <Button
+            type="submit"
+            disabled={verifying || code.length !== 6}
+            className="w-full h-9 font-medium text-xs"
+          >
+            {verifying ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="size-3.5 animate-spin" />
+                <span>Verifying…</span>
+              </div>
+            ) : (
+              'Verify'
+            )}
           </Button>
 
           <Button
             type="button"
             variant="ghost"
+            size="sm"
             onClick={() => {
               useAuthStore.setState({
                 status: 'unauthenticated',
@@ -124,24 +149,27 @@ export function LoginForm() {
               setResetRequested(false);
               setResetError(null);
             }}
+            className="w-full text-xs text-muted-foreground"
           >
-            Cancel and Sign In Again
+            Cancel
           </Button>
 
-          <div className="flex flex-col items-center gap-2 mt-4 border-t pt-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Lost access to your authenticator app?
+          <div className="flex flex-col items-center gap-1.5 pt-3 border-t border-border/60">
+            <p className="text-xs text-muted-foreground text-center">
+              Lost access to your authenticator?
             </p>
             {resetRequested ? (
-              <p className="text-sm text-green-600 text-center font-medium">
-                Reset request sent to administrators.
-              </p>
+              <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium py-0.5">
+                <CheckCircle2 className="size-3.5" />
+                <span>Reset request submitted.</span>
+              </div>
             ) : (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 disabled={resetting}
+                className="text-xs h-7 px-2.5"
                 onClick={async () => {
                   setResetError(null);
                   setResetting(true);
@@ -169,11 +197,11 @@ export function LoginForm() {
                   }
                 }}
               >
-                {resetting ? 'Requesting...' : 'Request MFA Reset'}
+                {resetting ? 'Requesting…' : 'Request MFA Reset'}
               </Button>
             )}
             {resetError && (
-              <p role="alert" className="text-sm text-destructive text-center">
+              <p role="alert" className="text-xs text-destructive text-center">
                 {resetError}
               </p>
             )}
@@ -184,25 +212,42 @@ export function LoginForm() {
   }
 
   function handleSsoLogin() {
-    window.location.href = `${API_BASE_URL}${API_PATHS.AUTH.SSO}?redirectUrl=${encodeURIComponent(window.location.origin)}&appId=HEADLESS_CMS`;
+    window.location.href = `${API_BASE_URL}${API_PATHS.AUTH.SSO}?redirectUrl=${encodeURIComponent(
+      window.location.origin,
+    )}&appId=HEADLESS_CMS`;
   }
 
   return (
     <Form spacing="comfortable">
+      {/* Form Header */}
+      <div className="space-y-1 mb-5 text-left">
+        <Typography
+          variant="h2"
+          className="text-lg font-semibold tracking-tight text-foreground"
+        >
+          Sign in
+        </Typography>
+        <p className="text-xs text-muted-foreground">
+          Enter your email and password to access your account.
+        </p>
+      </div>
+
       {urlError && (
         <div className="mb-4">
-          <p
+          <div
             role="alert"
-            className="text-destructive text-sm p-3 bg-destructive/10 rounded-md border border-destructive/20"
+            className="flex items-start gap-2 text-destructive text-xs p-2.5 bg-destructive/10 rounded-md border border-destructive/20"
           >
-            {urlError}
-          </p>
+            <AlertCircle className="size-4 shrink-0 mt-0.5" />
+            <span>{urlError}</span>
+          </div>
         </div>
       )}
+
       <form
         method="POST"
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
-        className="grid gap-4"
+        className="space-y-4 text-left"
       >
         <Controller
           control={form.control}
@@ -210,7 +255,10 @@ export function LoginForm() {
           render={({ field, fieldState }) => (
             <FormField>
               <label htmlFor="email">
-                <Typography variant="label" className="block mb-1">
+                <Typography
+                  variant="label"
+                  className="block mb-1 text-xs font-medium text-foreground"
+                >
                   Email
                 </Typography>
               </label>
@@ -222,6 +270,7 @@ export function LoginForm() {
                 onChange={(val: string) => field.onChange(val)}
                 error={fieldState.error?.message}
                 variant="default"
+                autoComplete="email"
               />
             </FormField>
           )}
@@ -232,11 +281,22 @@ export function LoginForm() {
           name="password"
           render={({ field, fieldState }) => (
             <FormField>
-              <label htmlFor="password">
-                <Typography variant="label" className="block mb-1">
-                  Password
-                </Typography>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="password">
+                  <Typography
+                    variant="label"
+                    className="text-xs font-medium text-foreground"
+                  >
+                    Password
+                  </Typography>
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-primary font-medium hover:underline transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -245,6 +305,8 @@ export function LoginForm() {
                 error={fieldState.error?.message}
                 variant="default"
                 placeholder="Enter your password"
+                showPasswordToggle={true}
+                autoComplete="current-password"
               />
             </FormField>
           )}
@@ -254,9 +316,12 @@ export function LoginForm() {
           control={form.control}
           name="rememberMe"
           render={({ field }) => (
-            <FormField className="flex flex-row items-center gap-2 space-y-0 mt-2">
+            <FormField className="flex flex-row items-center gap-2 space-y-0 pt-0.5">
               <Checkbox checked={field.value} onChange={field.onChange} />
-              <Typography variant="label" className="font-normal">
+              <Typography
+                variant="label"
+                className="font-normal text-xs text-muted-foreground select-none"
+              >
                 Remember me
               </Typography>
             </FormField>
@@ -264,31 +329,50 @@ export function LoginForm() {
         />
 
         {submitError ? (
-          <p role="alert" className="text-destructive text-sm">
-            {submitError}
-          </p>
+          <div
+            role="alert"
+            className="flex items-center gap-2 p-2.5 text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-md"
+          >
+            <AlertCircle className="size-4 shrink-0" />
+            <span>{submitError}</span>
+          </div>
         ) : null}
 
-        <Button type="submit" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? 'Signing in…' : 'Sign in'}
+        <Button
+          type="submit"
+          disabled={form.formState.isSubmitting}
+          className="w-full h-9 font-medium text-xs"
+        >
+          {form.formState.isSubmitting ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="size-3.5 animate-spin" />
+              <span>Signing in…</span>
+            </div>
+          ) : (
+            'Sign in'
+          )}
         </Button>
 
-        <div className="flex items-center gap-2 py-2">
-          <hr className="flex-1 border-t" />
-          <span className="text-muted-foreground text-xs">or</span>
-          <hr className="flex-1 border-t" />
+        <div className="relative my-2 py-0.5">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border/80" />
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase">
+            <span className="bg-card px-2 text-muted-foreground font-medium">
+              or
+            </span>
+          </div>
         </div>
 
-        <Button type="button" variant="outline" onClick={handleSsoLogin}>
-          Sign in with SSO / OIDC
-        </Button>
-
-        <Link
-          href="/forgot-password"
-          className="text-muted-foreground text-center text-sm hover:underline"
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleSsoLogin}
+          className="w-full h-9 gap-2 text-xs font-medium"
         >
-          Forgot password?
-        </Link>
+          <KeyRound className="size-3.5 text-muted-foreground" />
+          <span>Sign in with SSO / OIDC</span>
+        </Button>
       </form>
     </Form>
   );

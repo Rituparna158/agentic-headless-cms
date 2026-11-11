@@ -174,15 +174,13 @@ describe('audit-export-utils', () => {
       ];
       const pdfBytes = generatePdf(
         logsWithUnicode,
-        'Agentic Headless CMS — Audit Log Governance Report',
+        'Headless CMS — Audit Log Governance Report',
       );
       const pdfStr = new TextDecoder('latin1').decode(pdfBytes);
 
       // Must not contain multi-byte em-dash UTF-8 artifacts like â
       expect(pdfStr).not.toContain('â');
-      expect(pdfStr).toContain(
-        'Agentic Headless CMS - Audit Log Governance Report',
-      );
+      expect(pdfStr).toContain('Headless CMS - Audit Log Governance Report');
     });
   });
 

@@ -2,8 +2,14 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listLocales, createLocale, deleteLocale } from '@/lib/api/locales';
-import { Button, Input, Modal, DataTable } from '@repo/shared-ui';
+import { toast } from 'sonner';
+import {
+  listLocales,
+  createLocale,
+  deleteLocale,
+  setDefaultLocale,
+} from '@/lib/api/locales';
+import { Button, Input, Modal, DataTable, Checkbox } from '@repo/shared-ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2 } from 'lucide-react';
 import { LocaleRecord } from '@repo/types';
@@ -13,6 +19,7 @@ export function LocalesTab() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+  const [isDefault, setIsDefault] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<LocaleRecord | null>(null);
 
   const [page, setPage] = useState(1);
@@ -28,18 +35,50 @@ export function LocalesTab() {
   const locales = localesData?.data || [];
 
   const createMutation = useMutation({
-    mutationFn: () => createLocale({ code, name }),
+    mutationFn: () =>
+      createLocale({
+        code,
+        name,
+        ...(isDefault ? { isDefault: true } : {}),
+      }),
     onSuccess: () => {
+      toast.success('Locale added');
       queryClient.invalidateQueries({ queryKey: ['locales'] });
       closeDialog();
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create locale',
+      );
+    },
+  });
+
+  const setDefaultMutation = useMutation({
+    mutationFn: (id: string) => setDefaultLocale(id),
+    onSuccess: () => {
+      toast.success('Default locale updated');
+      queryClient.invalidateQueries({ queryKey: ['locales'] });
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update default locale',
+      );
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteLocale(id),
     onSuccess: () => {
+      toast.success('Locale deleted');
       queryClient.invalidateQueries({ queryKey: ['locales'] });
       setPendingDelete(null);
+    },
+    onError: (error: unknown) => {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete locale',
+      );
     },
   });
 
@@ -47,6 +86,7 @@ export function LocalesTab() {
     setIsCreateOpen(false);
     setCode('');
     setName('');
+    setIsDefault(false);
   };
 
   if (isLoading && !localesData) {
@@ -65,9 +105,11 @@ export function LocalesTab() {
           title="Add Locale"
           showFooter={false}
         >
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Code</label>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Code
+              </label>
               <Input
                 placeholder="e.g. fr-FR"
                 value={code}
@@ -75,8 +117,10 @@ export function LocalesTab() {
                 variant="default"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Name
+              </label>
               <Input
                 placeholder="e.g. French"
                 value={name}
@@ -84,7 +128,15 @@ export function LocalesTab() {
                 variant="default"
               />
             </div>
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="pt-1">
+              <Checkbox
+                size="sm"
+                label="Set as default locale"
+                checked={isDefault}
+                onChange={(checked: boolean) => setIsDefault(checked)}
+              />
+            </div>
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-border mt-4">
               <Button type="button" variant="outline" onClick={closeDialog}>
                 Cancel
               </Button>
@@ -100,7 +152,7 @@ export function LocalesTab() {
         </Modal>
       </div>
 
-      <div className="border rounded-md overflow-x-auto">
+      <div className="border border-border rounded-xl overflow-hidden bg-card shadow-xs w-full max-w-full min-w-0">
         <DataTable
           columns={[
             { label: 'Code', key: 'code', sortable: true },
@@ -116,13 +168,34 @@ export function LocalesTab() {
           rows={locales.map((locale) => ({
             code: <span className="font-mono text-xs">{locale.code}</span>,
             name: locale.name,
-            isDefault: locale.isDefault ? 'Yes' : '',
+            isDefault: locale.isDefault ? (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span className="size-1.5 rounded-full bg-emerald-500" />
+                Yes
+              </span>
+            ) : (
+              <span className="text-muted-foreground/60 text-xs pl-2">—</span>
+            ),
             actions: (
-              <div className="flex justify-end">
+              <div className="flex items-center justify-end gap-1.5">
+                {!locale.isDefault && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setDefaultMutation.mutate(locale.id)}
+                    disabled={setDefaultMutation.isPending}
+                  >
+                    {setDefaultMutation.isPending &&
+                    setDefaultMutation.variables === locale.id
+                      ? 'Setting...'
+                      : 'Set as default'}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-red-500 hover:text-red-600"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 size-8"
                   onClick={() => setPendingDelete(locale)}
                   title="Delete Locale"
                   aria-label="Delete Locale"
@@ -134,6 +207,7 @@ export function LocalesTab() {
           }))}
           enableFiltering={true}
           manualFiltering={true}
+          searchValue={search}
           filterPlaceholder="Search locales..."
           onSearchChange={(val: string) => {
             setSearch(val);
@@ -159,7 +233,7 @@ export function LocalesTab() {
           onPageChange={(newPage: number) => setPage(newPage)}
         />
         {locales.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground border-t">
+          <div className="p-8 text-center text-muted-foreground border-t border-border">
             No locales configured yet.
           </div>
         )}

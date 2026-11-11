@@ -53,7 +53,7 @@ export function MediaPickerField({
           /*Selected state: thumbnail card */
           <div
             className={cn(
-              'group relative flex items-center gap-4 rounded-lg border bg-muted/30 p-3',
+              'group relative flex items-center gap-3 sm:gap-4 rounded-lg border bg-muted/30 p-2.5 sm:p-3 w-full min-w-0',
               ariaInvalid && 'border-destructive',
               disabled && 'opacity-50',
             )}
@@ -116,7 +116,7 @@ export function MediaPickerField({
             disabled={disabled}
             onClick={() => setOpen(true)}
             className={cn(
-              'flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-8 text-muted-foreground transition-colors',
+              'flex w-full min-w-0 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-8 px-4 text-muted-foreground transition-colors',
               'hover:border-primary/50 hover:bg-muted/30 hover:text-foreground',
               'disabled:cursor-not-allowed disabled:opacity-50',
               ariaInvalid && 'border-destructive',

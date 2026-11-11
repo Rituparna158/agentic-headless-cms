@@ -6,16 +6,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LocalesTab } from '@/components/settings/locales-tab';
 
-const { mockList, mockCreate, mockDelete } = vi.hoisted(() => ({
+const { mockList, mockCreate, mockDelete, mockSetDefault } = vi.hoisted(() => ({
   mockList: vi.fn(),
   mockCreate: vi.fn(),
   mockDelete: vi.fn(),
+  mockSetDefault: vi.fn(),
 }));
 
 vi.mock('@/lib/api/locales', () => ({
   listLocales: mockList,
   createLocale: mockCreate,
   deleteLocale: mockDelete,
+  setDefaultLocale: mockSetDefault,
 }));
 
 const enLocale: LocaleRecord = {
@@ -105,5 +107,45 @@ describe('LocalesTab', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('l1'));
+  });
+
+  it('creates a locale with isDefault checked', async () => {
+    mockCreate.mockResolvedValue({ ...enLocale, id: 'l2', isDefault: true });
+    const user = userEvent.setup();
+    renderTab();
+    await screen.findByText('No locales configured yet.');
+
+    await user.click(screen.getByRole('button', { name: '+ Add' }));
+    await user.type(screen.getByPlaceholderText('e.g. fr-FR'), 'fr-FR');
+    await user.type(screen.getByPlaceholderText('e.g. French'), 'French');
+    await user.click(screen.getByLabelText('Set as default locale'));
+    await user.click(screen.getByRole('button', { name: 'Add' }));
+
+    await waitFor(() =>
+      expect(mockCreate).toHaveBeenCalledWith({
+        code: 'fr-FR',
+        name: 'French',
+        isDefault: true,
+      }),
+    );
+  });
+
+  it('sets a non-default locale as default', async () => {
+    const esLocale: LocaleRecord = {
+      id: 'l2',
+      code: 'es',
+      name: 'Spanish',
+      isDefault: false,
+      createdAt: new Date().toISOString(),
+    };
+    mockList.mockResolvedValue({ data: [esLocale], meta: { total: 1 } });
+    mockSetDefault.mockResolvedValue({ ...esLocale, isDefault: true });
+    const user = userEvent.setup();
+    renderTab();
+    await screen.findByText('Spanish');
+
+    await user.click(screen.getByRole('button', { name: 'Set as default' }));
+
+    await waitFor(() => expect(mockSetDefault).toHaveBeenCalledWith('l2'));
   });
 });

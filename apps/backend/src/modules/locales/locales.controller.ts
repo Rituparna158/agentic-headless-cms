@@ -86,3 +86,17 @@ export const deleteLocale: RequestHandler = asyncHandler(
     res.status(HTTP_STATUS.NO_CONTENT).send();
   },
 );
+export const setDefaultLocale: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'LocalesController: setDefaultLocale start');
+    const result = await localesService.setDefault(
+      id as string,
+      req.context?.applicationId,
+    );
+    logger.debug({ id }, 'LocalesController: setDefaultLocale success');
+    res
+      .status(HTTP_STATUS.OK)
+      .json(new ApiResponse(200, result, 'Locale set as default successfully'));
+  },
+);

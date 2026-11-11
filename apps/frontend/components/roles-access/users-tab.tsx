@@ -133,7 +133,9 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
     <div className="space-y-4">
       {isAdmin && (
         <div className="flex justify-end">
-          <Button onClick={() => setIsInviteOpen(true)}>+ Invite</Button>
+          <Button onClick={() => setIsInviteOpen(true)} className="gap-1.5">
+            + Invite
+          </Button>
           <Modal
             isOpen={isInviteOpen}
             onClose={() => setIsInviteOpen(false)}
@@ -143,11 +145,15 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
             <form
               method="POST"
               onSubmit={handleInvite}
-              className="space-y-4 pt-4"
+              className="space-y-4 pt-2"
             >
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label htmlFor="email">
-                  <Typography as="span" variant="label">
+                  <Typography
+                    as="span"
+                    variant="label"
+                    className="text-xs uppercase tracking-wider font-semibold text-muted-foreground"
+                  >
                     Email *
                   </Typography>
                 </label>
@@ -160,10 +166,14 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                   variant="default"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
                   <label htmlFor="firstName">
-                    <Typography as="span" variant="label">
+                    <Typography
+                      as="span"
+                      variant="label"
+                      className="text-xs uppercase tracking-wider font-semibold text-muted-foreground"
+                    >
                       First Name
                     </Typography>
                   </label>
@@ -175,9 +185,13 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                     variant="default"
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <label htmlFor="lastName">
-                    <Typography as="span" variant="label">
+                    <Typography
+                      as="span"
+                      variant="label"
+                      className="text-xs uppercase tracking-wider font-semibold text-muted-foreground"
+                    >
                       Last Name
                     </Typography>
                   </label>
@@ -190,8 +204,13 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Typography variant="label">Role *</Typography>
+              <div className="space-y-1.5">
+                <Typography
+                  variant="label"
+                  className="text-xs uppercase tracking-wider font-semibold text-muted-foreground"
+                >
+                  Role *
+                </Typography>
                 <div>
                   <Dropdown
                     trigger={
@@ -213,7 +232,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
                   </Dropdown>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
                 <Button
                   type="button"
                   variant="outline"
@@ -244,12 +263,12 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
             }}
             onCancel={() => setDevInviteUrl(null)}
           >
-            <div className="space-y-4 pt-4">
+            <div className="space-y-4 pt-2">
               <p className="text-sm text-muted-foreground">
                 Since SMTP is not configured in development, you can use this
                 link to accept the invitation:
               </p>
-              <div className="p-2 border rounded-md bg-muted/20 font-mono text-sm break-all">
+              <div className="p-3 border border-border rounded-lg bg-muted/30 font-mono text-xs break-all text-foreground">
                 {devInviteUrl || ''}
               </div>
             </div>
@@ -272,7 +291,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
         <div className="space-y-4 pt-2">
           <p className="text-sm text-muted-foreground">
             Are you sure you want to permanently delete{' '}
-            <span className="font-medium text-foreground">
+            <span className="font-semibold text-foreground">
               {userToDelete?.email}
             </span>
             ? This action cannot be undone.
@@ -280,7 +299,7 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
         </div>
       </Modal>
 
-      <div className="border rounded-md overflow-x-auto">
+      <div className="border border-border rounded-xl overflow-hidden bg-card shadow-xs w-full max-w-full min-w-0">
         <DataTable
           columns={[
             { label: 'Email', key: 'email', sortable: true },
@@ -300,8 +319,22 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
               : []),
           ]}
           rows={users.map((user) => ({
-            email: user.email,
-            name: `${user.firstName} ${user.lastName}`,
+            email: (
+              <span
+                className="truncate max-w-[130px] sm:max-w-[200px] block font-mono text-xs"
+                title={user.email}
+              >
+                {user.email}
+              </span>
+            ),
+            name: (
+              <span
+                className="truncate max-w-[100px] sm:max-w-[160px] block"
+                title={`${user.firstName} ${user.lastName}`}
+              >
+                {`${user.firstName} ${user.lastName}`}
+              </span>
+            ),
             status: (
               <Badge
                 variant={

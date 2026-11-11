@@ -3,6 +3,7 @@
 import { Suspense, useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Tabs } from '@repo/shared-ui';
+import { ShieldCheck } from 'lucide-react';
 import { RolesTab } from '@/components/roles-access/roles-tab';
 import { UsersTab } from '@/components/roles-access/users-tab';
 import { TokensTab } from '@/components/roles-access/tokens-tab';
@@ -77,11 +78,19 @@ function RolesAccessContent() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Roles & Access</h1>
-        <p className="text-muted-foreground">
-          Manage roles, user access, and API tokens.
+        <div className="flex items-center gap-2.5">
+          <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <ShieldCheck className="size-4" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Roles & Access
+          </h1>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage roles, granular permissions, user directory, and API
+          authentication tokens.
         </p>
       </div>
 
@@ -93,7 +102,7 @@ function RolesAccessContent() {
           value={handleTabChange}
         />
         {activeTab === 'roles' && isAdmin && (
-          <div className="space-y-4 h-[calc(100vh-14rem)]">
+          <div className="space-y-4 min-h-[500px] md:h-[calc(100vh-16rem)]">
             <RolesTab />
           </div>
         )}

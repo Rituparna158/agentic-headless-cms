@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, History } from 'lucide-react';
 import { Button, Drawer } from '@repo/shared-ui';
 import { listContentVersions, revertContentEntry } from '@/lib/api/content';
 import type { VersionHistoryDrawerProps } from '@/types/component.types';
@@ -64,7 +64,7 @@ export function VersionHistoryDrawer({
   const renderDiff = (oldText: string, newText: string) => {
     const changes = diffWordsWithSpace(oldText, newText);
     return (
-      <div className="whitespace-pre-wrap font-mono text-sm border p-4 rounded-md">
+      <div className="whitespace-pre-wrap font-mono text-xs sm:text-sm border rounded-lg p-3 bg-muted/10 leading-relaxed">
         {changes.map((part, i) => {
           if (part.added)
             return (
@@ -114,43 +114,123 @@ export function VersionHistoryDrawer({
         </p>
       );
 
+    const hasStatusChange =
+      selectedVersion &&
+      previousVersion &&
+      selectedVersion.status !== previousVersion.status;
+
     return (
-      <div className="flex flex-col md:flex-row h-full min-h-0 divide-y md:divide-y-0 md:divide-x overflow-y-auto md:overflow-hidden">
-        <div className="w-full md:w-64 lg:w-72 shrink-0 max-h-48 md:max-h-none overflow-y-auto p-4 space-y-4">
-          <h3 className="font-semibold text-sm">Versions</h3>
-          <div className="space-y-2">
-            {versions.map((version) => (
-              <div
-                key={version.id}
-                className={`p-3 border rounded-md cursor-pointer transition-colors ${selectedVersion?.id === version.id ? 'bg-muted border-primary' : 'hover:bg-muted/50'}`}
-                onClick={() => setSelectedVersionId(version.id)}
-              >
-                <div className="text-sm font-medium">v{version.versionNo}</div>
-                <div className="text-xs text-muted-foreground">
-                  {new Intl.DateTimeFormat('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true,
-                  }).format(new Date(version.createdAt))}
-                </div>
-                <div className="text-xs mt-1 capitalize text-muted-foreground">
-                  By {version.actorType}
-                </div>
-              </div>
-            ))}
+      <div className="flex flex-col h-full min-h-0 divide-y divide-border overflow-hidden">
+        {/* Revision Timeline Strip */}
+        <div className="p-3.5 sm:p-4 bg-muted/20 shrink-0 space-y-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="font-semibold uppercase tracking-wider text-[11px]">
+              Revisions ({versions.length})
+            </span>
+            <span>Select a version to compare</span>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-thin">
+            {versions.map((version, idx) => {
+              const isSelected = selectedVersion?.id === version.id;
+              const isLatest = idx === 0;
+              return (
+                <button
+                  key={version.id}
+                  type="button"
+                  onClick={() => setSelectedVersionId(version.id)}
+                  className={`min-w-[130px] p-2.5 rounded-lg border text-left transition-all shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'bg-primary/10 border-primary text-foreground ring-1 ring-primary/40 shadow-xs'
+                      : 'bg-card border-border hover:bg-muted/70 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="text-sm font-semibold text-foreground">
+                      v{version.versionNo}
+                    </div>
+                    {isLatest && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                        Latest
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1 truncate">
+                    {new Intl.DateTimeFormat('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true,
+                    }).format(new Date(version.createdAt))}
+                  </div>
+                  <div className="text-[10px] mt-0.5 capitalize text-muted-foreground/80 flex items-center gap-1">
+                    <span>By {version.actorType}</span>
+                    <span>&bull;</span>
+                    <span
+                      className={
+                        version.status === 'published'
+                          ? 'text-emerald-600 dark:text-emerald-400 font-medium'
+                          : ''
+                      }
+                    >
+                      {version.status}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
-        <div className="flex-1 min-w-0 md:overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
-          <h3 className="font-semibold text-sm">
-            Diff:{' '}
-            {previousVersion ? `v${previousVersion.versionNo}` : 'Initial'}{' '}
-            &rarr; v{selectedVersion?.versionNo}
-          </h3>
+
+        {/* Diff Inspection Canvas */}
+        <div className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border/60">
+            <h3 className="font-semibold text-sm text-foreground">
+              Diff:{' '}
+              {previousVersion ? `v${previousVersion.versionNo}` : 'Initial'}{' '}
+              &rarr; v{selectedVersion?.versionNo}
+            </h3>
+            <span className="text-[11px] text-muted-foreground">
+              Comparing against{' '}
+              {previousVersion ? `v${previousVersion.versionNo}` : 'initial'}
+            </span>
+          </div>
 
           <div className="space-y-4">
+            {/* Status change banner if status changed */}
+            {hasStatusChange && (
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold uppercase tracking-wider text-[11px] text-muted-foreground">
+                    Lifecycle Status Change
+                  </span>
+                  {selectedVersion?.comment && (
+                    <span className="text-muted-foreground font-mono text-[11px]">
+                      {selectedVersion.comment}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs font-medium pt-0.5">
+                  <span className="capitalize px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    {previousVersion?.status}
+                  </span>
+                  <span className="text-muted-foreground">&rarr;</span>
+                  <span
+                    className={`capitalize px-1.5 py-0.5 rounded font-semibold ${
+                      selectedVersion?.status === 'published'
+                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
+                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                    }`}
+                  >
+                    {selectedVersion?.status}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Field level diffs */}
             {Object.keys(currentEntry.data).map((key) => {
               const isMedia = fieldMap.get(key) === 'media';
               const currentVal = formatFieldValue(selectedVersion?.data?.[key]);
@@ -160,9 +240,14 @@ export function VersionHistoryDrawer({
 
               return (
                 <div key={key} className="space-y-2">
-                  <h4 className="text-xs font-semibold uppercase text-muted-foreground">
-                    {key}
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {key}
+                    </h4>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {fieldMap.get(key) || 'field'}
+                    </span>
+                  </div>
                   {isMedia ? (
                     <MediaVersionDiff oldId={oldVal} newId={currentVal} />
                   ) : (
@@ -172,30 +257,48 @@ export function VersionHistoryDrawer({
               );
             })}
 
+            {/* No field changes detected */}
             {Object.keys(currentEntry.data).every((key) => {
               const currentVal = formatFieldValue(selectedVersion?.data?.[key]);
               const oldVal = formatFieldValue(previousVersion?.data?.[key]);
               return currentVal === oldVal;
             }) && (
-              <p className="text-sm text-muted-foreground italic">
-                No changes in this version.
-              </p>
+              <div className="rounded-lg border border-dashed border-border p-5 text-center space-y-1">
+                <p className="text-sm text-muted-foreground italic">
+                  No changes in this version.
+                </p>
+                {selectedVersion?.comment ? (
+                  <p className="text-xs text-muted-foreground/80 font-mono">
+                    Action: {selectedVersion.comment}
+                  </p>
+                ) : hasStatusChange ? (
+                  <p className="text-xs text-muted-foreground/80">
+                    This revision recorded an entry status transition.
+                  </p>
+                ) : null}
+              </div>
             )}
           </div>
+        </div>
 
-          <div className="mt-auto pt-4 border-t flex justify-end">
-            <Button
-              disabled={revertMutation.isPending || !selectedVersion}
-              onClick={() => {
-                if (selectedVersion)
-                  revertMutation.mutate(selectedVersion.versionNo);
-              }}
-            >
-              {revertMutation.isPending
-                ? 'Restoring...'
-                : `Restore v${selectedVersion?.versionNo}`}
-            </Button>
+        {/* Sticky Action Footer */}
+        <div className="p-4 border-t border-border bg-background/95 backdrop-blur-xs flex items-center justify-between shrink-0">
+          <div className="text-xs text-muted-foreground">
+            {selectedVersion && (
+              <span>Inspect or rollback to this revision</span>
+            )}
           </div>
+          <Button
+            disabled={revertMutation.isPending || !selectedVersion}
+            onClick={() => {
+              if (selectedVersion)
+                revertMutation.mutate(selectedVersion.versionNo);
+            }}
+          >
+            {revertMutation.isPending
+              ? 'Restoring...'
+              : `Restore v${selectedVersion?.versionNo}`}
+          </Button>
         </div>
       </div>
     );
@@ -206,16 +309,23 @@ export function VersionHistoryDrawer({
       isOpen={open}
       onClose={() => onOpenChange(false)}
       position="right"
-      size="min(960px, 95vw)"
-      className="w-full max-w-[95vw] lg:max-w-5xl"
+      size="min(540px, 100vw)"
+      className="w-full max-w-[100vw] sm:max-w-[540px]"
     >
-      <div className="w-full h-full flex flex-col p-4 sm:p-6 bg-background">
-        <div className="mb-4 sm:mb-6 flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Version History</h2>
-            <p className="text-sm text-muted-foreground mt-1 sm:mt-2">
-              View past versions and revert changes.
-            </p>
+      <div className="w-full h-full flex flex-col bg-background">
+        <div className="p-4 sm:p-5 border-b border-border flex items-start justify-between shrink-0 bg-muted/10">
+          <div className="flex items-start gap-3">
+            <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+              <History className="size-4.5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                Version History
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                Inspect prior revisions and restore past entry states.
+              </p>
+            </div>
           </div>
           <Button
             variant="ghost"
@@ -227,7 +337,7 @@ export function VersionHistoryDrawer({
             <X className="size-5" />
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto md:overflow-hidden min-h-0">
+        <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
           {renderContent()}
         </div>
       </div>

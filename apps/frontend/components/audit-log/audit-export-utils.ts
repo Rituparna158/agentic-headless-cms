@@ -210,7 +210,7 @@ function sanitizePdfText(str: string, maxLength = 35): string {
  */
 export function generatePdf(
   logs: AuditLogRecord[],
-  title = 'Agentic Headless CMS - Audit Log Governance Report',
+  title = 'Headless CMS - Audit Log Governance Report',
 ): Uint8Array {
   const writer = new SimplePdfWriter();
 
@@ -230,19 +230,28 @@ export function generatePdf(
   const rowsPerPage = 22;
   const totalPages = Math.max(1, Math.ceil(logs.length / rowsPerPage));
   const pageObjIds: number[] = [];
-  const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
   for (let p = 0; p < totalPages; p++) {
     const pageStart = p * rowsPerPage;
     const pageEnd = Math.min(pageStart + rowsPerPage, logs.length);
     const streamCmds: string[] = [];
 
+    const now = new Date();
+    const nowStr = `${now.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })}, ${now.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
+
     // Title & Header info
     streamCmds.push(
       `BT /F2 15 Tf 0.1 0.1 0.1 rg 50 550 Td (${sanitizePdfText(title, 80)}) Tj ET`,
     );
     streamCmds.push(
-      `BT /F1 9 Tf 0.4 0.4 0.4 rg 50 535 Td (Generated: ${nowStr} UTC  |  Total Records: ${logs.length}) Tj ET`,
+      `BT /F1 9 Tf 0.4 0.4 0.4 rg 50 535 Td (Generated: ${nowStr}  |  Total Records: ${logs.length}) Tj ET`,
     );
     streamCmds.push(
       `BT /F1 9 Tf 0.4 0.4 0.4 rg 730 535 Td (Page ${p + 1} of ${totalPages}) Tj ET`,
@@ -271,11 +280,18 @@ export function generatePdf(
       const resourceText = sanitizePdfText(log.resourceType, 20);
       const resourceIdText = sanitizePdfText(log.resourceId, 28);
       const actorText = sanitizePdfText(formatLogActor(log), 30);
-      const rawTime = formatTimestamp(log.timestamp);
-      const timestampText = sanitizePdfText(
-        rawTime.slice(0, 19).replace('T', ' '),
-        22,
-      );
+      const logDate = new Date(log.timestamp);
+      const formattedDate = isNaN(logDate.getTime())
+        ? String(log.timestamp)
+        : `${logDate.toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })}, ${logDate.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}`;
+      const timestampText = sanitizePdfText(formattedDate, 24);
 
       streamCmds.push(
         `BT /F2 8 Tf 0.1 0.1 0.1 rg 58 ${y + 2} Td (${actionText}) Tj ET`,

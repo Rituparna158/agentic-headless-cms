@@ -1,39 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bell, HelpCircle, LogOut, Menu, Search, Settings } from 'lucide-react';
+import { Layers, Menu, X } from 'lucide-react';
 
-import {
-  Avatar,
-  Button,
-  Dropdown,
-  DropdownItem,
-  Input,
-  Drawer,
-} from '@repo/shared-ui';
+import { Button, Drawer } from '@repo/shared-ui';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { useAuthStore } from '@/stores/auth-store';
 
-function initialsFor(name: string | null, email: string): string {
-  if (name) {
-    return name
-      .split(' ')
-      .map((part) => part[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-  }
-  return email.slice(0, 2).toUpperCase();
-}
-
 export function Topbar() {
-  const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
   const [mounted, setMounted] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -53,102 +30,67 @@ export function Topbar() {
     return () => mediaQuery.removeEventListener('change', handleMediaChange);
   }, []);
 
-  async function handleLogout() {
-    try {
-      await logout();
-    } catch {
-      // Ignore errors during logout
-    } finally {
-      router.push('/login');
-    }
-  }
-
-  const displayName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
-    : 'Not signed in';
-
   const hasRoles = mounted ? !!(user && user.roles.length > 0) : true;
 
   return (
-    <header className="bg-background flex h-14 shrink-0 items-center gap-3 border-b px-4">
-      {hasRoles ? (
-        <>
-          <Drawer
-            isOpen={mobileNavOpen}
-            onClose={() => setMobileNavOpen(false)}
-            position="left"
-            title="Agentic CMS"
-            size="100%"
-            className="w-full max-w-full"
-          >
-            <div className="w-full h-full">
-              <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
+    <header className="md:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-border/70 bg-background/95 backdrop-blur-md px-3 sm:px-4">
+      {/* Mobile Navigation Drawer */}
+      <Drawer
+        isOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        position="left"
+        size="min(280px, 85vw)"
+        ariaLabel="Navigation menu"
+        className="bg-zinc-950 text-zinc-300 border-r border-zinc-800 shadow-2xl overflow-hidden"
+        bodyClassName="p-0 flex flex-col h-full overflow-hidden bg-zinc-950"
+      >
+        <div className="flex items-center justify-between h-14 px-4 border-b border-zinc-800 shrink-0 bg-zinc-950">
+          <div className="flex items-center gap-2.5">
+            <div className="size-7 rounded-lg bg-zinc-100 text-zinc-950 flex items-center justify-center font-bold shadow-xs shrink-0">
+              <Layers className="size-4" />
             </div>
-          </Drawer>
+            <span className="font-semibold text-sm tracking-tight text-zinc-100">
+              Headless CMS
+            </span>
+          </div>
 
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(false)}
+            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-600 shrink-0"
+            aria-label="Close navigation"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-zinc-950">
+          <SidebarNav onNavigate={() => setMobileNavOpen(false)} />
+        </div>
+      </Drawer>
+
+      {/* Left: Mobile Navigation Button and Brand */}
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        {hasRoles && (
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="size-8 text-muted-foreground hover:text-foreground"
             onClick={() => setMobileNavOpen(true)}
             aria-label="Open navigation"
           >
-            <Menu className="size-5" />
+            <Menu className="size-4" />
           </Button>
-          <span className="hidden font-semibold md:inline">Agentic CMS</span>
-        </>
-      ) : (
-        <span className="font-semibold">Agentic CMS</span>
-      )}
+        )}
 
-      {hasRoles && (
-        <div className="relative ml-2 hidden max-w-sm flex-1 md:block">
-          <Input
-            value={searchQuery}
-            onChange={(val: string) => setSearchQuery(val)}
-            placeholder="Search..."
-            variant="search"
-            icon={Search}
-            className="mb-0"
-          />
+        <div className="flex items-center gap-2.5">
+          <div className="size-7 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-xs">
+            <Layers className="size-4" />
+          </div>
+          <span className="font-semibold text-sm tracking-tight text-foreground">
+            Headless CMS
+          </span>
         </div>
-      )}
-
-      <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon" aria-label="Help">
-          <HelpCircle className="size-4" />
-        </Button>
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="size-4" />
-        </Button>
-
-        <Dropdown
-          trigger={
-            <Button
-              variant="ghost"
-              className="relative size-8 rounded-full"
-              aria-label={displayName}
-            >
-              <Avatar
-                className="size-8"
-                letters={initialsFor(displayName, user?.email ?? '??')}
-              />
-            </Button>
-          }
-        >
-          <DropdownItem onSelect={() => router.push('/settings')}>
-            <Settings className="mr-2 size-4" />
-            <span>Settings</span>
-          </DropdownItem>
-          <DropdownItem onSelect={() => {}}>
-            <HelpCircle className="mr-2 size-4" />
-            <span>Help & Support</span>
-          </DropdownItem>
-          <DropdownItem onSelect={handleLogout}>
-            <LogOut className="mr-2 size-4" />
-            <span>Log out</span>
-          </DropdownItem>
-        </Dropdown>
       </div>
     </header>
   );

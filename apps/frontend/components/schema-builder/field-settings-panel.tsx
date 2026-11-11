@@ -190,7 +190,7 @@ export function FieldSettingsPanel({
             </Typography>
 
             <Dropdown
-              className="w-[430px] p-2"
+              className="w-[calc(100vw-3rem)] sm:w-[430px] max-w-[430px] p-2"
               align="start"
               trigger={
                 <button
@@ -485,6 +485,31 @@ export function FieldSettingsPanel({
               </label>
             )}
           />
+
+          {dataType === 'text' && (
+            <Controller
+              control={control}
+              name={`fields.${index}.config.multiline`}
+              render={({ field }) => (
+                <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-border bg-card/60 hover:bg-accent/40 cursor-pointer transition-colors sm:col-span-2">
+                  <Checkbox
+                    checked={Boolean(field.value)}
+                    onChange={field.onChange}
+                    className="mt-0.5"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground leading-tight">
+                      Multi-line (Textarea)
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
+                      Renders as a comfortable multi-line box for longer
+                      summaries and excerpts
+                    </p>
+                  </div>
+                </label>
+              )}
+            />
+          )}
         </div>
       </div>
 

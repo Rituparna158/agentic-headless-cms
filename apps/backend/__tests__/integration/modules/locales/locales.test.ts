@@ -31,6 +31,12 @@ vi.mock('../../../../src/modules/locales/locales.service.js', () => {
     isDefault: false,
   });
   LocalesService.prototype.delete = vi.fn().mockResolvedValue({ id: 'l1' });
+  LocalesService.prototype.setDefault = vi.fn().mockResolvedValue({
+    id: 'l2',
+    code: 'fr-FR',
+    name: 'French',
+    isDefault: true,
+  });
   return { LocalesService };
 });
 describe('Locales Module', () => {
@@ -118,6 +124,21 @@ describe('Locales Module', () => {
         .delete('/api/v1/locales/l1')
         .set('Cookie', [`token_default=${adminToken}`]);
       expect(res.status).toBe(204);
+    });
+  });
+  describe('PATCH /api/v1/locales/:id/default', () => {
+    it('should reject non-admin users', async () => {
+      const res = await request(app)
+        .patch('/api/v1/locales/l2/default')
+        .set('Cookie', [`token_default=${nonAdminToken}`]);
+      expect(res.status).toBe(403);
+    });
+    it('should set a locale as default', async () => {
+      const res = await request(app)
+        .patch('/api/v1/locales/l2/default')
+        .set('Cookie', [`token_default=${adminToken}`]);
+      expect(res.status).toBe(200);
+      expect(res.body.data.isDefault).toBe(true);
     });
   });
 });
