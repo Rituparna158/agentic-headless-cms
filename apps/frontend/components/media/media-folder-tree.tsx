@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listMediaFolders,
@@ -6,15 +8,16 @@ import {
 } from '@/lib/api/media';
 import {
   Folder,
+  FolderOpen,
   ChevronRight,
   ChevronDown,
   Plus,
   Trash2,
-  Home,
+  HardDrive,
+  FolderPlus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@repo/shared-ui';
-import { Input } from '@repo/shared-ui';
 import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import type { FolderNodeProps } from '@/types/component.types';
@@ -47,19 +50,21 @@ function FolderNode({
 
   const children = childrenData ?? [];
   const hasChildren = children.length > 0;
+  const isActive = activeFolderId === folder.id;
 
   return (
-    <div className="w-full">
+    <div className="w-full select-none">
       <div
         className={cn(
-          'group flex items-center justify-between w-full py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors',
-          activeFolderId === folder.id &&
-            'bg-primary/10 text-primary font-medium',
+          'group flex items-center justify-between w-full py-1.5 px-2 rounded-lg text-xs font-medium transition-colors',
+          isActive
+            ? 'bg-primary text-primary-foreground font-semibold shadow-2xs'
+            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
         )}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
       >
         <div
-          className="flex flex-1 items-center gap-2 cursor-pointer"
+          className="flex flex-1 items-center gap-1.5 cursor-pointer min-w-0"
           onClick={() => onSelectFolder(folder.id)}
         >
           <div
@@ -67,31 +72,42 @@ function FolderNode({
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
-            className="w-4 h-4 flex items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground"
+            className="size-4 flex items-center justify-center cursor-pointer shrink-0 opacity-70 hover:opacity-100"
           >
             {hasChildren || isExpanded ? (
               isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="size-3.5" />
               ) : (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="size-3.5" />
               )
-            ) : null}
+            ) : (
+              <span className="size-3.5" />
+            )}
           </div>
-          <Folder className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm truncate">{folder.name}</span>
+          {isActive ? (
+            <FolderOpen className="size-3.5 shrink-0" />
+          ) : (
+            <Folder className="size-3.5 shrink-0 opacity-70 group-hover:opacity-100" />
+          )}
+          <span className="truncate">{folder.name}</span>
         </div>
 
         <Button
           variant="ghost"
           size="icon"
-          className="w-6 h-6 opacity-0 group-hover:opacity-100 h-full text-muted-foreground hover:text-destructive"
+          className={cn(
+            'size-5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 rounded',
+            isActive
+              ? 'text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/20'
+              : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+          )}
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             setPendingDelete(folder.id);
           }}
           aria-label={`Delete folder ${folder.name}`}
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="size-3" />
         </Button>
       </div>
 
@@ -170,40 +186,45 @@ export function MediaFolderTree({
   const rootFolders = data ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
-          Folders
-        </h3>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between pb-2 border-b border-border/60">
+        <div className="flex items-center gap-1.5">
+          <FolderPlus className="size-3.5 text-muted-foreground" />
+          <h3 className="font-semibold text-xs text-foreground uppercase tracking-wider">
+            Directories
+          </h3>
+        </div>
         <Button
           variant="ghost"
           size="icon"
-          className="w-6 h-6"
+          className="size-6 text-muted-foreground hover:text-foreground"
           onClick={() => setIsCreating(!isCreating)}
           aria-label="Create new folder"
+          title="Create new folder"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="size-3.5" />
         </Button>
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 select-none">
+        {/* Root Directory Button */}
         <div
           className={cn(
-            'flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors',
-            activeFolderId === 'root' &&
-              'bg-primary/10 text-primary font-medium',
+            'flex items-center gap-2 py-1.5 px-2 rounded-lg text-xs font-medium cursor-pointer transition-colors',
+            activeFolderId === 'root'
+              ? 'bg-primary text-primary-foreground font-semibold shadow-2xs'
+              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
           )}
           onClick={() => onSelectFolder('root')}
         >
-          <div className="w-4 h-4 flex items-center justify-center">
-            <Home className="w-4 h-4 text-muted-foreground" />
-          </div>
-          <span className="text-sm">Media Library</span>
+          <HardDrive className="size-3.5 shrink-0 opacity-80" />
+          <span className="truncate">Root Library</span>
         </div>
 
+        {/* Dynamic Nested Folders */}
         {isLoading ? (
-          <div className="px-8 py-2 text-sm text-muted-foreground">
-            Loading...
+          <div className="px-6 py-2 text-xs text-muted-foreground animate-pulse">
+            Loading folders…
           </div>
         ) : (
           rootFolders.map((folder) => (
@@ -218,16 +239,20 @@ export function MediaFolderTree({
         )}
       </div>
 
+      {/* Inline Create Folder Form */}
       {isCreating && (
-        <div className="flex flex-col gap-1 mt-2 px-2">
-          <form onSubmit={handleCreate} className="flex gap-2">
-            <Input
+        <div className="flex flex-col gap-1.5 mt-1 pt-2.5 border-t border-border/60">
+          <form
+            onSubmit={handleCreate}
+            className="flex items-center gap-1.5 w-full"
+          >
+            <input
               autoFocus
-              variant="default"
+              type="text"
               placeholder="Folder name"
-              className="h-8 flex-1"
+              className="h-8 flex-1 min-w-0 rounded-md border border-input bg-background px-2.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary transition-all"
               value={newFolderName}
-              onChange={(val: string) => setNewFolderName(val)}
+              onChange={(e) => setNewFolderName(e.target.value)}
               onKeyDown={(e: React.KeyboardEvent) => {
                 if (e.key === 'Enter') handleCreate(e);
                 if (e.key === 'Escape') setIsCreating(false);
@@ -236,13 +261,22 @@ export function MediaFolderTree({
             <Button
               type="submit"
               size="sm"
-              className="h-8"
+              className="h-8 text-xs px-2.5 font-medium shrink-0"
               disabled={createMutation.isPending || !newFolderName.trim()}
             >
               Add
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs px-1.5 text-muted-foreground hover:text-foreground shrink-0"
+              onClick={() => setIsCreating(false)}
+            >
+              Cancel
+            </Button>
           </form>
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && <p className="text-[11px] text-destructive">{error}</p>}
         </div>
       )}
     </div>
