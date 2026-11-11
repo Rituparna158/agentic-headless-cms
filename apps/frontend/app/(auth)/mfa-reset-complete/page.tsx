@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { MfaResetCompleteForm } from '@/components/auth/mfa-reset-complete-form';
 
 export const metadata: Metadata = {
-  title: 'Complete MFA Reset | Agentic CMS',
+  title: 'Complete MFA Reset | Headless CMS',
   description: 'Complete your MFA reset request.',
 };
 
