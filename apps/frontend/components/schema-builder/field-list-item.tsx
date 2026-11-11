@@ -130,7 +130,7 @@ export function FieldListItem({
         <button
           type="button"
           onClick={() => onSelect(index)}
-          className="flex flex-1 items-center gap-2 truncate text-left cursor-pointer"
+          className="flex flex-1 items-center gap-2 min-w-0 text-left cursor-pointer"
         >
           {hasError ? (
             <AlertCircle
@@ -197,7 +197,7 @@ export function FieldListItem({
         </button>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1 shrink-0 ml-2">
         <Button
           type="button"
           variant="ghost"
