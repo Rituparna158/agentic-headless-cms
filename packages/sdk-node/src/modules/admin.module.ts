@@ -7,6 +7,15 @@ import type {
   BaseQueryOptions,
 } from '@repo/types';
 
+export interface TokenMfaOptions {
+  /** 6-digit authenticator TOTP code required for token creation and revocation. */
+  mfaCode?: string;
+}
+
+function buildMfaRequestOptions(options?: TokenMfaOptions) {
+  return options?.mfaCode ? { headers: { 'x-mfa-code': options.mfaCode } } : {};
+}
+
 export class AdminModule {
   constructor(private transport: HttpTransport) {}
 
@@ -59,26 +68,47 @@ export class AdminModule {
     return res.data;
   }
 
+  public async listTokens(
+    options?: BaseQueryOptions,
+  ): Promise<PaginatedResult<TokenRecord>> {
+    const res = await this.transport.request<
+      ApiResponse<PaginatedResult<TokenRecord>>
+    >('/access/tokens', {
+      params:
+        (options as Record<string, string | number | boolean | undefined>) ||
+        {},
+    });
+    return res.data;
+  }
+
   public async createToken(
     name: string,
     type?: 'user' | 'agent',
     roleId?: string,
     scopes?: unknown,
+    options?: TokenMfaOptions,
   ): Promise<TokenRecord> {
     const res = await this.transport.request<ApiResponse<TokenRecord>>(
       '/access/tokens',
       {
         method: 'POST',
         body: JSON.stringify({ name, type, roleId, scopes }),
+        ...buildMfaRequestOptions(options),
       },
     );
     return res.data;
   }
 
-  public async revokeToken(tokenId: string): Promise<{ success: boolean }> {
+  public async revokeToken(
+    tokenId: string,
+    options?: TokenMfaOptions,
+  ): Promise<{ success: boolean }> {
     const res = await this.transport.request<ApiResponse<{ success: boolean }>>(
       `/access/tokens/${tokenId}`,
-      { method: 'DELETE' },
+      {
+        method: 'DELETE',
+        ...buildMfaRequestOptions(options),
+      },
     );
     return res.data;
   }
