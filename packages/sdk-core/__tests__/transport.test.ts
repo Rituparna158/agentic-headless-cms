@@ -72,6 +72,37 @@ describe('HttpTransport', () => {
     await expect(transport.request('/protected')).rejects.toThrow(AuthError);
   });
 
+  it('should extract nested error.message from backend error envelope', async () => {
+    (global.fetch as import('vitest').Mock)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        json: async () => ({
+          error: { message: 'Forbidden: Insufficient permissions' },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        json: async () => ({
+          error: { message: 'Invalid request.' },
+        }),
+      });
+
+    await expect(transport.request('/roles')).rejects.toMatchObject({
+      name: 'AuthError',
+      statusCode: 403,
+      message: 'Forbidden: Insufficient permissions',
+    });
+    await expect(transport.request('/entries')).rejects.toMatchObject({
+      name: 'ApiError',
+      statusCode: 400,
+      message: 'Invalid request.',
+    });
+  });
+
   it('should serialize nested objects in params to extended query parameters', async () => {
     (global.fetch as import('vitest').Mock).mockResolvedValueOnce({
       ok: true,
