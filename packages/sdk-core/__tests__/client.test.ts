@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createClient, AgenticCmsClient } from '../src/client.js';
+import {
+  createClient,
+  AgenticCmsClient,
+  normalizeApiBaseUrl,
+} from '../src/client.js';
 import { AuthClient } from '../src/auth/auth.client.js';
 import { HttpTransport } from '../src/transport/http.js';
 import { toPlainText } from '../src/utils/text.js';
@@ -35,6 +39,27 @@ describe('createClient', () => {
 
     expect(typedClient).toBeInstanceOf(AgenticCmsClient);
     expect(interfaceClient).toBeInstanceOf(AgenticCmsClient);
+  });
+
+  it('normalizes baseUrl with or without /api/v1 and trailing slashes', () => {
+    expect(normalizeApiBaseUrl('http://localhost:3000')).toBe(
+      'http://localhost:3000/api/v1',
+    );
+    expect(normalizeApiBaseUrl('http://localhost:3000/')).toBe(
+      'http://localhost:3000/api/v1',
+    );
+    expect(normalizeApiBaseUrl('http://localhost:3000/api/v1')).toBe(
+      'http://localhost:3000/api/v1',
+    );
+    expect(normalizeApiBaseUrl('http://localhost:3000/api/v1/')).toBe(
+      'http://localhost:3000/api/v1',
+    );
+    expect(normalizeApiBaseUrl('http://localhost:3000/api/v2/')).toBe(
+      'http://localhost:3000/api/v2',
+    );
+
+    const bare = createClient({ baseUrl: 'http://localhost:3000' });
+    expect(bare.transport.getBaseUrl()).toBe('http://localhost:3000/api/v1');
   });
 });
 

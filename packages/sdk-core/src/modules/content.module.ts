@@ -13,6 +13,31 @@ type InferEntryType<TMap, TSlug extends string> = TSlug extends keyof TMap
     : TMap[TSlug]
   : ContentEntryRecord;
 
+type InferEntryInput<TMap, TSlug extends string> = TSlug extends keyof TMap
+  ? unknown extends TMap[TSlug]
+    ? Record<string, unknown>
+    : TMap[TSlug] extends { data: infer TData }
+      ? string extends keyof TData
+        ? TData
+        : {
+            [K in keyof TData as null extends TData[K] ? never : K]: TData[K];
+          } & {
+            [K in keyof TData as null extends TData[K] ? K : never]?: TData[K];
+          }
+      : Record<string, unknown>
+  : Record<string, unknown>;
+
+type InferPartialEntryInput<
+  TMap,
+  TSlug extends string,
+> = TSlug extends keyof TMap
+  ? unknown extends TMap[TSlug]
+    ? Record<string, unknown>
+    : TMap[TSlug] extends { data: infer TData }
+      ? Partial<TData>
+      : Record<string, unknown>
+  : Record<string, unknown>;
+
 export class ContentModule<TMap extends object = Record<string, unknown>> {
   constructor(private transport: HttpTransport) {}
 
@@ -51,7 +76,7 @@ export class ContentModule<TMap extends object = Record<string, unknown>> {
 
   public async create<TSlug extends keyof TMap & string>(
     schemaSlug: TSlug,
-    data: Record<string, unknown>,
+    data: InferEntryInput<TMap, TSlug>,
     options?: { locale?: string },
   ): Promise<InferEntryType<TMap, TSlug>> {
     const res = await this.transport.request<
@@ -67,7 +92,7 @@ export class ContentModule<TMap extends object = Record<string, unknown>> {
   public async update<TSlug extends keyof TMap & string>(
     schemaSlug: TSlug,
     entryId: string,
-    data: Record<string, unknown>,
+    data: InferEntryInput<TMap, TSlug>,
     options?: { locale?: string },
   ): Promise<InferEntryType<TMap, TSlug>> {
     const res = await this.transport.request<
@@ -83,7 +108,7 @@ export class ContentModule<TMap extends object = Record<string, unknown>> {
   public async updatePartial<TSlug extends keyof TMap & string>(
     schemaSlug: TSlug,
     entryId: string,
-    data: Record<string, unknown>,
+    data: InferPartialEntryInput<TMap, TSlug>,
     options?: { locale?: string },
   ): Promise<InferEntryType<TMap, TSlug>> {
     const res = await this.transport.request<
