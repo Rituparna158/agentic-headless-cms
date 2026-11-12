@@ -52,6 +52,11 @@ loadEnv();
 
 const program = new Command();
 
+/** Normalizes a CMS API base URL by removing trailing slashes and any `/api/v1` suffix. */
+export function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, '').replace(/\/api\/v1$/i, '');
+}
+
 program
   .name('cms-codegen')
   .description('Auto-generate TypeScript types from live schema definitions')
@@ -79,7 +84,7 @@ program
   )
   .action(async (options: ProgramOptions) => {
     const { url, token, apiKey, output } = options;
-    const baseUrl = url.replace(/\/$/, '');
+    const baseUrl = normalizeBaseUrl(url);
 
     if (!token && !apiKey) {
       console.error(
