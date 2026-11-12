@@ -33,6 +33,7 @@ export interface UploadMediaOptions {
   altText?: string;
   folderId?: string;
   filename?: string;
+  mimeType?: string;
 }
 
 export type LoginResult =

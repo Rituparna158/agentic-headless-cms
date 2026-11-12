@@ -46,7 +46,26 @@ describe('NodeMediaModule', () => {
     const fileArg = body.get('file') as File;
     expect(fileArg).toBeInstanceOf(File);
     expect(fileArg.name).toBe('test.jpg');
+    expect(fileArg.type).toBe('image/jpeg');
 
     expect(result).toEqual(mockResponse.data);
+  });
+
+  it('infers image/png and respects explicit mimeType override', async () => {
+    const mockResponse = { data: { id: 'a2', originalFilename: 'probe.png' } };
+    vi.mocked(transport.request).mockResolvedValue(mockResponse);
+    vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from('png-bytes'));
+
+    await media.uploadFromPath('/tmp/probe.png');
+    const pngBody = vi.mocked(transport.request).mock.calls[0]![1]
+      ?.body as FormData;
+    expect((pngBody.get('file') as File).type).toBe('image/png');
+
+    await media.uploadFromPath('/tmp/custom.bin', {
+      mimeType: 'application/x-custom',
+    });
+    const customBody = vi.mocked(transport.request).mock.calls[1]![1]
+      ?.body as FormData;
+    expect((customBody.get('file') as File).type).toBe('application/x-custom');
   });
 });
