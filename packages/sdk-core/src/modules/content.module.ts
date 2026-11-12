@@ -13,9 +13,7 @@ type InferEntryType<TMap, TSlug extends string> = TSlug extends keyof TMap
     : TMap[TSlug]
   : ContentEntryRecord;
 
-export class ContentModule<
-  TMap extends Record<string, unknown> = Record<string, unknown>,
-> {
+export class ContentModule<TMap extends object = Record<string, unknown>> {
   constructor(private transport: HttpTransport) {}
 
   public async list<TSlug extends keyof TMap & string>(

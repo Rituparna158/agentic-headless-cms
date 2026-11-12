@@ -7,9 +7,7 @@ import { MediaModule } from './modules/media.module.js';
 import { GraphQLModule } from './modules/graphql.module.js';
 import { SearchModule } from './modules/search.module.js';
 
-export class AgenticCmsClient<
-  TMap extends Record<string, unknown> = Record<string, unknown>,
-> {
+export class AgenticCmsClient<TMap extends object = Record<string, unknown>> {
   public auth: AuthClient;
   public transport: HttpTransport;
   public content: ContentModule<TMap>;
@@ -41,8 +39,8 @@ export class AgenticCmsClient<
   }
 }
 
-export function createClient<
-  TMap extends Record<string, unknown> = Record<string, unknown>,
->(config: ClientConfig): AgenticCmsClient<TMap> {
+export function createClient<TMap extends object = Record<string, unknown>>(
+  config: ClientConfig,
+): AgenticCmsClient<TMap> {
   return new AgenticCmsClient<TMap>(config);
 }
