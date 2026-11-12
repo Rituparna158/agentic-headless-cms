@@ -13,10 +13,6 @@ import { GraphQLContext } from '../../types/graphql.types.js';
 import { assertPermission, isAuthorizedForDrafts } from './graphql.context.js';
 const contentService = new ContentService();
 
-/**
- * Determine whether GraphQL query arguments explicitly ask for draft or
- * non-published entries.
- */
 function requestsNonPublishedStatus(
   status?: string,
   filters?: unknown,
