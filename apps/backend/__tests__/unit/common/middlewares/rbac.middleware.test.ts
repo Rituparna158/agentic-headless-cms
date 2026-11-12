@@ -204,4 +204,28 @@ describe('RBAC Middleware', () => {
     expect(mockNext).not.toHaveBeenCalled();
     expect(authService.getUserPermissions).not.toHaveBeenCalled();
   });
+
+  it('should hydrate req.user.permissions from resolved DB permissions for cookie sessions', async () => {
+    const resolvedPermissions = [
+      {
+        action: 'read' as const,
+        effect: 'allow' as const,
+        schemaId: 'schema-1',
+        fields: null,
+        condition: null,
+      },
+    ];
+    vi.mocked(authService.getUserPermissions).mockResolvedValue(
+      resolvedPermissions,
+    );
+
+    await requirePermission('read')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction,
+    );
+
+    expect(mockNext).toHaveBeenCalledWith();
+    expect(mockReq.user?.permissions).toEqual(resolvedPermissions);
+  });
 });

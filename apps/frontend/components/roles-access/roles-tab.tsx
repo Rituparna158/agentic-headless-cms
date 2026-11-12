@@ -17,6 +17,29 @@ import { createRole, listRoles, updateRole } from '@/lib/api/access';
 import { listSchemas } from '@/lib/api/schemas';
 import { cn } from '@/lib/utils';
 
+function isEmptyCondition(condition: PermissionRecord['condition']): boolean {
+  return !condition || Object.keys(condition).length === 0;
+}
+
+function isUnconditionalWildcard(permission: PermissionRecord): boolean {
+  return (
+    permission.schemaId === null &&
+    permission.action === '*' &&
+    permission.effect !== 'deny' &&
+    isEmptyCondition(permission.condition)
+  );
+}
+
+function isConditionalWildcardPlaceholder(
+  permission: PermissionRecord,
+): boolean {
+  return (
+    permission.schemaId === null &&
+    permission.action === '*' &&
+    !isEmptyCondition(permission.condition)
+  );
+}
+
 export function RolesTab() {
   const queryClient = useQueryClient();
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>('new');
@@ -80,6 +103,10 @@ export function RolesTab() {
     }));
   };
 
+  const hasGlobalWildcard = Boolean(
+    activeRole?.permissions?.some(isUnconditionalWildcard),
+  );
+
   /**
    * Toggles a specific permission action for a given schema on the active role.
    */
@@ -87,7 +114,7 @@ export function RolesTab() {
     schemaId: string,
     action: PermissionRecord['action'],
   ) => {
-    if (!activeRole) return;
+    if (!activeRole || hasGlobalWildcard) return;
     const currentPerms = activeRole.permissions || [];
     const activeCondition =
       currentPerms.find(
@@ -103,9 +130,7 @@ export function RolesTab() {
       newPerms = currentPerms.filter((p) => p !== existing);
     } else {
       newPerms = [
-        ...currentPerms.filter(
-          (p) => !(p.schemaId === null && p.action === '*'),
-        ),
+        ...currentPerms.filter((p) => !isConditionalWildcardPlaceholder(p)),
         {
           schemaId,
           action,
@@ -126,9 +151,18 @@ export function RolesTab() {
     action: PermissionRecord['action'],
   ) => {
     if (!activeRole || !activeRole.permissions) return false;
+    if (hasGlobalWildcard) return true;
     return activeRole.permissions.some(
       (p) => p.schemaId === schemaId && p.action === action,
     );
+  };
+
+  const handleClearWildcard = () => {
+    if (!activeRole) return;
+    const nextPerms = (activeRole.permissions || []).filter(
+      (p) => !isUnconditionalWildcard(p),
+    );
+    updateActiveRole({ permissions: nextPerms });
   };
 
   if (isLoadingRoles || isLoadingSchemas) {
@@ -149,9 +183,11 @@ export function RolesTab() {
         schemas={schemas}
         selectedRoleId={selectedRoleId}
         isSaving={saveMutation.isPending}
+        hasGlobalWildcard={hasGlobalWildcard}
         onSave={() => saveMutation.mutate(activeRole as Partial<RoleRecord>)}
         onUpdateRole={updateActiveRole}
         onTogglePermission={togglePermission}
+        onClearWildcard={handleClearWildcard}
         hasPermission={hasPermission}
       />
     </div>
@@ -266,21 +302,25 @@ function RoleDetails({
   schemas,
   selectedRoleId,
   isSaving,
+  hasGlobalWildcard,
   onSave,
   onUpdateRole,
   onTogglePermission,
+  onClearWildcard,
   hasPermission,
 }: {
   activeRole: Partial<RoleRecord> | undefined;
   schemas: SchemaRecord[];
   selectedRoleId: string | null;
   isSaving: boolean;
+  hasGlobalWildcard: boolean;
   onSave: () => void;
   onUpdateRole: (updates: Partial<RoleRecord>) => void;
   onTogglePermission: (
     schemaId: string,
     action: PermissionRecord['action'],
   ) => void;
+  onClearWildcard: () => void;
   hasPermission: (
     schemaId: string,
     action: PermissionRecord['action'],
@@ -308,7 +348,7 @@ function RoleDetails({
       setJsonError(null);
       const currentPerms = activeRole?.permissions || [];
       const updatedPerms = currentPerms
-        .filter((p) => !(p.schemaId === null && p.action === '*'))
+        .filter((p) => !isConditionalWildcardPlaceholder(p))
         .map((p) => ({ ...p, condition: null }));
       onUpdateRole({ permissions: updatedPerms });
       return;
@@ -438,6 +478,28 @@ function RoleDetails({
             schema.
           </p>
         </div>
+        {hasGlobalWildcard ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-xs">
+            <div className="flex items-center gap-2 text-foreground">
+              <Shield className="h-4 w-4 shrink-0 text-primary" />
+              <span>
+                <strong>Full Wildcard Access (*)</strong> — Grants all
+                permissions across every content type.
+              </span>
+            </div>
+            {!activeRole.isSystem &&
+            activeRole.name?.toLowerCase() !== 'admin' ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClearWildcard}
+              >
+                Customize per content type
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
         <div className="border border-border rounded-xl overflow-hidden bg-background">
           <DataTable
             enablePagination={false}
@@ -479,6 +541,7 @@ function RoleDetails({
                 <div className="flex items-center justify-center">
                   <Checkbox
                     checked={hasPermission(schema.id, 'read')}
+                    disabled={hasGlobalWildcard}
                     onChange={() => onTogglePermission(schema.id, 'read')}
                   />
                 </div>
@@ -487,6 +550,7 @@ function RoleDetails({
                 <div className="flex items-center justify-center">
                   <Checkbox
                     checked={hasPermission(schema.id, 'create')}
+                    disabled={hasGlobalWildcard}
                     onChange={() => onTogglePermission(schema.id, 'create')}
                   />
                 </div>
@@ -495,6 +559,7 @@ function RoleDetails({
                 <div className="flex items-center justify-center">
                   <Checkbox
                     checked={hasPermission(schema.id, 'update')}
+                    disabled={hasGlobalWildcard}
                     onChange={() => onTogglePermission(schema.id, 'update')}
                   />
                 </div>
@@ -503,6 +568,7 @@ function RoleDetails({
                 <div className="flex items-center justify-center">
                   <Checkbox
                     checked={hasPermission(schema.id, 'delete')}
+                    disabled={hasGlobalWildcard}
                     onChange={() => onTogglePermission(schema.id, 'delete')}
                   />
                 </div>
@@ -511,6 +577,7 @@ function RoleDetails({
                 <div className="flex items-center justify-center">
                   <Checkbox
                     checked={hasPermission(schema.id, 'publish')}
+                    disabled={hasGlobalWildcard}
                     onChange={() => onTogglePermission(schema.id, 'publish')}
                   />
                 </div>
