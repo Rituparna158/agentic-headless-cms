@@ -1,5 +1,7 @@
 import { SchemaComposer } from 'graphql-compose';
 import type { GraphQLSchema } from 'graphql';
+import { ERROR_MESSAGES } from '@repo/constants';
+import { ForbiddenError, NotFoundError } from '@repo/utils';
 import type { SchemaDefinition } from '@repo/types';
 import type { SchemaRecord } from '@repo/shared-db';
 import { ContentService } from '../content/content.service.js';
@@ -8,8 +10,65 @@ import { fieldTypeSpec } from './type-mapper.js';
 import { toCamelCase, toPascalCase, toPluralCamelCase } from './naming.js';
 import { jsonScalarConfig } from './json-scalar.js';
 import { GraphQLContext } from '../../types/graphql.types.js';
-import { assertPermission } from './graphql.context.js';
+import { assertPermission, isAuthorizedForDrafts } from './graphql.context.js';
 const contentService = new ContentService();
+
+/**
+ * Determine whether GraphQL query arguments explicitly ask for draft or
+ * non-published entries.
+ */
+function requestsNonPublishedStatus(
+  status?: string,
+  filters?: unknown,
+): boolean {
+  if (typeof status === 'string') {
+    const normalized = status.trim().toLowerCase();
+    if (normalized === 'draft' || normalized === 'all') {
+      return true;
+    }
+  }
+
+  if (!filters || typeof filters !== 'object' || Array.isArray(filters)) {
+    return false;
+  }
+
+  const statusFilter = (filters as Record<string, unknown>).status;
+  if (
+    !statusFilter ||
+    typeof statusFilter !== 'object' ||
+    Array.isArray(statusFilter)
+  ) {
+    return false;
+  }
+
+  for (const [op, value] of Object.entries(
+    statusFilter as Record<string, unknown>,
+  )) {
+    if (typeof value !== 'string') {
+      continue;
+    }
+
+    if (op === '$ne') {
+      return true;
+    }
+
+    if (op === '$eq' && value.trim().toLowerCase() !== 'published') {
+      return true;
+    }
+
+    if (op === '$in') {
+      const values = value
+        .split(',')
+        .map((v) => v.trim().toLowerCase())
+        .filter(Boolean);
+      if (values.some((v) => v !== 'published')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
 interface EntryPayload {
   id: string;
   status: string;
@@ -107,7 +166,21 @@ function registerSchemaTypes(
         context: GraphQLContext,
       ) => {
         await assertPermission(context, 'read', schema.id);
-        return contentService.getEntryById(args.id, args.locale, schema.id);
+        const entry = await contentService.getEntryById(
+          args.id,
+          args.locale,
+          schema.id,
+        );
+        if (!entry) {
+          return null;
+        }
+        if (
+          entry.status !== 'published' &&
+          !(await isAuthorizedForDrafts(context, schema.id))
+        ) {
+          throw new NotFoundError(ERROR_MESSAGES.CONTENT.ENTRY_NOT_FOUND);
+        }
+        return entry;
       },
     },
     [pluralField]: {
@@ -119,6 +192,7 @@ function registerSchemaTypes(
         page: 'Int',
         pageSize: 'Int',
         locale: 'String',
+        status: 'String',
       },
       resolve: async (
         _src,
@@ -129,19 +203,31 @@ function registerSchemaTypes(
           page?: number;
           pageSize?: number;
           locale?: string;
+          status?: string | null;
         },
         context: GraphQLContext,
       ) => {
         await assertPermission(context, 'read', schema.id);
+        const requestedStatus = args.status ?? undefined;
+        if (
+          requestsNonPublishedStatus(requestedStatus, args.filters) &&
+          !(await isAuthorizedForDrafts(context, schema.id))
+        ) {
+          throw new ForbiddenError(
+            'Unauthorized: Viewing draft content requires editor or admin permissions.',
+          );
+        }
         const contentQuery = parseContentQuery(
           {
             filters: args.filters,
+            status: requestedStatus,
             sort: args.sort,
             search: args.search,
             page: args.page?.toString(),
             pageSize: args.pageSize?.toString(),
           },
           fields,
+          'published',
         );
         const [entries, total] = await Promise.all([
           contentService.listEntries(schema.id, args.locale, contentQuery),
