@@ -21,7 +21,7 @@ describe('createNodeClient', () => {
 
     expect(client).toBeInstanceOf(AgenticCmsNodeClient);
     // @ts-expect-error accessing private property for testing
-    expect(client.transport.baseUrl).toBe('http://localhost:3000');
+    expect(client.transport.baseUrl).toBe('http://localhost:3000/api/v1');
     expect(client.auth.getToken()).toBe('test-token-123');
   });
 
@@ -30,12 +30,12 @@ describe('createNodeClient', () => {
     process.env.CMS_API_TOKEN = 'test-token-123';
 
     const client = createNodeClient({
-      baseUrl: 'http://override:3000',
+      baseUrl: 'http://override:3000/api/v1/',
       apiToken: 'override-token',
     });
 
     // @ts-expect-error accessing private property for testing
-    expect(client.transport.baseUrl).toBe('http://override:3000');
+    expect(client.transport.baseUrl).toBe('http://override:3000/api/v1');
     expect(client.auth.getToken()).toBe('override-token');
   });
 

@@ -7,6 +7,12 @@ import { MediaModule } from './modules/media.module.js';
 import { GraphQLModule } from './modules/graphql.module.js';
 import { SearchModule } from './modules/search.module.js';
 
+/** Normalizes a Headless CMS base URL so it ends with an API version prefix (defaulting to `/api/v1`). */
+export function normalizeApiBaseUrl(baseUrl: string): string {
+  const trimmed = baseUrl.replace(/\/+$/, '');
+  return /\/api\/v\d+$/i.test(trimmed) ? trimmed : `${trimmed}/api/v1`;
+}
+
 export class AgenticCmsClient<TMap extends object = Record<string, unknown>> {
   public auth: AuthClient;
   public transport: HttpTransport;
@@ -18,8 +24,7 @@ export class AgenticCmsClient<TMap extends object = Record<string, unknown>> {
 
   constructor(config: ClientConfig) {
     this.auth = new AuthClient(config.apiToken);
-    // Remove trailing slash if user included one
-    const baseUrl = config.baseUrl.replace(/\/$/, '');
+    const baseUrl = normalizeApiBaseUrl(config.baseUrl);
     this.transport = new HttpTransport(baseUrl, this.auth, {
       appId:
         config.appId ||
