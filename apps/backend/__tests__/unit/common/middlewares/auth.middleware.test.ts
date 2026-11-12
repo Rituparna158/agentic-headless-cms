@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { authenticateToken } from '@repo/middlewares';
+import {
+  authenticateToken,
+  optionalAuthenticateToken,
+} from '@repo/middlewares';
 import { getDatabaseAdapter } from '@repo/config';
 
 vi.mock('jsonwebtoken', () => ({
@@ -200,5 +203,185 @@ describe('Auth Middleware - Security Edge Cases', () => {
     expect(mockNext).toHaveBeenCalled();
     expect(mockReq.user).toEqual(validUser);
     expect(mockRes.status).not.toHaveBeenCalled();
+  });
+
+  it('should mark API-token req.user with isApiToken: true and attach token role permissions', async () => {
+    mockReq.headers = { authorization: 'Bearer valid-api-token' };
+    vi.mocked(jwt.verify).mockImplementation(() => {
+      throw new Error('jwt malformed');
+    });
+
+    const viewerPerms = [
+      {
+        action: 'read',
+        effect: 'allow',
+        schemaId: 'schema-blog',
+        fields: null,
+        condition: null,
+      },
+    ];
+
+    mockDb.select = vi
+      .fn()
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          leftJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([
+                {
+                  token: {
+                    id: 'token-viewer',
+                    name: 'Viewer SDK Token',
+                    applicationId: 'app-1',
+                    createdBy: 'admin-creator-1',
+                    revokedAt: null,
+                    expiresAt: null,
+                    roleId: 'role-viewer',
+                  },
+                  role: { id: 'role-viewer', name: 'viewer' },
+                },
+              ]),
+            }),
+          }),
+        }),
+      })
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(viewerPerms),
+        }),
+      });
+
+    await authenticateToken(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction,
+    );
+
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockReq.user).toEqual({
+      id: 'admin-creator-1',
+      email: 'api-token@agentic-cms.local',
+      firstName: 'Viewer SDK Token',
+      lastName: 'Token',
+      roles: ['viewer'],
+      permissions: viewerPerms,
+      mfaEnabled: false,
+      isApiToken: true,
+    });
+  });
+
+  it('should reject an API token belonging to a different application', async () => {
+    mockReq.headers = { authorization: 'Bearer other-app-token' };
+    mockReq.context = { applicationId: 'app-2' };
+    vi.mocked(jwt.verify).mockImplementation(() => {
+      throw new Error('jwt malformed');
+    });
+
+    mockDb.select = vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        leftJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([
+              {
+                token: {
+                  id: 'token-app1',
+                  name: 'App 1 Token',
+                  applicationId: 'app-1',
+                  createdBy: 'admin-1',
+                  revokedAt: null,
+                  expiresAt: null,
+                  roleId: 'role-1',
+                },
+                role: { id: 'role-1', name: 'admin' },
+              },
+            ]),
+          }),
+        }),
+      }),
+    });
+
+    await authenticateToken(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction,
+    );
+
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          message: 'Unauthorized: Invalid token',
+        }),
+      }),
+    );
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('should mark API-token req.user with isApiToken: true in optionalAuthenticateToken', async () => {
+    mockReq.headers = { authorization: 'Bearer optional-api-token' };
+    vi.mocked(jwt.verify).mockImplementation(() => {
+      throw new Error('jwt malformed');
+    });
+
+    mockDb.select = vi.fn().mockReturnValueOnce({
+      from: vi.fn().mockReturnValue({
+        leftJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([
+              {
+                token: {
+                  id: 'token-opt',
+                  name: 'Optional Viewer Token',
+                  applicationId: 'app-1',
+                  createdBy: 'admin-1',
+                  revokedAt: null,
+                  expiresAt: null,
+                  roleId: null,
+                },
+                role: { id: 'role-viewer', name: 'viewer' },
+              },
+            ]),
+          }),
+        }),
+      }),
+    });
+
+    await optionalAuthenticateToken(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction,
+    );
+
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockReq.user).toEqual({
+      id: 'admin-1',
+      email: 'api-token@agentic-cms.local',
+      firstName: 'Optional Viewer Token',
+      lastName: 'Token',
+      roles: ['viewer'],
+      permissions: [],
+      mfaEnabled: false,
+      isApiToken: true,
+    });
+  });
+
+  it('should strip isApiToken from JWT payloads so JWT users cannot spoof API token permissions', async () => {
+    mockReq.headers = { authorization: 'Bearer crafted-jwt-token' };
+    vi.mocked(jwt.verify).mockReturnValue({
+      id: 'user-123',
+      email: 'test@example.com',
+      roles: ['viewer'],
+      isApiToken: true,
+      permissions: [{ action: '*', effect: 'allow', schemaId: null }],
+    } as unknown as ReturnType<typeof jwt.verify>);
+
+    await authenticateToken(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction,
+    );
+
+    expect(mockNext).toHaveBeenCalled();
+    expect(mockReq.user?.isApiToken).toBeUndefined();
   });
 });

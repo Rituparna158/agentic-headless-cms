@@ -19,6 +19,97 @@ function errorJson(res: Response, status: number, message: string) {
   return res.status(status).json({ error: { message, requestId } });
 }
 
+type ApiTokenResolution =
+  | { user: AuthenticatedUser }
+  | { errorMessage: string };
+
+/**
+ * Strip the internal API-token marker from decoded JWT payloads so a JWT can never
+ * bypass user DB permission lookup by asserting `isApiToken`.
+ */
+function sanitizeJwtUser(decoded: AuthenticatedUser): AuthenticatedUser {
+  if ('isApiToken' in decoded) {
+    delete decoded.isApiToken;
+  }
+  return decoded;
+}
+
+/**
+ * Resolve and validate a hashed bearer API token against the database, attaching
+ * its own role permissions and marking the context as API-token scoped.
+ */
+async function resolveApiTokenUser(
+  token: string,
+  expectedApplicationId?: string,
+): Promise<ApiTokenResolution> {
+  const hash = crypto.createHash('sha256').update(token).digest('hex');
+  const db = getDatabaseAdapter().getDb();
+  const records = await db
+    .select({
+      token: apiTokens,
+      role: roles,
+    })
+    .from(apiTokens)
+    .leftJoin(roles, eq(apiTokens.roleId, roles.id))
+    .where(eq(apiTokens.tokenHash, hash))
+    .limit(1);
+
+  if (records.length === 0) {
+    return { errorMessage: ERROR_MESSAGES.AUTH.INVALID_TOKEN };
+  }
+
+  const tokenRecord = records[0]!.token;
+  const roleRecord = records[0]!.role;
+
+  if (tokenRecord.revokedAt) {
+    return { errorMessage: 'Token has been revoked' };
+  }
+
+  if (tokenRecord.expiresAt && new Date(tokenRecord.expiresAt) < new Date()) {
+    return { errorMessage: 'Token has expired' };
+  }
+
+  if (
+    expectedApplicationId &&
+    tokenRecord.applicationId &&
+    tokenRecord.applicationId !== expectedApplicationId
+  ) {
+    return { errorMessage: ERROR_MESSAGES.AUTH.INVALID_TOKEN };
+  }
+
+  let tokenPermissions: Permission[] = [];
+  if (tokenRecord.roleId) {
+    tokenPermissions = await db
+      .select({
+        action: permissions.action,
+        effect: permissions.effect,
+        schemaId: permissions.schemaId,
+        fields: permissions.fields,
+        condition: permissions.condition,
+      })
+      .from(permissions)
+      .where(
+        and(
+          eq(permissions.roleId, tokenRecord.roleId),
+          eq(permissions.applicationId, tokenRecord.applicationId),
+        ),
+      );
+  }
+
+  return {
+    user: {
+      id: tokenRecord.createdBy || 'system',
+      email: 'api-token@agentic-cms.local',
+      firstName: tokenRecord.name,
+      lastName: 'Token',
+      roles: [roleRecord?.name || 'user'],
+      permissions: tokenPermissions,
+      mfaEnabled: false,
+      isApiToken: true,
+    },
+  };
+}
+
 export const authenticateToken = async (
   req: Request,
   res: Response,
@@ -50,79 +141,20 @@ export const authenticateToken = async (
       );
       return;
     }
-    req.user = decoded;
+    req.user = sanitizeJwtUser(decoded);
     next();
   } catch {
     try {
-      // Fallback: Check if it is a dashboard-generated API Token
-      const hash = crypto.createHash('sha256').update(token).digest('hex');
-      const db = getDatabaseAdapter().getDb();
-      const records = await db
-        .select({
-          token: apiTokens,
-          role: roles,
-        })
-        .from(apiTokens)
-        .leftJoin(roles, eq(apiTokens.roleId, roles.id))
-        .where(eq(apiTokens.tokenHash, hash))
-        .limit(1);
-
-      if (records.length === 0) {
-        errorJson(
-          res,
-          HTTP_STATUS.UNAUTHORIZED,
-          ERROR_MESSAGES.AUTH.INVALID_TOKEN,
-        );
+      const resolution = await resolveApiTokenUser(
+        token,
+        req.context?.applicationId,
+      );
+      if ('errorMessage' in resolution) {
+        errorJson(res, HTTP_STATUS.UNAUTHORIZED, resolution.errorMessage);
         return;
       }
 
-      const tokenRecord = records[0]!.token;
-      const roleRecord = records[0]!.role;
-
-      if (tokenRecord.revokedAt) {
-        errorJson(res, HTTP_STATUS.UNAUTHORIZED, 'Token has been revoked');
-        return;
-      }
-
-      if (
-        tokenRecord.expiresAt &&
-        new Date(tokenRecord.expiresAt) < new Date()
-      ) {
-        errorJson(res, HTTP_STATUS.UNAUTHORIZED, 'Token has expired');
-        return;
-      }
-
-      // Query permissions associated with this token's role
-      let tokenPermissions: Permission[] = [];
-      if (tokenRecord.roleId) {
-        tokenPermissions = await db
-          .select({
-            action: permissions.action,
-            effect: permissions.effect,
-            schemaId: permissions.schemaId,
-            fields: permissions.fields,
-            condition: permissions.condition,
-          })
-          .from(permissions)
-          .where(
-            and(
-              eq(permissions.roleId, tokenRecord.roleId),
-              eq(permissions.applicationId, tokenRecord.applicationId),
-            ),
-          );
-      }
-
-      // Set user context from token config
-      req.user = {
-        id: tokenRecord.createdBy || 'system',
-        email: 'api-token@agentic-cms.local',
-        firstName: tokenRecord.name,
-        lastName: 'Token',
-        roles: [roleRecord?.name || 'user'],
-        permissions: tokenPermissions,
-        mfaEnabled: false,
-      };
-
+      req.user = resolution.user;
       next();
     } catch {
       errorJson(
@@ -157,61 +189,17 @@ export const optionalAuthenticateToken = async (
       isMfaChallenge?: boolean;
     };
     if (!decoded.isMfaChallenge) {
-      req.user = decoded;
+      req.user = sanitizeJwtUser(decoded);
     }
     return next();
   } catch {
     try {
-      const hash = crypto.createHash('sha256').update(token).digest('hex');
-      const db = getDatabaseAdapter().getDb();
-      const records = await db
-        .select({
-          token: apiTokens,
-          role: roles,
-        })
-        .from(apiTokens)
-        .leftJoin(roles, eq(apiTokens.roleId, roles.id))
-        .where(eq(apiTokens.tokenHash, hash))
-        .limit(1);
-
-      if (records.length > 0) {
-        const tokenRecord = records[0]!.token;
-        const roleRecord = records[0]!.role;
-
-        if (
-          !tokenRecord.revokedAt &&
-          (!tokenRecord.expiresAt ||
-            new Date(tokenRecord.expiresAt) >= new Date())
-        ) {
-          let tokenPermissions: Permission[] = [];
-          if (tokenRecord.roleId) {
-            tokenPermissions = await db
-              .select({
-                action: permissions.action,
-                effect: permissions.effect,
-                schemaId: permissions.schemaId,
-                fields: permissions.fields,
-                condition: permissions.condition,
-              })
-              .from(permissions)
-              .where(
-                and(
-                  eq(permissions.roleId, tokenRecord.roleId),
-                  eq(permissions.applicationId, tokenRecord.applicationId),
-                ),
-              );
-          }
-
-          req.user = {
-            id: tokenRecord.createdBy || 'system',
-            email: 'api-token@agentic-cms.local',
-            firstName: tokenRecord.name,
-            lastName: 'Token',
-            roles: [roleRecord?.name || 'user'],
-            permissions: tokenPermissions,
-            mfaEnabled: false,
-          };
-        }
+      const resolution = await resolveApiTokenUser(
+        token,
+        req.context?.applicationId,
+      );
+      if ('user' in resolution) {
+        req.user = resolution.user;
       }
     } catch {
       // Ignored for optional auth fallback

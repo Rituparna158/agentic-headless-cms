@@ -92,10 +92,9 @@ export const getCurrentUser: RequestHandler = asyncHandler(
       { userId: req.user.id },
       'AuthController: getCurrentUser success',
     );
-    const permissions = await authService.getUserPermissions(
-      req.user.id,
-      appId,
-    );
+    const permissions = req.user.isApiToken
+      ? (req.user.permissions ?? [])
+      : await authService.getUserPermissions(req.user.id, appId);
     const userWithPermissions = { ...req.user, permissions };
     res
       .status(200)

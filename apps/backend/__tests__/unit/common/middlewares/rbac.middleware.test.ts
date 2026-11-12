@@ -125,4 +125,83 @@ describe('RBAC Middleware', () => {
     });
     expect(mockNext).not.toHaveBeenCalled();
   });
+
+  it('should evaluate token permissions and never fetch creator DB permissions for API tokens', async () => {
+    // Even though the creator user in DB has wildcard admin permissions, the viewer API token must be restricted.
+    vi.mocked(authService.getUserPermissions).mockResolvedValue([
+      {
+        action: '*',
+        effect: 'allow',
+        schemaId: null,
+        fields: null,
+        condition: null,
+      },
+    ]);
+
+    mockReq.user = {
+      id: 'admin-creator-1',
+      email: 'api-token@agentic-cms.local',
+      firstName: 'Viewer Token',
+      lastName: 'Token',
+      roles: ['viewer'],
+      mfaEnabled: false,
+      isApiToken: true,
+      permissions: [
+        {
+          action: 'read',
+          effect: 'allow',
+          schemaId: null,
+        },
+      ],
+    };
+
+    await requirePermission('read')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction,
+    );
+    expect(mockNext).toHaveBeenCalledTimes(1);
+
+    await requirePermission('create')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction,
+    );
+    expect(mockRes.status).toHaveBeenCalledWith(403);
+    expect(mockNext).toHaveBeenCalledTimes(1);
+    expect(authService.getUserPermissions).not.toHaveBeenCalled();
+  });
+
+  it('should return 403 for an API token with no permissions instead of falling back to creator DB permissions', async () => {
+    vi.mocked(authService.getUserPermissions).mockResolvedValue([
+      {
+        action: '*',
+        effect: 'allow',
+        schemaId: null,
+        fields: null,
+        condition: null,
+      },
+    ]);
+
+    mockReq.user = {
+      id: 'admin-creator-1',
+      email: 'api-token@agentic-cms.local',
+      firstName: 'Unprivileged Token',
+      lastName: 'Token',
+      roles: ['user'],
+      mfaEnabled: false,
+      isApiToken: true,
+      permissions: [],
+    };
+
+    await requirePermission('read')(
+      mockReq as Request,
+      mockRes as Response,
+      mockNext as NextFunction,
+    );
+
+    expect(mockRes.status).toHaveBeenCalledWith(403);
+    expect(mockNext).not.toHaveBeenCalled();
+    expect(authService.getUserPermissions).not.toHaveBeenCalled();
+  });
 });
