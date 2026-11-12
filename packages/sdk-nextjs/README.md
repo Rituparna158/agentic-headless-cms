@@ -114,3 +114,115 @@ export default async function Article({ id }: { id: string }) {
   );
 }
 ```
+
+---
+
+## Metadata & Static Params Helpers
+
+### `generateMetadataFromEntry`
+
+By default, `generateMetadataFromEntry` selects the first `text` or `richtext` schema field as `title`, the second `text` or `richtext` field as `description`, and the first `media` field as the OpenGraph image (automatically resolving media asset UUID strings via `getMediaAsset()`).
+
+If your schema defines a non-title field first (such as `slug`), pass explicit field overrides, and pass `draft: true` inside Draft Mode routes:
+
+```tsx
+import { draftMode } from 'next/headers';
+import { generateMetadataFromEntry } from '@mindfiredigital/sdk-nextjs';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const { isEnabled: isDraft } = await draftMode();
+
+  return generateMetadataFromEntry('articles', id, {
+    draft: isDraft,
+    titleField: 'title',
+    descriptionField: 'excerpt',
+    imageField: 'coverImage',
+  });
+}
+```
+
+### `generateCmsStaticParams`
+
+`generateCmsStaticParams` infers the returned param key type from `paramKey` (defaulting to `'slug'`) so Next.js 16 route type validation passes cleanly:
+
+```tsx
+export async function generateStaticParams() {
+  // Uses `entry.data.slug` when present, or `entry.id` when `idAsSlug: true`
+  return generateCmsStaticParams('articles', {
+    paramKey: 'id',
+    idAsSlug: true,
+  });
+}
+```
+
+---
+
+## Rich Text (`richtext`) & Lexical JSON Format
+
+Rich-text fields in Headless CMS are stored as serialized **Lexical editor JSON**:
+
+```json
+{
+  "root": {
+    "children": [
+      {
+        "children": [{ "text": "Hello world", "type": "text", "version": 1 }],
+        "type": "paragraph",
+        "version": 1
+      }
+    ],
+    "type": "root",
+    "version": 1
+  }
+}
+```
+
+Use the exported `toPlainText` helper to extract clean plain text (supporting serialized Lexical JSON, parsed Lexical objects, and HTML strings) for excerpts or metadata, or render the parsed Lexical state with `@lexical/react`:
+
+```tsx
+import { toPlainText } from '@mindfiredigital/sdk-nextjs';
+
+const summary = toPlainText(article.data.body);
+```
+
+---
+
+## Next.js 16 `cacheComponents: true` Compatibility
+
+If your Next.js 16 app enables `experimental.cacheComponents: true` (or `cacheComponents: true` in `next.config.ts`):
+
+- **Do not** export `export const dynamic = 'force-dynamic'` — Next.js 16 rejects route segment config `dynamic` when `cacheComponents` is active.
+- Wrap components calling `draftMode()`, `cookies()`, `headers()`, or uncached `getContentList` / `getContentEntry` fetches inside a `<Suspense>` boundary:
+
+```tsx
+import { Suspense } from 'react';
+import { draftMode } from 'next/headers';
+import { getContentList } from '@mindfiredigital/sdk-nextjs';
+
+async function ArticlesSection() {
+  const { isEnabled: isDraft } = await draftMode();
+  const { data } = await getContentList('articles', { draft: isDraft });
+  return (
+    <ul>
+      {data.map((item) => (
+        <li key={item.id}>{String(item.data.title)}</li>
+      ))}
+    </ul>
+  );
+}
+
+export default function ArticlesPage() {
+  return (
+    <Suspense fallback={<p>Loading articles...</p>}>
+      <ArticlesSection />
+    </Suspense>
+  );
+}
+```
+
+- For dynamic request-time rendering without prerender errors outside static shell routes, call `await connection()` from `next/server` inside the `<Suspense>` subtree.
