@@ -31,6 +31,9 @@ export const requirePermission =
           : (await getUserPermissions(req.user.id, appId).catch(() => null)) ||
             req.user.permissions ||
             [];
+        if (!req.user.isApiToken) {
+          req.user.permissions = permissions;
+        }
         const targetSchemaId =
           schemaId || (req as unknown as { schemaId?: string }).schemaId;
         if (!hasPermission(permissions, action, targetSchemaId)) {

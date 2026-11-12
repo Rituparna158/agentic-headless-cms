@@ -217,4 +217,126 @@ describe('RolesTab', () => {
       JSON.stringify({ author: '$currentUser' }, null, 2),
     );
   });
+
+  it('preserves wildcard (*) permissions for admin and disables schema checkboxes', async () => {
+    const adminRole: RoleRecord = {
+      ...editorRole,
+      id: 'role-admin',
+      name: 'admin',
+      isSystem: true,
+      permissions: [
+        {
+          id: 'perm-admin',
+          roleId: 'role-admin',
+          schemaId: null,
+          action: '*',
+          effect: 'allow',
+          fields: null,
+          condition: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    };
+
+    mockListRoles.mockResolvedValue({
+      data: [adminRole],
+      meta: { total: 1 },
+    });
+    mockUpdateRole.mockResolvedValue(adminRole);
+
+    const user = userEvent.setup();
+    renderTab();
+
+    await user.click(await screen.findByRole('button', { name: /admin/i }));
+    expect(screen.getByText(/Full Wildcard Access \(\*\)/)).toBeInTheDocument();
+
+    const row = screen.getByRole('row', { name: /Blog Post/ });
+    const checkboxes = within(row).getAllByRole('checkbox');
+    checkboxes.forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+      expect(checkbox).toBeDisabled();
+    });
+
+    await user.type(
+      screen.getByPlaceholderText('Optional description'),
+      'Full access',
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(mockUpdateRole).toHaveBeenCalledWith(
+        'role-admin',
+        expect.objectContaining({
+          description: 'Full access',
+          permissions: [
+            expect.objectContaining({
+              schemaId: null,
+              action: '*',
+              effect: 'allow',
+            }),
+          ],
+        }),
+      ),
+    );
+  });
+
+  it('allows non-system wildcard roles to explicitly switch to granular permissions', async () => {
+    const customWildcardRole: RoleRecord = {
+      ...editorRole,
+      id: 'role-custom-admin',
+      name: 'Super Editor',
+      isSystem: false,
+      permissions: [
+        {
+          id: 'perm-wild',
+          roleId: 'role-custom-admin',
+          schemaId: null,
+          action: '*',
+          effect: 'allow',
+          fields: null,
+          condition: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    };
+
+    mockListRoles.mockResolvedValue({
+      data: [customWildcardRole],
+      meta: { total: 1 },
+    });
+    mockUpdateRole.mockResolvedValue({
+      ...customWildcardRole,
+      permissions: [],
+    });
+
+    const user = userEvent.setup();
+    renderTab();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Super Editor' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Customize per content type' }),
+    );
+
+    const row = screen.getByRole('row', { name: /Blog Post/ });
+    const firstCheckbox = within(row).getAllByRole('checkbox')[0]!;
+    expect(firstCheckbox).not.toBeDisabled();
+    await user.click(firstCheckbox);
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() =>
+      expect(mockUpdateRole).toHaveBeenCalledWith(
+        'role-custom-admin',
+        expect.objectContaining({
+          permissions: [
+            expect.objectContaining({
+              schemaId: 'schema-1',
+              action: 'read',
+            }),
+          ],
+        }),
+      ),
+    );
+  });
 });

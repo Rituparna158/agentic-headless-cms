@@ -160,6 +160,61 @@ describe('Auth Module', () => {
       expect(cookies![0]).toContain('token_cms_ui=');
       expect(cookies![0]).toContain('HttpOnly');
     });
+
+    it('should omit permissions from session cookie JWT while returning them in login JSON', async () => {
+      const mockUser = {
+        id: 'user-id-123',
+        email: 'editor@example.com',
+        passwordHash: 'hashed-password',
+        firstName: 'Editor',
+        lastName: 'User',
+      };
+      const largePermissions = Array.from({ length: 40 }, (_, idx) => ({
+        action: 'read',
+        schemaId: `schema-${idx}`,
+        effect: 'allow',
+        fields: null,
+        condition: null,
+      }));
+      vi.mocked(authRepository.getUserByEmail).mockResolvedValue(
+        mockUser as unknown as Awaited<
+          ReturnType<typeof authRepository.getUserByEmail>
+        >,
+      );
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+      vi.mocked(authRepository.getUserRolesWithMfaInfo).mockResolvedValue([
+        { id: 'role-2', name: 'editor', mfaRequired: false },
+      ]);
+      vi.mocked(authRepository.getUserRoles).mockResolvedValue(['editor']);
+      vi.mocked(authRepository.getUserPermissions).mockResolvedValue(
+        largePermissions as unknown as Awaited<
+          ReturnType<typeof authRepository.getUserPermissions>
+        >,
+      );
+
+      const res = await request(app)
+        .post('/api/v1/auth/login')
+        .set('x-app-id', 'CMS_UI')
+        .send({
+          email: 'editor@example.com',
+          password: 'password123',
+          rememberMe: false,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.permissions).toHaveLength(40);
+
+      const cookieHeader = res.headers['set-cookie']![0]!;
+      const tokenMatch = cookieHeader.match(/token_cms_ui=([^;]+)/);
+      expect(tokenMatch).not.toBeNull();
+      const decoded = jwt.verify(
+        tokenMatch![1]!,
+        env.JWT_SECRET,
+      ) as jwt.JwtPayload;
+      expect(decoded.id).toBe('user-id-123');
+      expect(decoded.roles).toEqual(['editor']);
+      expect(decoded.permissions).toBeUndefined();
+    });
   });
   describe('GET /api/v1/auth/me', () => {
     it('should return 401 if no token is provided', async () => {
