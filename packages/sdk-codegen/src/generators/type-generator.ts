@@ -59,9 +59,9 @@ export function generateTypes(
     lines.push('');
   }
 
-  lines.push('export interface CmsContentMap {');
+  lines.push('export type CmsContentMap = {');
   lines.push(contentMapEntries.join('\n'));
-  lines.push('}');
+  lines.push('};');
   lines.push('');
 
   return lines.join('\n');
@@ -83,9 +83,9 @@ function mapDataType(field: SchemaField): string {
     case 'json':
       return 'Record<string, unknown>';
     case 'media':
-      return 'MediaAsset';
+      return 'string | MediaAsset';
     case 'relation':
-      return '{ id: string }';
+      return 'string | { id: string }';
     case 'enum': {
       const options = field.config?.options;
       if (
@@ -105,7 +105,8 @@ function mapDataType(field: SchemaField): string {
 function getFieldType(field: SchemaField): string {
   let typeStr = mapDataType(field);
   if (field.isRepeatable) {
-    typeStr = `${typeStr}[]`;
+    // Wrap union types so array suffix applies to all union members rather than only the last.
+    typeStr = typeStr.includes(' | ') ? `(${typeStr})[]` : `${typeStr}[]`;
   }
   if (!field.isRequired) {
     typeStr = `${typeStr} | null`;

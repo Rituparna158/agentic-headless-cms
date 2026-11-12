@@ -7,16 +7,16 @@ import { contentTag } from '../cache.js';
  * Generates the `generateStaticParams()` array for a Next.js dynamic route
  * backed by a CMS content type.
  */
-export async function generateCmsStaticParams(
+export async function generateCmsStaticParams<TKey extends string = 'slug'>(
   schemaSlug: string,
   options?: {
-    paramKey?: string;
+    paramKey?: TKey;
     locale?: string;
     pageSize?: number;
     idAsSlug?: boolean;
   },
-): Promise<Record<string, string>[]> {
-  const paramKey = options?.paramKey ?? 'slug';
+): Promise<Array<Record<TKey, string>>> {
+  const paramKey = (options?.paramKey ?? 'slug') as TKey;
   const pageSize = options?.pageSize ?? 1000;
   const locale = options?.locale;
   const idAsSlug = options?.idAsSlug ?? false;
@@ -27,7 +27,15 @@ export async function generateCmsStaticParams(
     { pageSize, locale },
   );
 
-  return result.data.map((entry) => ({
-    [paramKey]: idAsSlug ? entry.id : entry.id,
-  }));
+  return result.data.map((entry) => {
+    const entrySlug = entry.data?.['slug'];
+    const paramValue =
+      !idAsSlug && typeof entrySlug === 'string' && entrySlug.length > 0
+        ? entrySlug
+        : entry.id;
+
+    return {
+      [paramKey]: paramValue,
+    } as Record<TKey, string>;
+  });
 }

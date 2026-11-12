@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
-import { program } from '../src/cli.js';
+import { program, normalizeBaseUrl } from '../src/cli.js';
 
 describe('Codegen CLI Binary', () => {
   beforeEach(() => {
@@ -188,5 +188,44 @@ describe('Codegen CLI Binary', () => {
         './dist/cms-types.ts',
       ]),
     ).rejects.toThrow('process.exit called');
+  });
+
+  it('should normalize --url values that already end with /api/v1', async () => {
+    expect(normalizeBaseUrl('http://localhost:3001/api/v1')).toBe(
+      'http://localhost:3001',
+    );
+    expect(normalizeBaseUrl('http://localhost:3001/api/v1/')).toBe(
+      'http://localhost:3001',
+    );
+    expect(normalizeBaseUrl('http://localhost:3001///')).toBe(
+      'http://localhost:3001',
+    );
+
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: { data: [] },
+      }),
+    } as Response);
+
+    vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+
+    await program.parseAsync([
+      'node',
+      'cli.ts',
+      '--url',
+      'http://localhost:3001/api/v1/',
+      '--token',
+      'test-token',
+      '--output',
+      './dist/cms-types.ts',
+    ]);
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'http://localhost:3001/api/v1/schemas?pageSize=1000',
+      expect.any(Object),
+    );
   });
 });
