@@ -45,7 +45,7 @@ describe('getContentList', () => {
 
   it('normalizes baseUrl when it already includes /api/v1', async () => {
     process.env['CMS_API_URL'] = 'http://localhost:3000/api/v1';
-    await getContentList('blog-post', { draft: true });
+    await getContentList('blog-post');
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:3000/api/v1/content/blog-post',
       expect.any(Object),
@@ -88,9 +88,44 @@ describe('getContentList', () => {
     });
   });
 
-  it('returns the raw draft data when draft: true', async () => {
+  it('returns the raw draft and published data and sends status=all when draft: true', async () => {
+    const publishedEntry = {
+      id: 'entry-2',
+      status: 'published' as const,
+      data: { title: 'Published Post' },
+      publishedData: { title: 'Published Post' },
+    };
+    const mixedListResult = {
+      data: [mockEntry, publishedEntry],
+      meta: { pagination: { page: 1, pageSize: 10, total: 2, pageCount: 1 } },
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mixedListResult, success: true }),
+      }),
+    );
+
     const result = await getContentList('blog-post', { draft: true });
-    expect(result).toEqual(mockListResult);
+    const [url] = vi.mocked(fetch).mock.calls[0]!;
+    expect(new URL(url as string).searchParams.get('status')).toBe('all');
+    expect(result).toEqual(mixedListResult);
+    expect(result.data).toHaveLength(2);
+  });
+
+  it('respects explicit status override when draft: true and omits status=all when draft: false', async () => {
+    await getContentList('blog-post', { draft: true, status: 'draft' });
+    const [draftOnlyUrl] = vi.mocked(fetch).mock.calls[0]!;
+    expect(new URL(draftOnlyUrl as string).searchParams.get('status')).toBe(
+      'draft',
+    );
+
+    await getContentList('blog-post', { draft: false });
+    const [publishedOnlyUrl] = vi.mocked(fetch).mock.calls[1]!;
+    expect(
+      new URL(publishedOnlyUrl as string).searchParams.get('status'),
+    ).toBeNull();
   });
 
   it('filters out unpublished items and maps to publishedData when draft: false', async () => {
