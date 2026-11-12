@@ -379,9 +379,16 @@ describe('GraphQL API', () => {
         expect(listSpy.mock.calls[1][2].where).toBeUndefined();
 
         const editorToken = makeToken(['editor']);
-        vi.mocked(authService.getUserPermissions).mockResolvedValue(
-          readOnlyPerms,
-        );
+        vi.mocked(authService.getUserPermissions).mockResolvedValue([
+          ...readOnlyPerms,
+          {
+            action: 'update',
+            effect: 'allow',
+            schemaId: 'schema-1',
+            fields: null,
+            condition: null,
+          },
+        ]);
         const editorRes = await sendGraphQL(
           editorToken,
           'query($filters: JSON) { blogPosts(filters: $filters) { data { id } } }',
@@ -392,6 +399,64 @@ describe('GraphQL API', () => {
       } finally {
         listSpy.mockRestore();
       }
+    });
+
+    it('enforces draft access strictly via permissions rather than hardcoded role names', async () => {
+      // Custom role name with editorial permission (publish) is allowed
+      const customReviewerToken = makeToken(['regional-reviewer']);
+      vi.mocked(authService.getUserPermissions).mockResolvedValue([
+        ...readOnlyPerms,
+        {
+          action: 'publish',
+          effect: 'allow',
+          schemaId: 'schema-1',
+          fields: null,
+          condition: null,
+        },
+      ]);
+      const allowedCustomRes = await sendGraphQL(
+        customReviewerToken,
+        '{ blogPosts(status: "draft") { data { id } } }',
+      );
+      expect(allowedCustomRes.status).toBe(200);
+      expect(allowedCustomRes.body.errors).toBeUndefined();
+
+      // Even a built-in role name ('editor') is blocked if permissions only allow 'read' on this schema
+      const scopedEditorToken = makeToken(['editor']);
+      vi.mocked(authService.getUserPermissions).mockResolvedValue([
+        ...readOnlyPerms,
+        {
+          action: 'update',
+          effect: 'allow',
+          schemaId: 'other-schema',
+          fields: null,
+          condition: null,
+        },
+      ]);
+      const blockedEditorRes = await sendGraphQL(
+        scopedEditorToken,
+        '{ blogPosts(status: "draft") { data { id } } }',
+      );
+      expect(blockedEditorRes.status).toBe(200);
+      expect(blockedEditorRes.body.errors[0].extensions.code).toBe('FORBIDDEN');
+
+      // UI capability permissions (`action: 'manage'`) combined with `read` must not unlock draft content
+      vi.mocked(authService.getUserPermissions).mockResolvedValue([
+        ...readOnlyPerms,
+        {
+          action: 'manage',
+          effect: 'allow',
+          schemaId: null,
+          fields: null,
+          condition: { capability: 'manage_media' },
+        },
+      ]);
+      const mediaManagerRes = await sendGraphQL(
+        customReviewerToken,
+        '{ blogPosts(status: "draft") { data { id } } }',
+      );
+      expect(mediaManagerRes.status).toBe(200);
+      expect(mediaManagerRes.body.errors[0].extensions.code).toBe('FORBIDDEN');
     });
 
     it('allows users with explicit editorial permission to query drafts', async () => {
@@ -485,6 +550,16 @@ describe('GraphQL API', () => {
       }
 
       const editorToken = makeToken(['editor']);
+      vi.mocked(authService.getUserPermissions).mockResolvedValue([
+        ...readOnlyPerms,
+        {
+          action: 'update',
+          effect: 'allow',
+          schemaId: 'schema-1',
+          fields: null,
+          condition: null,
+        },
+      ]);
       const editorRes = await sendGraphQL(
         editorToken,
         '{ blogPost(id: "entry-1") { id status title } }',

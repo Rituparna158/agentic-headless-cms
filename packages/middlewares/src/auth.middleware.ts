@@ -23,10 +23,6 @@ type ApiTokenResolution =
   | { user: AuthenticatedUser }
   | { errorMessage: string };
 
-/**
- * Strip the internal API-token marker from decoded JWT payloads so a JWT can never
- * bypass user DB permission lookup by asserting `isApiToken`.
- */
 function sanitizeJwtUser(decoded: AuthenticatedUser): AuthenticatedUser {
   if ('isApiToken' in decoded) {
     delete decoded.isApiToken;
@@ -34,10 +30,6 @@ function sanitizeJwtUser(decoded: AuthenticatedUser): AuthenticatedUser {
   return decoded;
 }
 
-/**
- * Resolve and validate a hashed bearer API token against the database, attaching
- * its own role permissions and marking the context as API-token scoped.
- */
 async function resolveApiTokenUser(
   token: string,
   expectedApplicationId?: string,

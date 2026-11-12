@@ -70,6 +70,39 @@ describe('Content Server Actions', () => {
       expect(revalidateTag).toHaveBeenCalledWith('cms', undefined);
     });
 
+    it('strips all $ACTION_* Next.js internal fields from FormData and object payloads', async () => {
+      const action = createEntryAction('blog-post');
+
+      const formData = new FormData();
+      formData.append('title', 'Bound Action');
+      formData.append('$ACTION_ID_abc', 'id-val');
+      formData.append('$ACTION_REF_1', 'ref-val');
+      formData.append('$ACTION_1:0', 'bound-arg-0');
+      formData.append('$ACTION_1:1', 'bound-arg-1');
+      formData.append('$ACTION_KEY', 'action-key');
+      formData.append('$ACTION', 'raw-action');
+
+      await action(null, formData);
+
+      const [, formOptions] = vi.mocked(fetch).mock.calls[0]!;
+      expect(JSON.parse(formOptions!.body as string)).toEqual({
+        title: 'Bound Action',
+      });
+
+      const plainPayload = {
+        title: 'Plain Action',
+        $ACTION_REF_1: 'ref-val',
+        '$ACTION_1:0': 'bound-arg-0',
+      };
+      await action(null, plainPayload);
+
+      const [, plainOptions] = vi.mocked(fetch).mock.calls[1]!;
+      expect(JSON.parse(plainOptions!.body as string)).toEqual({
+        title: 'Plain Action',
+      });
+      expect(plainPayload).toHaveProperty('$ACTION_REF_1');
+    });
+
     it('returns error state if fetch fails', async () => {
       vi.mocked(fetch).mockResolvedValueOnce({
         ok: false,
@@ -143,6 +176,36 @@ describe('Content Server Actions', () => {
       const [url, options] = vi.mocked(fetch).mock.calls[0]!;
       expect(url).toContain('/api/v1/content/blog-post/entry-123');
       expect(options!.method).toBe('DELETE');
+    });
+
+    it('handles 204 No Content empty responses without JSON parse failure', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(null, { status: 204 }),
+      );
+
+      const formData = new FormData();
+      formData.append('id', 'entry-204');
+      formData.append('$ACTION_REF_2', 'ref-val');
+      formData.append('$ACTION_2:0', 'chunk-0');
+
+      const action = deleteEntryAction('blog-post');
+      const result = await action(null, formData);
+
+      expect(result).toEqual({ success: true });
+
+      const [url, options] = vi.mocked(fetch).mock.calls[0]!;
+      expect(url).toContain('/api/v1/content/blog-post/entry-204');
+      expect(options!.method).toBe('DELETE');
+
+      const { revalidateTag } = await import('next/cache');
+      expect(revalidateTag).toHaveBeenCalledWith(
+        'cms:content:blog-post',
+        undefined,
+      );
+      expect(revalidateTag).toHaveBeenCalledWith(
+        'cms:content:blog-post:entry-204',
+        undefined,
+      );
     });
   });
 });
