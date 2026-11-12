@@ -4,9 +4,21 @@ import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
 import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
 import type { ContentQueryOptions } from '@repo/types';
-import { ApiError } from '@repo/utils';
+import { ApiError, HttpError } from '@repo/utils';
+import { DatabaseError } from '@repo/shared-db';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
+
+function rethrowKnownContentError(error: unknown): void {
+  if (
+    error instanceof ApiError ||
+    error instanceof HttpError ||
+    error instanceof DatabaseError
+  ) {
+    throw error;
+  }
+}
+
 export class ContentService {
   private repository: ContentRepository;
   constructor() {
@@ -30,6 +42,7 @@ export class ContentService {
         applicationId,
       );
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in listEntries:');
       throw new ApiError(500, SERVICE_ERRORS.LIST_ENTRIES_FAILED);
     }
@@ -52,6 +65,7 @@ export class ContentService {
         applicationId,
       );
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in countEntries:');
       throw new ApiError(500, SERVICE_ERRORS.COUNT_ENTRIES_FAILED);
     }
@@ -74,6 +88,7 @@ export class ContentService {
         applicationId,
       );
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in getEntryById:');
       throw new ApiError(500, SERVICE_ERRORS.FETCH_ENTRY_FAILED);
     }
@@ -112,6 +127,7 @@ export class ContentService {
       });
       return result;
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in createDraft:');
       throw new ApiError(500, SERVICE_ERRORS.CREATE_DRAFT_FAILED);
     }
@@ -152,6 +168,7 @@ export class ContentService {
       });
       return result;
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in updateDraft:');
       throw new ApiError(500, SERVICE_ERRORS.UPDATE_DRAFT_FAILED);
     }
@@ -190,6 +207,7 @@ export class ContentService {
       });
       return result;
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in updatePartial:');
       throw new ApiError(500, 'Failed to partially update entry.');
     }
@@ -228,6 +246,7 @@ export class ContentService {
       });
       return result;
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in publishEntry:');
       throw new ApiError(500, SERVICE_ERRORS.PUBLISH_ENTRY_FAILED);
     }
@@ -260,8 +279,8 @@ export class ContentService {
       });
       return result;
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in unpublishEntry:');
-      if (error instanceof ApiError) throw error;
       throw new ApiError(500, SERVICE_ERRORS.UNPUBLISH_ENTRY_FAILED);
     }
   }
@@ -303,6 +322,7 @@ export class ContentService {
       });
       return result;
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in revertEntry:');
       throw new ApiError(500, SERVICE_ERRORS.REVERT_ENTRY_FAILED);
     }
@@ -312,6 +332,7 @@ export class ContentService {
       logger.info({ entryId, locale }, 'ContentService: listEntryVersions');
       return await this.repository.listEntryVersions(entryId, locale);
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error(
         { err: error },
         'ContentService Error in listEntryVersions:',
@@ -351,6 +372,7 @@ export class ContentService {
       });
       return result;
     } catch (error) {
+      rethrowKnownContentError(error);
       logger.error({ err: error }, 'ContentService Error in deleteEntry:');
       throw new ApiError(500, SERVICE_ERRORS.DELETE_ENTRY_FAILED);
     }

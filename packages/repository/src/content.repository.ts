@@ -1,7 +1,7 @@
 import { eq, and, or, isNull, sql, desc, SQL } from 'drizzle-orm';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
-import { ApiError } from '@repo/utils';
+import { ApiError, BadRequestError, HttpError } from '@repo/utils';
 import {
   schemas,
   contentEntries,
@@ -16,6 +16,32 @@ import { DEFAULT_LOCALE } from '@repo/constants';
 import type { ContentQueryOptions } from '@repo/types';
 import { isDeepStrictEqual } from 'node:util';
 import { REPO_ERRORS } from './error-constants.js';
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function assertValidUuid(value: string, label: string = 'entry ID'): void {
+  if (!UUID_REGEX.test(value)) {
+    throw new BadRequestError(`Invalid ${label} format.`);
+  }
+}
+
+function rethrowKnownRepoError(error: unknown): void {
+  if (
+    error instanceof ApiError ||
+    error instanceof HttpError ||
+    error instanceof RecordNotFoundError
+  ) {
+    throw error;
+  }
+  if (error && typeof error === 'object') {
+    const err = error as { code?: unknown; cause?: { code?: unknown } };
+    if (err.code === '22P02' || err.cause?.code === '22P02') {
+      throw new BadRequestError('Invalid entry ID format.');
+    }
+  }
+}
+
 export class ContentRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
@@ -186,6 +212,7 @@ export class ContentRepository {
         { entryId, locale, schemaId, applicationId },
         'ContentRepository: fetching entry by ID',
       );
+      assertValidUuid(entryId, 'entry ID');
       const conditions = [
         eq(contentEntries.id, entryId),
         isNull(contentEntries.deletedAt),
@@ -237,6 +264,7 @@ export class ContentRepository {
       );
       return entry || null;
     } catch (error) {
+      rethrowKnownRepoError(error);
       logger.error({ err: error }, 'ContentRepository Error in getEntryById:');
       throw new ApiError(500, REPO_ERRORS.FETCH_ENTRY_FAILED);
     }
@@ -322,6 +350,7 @@ export class ContentRepository {
         { entryId, userId, locale },
         'ContentRepository: updating entry draft',
       );
+      assertValidUuid(entryId, 'entry ID');
       const currentEntry = await this.getEntryById(entryId, locale);
       if (currentEntry && isDeepStrictEqual(currentEntry.data, data)) {
         logger.debug('ContentRepository: no changes detected, skipping update');
@@ -377,6 +406,7 @@ export class ContentRepository {
       logger.info({ entryId }, 'ContentRepository: updateEntryDraft complete');
       return updatedEntry;
     } catch (error) {
+      rethrowKnownRepoError(error);
       logger.error(
         { err: error },
         'ContentRepository Error in updateEntryDraft:',
@@ -395,6 +425,7 @@ export class ContentRepository {
         { entryId, userId, locale },
         'ContentRepository: publishing entry',
       );
+      assertValidUuid(entryId, 'entry ID');
       const entry = await this.getEntryById(entryId, locale);
       if (!entry) {
         logger.error(
@@ -453,8 +484,8 @@ export class ContentRepository {
       logger.info({ entryId }, 'ContentRepository: publishEntry complete');
       return publishedEntry;
     } catch (error) {
+      rethrowKnownRepoError(error);
       logger.error({ err: error }, 'ContentRepository Error in publishEntry:');
-      if (error instanceof RecordNotFoundError) throw error;
       throw new ApiError(500, REPO_ERRORS.PUBLISH_ENTRY_FAILED);
     }
   }
@@ -469,6 +500,7 @@ export class ContentRepository {
         { entryId, userId, locale },
         'ContentRepository: unpublishing entry',
       );
+      assertValidUuid(entryId, 'entry ID');
       const entry = await this.getEntryById(entryId, locale);
       if (!entry) {
         throw new RecordNotFoundError('Entry not found');
@@ -538,13 +570,11 @@ export class ContentRepository {
       logger.info({ entryId }, 'ContentRepository: unpublishEntry complete');
       return unpublishedEntry;
     } catch (error) {
+      rethrowKnownRepoError(error);
       logger.error(
         { err: error },
         'ContentRepository Error in unpublishEntry:',
       );
-      if (error instanceof RecordNotFoundError || error instanceof ApiError) {
-        throw error;
-      }
       throw new ApiError(500, 'Failed to unpublish entry');
     }
   }
@@ -559,6 +589,7 @@ export class ContentRepository {
         { entryId, versionNo, userId, locale },
         'ContentRepository: reverting entry',
       );
+      assertValidUuid(entryId, 'entry ID');
       const [historical] = await withTransaction(this.db, async (tx) => {
         return await tx
           .select({ data: contentVersions.data })
@@ -600,8 +631,8 @@ export class ContentRepository {
       logger.info({ entryId }, 'ContentRepository: revertEntry complete');
       return revertedEntry;
     } catch (error) {
+      rethrowKnownRepoError(error);
       logger.error({ err: error }, 'ContentRepository Error in revertEntry:');
-      if (error instanceof RecordNotFoundError) throw error;
       throw new ApiError(500, REPO_ERRORS.REVERT_ENTRY_FAILED);
     }
   }
@@ -611,6 +642,7 @@ export class ContentRepository {
         { entryId, locale },
         'ContentRepository: listing entry versions',
       );
+      assertValidUuid(entryId, 'entry ID');
       const versions = await withTransaction(this.db, async (tx) => {
         return await tx
           .select()
@@ -629,6 +661,7 @@ export class ContentRepository {
       );
       return versions;
     } catch (error) {
+      rethrowKnownRepoError(error);
       logger.error(
         { err: error },
         'ContentRepository Error in listEntryVersions:',
@@ -642,6 +675,7 @@ export class ContentRepository {
         { entryId, applicationId },
         'ContentRepository: deleting entry',
       );
+      assertValidUuid(entryId, 'entry ID');
       const conditions = [eq(contentEntries.id, entryId)];
       if (applicationId) {
         conditions.push(eq(contentEntries.applicationId, applicationId));
@@ -663,8 +697,8 @@ export class ContentRepository {
       logger.info({ entryId }, 'ContentRepository: deleteEntry complete');
       return deleted;
     } catch (error) {
+      rethrowKnownRepoError(error);
       logger.error({ err: error }, 'ContentRepository Error in deleteEntry:');
-      if (error instanceof RecordNotFoundError) throw error;
       throw new ApiError(500, REPO_ERRORS.DELETE_ENTRY_FAILED);
     }
   }
