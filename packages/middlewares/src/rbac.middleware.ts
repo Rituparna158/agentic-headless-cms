@@ -25,10 +25,12 @@ export const requirePermission =
       }
       try {
         const appId = (req.headers['x-app-id'] as string) || 'default';
-        const dbPerms = await getUserPermissions(req.user.id, appId).catch(
-          () => null,
-        );
-        const permissions = dbPerms || req.user.permissions || [];
+        // API tokens carry their own role-scoped permissions; never overwrite with creator's DB permissions
+        const permissions = req.user.isApiToken
+          ? (req.user.permissions ?? [])
+          : (await getUserPermissions(req.user.id, appId).catch(() => null)) ||
+            req.user.permissions ||
+            [];
         const targetSchemaId =
           schemaId || (req as unknown as { schemaId?: string }).schemaId;
         if (!hasPermission(permissions, action, targetSchemaId)) {

@@ -78,6 +78,7 @@ export interface AuthenticatedUser {
   lastName: string | null;
   roles: string[];
   mfaEnabled: boolean;
+  isApiToken?: boolean;
   permissions?: {
     action: string;
     schemaId: string | null;
