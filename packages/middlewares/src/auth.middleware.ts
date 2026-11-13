@@ -110,11 +110,9 @@ export const authenticateToken = async (
   const appId = (req.headers['x-app-id'] as string) || 'default';
   const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
 
-  let token = (req.cookies as Record<string, string> | undefined)?.[cookieName];
-
-  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+  let token = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.split(' ')[1]
+    : (req.cookies as Record<string, string> | undefined)?.[cookieName];
 
   if (!token) {
     errorJson(res, HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.AUTH.NO_TOKEN);
@@ -166,11 +164,9 @@ export const optionalAuthenticateToken = async (
   const appId = (req.headers['x-app-id'] as string) || 'default';
   const cookieName = `${AUTH_COOKIES.PREFIX}${appId.toLowerCase()}`;
 
-  let token = (req.cookies as Record<string, string> | undefined)?.[cookieName];
-
-  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+  let token = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.split(' ')[1]
+    : (req.cookies as Record<string, string> | undefined)?.[cookieName];
 
   if (!token) {
     return next();
