@@ -17,6 +17,10 @@
   "bin": {
     "cms-codegen": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
