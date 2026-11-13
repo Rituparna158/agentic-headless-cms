@@ -12,6 +12,7 @@ import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 
 import {
   type EditorState,
+  type LexicalEditor,
   FORMAT_TEXT_COMMAND,
   $getSelection,
   $isRangeSelection,
@@ -310,6 +311,26 @@ export function LexicalRichTextField({
   'aria-describedby': ariaDescribedBy,
   'aria-invalid': ariaInvalid,
 }: LexicalRichTextFieldProps) {
+  const getInitialEditorState = React.useCallback(
+    (editor: LexicalEditor) => {
+      if (!value || !value.trim()) return;
+      try {
+        const parsed = editor.parseEditorState(value);
+        editor.setEditorState(parsed);
+      } catch {
+        editor.update(() => {
+          const root = $getRoot();
+          root.clear();
+          const p = $createParagraphNode();
+          p.append($createTextNode(value));
+          root.append(p);
+        });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   return (
     <LexicalComposer
       initialConfig={{
@@ -318,7 +339,7 @@ export function LexicalRichTextField({
         nodes: EDITOR_NODES,
         editable: !disabled,
         onError,
-        editorState: value || undefined,
+        editorState: getInitialEditorState,
       }}
     >
       <div
