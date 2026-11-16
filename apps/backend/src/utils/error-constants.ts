@@ -61,4 +61,13 @@ export const SERVICE_ERRORS = {
   TRIGGER_WEBHOOK_FAILED: 'Failed to trigger webhook manually',
   TEST_WEBHOOK_FAILED: 'Failed to test webhook',
   LIST_WEBHOOK_DELIVERIES_FAILED: 'Failed to list webhook deliveries',
+
+  // Workflows
+  LIST_WORKFLOWS_FAILED: 'Failed to list workflows',
+  CREATE_WORKFLOW_FAILED: 'Failed to create workflow',
+  UPDATE_WORKFLOW_FAILED: 'Failed to update workflow',
+  DELETE_WORKFLOW_FAILED: 'Failed to delete workflow',
+  FETCH_WORKFLOW_FAILED: 'Failed to fetch workflow details',
+  ASSIGN_WORKFLOW_FAILED: 'Failed to assign workflow to schema',
+  REMOVE_WORKFLOW_FAILED: 'Failed to remove workflow from schema',
 };
