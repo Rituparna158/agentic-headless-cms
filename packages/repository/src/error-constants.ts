@@ -69,4 +69,14 @@ export const REPO_ERRORS = {
   FETCH_WEBHOOK_FAILED: 'Failed to fetch webhook',
   RECORD_WEBHOOK_DELIVERY_FAILED: 'Failed to record webhook delivery',
   LIST_WEBHOOK_DELIVERIES_FAILED: 'Failed to list webhook deliveries',
+
+  // Workflows
+  LIST_WORKFLOWS_FAILED: 'Failed to list workflows',
+  CREATE_WORKFLOW_FAILED: 'Failed to create workflow',
+  UPDATE_WORKFLOW_FAILED: 'Failed to update workflow',
+  DELETE_WORKFLOW_FAILED: 'Failed to delete workflow',
+  FETCH_WORKFLOW_FAILED: 'Failed to fetch workflow',
+  ASSIGN_WORKFLOW_FAILED: 'Failed to assign workflow to schema',
+  REMOVE_WORKFLOW_ASSIGNMENT_FAILED:
+    'Failed to remove workflow schema assignment',
 };
