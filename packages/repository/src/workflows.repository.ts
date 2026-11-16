@@ -1,9 +1,11 @@
-import { eq, sql, and, inArray } from 'drizzle-orm';
+import { eq, sql, and, inArray, desc } from 'drizzle-orm';
 import type {
   BaseQueryOptions,
   CreateWorkflowInput,
   UpdateWorkflowInput,
   WorkflowRecord,
+  ContentWorkflowStateRecord,
+  WorkflowHistoryRecord,
 } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
@@ -11,6 +13,9 @@ import {
   workflows,
   schemaWorkflows,
   schemas,
+  contentWorkflowStates,
+  workflowHistories,
+  users,
   RecordNotFoundError,
   buildPaginationOptions,
   withTransaction,
@@ -644,6 +649,199 @@ export class WorkflowsRepository {
         'WorkflowsRepository Error in getAssignedSchemas:',
       );
       throw new ApiError(500, REPO_ERRORS.FETCH_WORKFLOW_FAILED);
+    }
+  }
+
+  async getEntryWorkflowState(
+    entryId: string,
+    applicationId?: string,
+  ): Promise<ContentWorkflowStateRecord | null> {
+    try {
+      logger.info({ entryId }, 'WorkflowsRepository: getEntryWorkflowState');
+      const conditions = [eq(contentWorkflowStates.entryId, entryId)];
+      if (applicationId) {
+        conditions.push(eq(contentWorkflowStates.applicationId, applicationId));
+      }
+
+      const [state] = await this.db
+        .select()
+        .from(contentWorkflowStates)
+        .where(and(...conditions))
+        .limit(1);
+
+      return state ?? null;
+    } catch (error) {
+      logger.error(
+        { err: error, entryId },
+        'WorkflowsRepository Error in getEntryWorkflowState:',
+      );
+      throw new ApiError(500, REPO_ERRORS.FETCH_WORKFLOW_STATE_FAILED);
+    }
+  }
+
+  async upsertEntryWorkflowState(
+    data: {
+      entryId: string;
+      workflowId: string;
+      currentStage: string;
+      updatedByUserId?: string | null;
+    },
+    applicationId?: string,
+  ): Promise<ContentWorkflowStateRecord> {
+    try {
+      logger.info(
+        { entryId: data.entryId, stage: data.currentStage },
+        'WorkflowsRepository: upsertEntryWorkflowState',
+      );
+
+      return await withTransaction(this.db, async (tx) => {
+        const conditions = [eq(contentWorkflowStates.entryId, data.entryId)];
+        if (applicationId) {
+          conditions.push(
+            eq(contentWorkflowStates.applicationId, applicationId),
+          );
+        }
+
+        const [existing] = await tx
+          .select()
+          .from(contentWorkflowStates)
+          .where(and(...conditions))
+          .limit(1);
+
+        if (existing) {
+          const [updated] = await tx
+            .update(contentWorkflowStates)
+            .set({
+              workflowId: data.workflowId,
+              currentStage: data.currentStage,
+              updatedByUserId: data.updatedByUserId ?? null,
+              updatedAt: new Date(),
+            })
+            .where(eq(contentWorkflowStates.id, existing.id))
+            .returning();
+          return updated!;
+        } else {
+          const insertPayload: Record<string, unknown> = {
+            entryId: data.entryId,
+            workflowId: data.workflowId,
+            currentStage: data.currentStage,
+            updatedByUserId: data.updatedByUserId ?? null,
+          };
+          if (applicationId) {
+            insertPayload.applicationId = applicationId;
+          }
+          const [inserted] = await tx
+            .insert(contentWorkflowStates)
+            .values(insertPayload as any)
+            .returning();
+          return inserted!;
+        }
+      });
+    } catch (error) {
+      logger.error(
+        { err: error, entryId: data.entryId },
+        'WorkflowsRepository Error in upsertEntryWorkflowState:',
+      );
+      throw new ApiError(500, REPO_ERRORS.UPDATE_WORKFLOW_STATE_FAILED);
+    }
+  }
+
+  async recordWorkflowHistory(
+    data: {
+      entryId: string;
+      workflowId: string;
+      fromStage: string;
+      toStage: string;
+      action?: string;
+      comment?: string;
+      actorType?: 'user' | 'agent' | 'system';
+      actorUserId?: string | null;
+    },
+    applicationId?: string,
+  ): Promise<WorkflowHistoryRecord> {
+    try {
+      logger.info(
+        { entryId: data.entryId, from: data.fromStage, to: data.toStage },
+        'WorkflowsRepository: recordWorkflowHistory',
+      );
+
+      const insertPayload: Record<string, unknown> = {
+        entryId: data.entryId,
+        workflowId: data.workflowId,
+        fromStage: data.fromStage,
+        toStage: data.toStage,
+        action: data.action ?? 'transition',
+        comment: data.comment ?? null,
+        actorType: data.actorType ?? 'user',
+        actorUserId: data.actorUserId ?? null,
+      };
+      if (applicationId) {
+        insertPayload.applicationId = applicationId;
+      }
+
+      const [record] = await this.db
+        .insert(workflowHistories)
+        .values(insertPayload as any)
+        .returning();
+
+      return record!;
+    } catch (error) {
+      logger.error(
+        { err: error, entryId: data.entryId },
+        'WorkflowsRepository Error in recordWorkflowHistory:',
+      );
+      throw new ApiError(500, REPO_ERRORS.RECORD_WORKFLOW_HISTORY_FAILED);
+    }
+  }
+
+  async getWorkflowHistory(
+    entryId: string,
+    applicationId?: string,
+  ): Promise<
+    (WorkflowHistoryRecord & {
+      actorName?: string | null;
+      actorEmail?: string | null;
+    })[]
+  > {
+    try {
+      logger.info({ entryId }, 'WorkflowsRepository: getWorkflowHistory');
+
+      const conditions = [eq(workflowHistories.entryId, entryId)];
+      if (applicationId) {
+        conditions.push(eq(workflowHistories.applicationId, applicationId));
+      }
+
+      const rows = await this.db
+        .select({
+          history: workflowHistories,
+          user: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+          },
+        })
+        .from(workflowHistories)
+        .leftJoin(users, eq(workflowHistories.actorUserId, users.id))
+        .where(and(...conditions))
+        .orderBy(desc(workflowHistories.createdAt));
+
+      return rows.map((r) => {
+        const actorName = r.user?.firstName
+          ? `${r.user.firstName}${r.user.lastName ? ` ${r.user.lastName}` : ''}`
+          : (r.user?.email ?? null);
+        return {
+          ...r.history,
+          actorName,
+          actorEmail: r.user?.email ?? null,
+        };
+      });
+    } catch (error) {
+      logger.error(
+        { err: error, entryId },
+        'WorkflowsRepository Error in getWorkflowHistory:',
+      );
+      throw new ApiError(500, REPO_ERRORS.FETCH_WORKFLOW_HISTORY_FAILED);
     }
   }
 }
