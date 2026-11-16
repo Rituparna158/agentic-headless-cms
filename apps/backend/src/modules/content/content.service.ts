@@ -1,13 +1,18 @@
 import { ContentRepository } from '@repo/repository';
-import { DEFAULT_LOCALE } from '@repo/constants';
+import {
+  DEFAULT_LOCALE,
+  ERROR_MESSAGES,
+  EVENT_NAMES,
+  AUDIT_ACTIONS,
+} from '@repo/constants';
 import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
-import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
 import type { ContentQueryOptions } from '@repo/types';
 import { ApiError, HttpError } from '@repo/utils';
 import { DatabaseError } from '@repo/shared-db';
 import { getAuditContext } from '../../utils/audit.js';
 import { SERVICE_ERRORS } from '../../utils/error-constants.js';
+import { WorkflowsService } from '../workflows/workflows.service.js';
 
 function rethrowKnownContentError(error: unknown): void {
   if (
@@ -21,8 +26,14 @@ function rethrowKnownContentError(error: unknown): void {
 
 export class ContentService {
   private repository: ContentRepository;
-  constructor() {
-    this.repository = new ContentRepository();
+  private workflowsService: WorkflowsService;
+
+  constructor(
+    repository?: ContentRepository,
+    workflowsService?: WorkflowsService,
+  ) {
+    this.repository = repository ?? new ContentRepository();
+    this.workflowsService = workflowsService ?? new WorkflowsService();
   }
   async listEntries(
     schemaId: string,
@@ -110,6 +121,16 @@ export class ContentService {
         locale,
         { applicationId, userEmail },
       );
+      if (
+        typeof this.workflowsService?.initializeEntryWorkflow === 'function'
+      ) {
+        await this.workflowsService.initializeEntryWorkflow(
+          result.id,
+          schemaId,
+          userId,
+          applicationId,
+        );
+      }
       logger.debug(
         { id: result.id },
         'ContentService: createDraft success, emitting audit log',
@@ -217,9 +238,26 @@ export class ContentService {
     userId: string,
     locale: string = DEFAULT_LOCALE,
     userEmail?: string,
+    schemaId?: string,
+    applicationId?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: publishEntry start');
+
+      if (schemaId && typeof this.workflowsService?.canPublish === 'function') {
+        const isAllowed = await this.workflowsService.canPublish(
+          entryId,
+          schemaId,
+          applicationId,
+        );
+        if (!isAllowed) {
+          throw new ApiError(
+            400,
+            ERROR_MESSAGES.WORKFLOWS.WORKFLOW_APPROVAL_REQUIRED,
+          );
+        }
+      }
+
       // Capture BEFORE state
       logger.debug({ entryId }, 'ContentService: fetching beforeState');
       const beforeState = await this.repository.getEntryById(entryId, locale);

@@ -266,3 +266,108 @@
  *       403:
  *         description: Forbidden
  */
+
+/**
+ * @swagger
+ * /content/{schemaSlug}/{entryId}/workflow-state:
+ *   get:
+ *     summary: Get current workflow state and available transitions for a content entry
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: schemaSlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The slug of the schema
+ *       - in: path
+ *         name: entryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The UUID of the content entry
+ *     responses:
+ *       200:
+ *         description: Entry workflow state retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Schema or Entry not found
+ */
+
+/**
+ * @swagger
+ * /content/{schemaSlug}/{entryId}/transition:
+ *   post:
+ *     summary: Transition a content entry to a new workflow stage
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: schemaSlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: entryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - toStage
+ *             properties:
+ *               toStage:
+ *                 type: string
+ *                 example: "in-review"
+ *               comment:
+ *                 type: string
+ *                 example: "Ready for editor review"
+ *     responses:
+ *       200:
+ *         description: Workflow transition executed successfully
+ *       400:
+ *         description: Invalid target stage or transition not allowed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - user does not have permission for this transition
+ *       404:
+ *         description: Schema or entry not found
+ */
+
+/**
+ * @swagger
+ * /content/{schemaSlug}/{entryId}/workflow-history:
+ *   get:
+ *     summary: Get stage transition history for a content entry
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: schemaSlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: entryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Workflow history retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Schema or entry not found
+ */
