@@ -87,6 +87,7 @@ vi.mock('@repo/repository', () => ({
   ),
   LocalesRepository: vi.fn().mockImplementation(class {}),
   WebhooksRepository: vi.fn().mockImplementation(class {}),
+  WorkflowsRepository: vi.fn().mockImplementation(class {}),
 }));
 vi.mock('bcrypt', () => ({
   default: {

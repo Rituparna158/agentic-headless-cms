@@ -1,0 +1,268 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Workflows
+ *   description: Content workflow definitions, stage transitions, and schema associations
+ */
+
+/**
+ * @swagger
+ * /workflows:
+ *   get:
+ *     summary: List all workflows
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: List of workflows
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /workflows:
+ *   post:
+ *     summary: Create a new workflow definition
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - stages
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Editorial Review"
+ *               description:
+ *                 type: string
+ *                 example: "Standard two-step review workflow"
+ *               isDefault:
+ *                 type: boolean
+ *                 example: false
+ *               stages:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - id
+ *                     - name
+ *                     - slug
+ *                     - order
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     slug:
+ *                       type: string
+ *                     color:
+ *                       type: string
+ *                     order:
+ *                       type: integer
+ *                     isInitial:
+ *                       type: boolean
+ *                     isFinal:
+ *                       type: boolean
+ *               transitions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - id
+ *                     - name
+ *                     - fromStage
+ *                     - toStage
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     fromStage:
+ *                       type: string
+ *                     toStage:
+ *                       type: string
+ *                     requiredRoleIds:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *               schemaIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: Workflow created successfully
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         description: Forbidden (Admin only)
+ */
+
+/**
+ * @swagger
+ * /workflows/{id}:
+ *   get:
+ *     summary: Get workflow by ID
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Workflow details
+ *       404:
+ *         description: Workflow not found
+ */
+
+/**
+ * @swagger
+ * /workflows/{id}:
+ *   put:
+ *     summary: Update an existing workflow
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Workflow updated successfully
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Workflow not found
+ */
+
+/**
+ * @swagger
+ * /workflows/{id}:
+ *   delete:
+ *     summary: Delete a workflow definition
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Workflow deleted successfully
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Workflow not found
+ */
+
+/**
+ * @swagger
+ * /workflows/schema/{schemaId}:
+ *   get:
+ *     summary: Get active workflow for a content schema
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: schemaId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Workflow details for schema
+ *       404:
+ *         description: No workflow found
+ */
+
+/**
+ * @swagger
+ * /workflows/{id}/schemas/{schemaId}:
+ *   post:
+ *     summary: Assign a workflow to a content schema
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: schemaId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Workflow assigned to schema successfully
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Workflow or Schema not found
+ */
+
+/**
+ * @swagger
+ * /workflows/{id}/schemas/{schemaId}:
+ *   delete:
+ *     summary: Remove a workflow assignment from a content schema
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: schemaId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Workflow assignment removed successfully
+ *       403:
+ *         description: Forbidden
+ */
