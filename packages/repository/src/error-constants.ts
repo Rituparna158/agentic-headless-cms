@@ -79,4 +79,9 @@ export const REPO_ERRORS = {
   ASSIGN_WORKFLOW_FAILED: 'Failed to assign workflow to schema',
   REMOVE_WORKFLOW_ASSIGNMENT_FAILED:
     'Failed to remove workflow schema assignment',
+  FETCH_WORKFLOW_STATE_FAILED: 'Failed to fetch workflow state for entry',
+  UPDATE_WORKFLOW_STATE_FAILED: 'Failed to update workflow state for entry',
+  RECORD_WORKFLOW_HISTORY_FAILED:
+    'Failed to record workflow transition history',
+  FETCH_WORKFLOW_HISTORY_FAILED: 'Failed to fetch workflow transition history',
 };

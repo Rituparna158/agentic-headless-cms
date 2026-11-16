@@ -55,6 +55,22 @@ export interface SchemaWorkflowAssignment {
   createdAt: string | Date;
 }
 
+export interface TransitionEntryInput {
+  toStage: string;
+  comment?: string;
+}
+
+export interface EntryWorkflowState {
+  hasWorkflow: boolean;
+  workflow: {
+    id: string;
+    name: string;
+  } | null;
+  currentStage: WorkflowStage | null;
+  availableTransitions: WorkflowTransition[];
+  isFinal: boolean;
+}
+
 export interface ContentWorkflowStateRecord {
   id: string;
   entryId: string;

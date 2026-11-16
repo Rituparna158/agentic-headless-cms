@@ -70,4 +70,7 @@ export const SERVICE_ERRORS = {
   FETCH_WORKFLOW_FAILED: 'Failed to fetch workflow details',
   ASSIGN_WORKFLOW_FAILED: 'Failed to assign workflow to schema',
   REMOVE_WORKFLOW_FAILED: 'Failed to remove workflow from schema',
+  FETCH_WORKFLOW_STATE_FAILED: 'Failed to fetch workflow state for entry',
+  TRANSITION_WORKFLOW_FAILED: 'Failed to transition workflow stage',
+  FETCH_WORKFLOW_HISTORY_FAILED: 'Failed to fetch workflow history',
 };
