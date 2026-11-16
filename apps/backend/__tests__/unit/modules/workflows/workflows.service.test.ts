@@ -199,4 +199,287 @@ describe('WorkflowsService', () => {
     );
     expect(result).toEqual(baseWorkflow);
   });
+
+  describe('Workflow State Engine & Guards', () => {
+    const multiStageWorkflow: WorkflowRecord = {
+      id: 'wf-multi',
+      name: 'Publishing Workflow',
+      description: 'Multi-stage workflow',
+      applicationId: 'app-1',
+      isDefault: false,
+      stages: [
+        { id: 's1', name: 'Draft', slug: 'draft', order: 0, isInitial: true },
+        { id: 's2', name: 'In Review', slug: 'in-review', order: 1 },
+        {
+          id: 's3',
+          name: 'Approved',
+          slug: 'approved',
+          order: 2,
+          isFinal: true,
+        },
+      ],
+      transitions: [
+        {
+          id: 't1',
+          name: 'Submit for Review',
+          fromStage: 'draft',
+          toStage: 'in-review',
+        },
+        {
+          id: 't2',
+          name: 'Approve',
+          fromStage: 'in-review',
+          toStage: 'approved',
+          requiredRoleIds: ['admin', 'editor'],
+        },
+        {
+          id: 't3',
+          name: 'Request Changes',
+          fromStage: 'in-review',
+          toStage: 'draft',
+        },
+      ],
+      assignedSchemaIds: ['schema-1'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    it('should return no-workflow state when schema has no workflow assigned', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(null);
+
+      const state = await workflowsService.getEntryWorkflowState(
+        'entry-1',
+        'schema-1',
+        { id: 'user-1', roles: ['author'] },
+        'app-1',
+      );
+
+      expect(state.hasWorkflow).toBe(false);
+      expect(state.isFinal).toBe(true);
+      expect(state.availableTransitions).toEqual([]);
+    });
+
+    it('should return entry workflow state with role-filtered transitions', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'in-review',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // Author role cannot approve
+      const stateAuthor = await workflowsService.getEntryWorkflowState(
+        'entry-1',
+        'schema-1',
+        { id: 'user-author', roles: ['author'] },
+        'app-1',
+      );
+      expect(stateAuthor.hasWorkflow).toBe(true);
+      expect(stateAuthor.currentStage?.slug).toBe('in-review');
+      expect(stateAuthor.availableTransitions.map((t) => t.toStage)).toEqual([
+        'draft',
+      ]);
+
+      // Editor role can approve and request changes
+      const stateEditor = await workflowsService.getEntryWorkflowState(
+        'entry-1',
+        'schema-1',
+        { id: 'user-editor', roles: ['editor'] },
+        'app-1',
+      );
+      expect(stateEditor.availableTransitions.map((t) => t.toStage)).toEqual([
+        'approved',
+        'draft',
+      ]);
+    });
+
+    it('should execute valid workflow transition and emit audit event', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockRepository.upsertEntryWorkflowState.mockResolvedValue({} as any);
+      mockRepository.recordWorkflowHistory.mockResolvedValue({} as any);
+
+      const updatedState = await workflowsService.transitionEntry(
+        'entry-1',
+        'schema-1',
+        { toStage: 'in-review', comment: 'Ready for editorial review' },
+        { id: 'user-author', roles: ['author'] },
+        'app-1',
+      );
+
+      expect(mockRepository.upsertEntryWorkflowState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entryId: 'entry-1',
+          workflowId: 'wf-multi',
+          currentStage: 'in-review',
+        }),
+        'app-1',
+      );
+      expect(mockRepository.recordWorkflowHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entryId: 'entry-1',
+          workflowId: 'wf-multi',
+          fromStage: 'draft',
+          toStage: 'in-review',
+          comment: 'Ready for editorial review',
+        }),
+        'app-1',
+      );
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        EVENT_NAMES.AUDIT_LOG,
+        expect.objectContaining({
+          action: AUDIT_ACTIONS.UPDATE,
+          resourceType: 'workflow_transition',
+          resourceId: 'entry-1',
+        }),
+      );
+      expect(updatedState).toBeDefined();
+    });
+
+    it('should reject invalid workflow transition', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // Cannot skip directly from draft to approved
+      await expect(
+        workflowsService.transitionEntry(
+          'entry-1',
+          'schema-1',
+          { toStage: 'approved' },
+          { id: 'user-author', roles: ['author'] },
+          'app-1',
+        ),
+      ).rejects.toThrow();
+    });
+
+    it('should reject unauthorized role for restricted transition', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'in-review',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // Author role cannot approve (requires admin or editor)
+      await expect(
+        workflowsService.transitionEntry(
+          'entry-1',
+          'schema-1',
+          { toStage: 'approved' },
+          { id: 'user-author', roles: ['author'] },
+          'app-1',
+        ),
+      ).rejects.toThrow();
+    });
+
+    it('should check publishing permission based on stage isFinal status', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+
+      // In draft (not final)
+      mockRepository.getEntryWorkflowState.mockResolvedValueOnce({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      const canPublishDraft = await workflowsService.canPublish(
+        'entry-1',
+        'schema-1',
+        'app-1',
+      );
+      expect(canPublishDraft).toBe(false);
+
+      // In approved (isFinal: true)
+      mockRepository.getEntryWorkflowState.mockResolvedValueOnce({
+        id: 'st-2',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'approved',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      const canPublishApproved = await workflowsService.canPublish(
+        'entry-1',
+        'schema-1',
+        'app-1',
+      );
+      expect(canPublishApproved).toBe(true);
+    });
+
+    it('should retrieve workflow transition history', async () => {
+      const mockHistory = [
+        {
+          id: 'h-1',
+          entryId: 'entry-1',
+          workflowId: 'wf-multi',
+          fromStage: 'draft',
+          toStage: 'in-review',
+          action: 'Submit for Review',
+          comment: 'First draft ready',
+          actorType: 'user' as const,
+          actorUserId: 'user-1',
+          actorName: 'John Doe',
+          actorEmail: 'john@example.com',
+          applicationId: 'app-1',
+          createdAt: new Date().toISOString(),
+        },
+      ];
+      mockRepository.getWorkflowHistory.mockResolvedValue(mockHistory);
+
+      const history = await workflowsService.getWorkflowHistory(
+        'entry-1',
+        'app-1',
+      );
+
+      expect(mockRepository.getWorkflowHistory).toHaveBeenCalledWith(
+        'entry-1',
+        'app-1',
+      );
+      expect(history).toEqual(mockHistory);
+    });
+  });
 });

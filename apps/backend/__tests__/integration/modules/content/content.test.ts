@@ -43,7 +43,7 @@ const testSchema = {
     ],
   },
 };
-const { repoMocks } = vi.hoisted(() => ({
+const { repoMocks, workflowRepoMocks } = vi.hoisted(() => ({
   repoMocks: {
     getSchemaBySlug: vi.fn(),
     listEntries: vi.fn(),
@@ -56,6 +56,13 @@ const { repoMocks } = vi.hoisted(() => ({
     revertEntry: vi.fn(),
     listEntryVersions: vi.fn(),
     deleteEntry: vi.fn(),
+  },
+  workflowRepoMocks: {
+    getWorkflowBySchemaId: vi.fn(),
+    getEntryWorkflowState: vi.fn(),
+    upsertEntryWorkflowState: vi.fn(),
+    recordWorkflowHistory: vi.fn(),
+    getWorkflowHistory: vi.fn(),
   },
 }));
 vi.mock('@repo/repository', () => {
@@ -70,7 +77,9 @@ vi.mock('@repo/repository', () => {
     AccessRepository: vi.fn().mockImplementation(class {}),
     LocalesRepository: vi.fn().mockImplementation(class {}),
     WebhooksRepository: vi.fn().mockImplementation(class {}),
-    WorkflowsRepository: vi.fn().mockImplementation(class {}),
+    WorkflowsRepository: vi.fn().mockImplementation(function () {
+      return workflowRepoMocks;
+    }),
     authRepository: {},
   };
 });
@@ -104,6 +113,11 @@ describe('Content API', () => {
     repoMocks.getSchemaBySlug.mockResolvedValue(testSchema);
     repoMocks.listEntries.mockResolvedValue([]);
     repoMocks.countEntries.mockResolvedValue(0);
+    workflowRepoMocks.getWorkflowBySchemaId.mockResolvedValue(null);
+    workflowRepoMocks.getEntryWorkflowState.mockResolvedValue(null);
+    workflowRepoMocks.upsertEntryWorkflowState.mockResolvedValue({});
+    workflowRepoMocks.recordWorkflowHistory.mockResolvedValue({});
+    workflowRepoMocks.getWorkflowHistory.mockResolvedValue([]);
     repoMocks.getEntryById.mockResolvedValue({
       id: 'entry-1',
       status: 'draft',
@@ -344,6 +358,168 @@ describe('Content API', () => {
         .set('Cookie', [`token_default=${adminToken}`]);
       expect(res.status).toBe(403);
       expect(repoMocks.deleteEntry).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Workflow Integration & Publishing Guards', () => {
+    const testWorkflow = {
+      id: 'wf-1',
+      name: 'Content Approval',
+      stages: [
+        { id: 's1', name: 'Draft', slug: 'draft', order: 0, isInitial: true },
+        { id: 's2', name: 'In Review', slug: 'in-review', order: 1 },
+        {
+          id: 's3',
+          name: 'Approved',
+          slug: 'approved',
+          order: 2,
+          isFinal: true,
+        },
+      ],
+      transitions: [
+        {
+          id: 't1',
+          name: 'Submit for Review',
+          fromStage: 'draft',
+          toStage: 'in-review',
+        },
+        {
+          id: 't2',
+          name: 'Approve',
+          fromStage: 'in-review',
+          toStage: 'approved',
+          requiredRoleIds: ['admin', 'editor'],
+        },
+      ],
+    };
+
+    it('should get entry workflow state', async () => {
+      workflowRepoMocks.getWorkflowBySchemaId.mockResolvedValue(testWorkflow);
+      workflowRepoMocks.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: createdEntryId,
+        workflowId: 'wf-1',
+        currentStage: 'draft',
+      });
+
+      const res = await request(app)
+        .get(
+          `/api/v1/content/${testSchemaSlug}/${createdEntryId}/workflow-state`,
+        )
+        .set('Cookie', [`token_default=${adminToken}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.hasWorkflow).toBe(true);
+      expect(res.body.data.currentStage.slug).toBe('draft');
+      expect(res.body.data.isFinal).toBe(false);
+      expect(res.body.data.availableTransitions[0].toStage).toBe('in-review');
+    });
+
+    it('should transition entry to next valid stage', async () => {
+      workflowRepoMocks.getWorkflowBySchemaId.mockResolvedValue(testWorkflow);
+      workflowRepoMocks.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: createdEntryId,
+        workflowId: 'wf-1',
+        currentStage: 'draft',
+      });
+
+      const res = await request(app)
+        .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/transition`)
+        .set('Cookie', [`token_default=${adminToken}`])
+        .send({ toStage: 'in-review', comment: 'Ready for editorial review' });
+
+      expect(res.status).toBe(200);
+      expect(workflowRepoMocks.upsertEntryWorkflowState).toHaveBeenCalled();
+      expect(workflowRepoMocks.recordWorkflowHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entryId: createdEntryId,
+          fromStage: 'draft',
+          toStage: 'in-review',
+          comment: 'Ready for editorial review',
+        }),
+        'app-1',
+      );
+    });
+
+    it('should reject invalid transition', async () => {
+      workflowRepoMocks.getWorkflowBySchemaId.mockResolvedValue(testWorkflow);
+      workflowRepoMocks.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: createdEntryId,
+        workflowId: 'wf-1',
+        currentStage: 'draft',
+      });
+
+      const res = await request(app)
+        .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/transition`)
+        .set('Cookie', [`token_default=${adminToken}`])
+        .send({ toStage: 'approved' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should block publish when entry is not in final workflow stage', async () => {
+      workflowRepoMocks.getWorkflowBySchemaId.mockResolvedValue(testWorkflow);
+      workflowRepoMocks.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: createdEntryId,
+        workflowId: 'wf-1',
+        currentStage: 'in-review',
+      });
+
+      const res = await request(app)
+        .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/publish`)
+        .set('Cookie', [`token_default=${adminToken}`]);
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.message).toContain('workflow approval is required');
+      expect(repoMocks.publishEntry).not.toHaveBeenCalled();
+    });
+
+    it('should allow publish when entry is in final approved stage', async () => {
+      workflowRepoMocks.getWorkflowBySchemaId.mockResolvedValue(testWorkflow);
+      workflowRepoMocks.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: createdEntryId,
+        workflowId: 'wf-1',
+        currentStage: 'approved',
+      });
+      repoMocks.publishEntry.mockResolvedValue({
+        id: createdEntryId,
+        status: 'published',
+        publishedData: { title: 'Published Article' },
+      });
+
+      const res = await request(app)
+        .post(`/api/v1/content/${testSchemaSlug}/${createdEntryId}/publish`)
+        .set('Cookie', [`token_default=${adminToken}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.status).toBe('published');
+    });
+
+    it('should get workflow transition history', async () => {
+      const mockHistory = [
+        {
+          id: 'h-1',
+          entryId: createdEntryId,
+          fromStage: 'draft',
+          toStage: 'in-review',
+          comment: 'Submitting',
+          createdAt: new Date().toISOString(),
+        },
+      ];
+      workflowRepoMocks.getWorkflowHistory.mockResolvedValue(mockHistory);
+
+      const res = await request(app)
+        .get(
+          `/api/v1/content/${testSchemaSlug}/${createdEntryId}/workflow-history`,
+        )
+        .set('Cookie', [`token_default=${adminToken}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual(mockHistory);
     });
   });
 });

@@ -93,6 +93,45 @@ vi.mock('../../../../src/modules/workflows/workflows.service.js', () => {
     .mockResolvedValue([
       { id: 'schema-1', name: 'Articles', slug: 'articles' },
     ]);
+  WorkflowsService.prototype.getEntryWorkflowState = vi.fn().mockResolvedValue({
+    hasWorkflow: true,
+    workflow: { id: 'wf-1', name: 'Editorial Review' },
+    currentStage: { id: 's1', name: 'Draft', slug: 'draft', order: 0 },
+    availableTransitions: [
+      { id: 't1', name: 'Submit', fromStage: 'draft', toStage: 'approved' },
+    ],
+    isFinal: false,
+  });
+  WorkflowsService.prototype.transitionEntry = vi.fn().mockResolvedValue({
+    hasWorkflow: true,
+    workflow: { id: 'wf-1', name: 'Editorial Review' },
+    currentStage: {
+      id: 's2',
+      name: 'Approved',
+      slug: 'approved',
+      order: 1,
+      isFinal: true,
+    },
+    availableTransitions: [],
+    isFinal: true,
+  });
+  WorkflowsService.prototype.getWorkflowHistory = vi.fn().mockResolvedValue([
+    {
+      id: 'h-1',
+      entryId: 'entry-1',
+      workflowId: 'wf-1',
+      fromStage: 'draft',
+      toStage: 'approved',
+      action: 'Submit',
+      actorType: 'user',
+      actorUserId: 'user-1',
+      createdAt: new Date().toISOString(),
+    },
+  ]);
+  WorkflowsService.prototype.canPublish = vi.fn().mockResolvedValue(true);
+  WorkflowsService.prototype.initializeEntryWorkflow = vi
+    .fn()
+    .mockResolvedValue(undefined);
 
   return { WorkflowsService };
 });
