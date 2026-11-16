@@ -70,6 +70,7 @@ vi.mock('@repo/repository', () => {
     AccessRepository: vi.fn().mockImplementation(class {}),
     LocalesRepository: vi.fn().mockImplementation(class {}),
     WebhooksRepository: vi.fn().mockImplementation(class {}),
+    WorkflowsRepository: vi.fn().mockImplementation(class {}),
     authRepository: {},
   };
 });
