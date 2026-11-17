@@ -1,5 +1,6 @@
+import { activateOnKey } from '@/utils/a11y.util';
 import React, { useEffect, useRef } from 'react';
-import { Loader2, Image as ImageIcon, Upload } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Upload, Tag } from 'lucide-react';
 import type { MediaGridProps } from '../types/media.types';
 import { MediaAssetCard } from './MediaAssetCard';
 import {
@@ -26,6 +27,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
   onOpenUpload,
   isPickerMode = false,
   className = '',
+  getAssetSites,
 }) => {
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -96,6 +98,7 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
               onDelete={onDelete}
               onSelect={onSelect}
               isPickerMode={isPickerMode}
+              usedInSites={getAssetSites ? getAssetSites(asset) : []}
             />
           ))}
         </div>
@@ -106,11 +109,19 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
             const isSelected = selectedAssetIds.has(asset.id);
             const fullUrl = getMediaFileUrl(asset.url);
             return (
+              // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- card holds its own controls, so it cannot be role=button
               <div
                 key={asset.id}
+                role="group"
+                // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- see above
+                tabIndex={0}
+                aria-label={asset.filename}
                 onClick={() =>
                   onSelect ? onSelect(asset) : onViewDetails(asset)
                 }
+                onKeyDown={activateOnKey(() =>
+                  onSelect ? onSelect(asset) : onViewDetails(asset),
+                )}
                 className={`flex items-center gap-4 p-3 rounded-xl border cursor-pointer transition-all ${
                   isSelected
                     ? 'bg-primary/10 border-primary text-foreground ring-1 ring-primary/30'
@@ -148,6 +159,25 @@ export const MediaGrid: React.FC<MediaGridProps> = ({
                       ` &bull; ${asset.width}×${asset.height}px`}
                   </p>
                 </div>
+
+                {/* Usage Badge in List View */}
+                {(() => {
+                  const sites = getAssetSites ? getAssetSites(asset) : [];
+                  return sites.length > 0 ? (
+                    <span
+                      className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 max-w-[150px] truncate"
+                      title={`Used on: ${sites.join(', ')}`}
+                    >
+                      <Tag className="size-2.5 shrink-0" />
+                      <span className="truncate">{sites.join(', ')}</span>
+                    </span>
+                  ) : (
+                    <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border/60">
+                      <Tag className="size-2.5 shrink-0" />
+                      <span>Unused</span>
+                    </span>
+                  );
+                })()}
 
                 <div className="text-[11px] text-muted-foreground hidden sm:block font-medium">
                   {formatDate(asset.createdAt)}

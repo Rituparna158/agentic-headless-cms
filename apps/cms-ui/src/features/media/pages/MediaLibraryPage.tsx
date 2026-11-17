@@ -8,6 +8,7 @@ import {
   X,
   Loader2,
   CheckSquare,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   useInfiniteMedia,
@@ -15,12 +16,14 @@ import {
   useDeleteMedia,
   useDeleteBulkMedia,
 } from '../hooks/useMediaQueries';
+import { useMediaUsage } from '../hooks/useMediaUsage';
 import type { MediaAsset, MediaViewMode } from '../types/media.types';
 import { MediaFoldersSidebar } from '../components/MediaFoldersSidebar';
 import { MediaGrid } from '../components/MediaGrid';
 import { MediaUploadZone } from '../components/MediaUploadZone';
 import { MediaAssetDetailModal } from '../components/MediaAssetDetailModal';
 import { useToast } from '@repo/shared-ui';
+import { CMS_THEME_CLASSES } from '@/tokens/colorTokens';
 
 export const MediaLibraryPage: React.FC = () => {
   const toast = useToast();
@@ -37,10 +40,13 @@ export const MediaLibraryPage: React.FC = () => {
   );
   const [assetToDelete, setAssetToDelete] = useState<MediaAsset | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [siteFilter, setSiteFilter] = useState<string>('all');
 
   // Queries & Mutations
   const { data: foldersData, isLoading: isLoadingFolders } = useMediaFolders();
   const folders = useMemo(() => foldersData || [], [foldersData]);
+
+  const { siteCollections, getAssetSites } = useMediaUsage();
 
   const {
     data: mediaData,
@@ -61,19 +67,51 @@ export const MediaLibraryPage: React.FC = () => {
     return mediaData.pages.flatMap((page) => page.data);
   }, [mediaData]);
 
+  // Compute counts per site & unused
+  const usageStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let unused = 0;
+
+    siteCollections.forEach((sc) => {
+      counts[sc.name] = 0;
+    });
+
+    allAssets.forEach((asset) => {
+      const sites = getAssetSites(asset);
+      if (sites.length === 0) {
+        unused += 1;
+      } else {
+        sites.forEach((siteName) => {
+          counts[siteName] = (counts[siteName] || 0) + 1;
+        });
+      }
+    });
+
+    return { counts, unused };
+  }, [allAssets, siteCollections, getAssetSites]);
+
+  // Filter assets by site usage
+  const siteFilteredAssets = useMemo(() => {
+    if (siteFilter === 'all') return allAssets;
+    if (siteFilter === 'unused') {
+      return allAssets.filter((a) => getAssetSites(a).length === 0);
+    }
+    return allAssets.filter((a) => getAssetSites(a).includes(siteFilter));
+  }, [allAssets, siteFilter, getAssetSites]);
+
   // Client search filter
   const filteredAssets = useMemo(() => {
-    if (!searchQuery.trim()) return allAssets;
+    if (!searchQuery.trim()) return siteFilteredAssets;
     const q = searchQuery.toLowerCase();
-    return allAssets.filter(
+    return siteFilteredAssets.filter(
       (a) =>
         a.filename.toLowerCase().includes(q) ||
         (a.altText && a.altText.toLowerCase().includes(q)),
     );
-  }, [allAssets, searchQuery]);
+  }, [siteFilteredAssets, searchQuery]);
 
   const totalCount =
-    mediaData?.pages?.[0]?.meta?.pagination?.total ?? filteredAssets.length;
+    mediaData?.pages?.[0]?.meta?.pagination?.total ?? allAssets.length;
 
   const currentFolder = useMemo(() => {
     if (!selectedFolderId) return { name: 'All Assets', id: undefined };
@@ -139,8 +177,10 @@ export const MediaLibraryPage: React.FC = () => {
     }
   };
 
+  const activeSitesLabel = siteCollections.map((s) => s.name).join(', ');
+
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background text-foreground font-sans">
+    <div className="flex h-full w-full overflow-hidden bg-background text-foreground font-sans animate-in fade-in duration-200">
       {/* Groupify Folders Sidebar */}
       <MediaFoldersSidebar
         folders={folders}
@@ -154,21 +194,21 @@ export const MediaLibraryPage: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
-        {/* Top Header */}
+        {/* Top Header - Blueprint Screen 9 */}
         <header className="px-6 py-5 border-b border-border bg-card/40 backdrop-blur-sm flex flex-col gap-3">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
-                  {currentFolder.name}
+                  Central Media Bank
                   <span className="text-xs font-semibold text-muted-foreground font-mono px-2.5 py-0.5 rounded-full bg-muted border border-border">
-                    {totalCount} items
+                    {totalCount} files
                   </span>
                 </h1>
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                Centralized visual asset storage for pages, schemas, and editor
-                designs
+                Master asset repository shared across{' '}
+                {activeSitesLabel || 'all websites'}
               </p>
             </div>
 
@@ -205,16 +245,67 @@ export const MediaLibraryPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowUploadZone((prev) => !prev)}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-xs ${
-                  showUploadZone
-                    ? 'border border-border bg-background hover:bg-muted text-foreground'
-                    : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                }`}
+                className={CMS_THEME_CLASSES.buttons.primary}
               >
                 <Upload className="size-4" />
-                {showUploadZone ? 'Hide Upload Zone' : 'Upload Assets'}
+                <span>
+                  {showUploadZone ? 'Hide Upload Zone' : 'Upload Media Files'}
+                </span>
               </button>
             </div>
+          </div>
+
+          {/* Blueprint Screen 9: Multi-Site Usage Filter Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pt-2 pb-0.5 border-t border-border/40 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setSiteFilter('all')}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
+                siteFilter === 'all'
+                  ? 'bg-foreground text-background font-semibold shadow-xs'
+                  : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <span>All Media</span>
+              <span className="text-[10px] font-mono">
+                ({allAssets.length})
+              </span>
+            </button>
+
+            {siteCollections.map((site) => {
+              const count = usageStats.counts[site.name] || 0;
+              const isActive = siteFilter === site.name;
+              return (
+                <button
+                  key={site.id}
+                  type="button"
+                  onClick={() => setSiteFilter(site.name)}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-foreground text-background font-semibold shadow-xs'
+                      : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                >
+                  <span>Used in {site.name}</span>
+                  <span className="text-[10px] font-mono">({count})</span>
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => setSiteFilter('unused')}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
+                siteFilter === 'unused'
+                  ? 'bg-foreground text-background font-semibold shadow-xs'
+                  : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <span>Unused</span>
+              <span className="text-[10px] font-mono">
+                ({usageStats.unused})
+              </span>
+            </button>
           </div>
         </header>
 
@@ -241,6 +332,13 @@ export const MediaLibraryPage: React.FC = () => {
               )}
             </div>
           </div>
+
+          <span className="text-xs text-muted-foreground hidden md:inline">
+            Folder:{' '}
+            <span className="font-semibold text-foreground">
+              {currentFolder.name}
+            </span>
+          </span>
 
           <div className="flex items-center gap-2">
             {/* Select All on Page Button */}
@@ -302,7 +400,7 @@ export const MediaLibraryPage: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-6 bg-background custom-scrollbar flex flex-col">
           <MediaGrid
             assets={filteredAssets}
-            totalCount={totalCount}
+            totalCount={filteredAssets.length}
             isLoading={isLoadingMedia}
             isFetchingNextPage={isFetchingNextPage}
             hasNextPage={hasNextPage}
@@ -313,6 +411,7 @@ export const MediaLibraryPage: React.FC = () => {
             onViewDetails={(asset) => setSelectedAssetForDetail(asset)}
             onDelete={(asset) => setAssetToDelete(asset)}
             onOpenUpload={() => setShowUploadZone(true)}
+            getAssetSites={getAssetSites}
           />
         </div>
       </div>
@@ -327,21 +426,42 @@ export const MediaLibraryPage: React.FC = () => {
         />
       )}
 
-      {/* Single Delete Confirmation Dialog */}
+      {/* Single Delete Confirmation Dialog with Live Usage Safety Warning */}
       {assetToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 shadow-2xl text-card-foreground">
-            <h3 className="text-base font-bold text-foreground mb-2">
-              Delete Visual Asset
-            </h3>
-            <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
-              Are you sure you want to permanently delete{' '}
-              <span className="text-foreground font-semibold">
-                &ldquo;{assetToDelete.filename}&rdquo;
-              </span>
-              ? Pages or components linking to this image will no longer be able
-              to display it.
-            </p>
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl text-card-foreground">
+            <div className="flex items-center gap-2 mb-2 text-foreground font-bold">
+              {getAssetSites(assetToDelete).length > 0 ? (
+                <AlertTriangle className="size-5 text-amber-500 shrink-0" />
+              ) : (
+                <Trash2 className="size-5 text-destructive shrink-0" />
+              )}
+              <h3 className="text-base font-bold">
+                {getAssetSites(assetToDelete).length > 0
+                  ? 'Active Usage Safety Warning'
+                  : 'Delete Visual Asset'}
+              </h3>
+            </div>
+
+            {getAssetSites(assetToDelete).length > 0 ? (
+              <div className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                This image is currently live on{' '}
+                <span className="font-bold underline">
+                  {getAssetSites(assetToDelete).join(', ')}
+                </span>
+                . Deleting it will break those pages and cause missing visual
+                elements for visitors.
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
+                Are you sure you want to permanently delete{' '}
+                <span className="text-foreground font-semibold">
+                  &ldquo;{assetToDelete.filename}&rdquo;
+                </span>
+                ? This asset is currently not linked to any active pages.
+              </p>
+            )}
+
             <div className="flex justify-end gap-2.5">
               <button
                 type="button"
@@ -354,12 +474,20 @@ export const MediaLibraryPage: React.FC = () => {
                 type="button"
                 onClick={() => handleDeleteSingle(assetToDelete)}
                 disabled={deleteMediaMutation.isPending}
-                className="px-4 py-2 text-xs font-semibold rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground flex items-center gap-1.5 shadow-xs transition-colors"
+                className={`px-4 py-2 text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-xs transition-colors ${
+                  getAssetSites(assetToDelete).length > 0
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                    : 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+                }`}
               >
                 {deleteMediaMutation.isPending && (
                   <Loader2 className="size-3.5 animate-spin" />
                 )}
-                Delete Asset
+                <span>
+                  {getAssetSites(assetToDelete).length > 0
+                    ? 'Proceed and Delete Anyway'
+                    : 'Delete Asset'}
+                </span>
               </button>
             </div>
           </div>
