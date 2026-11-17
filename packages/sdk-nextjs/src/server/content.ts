@@ -35,6 +35,10 @@ export async function getContentList(
     params['pageSize'] = queryOptions.pageSize;
   if (queryOptions.locale) params['locale'] = queryOptions.locale;
   if (queryOptions.sort) params['sort'] = queryOptions.sort;
+  if (queryOptions.search) params['search'] = queryOptions.search;
+  if (draft) {
+    params['status'] = queryOptions.status ?? 'all';
+  }
 
   const result = await cmsServerFetch<ListContentEntriesResult>(
     `/api/v1/content/${schemaSlug}`,
@@ -45,7 +49,7 @@ export async function getContentList(
   if (!draft) {
     // Filter out unpublished items and map data to publishedData
     const publishedEntries = result.data
-      .filter((entry) => entry.publishedData !== null)
+      .filter((entry) => entry.publishedData != null)
       .map((entry) => ({
         ...entry,
         status: 'published' as const,

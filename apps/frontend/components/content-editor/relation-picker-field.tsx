@@ -305,7 +305,7 @@ export function RelationPickerField({
               type="button"
               variant="ghost"
               size="sm"
-              className="text-xs text-muted-foreground whitespace-nowrap h-10"
+              className="text-xs text-muted-foreground whitespace-nowrap h-10 shrink-0"
               onClick={() => setManualMode(true)}
             >
               Enter UUID

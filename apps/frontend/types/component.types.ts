@@ -34,6 +34,7 @@ export interface UsersTabProps {
 export interface DynamicFieldProps<T extends FieldValues = FieldValues> {
   field: SchemaField;
   control: Control<T>;
+  disabled?: boolean;
 }
 
 export interface FieldTypeInputProps {
@@ -88,6 +89,7 @@ export interface FieldSettingsPanelProps<T extends FieldValues = FieldValues> {
   index: number | null;
   control: Control<T>;
   onRemove: (index: number) => void;
+  onClose?: () => void;
 }
 
 export interface ConfirmDialogProps {

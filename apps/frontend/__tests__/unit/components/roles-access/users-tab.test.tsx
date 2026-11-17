@@ -59,14 +59,14 @@ describe('UsersTab', () => {
     renderTab(false);
     await screen.findByText('No users match your search criteria.');
     expect(
-      screen.queryByRole('button', { name: '+ Invite User' }),
+      screen.queryByRole('button', { name: '+ Invite' }),
     ).not.toBeInTheDocument();
   });
 
   it('shows the invite button for admins', async () => {
     renderTab(true);
     expect(
-      await screen.findByRole('button', { name: '+ Invite User' }),
+      await screen.findByRole('button', { name: '+ Invite' }),
     ).toBeInTheDocument();
   });
 
@@ -90,9 +90,7 @@ describe('UsersTab', () => {
     const user2 = userEvent.setup();
     renderTab(true);
 
-    await user2.click(
-      await screen.findByRole('button', { name: '+ Invite User' }),
-    );
+    await user2.click(await screen.findByRole('button', { name: '+ Invite' }));
 
     expect(screen.getByRole('button', { name: 'Send Invite' })).toBeDisabled();
   });
@@ -111,9 +109,7 @@ describe('UsersTab', () => {
 
     renderTab(true);
 
-    await user2.click(
-      await screen.findByRole('button', { name: '+ Invite User' }),
-    );
+    await user2.click(await screen.findByRole('button', { name: '+ Invite' }));
 
     await user2.type(screen.getByLabelText(/Email/), 'new@example.com');
     await user2.type(screen.getByLabelText(/First Name/), 'New');
@@ -148,9 +144,7 @@ describe('UsersTab', () => {
 
     renderTab(true);
 
-    await user2.click(
-      await screen.findByRole('button', { name: '+ Invite User' }),
-    );
+    await user2.click(await screen.findByRole('button', { name: '+ Invite' }));
     await user2.type(screen.getByLabelText(/Email/), 'fail@example.com');
 
     await user2.click(screen.getByRole('button', { name: 'Select a role' }));
@@ -186,9 +180,7 @@ describe('UsersTab', () => {
 
     renderTab(true);
 
-    await user2.click(
-      await screen.findByRole('button', { name: '+ Invite User' }),
-    );
+    await user2.click(await screen.findByRole('button', { name: '+ Invite' }));
     await user2.type(screen.getByLabelText(/Email/), 'dev@example.com');
     await user2.click(screen.getByRole('button', { name: 'Select a role' }));
     await user2.click(await screen.findByRole('menuitem', { name: 'Admin' }));
@@ -222,9 +214,7 @@ describe('UsersTab', () => {
     const user2 = userEvent.setup();
     renderTab(true);
 
-    await user2.click(
-      await screen.findByRole('button', { name: '+ Invite User' }),
-    );
+    await user2.click(await screen.findByRole('button', { name: '+ Invite' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     await user2.click(screen.getByRole('button', { name: 'Cancel' }));

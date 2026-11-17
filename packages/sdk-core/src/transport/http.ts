@@ -37,6 +37,33 @@ function appendQueryParam(
   }
 }
 
+function extractErrorMessage(body: unknown, fallback: string): string {
+  if (typeof body === 'string' && body.trim()) {
+    return body.trim();
+  }
+  if (body && typeof body === 'object') {
+    const record = body as {
+      message?: unknown;
+      error?: { message?: unknown } | string;
+    };
+    if (
+      record.error &&
+      typeof record.error === 'object' &&
+      typeof record.error.message === 'string' &&
+      record.error.message
+    ) {
+      return record.error.message;
+    }
+    if (typeof record.error === 'string' && record.error) {
+      return record.error;
+    }
+    if (typeof record.message === 'string' && record.message) {
+      return record.message;
+    }
+  }
+  return fallback;
+}
+
 export class HttpTransport {
   private baseUrl: string;
   private authClient: AuthClient;
@@ -202,19 +229,11 @@ export class HttpTransport {
           body = await response.text();
         }
 
-        const errorBody = body as { message?: string };
+        const errorMessage = extractErrorMessage(body, response.statusText);
         if (response.status === 401 || response.status === 403) {
-          throw new AuthError(
-            response.status,
-            errorBody?.message || response.statusText,
-            body,
-          );
+          throw new AuthError(response.status, errorMessage, body);
         }
-        throw new ApiError(
-          response.status,
-          errorBody?.message || response.statusText,
-          body,
-        );
+        throw new ApiError(response.status, errorMessage, body);
       }
 
       let body: unknown;

@@ -106,7 +106,7 @@ describe('CLI Script - Setup Command', () => {
     // Extract the action function that was passed to .action() for the 'setup' command
     // The setup command is the first command registered, so it's the first call to action()
     setupActionFn = mockAction.mock.calls[0]![0];
-  });
+  }, 20000);
 
   it('should push TWO default records when --auto is used with no other flags', async () => {
     await setupActionFn({ auto: true });

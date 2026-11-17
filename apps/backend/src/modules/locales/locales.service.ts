@@ -1,7 +1,7 @@
 import { LocalesRepository } from '@repo/repository';
 import type { CreateLocaleInput, BaseQueryOptions } from '@repo/types';
 import { ERROR_MESSAGES, EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
-import { ConflictError, ApiError } from '@repo/utils';
+import { ConflictError, NotFoundError, ApiError } from '@repo/utils';
 import { logger } from '@repo/logger';
 import { eventBus } from '@repo/events';
 import { getAuditContext } from '../../utils/audit.js';
@@ -84,6 +84,43 @@ export class LocalesService {
     } catch (error) {
       logger.error({ err: error }, 'LocalesService Error in delete:');
       throw new ApiError(500, SERVICE_ERRORS.DELETE_LOCALE_FAILED);
+    }
+  }
+  async setDefault(id: string, applicationId?: string) {
+    try {
+      logger.info({ id }, 'LocalesService: setDefault start');
+      const beforeState = await this.repository.getById(id);
+      if (
+        !beforeState ||
+        (applicationId && beforeState.applicationId !== applicationId)
+      ) {
+        throw new NotFoundError(ERROR_MESSAGES.LOCALES.NOT_FOUND);
+      }
+      const result = await this.repository.setDefault(id, applicationId);
+      logger.debug(
+        { id },
+        'LocalesService: setDefault successful, emitting audit log',
+      );
+      const { actorUserId, actorAgentId, context } = getAuditContext();
+      eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+        action: AUDIT_ACTIONS.UPDATE,
+        resourceType: 'locale',
+        resourceId: id,
+        actorUserId,
+        actorAgentId,
+        beforeState,
+        afterState: result,
+        context,
+      });
+      return result;
+    } catch (error) {
+      logger.error({ err: error }, 'LocalesService Error in setDefault:');
+      if (error instanceof NotFoundError || error instanceof ApiError)
+        throw error;
+      if (error instanceof Error && error.name === 'RecordNotFoundError') {
+        throw new NotFoundError(ERROR_MESSAGES.LOCALES.NOT_FOUND);
+      }
+      throw new ApiError(500, SERVICE_ERRORS.SET_DEFAULT_LOCALE_FAILED);
     }
   }
 }

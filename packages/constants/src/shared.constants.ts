@@ -41,6 +41,20 @@ export const ERROR_MESSAGES = {
     CODE_NAME_REQUIRED: 'code and name are required',
     CODE_ALREADY_EXISTS: 'A locale with this code already exists',
   },
+  WORKFLOWS: {
+    NOT_FOUND: 'Workflow not found',
+    NAME_AND_STAGES_REQUIRED:
+      'Workflow name and at least one stage are required',
+    SCHEMA_ALREADY_ASSIGNED: 'Schema is already assigned to a workflow',
+    ASSIGNMENT_NOT_FOUND: 'Schema is not assigned to this workflow',
+    TRANSITION_NOT_ALLOWED: 'The requested stage transition is not allowed',
+    INVALID_STAGE: 'Invalid target workflow stage',
+    UNAUTHORIZED_TRANSITION:
+      'You do not have permission to execute this workflow transition',
+    WORKFLOW_APPROVAL_REQUIRED:
+      'Cannot publish entry: workflow approval is required',
+    STATE_NOT_FOUND: 'Workflow state for entry not found',
+  },
 } as const;
 
 export const DEFAULT_LOCALE = 'en';

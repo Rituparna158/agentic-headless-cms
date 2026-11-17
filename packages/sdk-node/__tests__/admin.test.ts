@@ -95,4 +95,42 @@ describe('AdminModule', () => {
     });
     expect(result).toEqual(mockResponse.data);
   });
+
+  it('lists tokens', async () => {
+    const mockResponse = { data: { data: [{ id: 't1' }], meta: { total: 1 } } };
+    vi.mocked(transport.request).mockResolvedValueOnce(mockResponse);
+
+    const result = await admin.listTokens({ page: 1, pageSize: 20 });
+
+    expect(transport.request).toHaveBeenCalledWith('/access/tokens', {
+      params: { page: 1, pageSize: 20 },
+    });
+    expect(result).toEqual(mockResponse.data);
+  });
+
+  it('sends x-mfa-code header when mfaCode option is provided on createToken and revokeToken', async () => {
+    vi.mocked(transport.request)
+      .mockResolvedValueOnce({ data: { id: 't2', rawToken: 'xyz' } })
+      .mockResolvedValueOnce({ data: { success: true } });
+
+    await admin.createToken('CI Token', 'agent', 'r1', undefined, {
+      mfaCode: '123456',
+    });
+    expect(transport.request).toHaveBeenCalledWith('/access/tokens', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'CI Token',
+        type: 'agent',
+        roleId: 'r1',
+        scopes: undefined,
+      }),
+      headers: { 'x-mfa-code': '123456' },
+    });
+
+    await admin.revokeToken('t2', { mfaCode: '654321' });
+    expect(transport.request).toHaveBeenCalledWith('/access/tokens/t2', {
+      method: 'DELETE',
+      headers: { 'x-mfa-code': '654321' },
+    });
+  });
 });

@@ -23,7 +23,7 @@ test('a non-admin role cannot see or perform admin-only actions', async ({
 
   await page.goto('/roles-access');
   await page.getByRole('button', { name: 'Users', exact: true }).click();
-  await page.getByRole('button', { name: '+ Invite User' }).click();
+  await page.getByRole('button', { name: '+ Invite' }).click();
   await page.locator('#email').fill(email);
   await page.getByRole('button', { name: 'Select a role' }).click();
   await page
@@ -81,7 +81,7 @@ test('a non-admin role cannot see or perform admin-only actions', async ({
     memberPage.getByRole('button', { name: 'API Tokens', exact: true }),
   ).toHaveCount(0);
   await expect(
-    memberPage.getByRole('button', { name: '+ Invite User' }),
+    memberPage.getByRole('button', { name: '+ Invite' }),
   ).toHaveCount(0);
 
   const forbiddenRes = await memberPage.request.post(

@@ -16,7 +16,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createSchemaSchema, schemaTypeValues } from '@repo/validation';
 import { type CreateSchemaInput, type SchemaRecord } from '@repo/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PlusIcon, ShieldAlert } from 'lucide-react';
+import {
+  Boxes,
+  ChevronDown,
+  Layers,
+  PlusIcon,
+  ShieldAlert,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -35,6 +41,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Drawer,
   Input,
   Dropdown,
   DropdownItem,
@@ -69,8 +76,11 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  // Controls which field's config is expanded in the settings panel.
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
+  // Controls which field's config is opened in the slide-over drawer.
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(
+    schema && schema.definition.fields.length > 0 ? 0 : null,
+  );
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
   const status = useAuthStore((state) => state.status);
@@ -100,7 +110,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
           name: '',
           slug: '',
           type: 'collection',
-          fields: [emptyField()],
+          fields: [],
         },
   });
 
@@ -157,7 +167,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
   }
 
   /**
-   * Appends a new empty field to the end of the schema after validating the current field.
+   * Appends a new empty field and opens the slide-over drawer to configure it.
    */
   async function handleAddField() {
     // 1. If there's an active field currently being edited, validate it first
@@ -178,34 +188,49 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
         toast.error(
           `Please complete the required details for Field ${selectedIndex + 1} before adding a new field.`,
         );
+        setIsDrawerOpen(true);
         return;
       }
     }
 
     // 2. Also ensure all existing fields are valid before appending a new one
-    const isAllFieldsValid = await form.trigger('fields');
-    if (!isAllFieldsValid) {
-      const fieldsErrors = form.formState.errors.fields;
-      if (fieldsErrors && Array.isArray(fieldsErrors)) {
-        const firstInvalidIdx = fieldsErrors.findIndex(
-          (f) => !!f && typeof f === 'object' && Object.keys(f).length > 0,
-        );
-        if (firstInvalidIdx !== -1) {
-          setSelectedIndex(firstInvalidIdx);
-          toast.error(
-            `Please complete Field ${firstInvalidIdx + 1} before adding a new field.`,
+    if (fieldArray.fields.length > 0) {
+      const isAllFieldsValid = await form.trigger('fields');
+      if (!isAllFieldsValid) {
+        const fieldsErrors = form.formState.errors.fields;
+        if (fieldsErrors && Array.isArray(fieldsErrors)) {
+          const firstInvalidIdx = fieldsErrors.findIndex(
+            (f) => !!f && typeof f === 'object' && Object.keys(f).length > 0,
           );
-          return;
+          if (firstInvalidIdx !== -1) {
+            setSelectedIndex(firstInvalidIdx);
+            setIsDrawerOpen(true);
+            toast.error(
+              `Please complete Field ${firstInvalidIdx + 1} before adding a new field.`,
+            );
+            return;
+          }
         }
+        toast.error(
+          'Please complete all existing fields before adding a new field.',
+        );
+        setIsDrawerOpen(true);
+        return;
       }
-      toast.error(
-        'Please complete all existing fields before adding a new field.',
-      );
-      return;
     }
 
+    const newIdx = fieldArray.fields.length;
     fieldArray.append(emptyField(), { shouldFocus: false });
-    setSelectedIndex(fieldArray.fields.length);
+    setSelectedIndex(newIdx);
+    setIsDrawerOpen(true);
+  }
+
+  /**
+   * Selects a field and opens the drawer to edit it.
+   */
+  function handleSelectField(index: number) {
+    setSelectedIndex(index);
+    setIsDrawerOpen(true);
   }
 
   /**
@@ -215,10 +240,15 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
     fieldArray.remove(index);
     setSelectedIndex((current) => {
       if (current === null) return null;
-      if (fieldArray.fields.length <= 1) return null;
+      if (fieldArray.fields.length <= 1) {
+        setIsDrawerOpen(false);
+        return null;
+      }
       if (index < current) return current - 1;
-      if (index === current)
-        return Math.min(index, fieldArray.fields.length - 2);
+      if (index === current) {
+        const nextIdx = Math.min(index, fieldArray.fields.length - 2);
+        return nextIdx >= 0 ? nextIdx : null;
+      }
       return current;
     });
   }
@@ -249,7 +279,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
 
   /**
    * Handles validation errors when form submission is attempted.
-   * Auto-selects the first invalid field so the user sees the error inline.
+   * Auto-selects the first invalid field and opens the drawer so the user sees the error inline.
    */
   function onInvalid(errors: FieldErrors<SchemaBuilderFieldValues>) {
     if (errors.fields) {
@@ -273,6 +303,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
 
       if (firstErrorIndex !== null) {
         setSelectedIndex(firstErrorIndex);
+        setIsDrawerOpen(true);
         const fieldErrorObj = (
           fieldsErrors as Record<string, Record<string, { message?: string }>>
         )[firstErrorIndex];
@@ -327,56 +358,176 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
     <FormProvider {...form}>
       <form
         onSubmit={(event) => void form.handleSubmit(onSubmit, onInvalid)(event)}
-        className="grid gap-6"
+        className="space-y-6 w-full min-w-0"
       >
-        <Controller
-          control={form.control}
-          name="name"
-          render={({ field, fieldState }) => (
-            <div className="grid gap-2 max-w-sm">
-              <label htmlFor="name">
-                <Typography as="span" variant="label">
-                  Name
-                </Typography>
-              </label>
-              <Input
-                id="name"
-                placeholder="e.g. Blog Post"
-                variant="default"
-                {...field}
-                value={field.value ?? ''}
-              />
-              {fieldState.error?.message ? (
-                <p className="text-sm font-medium text-destructive">
-                  {fieldState.error.message}
-                </p>
-              ) : null}
-            </div>
-          )}
-        />
+        {/* Model Configuration Card */}
+        <Card className="border border-border/70 shadow-xs overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Boxes className="size-4 text-muted-foreground" />
+              General Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-3 min-w-0">
+            {/* Name */}
+            <Controller
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <div className="grid gap-2">
+                  <label htmlFor="name">
+                    <Typography as="span" variant="label">
+                      Name
+                    </Typography>
+                  </label>
+                  <Input
+                    id="name"
+                    placeholder="e.g. Blog Post"
+                    variant="default"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
+                  {fieldState.error?.message ? (
+                    <p className="text-sm font-medium text-destructive">
+                      {fieldState.error.message}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            />
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <div className="grid gap-6">
-            <div className="grid gap-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-medium">Fields</h2>
+            {/* Slug */}
+            <Controller
+              control={form.control}
+              name="slug"
+              render={({ field, fieldState }) => (
+                <div className="grid gap-2">
+                  <label htmlFor="slug">
+                    <Typography as="span" variant="label">
+                      Slug
+                    </Typography>
+                  </label>
+                  <Input
+                    id="slug"
+                    placeholder="e.g. blog-post"
+                    disabled={isEditing}
+                    variant="default"
+                    {...field}
+                    value={field.value ?? ''}
+                  />
+                  {fieldState.error?.message ? (
+                    <p className="text-sm font-medium text-destructive">
+                      {fieldState.error.message}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            />
+
+            {/* Type */}
+            <Controller
+              control={form.control}
+              name="type"
+              render={({ field, fieldState }) => (
+                <div className="grid gap-2">
+                  <Typography as="span" variant="label">
+                    Type
+                  </Typography>
+                  <Dropdown
+                    trigger={
+                      <button
+                        type="button"
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                        disabled={isEditing}
+                      >
+                        <span className="capitalize">
+                          {field.value || 'Select…'}
+                        </span>
+                        <ChevronDown className="size-4 text-muted-foreground opacity-60 ml-1 shrink-0" />
+                      </button>
+                    }
+                  >
+                    {schemaTypeValues.map((type) => (
+                      <DropdownItem
+                        key={type}
+                        onSelect={() => field.onChange(type)}
+                        className="capitalize text-xs cursor-pointer"
+                      >
+                        {type}
+                      </DropdownItem>
+                    ))}
+                  </Dropdown>
+                  {fieldState.error?.message ? (
+                    <p className="text-sm font-medium text-destructive">
+                      {fieldState.error.message}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Fields Architecture Card */}
+        <Card className="border border-border/70 shadow-xs">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+            <div className="min-w-0">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Layers className="size-4 text-muted-foreground shrink-0" />
+                <span className="truncate">Fields Architecture</span>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Configure data attributes, validation rules, and schema types
+                for this model.
+              </p>
+            </div>
+            {fieldArray.fields.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 text-xs font-medium shrink-0 self-start sm:self-auto"
+                onClick={handleAddField}
+              >
+                <PlusIcon className="size-3.5" />
+                Add Field
+              </Button>
+            )}
+          </CardHeader>
+
+          <CardContent className="space-y-3 min-w-0">
+            {errors.fields?.root?.message ? (
+              <p
+                role="alert"
+                className="text-destructive text-sm bg-destructive/10 border border-destructive/20 rounded-xl p-3"
+              >
+                {errors.fields.root.message}
+              </p>
+            ) : null}
+
+            {fieldArray.fields.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 py-10 px-4 text-center bg-muted/15">
+                <div className="rounded-xl bg-muted p-3 mb-3 text-muted-foreground ring-1 ring-border">
+                  <Layers className="size-5" />
+                </div>
+                <p className="font-semibold text-sm text-foreground">
+                  No fields added yet
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 mb-4 max-w-xs">
+                  Define the data structure of your content type by adding your
+                  first field.
+                </p>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={handleAddField}
                 >
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4 mr-1.5" />
                   Add Field
                 </Button>
               </div>
-
-              {errors.fields?.root?.message ? (
-                <p role="alert" className="text-destructive text-sm">
-                  {errors.fields.root.message}
-                </p>
-              ) : null}
-
+            ) : (
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -386,129 +537,98 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
                   items={fieldArray.fields.map((field) => field.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="grid gap-2">
-                    {fieldArray.fields.map((field, index) => {
-                      const fieldErrors = errors.fields?.[index];
-                      const hasError = !!(
-                        fieldErrors &&
-                        typeof fieldErrors === 'object' &&
-                        Object.keys(fieldErrors).length > 0
-                      );
+                  <div className="w-full overflow-x-auto min-w-0 pb-1.5 -mx-1 px-1">
+                    <div className="min-w-[540px] sm:min-w-0 grid gap-2">
+                      {fieldArray.fields.map((field, index) => {
+                        const fieldErrors = errors.fields?.[index];
+                        const hasError = !!(
+                          fieldErrors &&
+                          typeof fieldErrors === 'object' &&
+                          Object.keys(fieldErrors).length > 0
+                        );
 
-                      return (
-                        <FieldListItem
-                          key={field.id}
-                          id={field.id}
-                          index={index}
-                          control={form.control}
-                          isSelected={selectedIndex === index}
-                          hasError={hasError}
-                          onSelect={setSelectedIndex}
-                          onRemove={handleRemoveField}
-                        />
-                      );
-                    })}
+                        return (
+                          <FieldListItem
+                            key={field.id}
+                            id={field.id}
+                            index={index}
+                            control={form.control}
+                            isSelected={selectedIndex === index && isDrawerOpen}
+                            hasError={hasError}
+                            onSelect={handleSelectField}
+                            onRemove={handleRemoveField}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
                 </SortableContext>
               </DndContext>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Content Type Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
-                <Controller
-                  control={form.control}
-                  name="slug"
-                  render={({ field, fieldState }) => (
-                    <div className="grid gap-2">
-                      <label htmlFor="slug">
-                        <Typography as="span" variant="label">
-                          Slug
-                        </Typography>
-                      </label>
-                      <Input
-                        id="slug"
-                        placeholder="e.g. blog-post"
-                        disabled={isEditing}
-                        variant="default"
-                        {...field}
-                        value={field.value ?? ''}
-                      />
-                      {fieldState.error?.message ? (
-                        <p className="text-sm font-medium text-destructive">
-                          {fieldState.error.message}
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
-                />
-
-                <Controller
-                  control={form.control}
-                  name="type"
-                  render={({ field, fieldState }) => (
-                    <div className="grid gap-2">
-                      <Typography as="span" variant="label">
-                        Type
-                      </Typography>
-                      <Dropdown
-                        trigger={
-                          <button
-                            type="button"
-                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            disabled={isEditing}
-                          >
-                            {field.value || 'Select…'}
-                          </button>
-                        }
-                      >
-                        {schemaTypeValues.map((type) => (
-                          <DropdownItem
-                            key={type}
-                            onSelect={() => field.onChange(type)}
-                          >
-                            {type}
-                          </DropdownItem>
-                        ))}
-                      </Dropdown>
-                      {fieldState.error?.message ? (
-                        <p className="text-sm font-medium text-destructive">
-                          {fieldState.error.message}
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          <FieldSettingsPanel
-            index={selectedIndex}
-            control={form.control}
-            onRemove={handleRemoveField}
-          />
-        </div>
+            )}
+          </CardContent>
+        </Card>
 
         {submitError ? (
-          <p role="alert" className="text-destructive text-sm">
+          <p
+            role="alert"
+            className="text-destructive text-sm bg-destructive/10 border border-destructive/20 rounded-xl p-3"
+          >
             {submitError}
           </p>
         ) : null}
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
+        {/* Form Actions Footer */}
+        <div className="flex items-center justify-between gap-3 pt-2">
+          <Button variant="outline" asChild size="sm">
+            <Link href="/content-types">Cancel</Link>
+          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={form.formState.isSubmitting}
+            className="min-w-[130px] shadow-xs"
+          >
             {form.formState.isSubmitting
               ? isEditing
                 ? 'Saving…'
                 : 'Creating…'
               : isEditing
                 ? 'Save Changes'
-                : 'Create Content Type'}
+                : 'Create'}
           </Button>
         </div>
+
+        {/* Slide-over Drawer for Field Configuration */}
+        <Drawer
+          isOpen={
+            isDrawerOpen &&
+            selectedIndex !== null &&
+            selectedIndex >= 0 &&
+            selectedIndex < fieldArray.fields.length
+          }
+          onClose={() => setIsDrawerOpen(false)}
+          position="right"
+          size="min(480px, 100vw)"
+          className="w-full max-w-[100vw] sm:max-w-[480px]"
+          title={
+            selectedIndex !== null && selectedIndex < fieldArray.fields.length
+              ? form.watch(`fields.${selectedIndex}.displayName`)
+                ? `Edit Field: ${form.watch(`fields.${selectedIndex}.displayName`)}`
+                : `Field ${selectedIndex + 1} Settings`
+              : 'Field Settings'
+          }
+        >
+          {selectedIndex !== null &&
+            selectedIndex >= 0 &&
+            selectedIndex < fieldArray.fields.length && (
+              <FieldSettingsPanel
+                index={selectedIndex}
+                control={form.control}
+                onRemove={handleRemoveField}
+                onClose={() => setIsDrawerOpen(false)}
+              />
+            )}
+        </Drawer>
       </form>
     </FormProvider>
   );

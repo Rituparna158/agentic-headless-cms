@@ -26,7 +26,12 @@ export { getSchemas, getSchema } from './server/schemas.js';
 export { getMediaList, getMediaAsset } from './server/media.js';
 export { generateCmsStaticParams } from './server/static-params.js';
 export { generateMetadataFromEntry } from './server/metadata.js';
-export type { CmsMetadata } from './server/metadata.js';
+export type {
+  CmsMetadata,
+  ExtractMetaFieldsOptions,
+  GenerateMetadataOptions,
+} from './server/metadata.js';
+export { toPlainText } from './utils/text.js';
 export { draftModeHandlers } from './preview/draft-mode.js';
 export { revalidationHandler } from './webhooks/revalidation-handler.js';
 

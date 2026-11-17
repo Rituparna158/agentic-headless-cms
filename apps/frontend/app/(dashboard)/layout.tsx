@@ -6,12 +6,12 @@ import { RoleGuard } from '@/components/layout/role-guard';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-svh flex-col">
+    <div className="fixed inset-0 flex overflow-hidden bg-background">
       <AuthHydrator />
-      <Topbar />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 min-w-0 overflow-y-auto p-6">
+      <Sidebar />
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        <Topbar />
+        <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3.5 sm:p-5 md:p-6 lg:p-8">
           <RoleGuard>{children}</RoleGuard>
         </main>
       </div>

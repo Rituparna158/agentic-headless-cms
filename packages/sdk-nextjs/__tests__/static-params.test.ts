@@ -110,4 +110,39 @@ describe('generateCmsStaticParams', () => {
     const [url] = vi.mocked(fetch).mock.calls[0]!;
     expect(url).toContain('pageSize=1000');
   });
+
+  it('uses entry.data.slug when present and idAsSlug is false, or entry.id when idAsSlug is true', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          data: {
+            data: [
+              {
+                id: 'entry-1',
+                status: 'published',
+                data: { slug: 'hello-world', title: 'Hello' },
+                publishedData: { slug: 'hello-world', title: 'Hello' },
+              },
+            ],
+            meta: {
+              pagination: { page: 1, pageSize: 1000, total: 1, pageCount: 1 },
+            },
+          },
+          success: true,
+        }),
+      }),
+    );
+
+    const slugParams: Array<{ slug: string }> =
+      await generateCmsStaticParams('blog-post');
+    expect(slugParams).toEqual([{ slug: 'hello-world' }]);
+
+    const idParams: Array<{ id: string }> = await generateCmsStaticParams(
+      'blog-post',
+      { paramKey: 'id', idAsSlug: true },
+    );
+    expect(idParams).toEqual([{ id: 'entry-1' }]);
+  });
 });

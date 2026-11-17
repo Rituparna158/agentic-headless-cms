@@ -99,4 +99,31 @@ describe('ContentModule', () => {
       },
     );
   });
+
+  it('enforces typed data inputs when TMap is provided', async () => {
+    type ArticleEntry = {
+      id: string;
+      status: 'draft' | 'published';
+      data: {
+        title: string;
+        subtitle: string | null;
+      };
+    };
+    type Map = { articles: ArticleEntry };
+
+    const typedContent = new ContentModule<Map>(transport);
+
+    await typedContent.create('articles', { title: 'Hello' });
+    await typedContent.update('articles', '1', {
+      title: 'Hello',
+      subtitle: 'World',
+    });
+    await typedContent.updatePartial('articles', '1', { subtitle: null });
+
+    // @ts-expect-error missing required 'title' field
+    await typedContent.create('articles', { subtitle: 'Only optional' });
+
+    // @ts-expect-error wrong type for 'title'
+    await typedContent.updatePartial('articles', '1', { title: 123 });
+  });
 });

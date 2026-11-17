@@ -31,6 +31,21 @@ contentRoutes.get(
   requirePermission('read'),
   contentController.listVersions,
 );
+contentRoutes.get(
+  '/:schemaSlug/:entryId/workflow-state',
+  requirePermission('read'),
+  contentController.getWorkflowState,
+);
+contentRoutes.get(
+  '/:schemaSlug/:entryId/workflow-history',
+  requirePermission('read'),
+  contentController.getWorkflowHistory,
+);
+contentRoutes.post(
+  '/:schemaSlug/:entryId/transition',
+  requirePermission('update'),
+  contentController.transitionEntry,
+);
 contentRoutes.post(
   '/:schemaSlug',
   requirePermission('create'),

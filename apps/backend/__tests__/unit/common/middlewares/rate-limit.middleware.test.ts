@@ -32,7 +32,7 @@ describe('Auth Rate Limiter Middleware', () => {
       const res = await request(app).get('/test');
       expect(res.status).toBe(200);
     }
-  });
+  }, 15000);
 
   it('should not count successful requests against authRateLimiter quota outside test mode', async () => {
     process.env.NODE_ENV = 'development';

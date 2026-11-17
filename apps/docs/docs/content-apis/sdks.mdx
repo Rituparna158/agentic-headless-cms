@@ -14,13 +14,13 @@ The official `@mindfiredigital` SDKs provide typed, production-ready interfaces 
 
 ## Available Packages
 
-| Package | Target Environment | Key Features | Installation |
-| :--- | :--- | :--- | :--- |
-| **`@mindfiredigital/sdk-core`** | Universal (Browser & Node.js) | Base HTTP transport, exponential backoff retries, typed content queries | `npm i @mindfiredigital/sdk-core` |
-| **`@mindfiredigital/sdk-nextjs`** | Next.js App Router | React Server Components, server actions, on-demand tag revalidation | `npm i @mindfiredigital/sdk-nextjs @mindfiredigital/sdk-core` |
-| **`@mindfiredigital/sdk-react`** | React SPAs (Vite, CRA) | `<CmsProvider>`, `useContentList`, `useContentEntry`, TanStack Query cache | `npm i @mindfiredigital/sdk-react @mindfiredigital/sdk-core @tanstack/react-query` |
-| **`@mindfiredigital/sdk-node`** | Node.js Server & Scripts | Filesystem read-stream media uploads, admin automation | `npm i @mindfiredigital/sdk-node @mindfiredigital/sdk-core` |
-| **`@mindfiredigital/sdk-codegen`** | CLI / Build Tool | Scans live schemas and outputs static TypeScript interfaces | `npm i -D @mindfiredigital/sdk-codegen` |
+| Package                            | Target Environment            | Key Features                                                               | Installation                                                                       |
+| :--------------------------------- | :---------------------------- | :------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **`@mindfiredigital/sdk-core`**    | Universal (Browser & Node.js) | Base HTTP transport, exponential backoff retries, typed content queries    | `npm i @mindfiredigital/sdk-core`                                                  |
+| **`@mindfiredigital/sdk-nextjs`**  | Next.js App Router            | React Server Components, server actions, on-demand tag revalidation        | `npm i @mindfiredigital/sdk-nextjs @mindfiredigital/sdk-core`                      |
+| **`@mindfiredigital/sdk-react`**   | React SPAs (Vite, CRA)        | `<CmsProvider>`, `useContentList`, `useContentEntry`, TanStack Query cache | `npm i @mindfiredigital/sdk-react @mindfiredigital/sdk-core @tanstack/react-query` |
+| **`@mindfiredigital/sdk-node`**    | Node.js Server & Scripts      | Filesystem read-stream media uploads, admin automation                     | `npm i @mindfiredigital/sdk-node @mindfiredigital/sdk-core`                        |
+| **`@mindfiredigital/sdk-codegen`** | CLI / Build Tool              | Scans live schemas and outputs static TypeScript interfaces                | `npm i -D @mindfiredigital/sdk-codegen`                                            |
 
 ---
 
@@ -28,10 +28,10 @@ The official `@mindfiredigital` SDKs provide typed, production-ready interfaces 
 
 All client SDKs read connection settings from standard environment variables:
 
-| Variable | Required | Description | Example |
-| :--- | :--- | :--- | :--- |
-| `CMS_API_URL` | Yes | Backend REST API endpoint | `http://localhost:3000/api/v1` |
-| `CMS_API_TOKEN` | Optional | Bearer token for private queries and draft previews | `cms_tok_abcdef123456` |
+| Variable        | Required | Description                                         | Example                        |
+| :-------------- | :------- | :-------------------------------------------------- | :----------------------------- |
+| `CMS_API_URL`   | Yes      | Backend REST API endpoint                           | `http://localhost:3000/api/v1` |
+| `CMS_API_TOKEN` | Optional | Bearer token for private queries and draft previews | `cms_tok_abcdef123456`         |
 
 ---
 
@@ -79,7 +79,10 @@ const queryClient = new QueryClient();
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CmsProvider baseUrl="http://localhost:3000/api/v1" apiKey="YOUR_API_TOKEN">
+      <CmsProvider
+        baseUrl="http://localhost:3000/api/v1"
+        apiKey="YOUR_API_TOKEN"
+      >
         <ArticlesFeed />
       </CmsProvider>
     </QueryClientProvider>
@@ -90,7 +93,13 @@ function ArticlesFeed() {
   const { data, isLoading } = useContentList('articles');
 
   if (isLoading) return <p>Loading articles...</p>;
-  return <ul>{data?.map((a) => <li key={a.id}>{a.data.title}</li>)}</ul>;
+  return (
+    <ul>
+      {data?.map((a) => (
+        <li key={a.id}>{a.data.title}</li>
+      ))}
+    </ul>
+  );
 }
 ```
 
@@ -139,11 +148,56 @@ const { data: articles } = await client.content.find('articles', {
   </TabItem>
   <TabItem value="codegen" label="Codegen CLI">
 
-Generate TypeScript interfaces matching your live schemas:
+Generate TypeScript interfaces matching your live schemas (`--url` accepts either root host URL or `/api/v1`):
 
 ```bash
 npx @mindfiredigital/sdk-codegen --url http://localhost:3000 --output ./types/cms.ts
 ```
 
+Pass the generated `CmsContentMap` type to `createClient<CmsContentMap>()` or `getCmsClient<CmsContentMap>()`:
+
+```typescript
+import { getCmsClient } from '@mindfiredigital/sdk-nextjs';
+import type { CmsContentMap } from './types/cms';
+
+const client = getCmsClient<CmsContentMap>();
+```
+
+Unpopulated `media` fields are typed as `string | MediaAsset` and unpopulated `relation` fields as `string | { id: string }`.
+
   </TabItem>
 </Tabs>
+
+---
+
+## Rich Text (`richtext`) Format
+
+Rich-text fields return serialized **Lexical JSON** strings:
+
+```json
+{
+  "root": {
+    "children": [
+      {
+        "children": [{ "text": "Hello world", "type": "text", "version": 1 }],
+        "type": "paragraph",
+        "version": 1
+      }
+    ],
+    "type": "root",
+    "version": 1
+  }
+}
+```
+
+Use `toPlainText` (exported from `@mindfiredigital/sdk-core`, `@mindfiredigital/sdk-nextjs`, and `@mindfiredigital/sdk-react`) to extract plain text for previews and SEO descriptions, or parse the JSON and render nodes with `@lexical/react`.
+
+---
+
+## Next.js 16 `cacheComponents: true` Notes
+
+When using **Next.js 16** with `cacheComponents: true`:
+
+- **Do not** set `export const dynamic = 'force-dynamic'` in route files (unsupported when `cacheComponents` is active).
+- Wrap Server Components calling `draftMode()`, `cookies()`, `headers()`, `await connection()` (from `next/server`), or live content queries inside `<Suspense>` boundaries.
+- Use `generateMetadataFromEntry(slug, id, { draft: isDraft, titleField: 'title', descriptionField: 'excerpt', imageField: 'coverImage' })` when your schema defines fields like `slug` before `title`.

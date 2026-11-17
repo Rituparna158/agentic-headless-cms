@@ -76,6 +76,23 @@ export async function cmsServerFetch<T>(
     throw new Error(`[sdk-nextjs] ${response.status}: ${message} (${path})`);
   }
 
+  if (
+    response.status === 204 ||
+    response.status === 205 ||
+    response.headers?.get?.('content-length') === '0'
+  ) {
+    return undefined as T;
+  }
+
+  if (typeof response.text === 'function') {
+    const text = await response.text();
+    if (!text.trim()) {
+      return undefined as T;
+    }
+    const json = JSON.parse(text) as { data: T };
+    return json.data;
+  }
+
   const json = (await response.json()) as { data: T };
   return json.data;
 }

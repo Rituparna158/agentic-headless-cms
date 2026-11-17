@@ -1,6 +1,5 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
-import path from 'path';
 
 // 1. Skip if a manual changeset file already exists (ignoring README.md)
 if (fs.existsSync('.changeset')) {
@@ -13,67 +12,43 @@ if (fs.existsSync('.changeset')) {
   }
 }
 
-// 2. Comprehensive Scope to Package Mapping
-const SCOPE_PACKAGE_MAP = {
-  // Applications
-  backend: 'backend',
-  frontend: 'frontend',
-  'cms-ui': 'cms-ui',
-  worker: 'worker',
-
-  // Shared packages
-  'shared-ui': '@repo/shared-ui',
-  ui: '@repo/shared-ui',
-  types: '@repo/types',
-  utils: '@repo/utils',
-  'shared-db': '@repo/shared-db',
-  db: '@repo/shared-db',
-  validation: '@repo/validation',
-  constants: '@repo/constants',
-  logger: '@repo/logger',
-  middlewares: '@repo/middlewares',
-  context: '@repo/context',
-  events: '@repo/events',
-  repository: '@repo/repository',
-  storage: '@repo/storage',
-  config: '@repo/config',
-  'plugin-sdk': '@repo/plugin-sdk',
+// 2. Official Public SDK Package Mapping (exclusive to @mindfiredigital SDKs)
+const SDK_PACKAGE_MAP = {
   'sdk-codegen': '@mindfiredigital/sdk-codegen',
   'sdk-core': '@mindfiredigital/sdk-core',
   'sdk-nextjs': '@mindfiredigital/sdk-nextjs',
   'sdk-node': '@mindfiredigital/sdk-node',
   'sdk-react': '@mindfiredigital/sdk-react',
-  'typescript-config': '@repo/typescript-config',
-  'eslint-config': '@repo/eslint-config',
+
+  // Common aliases used in commit scopes
+  codegen: '@mindfiredigital/sdk-codegen',
+  core: '@mindfiredigital/sdk-core',
+  nextjs: '@mindfiredigital/sdk-nextjs',
+  next: '@mindfiredigital/sdk-nextjs',
+  node: '@mindfiredigital/sdk-node',
+  react: '@mindfiredigital/sdk-react',
 };
 
-// Helper: map modified file path to workspace package name
-function getPackageFromFilePath(filePath) {
-  if (filePath.startsWith('apps/backend/')) return 'backend';
-  if (filePath.startsWith('apps/frontend/')) return 'frontend';
-  if (filePath.startsWith('apps/cms-ui/')) return 'cms-ui';
-  if (filePath.startsWith('apps/worker/')) return 'worker';
-
-  const pkgMatch = filePath.match(/^packages\/([^/]+)\//);
-  if (pkgMatch) {
-    const pkgFolder = pkgMatch[1];
-    return SCOPE_PACKAGE_MAP[pkgFolder] || `@repo/${pkgFolder}`;
-  }
-  return null;
-}
+const ALL_PUBLIC_SDKS = [
+  '@mindfiredigital/sdk-core',
+  '@mindfiredigital/sdk-node',
+  '@mindfiredigital/sdk-react',
+  '@mindfiredigital/sdk-nextjs',
+  '@mindfiredigital/sdk-codegen',
+];
 
 // 3. Read latest commit message (Subject + Body)
 let commitMessage = '';
 try {
   commitMessage = execSync('git log -1 --pretty=format:%B').toString().trim();
 } catch (error) {
-  console.error(' Failed to retrieve git commit message:', error.message);
+  console.error('Failed to retrieve git commit message:', error.message);
   process.exit(1);
 }
 
 console.log(`Processing commit log:\n${commitMessage}\n`);
 
-// 4. Parse Conventional Commits
+// 4. Parse Conventional Commits strictly by scope
 const lines = commitMessage
   .split('\n')
   .map((l) => l.trim().replace(/^[-*]\s+/, ''))
@@ -101,8 +76,6 @@ function recordChange(packageName, type, desc) {
 
 const CONVENTIONAL_REGEX =
   /^(feat|fix|refactor|perf|docs|style|chore|db)\(([^)]+)\)(!?):\s*(.+)/i;
-const GENERIC_CONVENTIONAL_REGEX =
-  /^(feat|fix|refactor|perf|docs|style|chore|db)(!?):\s*(.+)/i;
 
 const isGlobalBreaking =
   /!:/.test(commitMessage) || commitMessage.includes('BREAKING CHANGE');
@@ -120,86 +93,32 @@ for (const line of lines) {
       bumpType = 'minor';
     }
 
-    // Support comma-separated scopes: feat(types,shared-ui): ...
+    // Support comma-separated and slash-separated scopes:
+    // e.g., feat(sdk-node,sdk-nextjs): ... or feat(node/nextjs): ...
     const scopes = rawScope
       .split(/[,/]/)
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
 
     for (const scope of scopes) {
-      const mappedPkg = SCOPE_PACKAGE_MAP[scope];
+      const mappedPkg = SDK_PACKAGE_MAP[scope];
       if (mappedPkg) {
         recordChange(mappedPkg, bumpType, rawDesc.trim());
-      } else if (['all', 'root', 'deps', 'release', 'ci', 'sdk'].includes(scope)) {
-        // Broad scope -> detect touched packages from git diff
-        try {
-          const diffFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD')
-            .toString()
-            .trim()
-            .split('\n');
-          for (const file of diffFiles) {
-            const pkg = getPackageFromFilePath(file);
-            if (pkg) recordChange(pkg, bumpType, rawDesc.trim());
-          }
-        } catch {
-          // ignore diff failure
+      } else if (scope === 'sdk') {
+        // Explicit umbrella scope -> bumps all 5 public SDK packages together
+        for (const sdkPkg of ALL_PUBLIC_SDKS) {
+          recordChange(sdkPkg, bumpType, rawDesc.trim());
         }
-      }
-    }
-  } else {
-    // Check generic commit without scope: "feat: add something"
-    const genericMatch = line.match(GENERIC_CONVENTIONAL_REGEX);
-    if (genericMatch) {
-      const [, typeStr, breakingMark, rawDesc] = genericMatch;
-      const isBreaking = Boolean(breakingMark) || isGlobalBreaking;
-      const bumpType = isBreaking
-        ? 'major'
-        : typeStr.toLowerCase() === 'feat'
-        ? 'minor'
-        : 'patch';
-
-      try {
-        const diffFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD')
-          .toString()
-          .trim()
-          .split('\n');
-        for (const file of diffFiles) {
-          const pkg = getPackageFromFilePath(file);
-          if (pkg) recordChange(pkg, bumpType, rawDesc.trim());
-        }
-      } catch {
-        // ignore diff failure
       }
     }
   }
 }
 
-// 5. Fallback: If no conventional commit matched, check touched packages from git diff
+// 5. Write Changeset files strictly for identified scopes
 if (packageChanges.size === 0) {
   console.log(
-    'No explicit scoped conventional commits found. Inspecting git diff...'
+    'No SDK package scopes detected in commit. Skipping changeset creation.',
   );
-  try {
-    const diffFiles = execSync('git diff-tree --no-commit-id --name-only -r HEAD')
-      .toString()
-      .trim()
-      .split('\n');
-
-    const firstLine = lines[0] || 'Updates and improvements';
-    for (const file of diffFiles) {
-      const pkg = getPackageFromFilePath(file);
-      if (pkg) {
-        recordChange(pkg, 'patch', firstLine);
-      }
-    }
-  } catch (err) {
-    console.warn(' Could not inspect git diff:', err.message);
-  }
-}
-
-// 6. Write Changeset files
-if (packageChanges.size === 0) {
-  console.log(' No package changes detected for release. Skipping changeset creation.');
   process.exit(0);
 }
 

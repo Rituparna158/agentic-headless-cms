@@ -31,6 +31,10 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "peerDependencies": {
     "@mindfiredigital/sdk-core": "*",
     "@tanstack/react-query": "^5.0.0",

@@ -6,7 +6,7 @@ test('admin can register and delete a webhook', async ({ page }) => {
 
   await page.goto('/webhooks');
 
-  await page.getByRole('button', { name: 'Register Webhook' }).click();
+  await page.getByRole('button', { name: '+ Register' }).click();
   await page.getByPlaceholder('e.g. Next.js ISR Rebuild').fill(name);
   await page
     .getByPlaceholder('https://example.com/api/revalidate')

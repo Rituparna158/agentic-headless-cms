@@ -19,6 +19,7 @@ const {
   mockListLocales,
   mockToastSuccess,
   mockToastError,
+  mockTranslateEntry,
 } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockRefresh: vi.fn(),
@@ -31,6 +32,7 @@ const {
   mockListLocales: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
+  mockTranslateEntry: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({
@@ -50,6 +52,15 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/api/locales', () => ({
   listLocales: mockListLocales,
+}));
+
+vi.mock('@/lib/services/translation-service', () => ({
+  translateContentEntry: mockTranslateEntry,
+  getTranslationConfig: () => ({ provider: 'free', model: 'gpt-4o-mini' }),
+  saveTranslationConfig: vi.fn(),
+  testTranslationProvider: vi
+    .fn()
+    .mockResolvedValue({ success: true, message: 'Connected' }),
 }));
 
 vi.mock('@/lib/api/content', () => ({
@@ -522,5 +533,78 @@ describe('ContentEntryForm', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/title/i)).toHaveValue('');
     });
+  });
+
+  it('does not show auto-translate button on default locale', async () => {
+    mockListLocales.mockResolvedValue({
+      data: [
+        { id: 'loc-1', code: 'en', name: 'English', isDefault: true },
+        { id: 'loc-2', code: 'es', name: 'Spanish', isDefault: false },
+      ],
+    });
+    renderForm();
+    expect(
+      screen.queryByRole('button', { name: /auto-translate/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows auto-translate button on secondary locale and translates fields', async () => {
+    mockListLocales.mockResolvedValue({
+      data: [
+        { id: 'loc-1', code: 'en', name: 'English', isDefault: true },
+        { id: 'loc-2', code: 'es', name: 'Spanish', isDefault: false },
+      ],
+    });
+    mockGetEntry.mockResolvedValue(null);
+    mockTranslateEntry.mockResolvedValue({
+      success: true,
+      translatedCount: 1,
+      provider: 'free',
+      translatedData: { title: 'Hola Mundo Auto', views: 42 },
+    });
+
+    const entry: ContentEntryRecord = {
+      id: 'entry-1',
+      status: 'draft',
+      data: { title: 'Hello World Base', views: 42 },
+      publishedData: null,
+    };
+
+    const user = userEvent.setup();
+    renderForm(entry);
+
+    // Switch to Spanish
+    const localeBtn = await screen.findByRole('button', {
+      name: /select locale/i,
+    });
+    await user.click(localeBtn);
+    const spanishOption = await screen.findByText('Spanish');
+    await user.click(spanishOption);
+
+    // Auto-translate button should be visible
+    const translateBtn = await screen.findByRole('button', {
+      name: /auto-translate/i,
+    });
+    expect(translateBtn).toBeInTheDocument();
+
+    await user.click(translateBtn);
+
+    await waitFor(() => {
+      expect(mockTranslateEntry).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceLocale: 'en',
+          targetLocale: 'es',
+          sourceData: expect.objectContaining({ title: 'Hello World Base' }),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Hola Mundo Auto')).toBeInTheDocument();
+    });
+
+    expect(mockToastSuccess).toHaveBeenCalledWith(
+      expect.stringContaining('Auto-translated 1 field from EN to ES'),
+    );
   });
 });

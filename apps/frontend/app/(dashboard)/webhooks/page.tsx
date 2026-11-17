@@ -2,7 +2,7 @@
 
 import { WebhooksTable } from '@/components/webhooks/webhooks-table';
 import { useAuthStore } from '@/stores/auth-store';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Webhook } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -52,12 +52,19 @@ export default function WebhooksPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 w-full min-w-0 max-w-full">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Webhooks</h1>
-        <p className="text-muted-foreground">
-          Notify external systems (e.g. a Next.js frontend) when content changes
-          so they can rebuild or revalidate.
+        <div className="flex items-center gap-2.5">
+          <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Webhook className="size-4" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Webhooks
+          </h1>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Notify external systems when content changes so they can rebuild or
+          revalidate cache.
         </p>
       </div>
 

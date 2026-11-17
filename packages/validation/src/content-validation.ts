@@ -43,17 +43,37 @@ function getBaseType(field: SchemaField): z.ZodTypeAny {
     case 'text':
     case 'richtext':
       return z.string();
-    case 'number':
-      return z
-        .union([
-          z.number(),
-          z
-            .string()
-            .regex(/^-?\d+(\.\d+)?$/)
-            .transform(Number),
-          z.literal('').transform(() => undefined),
-        ])
-        .optional();
+    case 'number': {
+      let num = z.number();
+
+      const val = field.validation as { min?: number; max?: number } | null;
+      if (val?.min !== undefined) {
+        num = num.min(
+          val.min,
+          `${field.displayName} must be at least ${val.min}`,
+        );
+      }
+      if (val?.max !== undefined) {
+        num = num.max(
+          val.max,
+          `${field.displayName} must be at most ${val.max}`,
+        );
+      }
+
+      return z.preprocess(
+        (arg) => {
+          if (arg === '' || arg === null || arg === undefined) {
+            return undefined;
+          }
+          if (typeof arg === 'string') {
+            const parsed = Number(arg);
+            return Number.isNaN(parsed) ? arg : parsed;
+          }
+          return arg;
+        },
+        field.isRequired ? num : num.optional(),
+      );
+    }
     case 'boolean':
       return z.union([
         z.boolean(),
@@ -109,18 +129,6 @@ function applyValidations(
       stringSchema = stringSchema.regex(new RegExp(val.regex));
     }
     schema = stringSchema;
-  } else if (field.dataType === 'number') {
-    const s = schema as z.ZodNumber;
-    let numberSchema = s;
-
-    const val = field.validation as { min?: number; max?: number } | null;
-    if (val?.min !== undefined) {
-      numberSchema = numberSchema.min(val.min);
-    }
-    if (val?.max !== undefined) {
-      numberSchema = numberSchema.max(val.max);
-    }
-    schema = numberSchema;
   }
 
   return schema;

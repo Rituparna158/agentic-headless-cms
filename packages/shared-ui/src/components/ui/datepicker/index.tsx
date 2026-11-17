@@ -771,7 +771,7 @@ const getPopupPositionClasses = (position: string): string => {
 
 // ========== VARIANTS ==========
 const inputVariants = {
-  base: 'flex items-center gap-2 px-4 border rounded-xl transition-all duration-300 focus-within:shadow-sm',
+  base: 'flex items-center gap-2 px-4 border rounded-xl transition-all duration-300 focus-within:shadow-sm w-full min-w-0 max-w-full',
   sizes: {
     sm: 'h-9 text-sm px-3',
     md: 'h-11 text-base',
@@ -1922,7 +1922,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
       <div
         ref={containerRef}
         className={cn(
-          'relative text-foreground space-y-3',
+          'relative text-foreground space-y-3 w-full min-w-0 max-w-full',
           themeMode,
           className,
         )}

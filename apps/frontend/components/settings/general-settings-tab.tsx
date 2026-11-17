@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import {
   Card,
   CardContent,
@@ -16,16 +17,31 @@ import {
   HardDrive,
   Cpu,
   Layers,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api-client';
 
 export function GeneralSettingsTab() {
+  const [copiedEndpoint, setCopiedEndpoint] = React.useState<string | null>(
+    null,
+  );
   const appId = process.env.NEXT_PUBLIC_APP_ID || 'HEADLESS_CMS';
   const nodeEnv = process.env.NODE_ENV || 'production';
   const appVersion =
     process.env.NEXT_PUBLIC_APP_VERSION ||
     process.env.NEXT_PUBLIC_VERSION ||
     'v1.0.0';
+
+  const copyToClipboard = (text: string, id: string) => {
+    void navigator.clipboard.writeText(text);
+    setCopiedEndpoint(id);
+    setTimeout(() => setCopiedEndpoint(null), 2000);
+  };
+
+  const rawTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const canonicalTimezone =
+    rawTimezone === 'Asia/Calcutta' ? 'Asia/Kolkata' : rawTimezone;
 
   return (
     <div className="space-y-6">
@@ -42,14 +58,6 @@ export function GeneralSettingsTab() {
                 System health, deployment environment, and platform metadata.
               </CardDescription>
             </div>
-            <Badge
-              variant="success"
-              size="sm"
-              className="flex items-center gap-1.5 font-medium"
-            >
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              Operational
-            </Badge>
           </div>
         </CardHeader>
         <CardContent>
@@ -94,9 +102,7 @@ export function GeneralSettingsTab() {
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                 Timezone
               </p>
-              <p className="text-sm font-semibold mt-1">
-                {Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'}
-              </p>
+              <p className="text-sm font-semibold mt-1">{canonicalTimezone}</p>
             </div>
           </div>
         </CardContent>
@@ -123,9 +129,29 @@ export function GeneralSettingsTab() {
                 content queries.
               </p>
             </div>
-            <code className="text-xs bg-muted px-2.5 py-1 rounded font-mono border">
-              {API_BASE_URL}/api/v1/content
-            </code>
+            <div className="flex items-center gap-1.5">
+              <code className="text-xs bg-muted px-2.5 py-1 rounded font-mono border">
+                {API_BASE_URL}/api/v1/content
+              </code>
+              <button
+                type="button"
+                onClick={() =>
+                  copyToClipboard(
+                    `${API_BASE_URL}/api/v1/content`,
+                    'rest-endpoint',
+                  )
+                }
+                className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer border border-border/50"
+                title="Copy REST endpoint"
+                aria-label="Copy REST endpoint"
+              >
+                {copiedEndpoint === 'rest-endpoint' ? (
+                  <Check className="size-3.5 text-emerald-500" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border bg-muted/20 gap-2">
@@ -136,9 +162,26 @@ export function GeneralSettingsTab() {
                 content relations.
               </p>
             </div>
-            <code className="text-xs bg-muted px-2.5 py-1 rounded font-mono border">
-              {API_BASE_URL}/graphql
-            </code>
+            <div className="flex items-center gap-1.5">
+              <code className="text-xs bg-muted px-2.5 py-1 rounded font-mono border">
+                {API_BASE_URL}/graphql
+              </code>
+              <button
+                type="button"
+                onClick={() =>
+                  copyToClipboard(`${API_BASE_URL}/graphql`, 'graphql-endpoint')
+                }
+                className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer border border-border/50"
+                title="Copy GraphQL endpoint"
+                aria-label="Copy GraphQL endpoint"
+              >
+                {copiedEndpoint === 'graphql-endpoint' ? (
+                  <Check className="size-3.5 text-emerald-500" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border bg-muted/20 gap-2">

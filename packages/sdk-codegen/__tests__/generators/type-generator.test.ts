@@ -134,11 +134,69 @@ describe('Codegen Type Generator', () => {
     expect(result).toContain('  tags: string[] | null;');
     expect(result).toContain('  metadata: Record<string, unknown> | null;');
     expect(result).toContain("  status: 'draft' | 'published' | 'archived';");
-    expect(result).toContain('  featuredImage: MediaAsset | null;');
-    expect(result).toContain('  author: { id: string };');
+    expect(result).toContain('  featuredImage: string | MediaAsset | null;');
+    expect(result).toContain('  author: string | { id: string };');
 
     // Assert CmsContentMap
-    expect(result).toContain('export interface CmsContentMap {');
+    expect(result).toContain('export type CmsContentMap = {');
     expect(result).toContain("  'articles': ArticlesEntry;");
+    expect(result).toContain('};');
+  });
+
+  it('should wrap union types in parentheses for repeatable fields', () => {
+    const schemas: SchemaRecord[] = [
+      {
+        id: 'schema-2',
+        name: 'Gallery',
+        slug: 'galleries',
+        type: 'collection',
+        status: 'published',
+        version: 1,
+        createdAt: '2026-08-25T12:00:00.000Z',
+        updatedAt: '2026-08-25T12:00:00.000Z',
+        definition: {
+          fields: [
+            {
+              apiId: 'images',
+              displayName: 'Images',
+              dataType: 'media',
+              isRequired: true,
+              isUnique: false,
+              isLocalized: false,
+              isRepeatable: true,
+              sortOrder: 1,
+            },
+            {
+              apiId: 'relatedPosts',
+              displayName: 'Related Posts',
+              dataType: 'relation',
+              isRequired: false,
+              isUnique: false,
+              isLocalized: false,
+              isRepeatable: true,
+              sortOrder: 2,
+            },
+            {
+              apiId: 'channels',
+              displayName: 'Channels',
+              dataType: 'enum',
+              isRequired: false,
+              isUnique: false,
+              isLocalized: false,
+              isRepeatable: true,
+              config: { options: ['web', 'mobile'] },
+              sortOrder: 3,
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = generateTypes(schemas, '2026-08-25T12:00:00.000Z');
+    expect(result).toContain('  images: (string | MediaAsset)[];');
+    expect(result).toContain(
+      '  relatedPosts: (string | { id: string })[] | null;',
+    );
+    expect(result).toContain("  channels: ('web' | 'mobile')[] | null;");
   });
 });

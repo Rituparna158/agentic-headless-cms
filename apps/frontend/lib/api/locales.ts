@@ -17,6 +17,7 @@ export function listLocales(
 export function createLocale(data: {
   code: string;
   name: string;
+  isDefault?: boolean;
 }): Promise<LocaleRecord> {
   return apiFetch<LocaleRecord>(API_PATHS.LOCALES.BASE, {
     method: 'POST',
@@ -26,4 +27,10 @@ export function createLocale(data: {
 
 export function deleteLocale(id: string): Promise<void> {
   return apiFetch<void>(API_PATHS.LOCALES.BY_ID(id), { method: 'DELETE' });
+}
+
+export function setDefaultLocale(id: string): Promise<LocaleRecord> {
+  return apiFetch<LocaleRecord>(API_PATHS.LOCALES.SET_DEFAULT(id), {
+    method: 'PATCH',
+  });
 }

@@ -4,9 +4,9 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { LayersIcon, PlusIcon } from 'lucide-react';
+import { FileText, LayersIcon, PlusIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
-import { Badge, Button, Card, CardContent } from '@repo/shared-ui';
+import { Badge, Breadcrumbs, Button, Card, CardContent } from '@repo/shared-ui';
 import { useAuthStore } from '@/stores/auth-store';
 import { useHasPermission } from '@/hooks/use-permissions';
 import { ContentEntryList } from './content-entry-list';
@@ -76,8 +76,13 @@ export function ContentEntriesView() {
   if (!schemas.length || !activeSchema) {
     return (
       <div className="grid gap-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Content Entries</h1>
+        <div className="flex items-center gap-2.5">
+          <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <FileText className="size-4" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Content Entries
+          </h1>
         </div>
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-12 text-center">
@@ -95,7 +100,7 @@ export function ContentEntriesView() {
             <Button asChild>
               <Link href="/content-types/new">
                 <PlusIcon className="size-4 mr-2" />
-                Create Content Type
+                Create Type
               </Link>
             </Button>
           </CardContent>
@@ -106,18 +111,29 @@ export function ContentEntriesView() {
 
   return (
     <div className="grid gap-6 w-full">
+      <Breadcrumbs
+        variant="text"
+        size="sm"
+        className="p-0 bg-transparent"
+        items={[{ label: 'Content' }, { label: activeSchema.name }]}
+      />
+
       {/* 100% Full-Width Header Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold">{activeSchema.name}</h1>
-            <Badge variant="outline" size="sm" className="font-mono">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <FileText className="size-4" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              {activeSchema.name}
+            </h1>
+            <Badge variant="outline" size="sm" className="font-mono text-xs">
               {activeSchema.slug}
             </Badge>
           </div>
-          <p className="text-muted-foreground text-xs mt-1">
-            Managing entries for content type &quot;{activeSchema.name}&quot; (
-            {activeSchema.definition.fields.length} fields)
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage and publish entries for {activeSchema.name}.
           </p>
         </div>
 
@@ -125,7 +141,7 @@ export function ContentEntriesView() {
           <Button asChild>
             <Link href={`/content/${activeSchema.slug}/new`}>
               <PlusIcon className="size-4 mr-2" />
-              New {activeSchema.name} Entry
+              New Entry
             </Link>
           </Button>
         ) : (

@@ -74,7 +74,7 @@ describe('WebhooksTable', () => {
     await screen.findByText('No webhooks registered yet.');
 
     // 1. Submit empty
-    await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
+    await user.click(screen.getByRole('button', { name: '+ Register' }));
     let registerButton = await screen.findByRole('button', {
       name: 'Register',
     });
@@ -82,7 +82,7 @@ describe('WebhooksTable', () => {
     expect(mockCreate).not.toHaveBeenCalled();
 
     // 2. Submit with only name and url (modal closed, so open again)
-    await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
+    await user.click(screen.getByRole('button', { name: '+ Register' }));
     fireEvent.change(
       await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
       { target: { value: 'My Hook' } },
@@ -96,7 +96,7 @@ describe('WebhooksTable', () => {
     expect(mockCreate).not.toHaveBeenCalled();
 
     // 3. Submit with everything
-    await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
+    await user.click(screen.getByRole('button', { name: '+ Register' }));
     fireEvent.change(
       await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
       { target: { value: 'My Hook' } },
@@ -117,7 +117,7 @@ describe('WebhooksTable', () => {
     renderTable();
     await screen.findByText('No webhooks registered yet.');
 
-    await user.click(screen.getByRole('button', { name: 'Register Webhook' }));
+    await user.click(screen.getByRole('button', { name: '+ Register' }));
     fireEvent.change(
       await screen.findByPlaceholderText('e.g. Next.js ISR Rebuild'),
       { target: { value: 'My Hook' } },

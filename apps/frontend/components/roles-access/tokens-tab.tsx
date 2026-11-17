@@ -1,11 +1,12 @@
 'use client';
+
 import {
   useMutation,
   useQuery,
   useQueryClient,
   keepPreviousData,
 } from '@tanstack/react-query';
-import { Check, Copy, Trash2 } from 'lucide-react';
+import { Check, Copy, KeyRound, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   Badge,
@@ -23,6 +24,7 @@ import {
   listTokens,
   revokeToken,
 } from '@/lib/api/access';
+
 export function TokensTab() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -37,17 +39,21 @@ export function TokensTab() {
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort] = useState('createdAt:desc');
   const [search, setSearch] = useState('');
+
   const { data: tokensData, isLoading } = useQuery({
     queryKey: ['access', 'tokens', page, pageSize, sort, search],
     queryFn: () => listTokens({ page, pageSize, sort, search }),
     placeholderData: keepPreviousData,
   });
+
   const { data: rolesData } = useQuery({
     queryKey: ['access', 'roles'],
     queryFn: () => listRoles({ page: 1, pageSize: 100 }),
   });
+
   const tokens = tokensData?.data || [];
   const roles = rolesData?.data || [];
+
   const createMutation = useMutation({
     mutationFn: () =>
       createToken(
@@ -63,6 +69,7 @@ export function TokensTab() {
       alert(error?.message || 'Failed to generate token');
     },
   });
+
   const revokeMutation = useMutation({
     mutationFn: (id: string) => revokeToken(id, mfaCode),
     onSuccess: () => {
@@ -74,6 +81,7 @@ export function TokensTab() {
       alert(error?.message || 'Failed to revoke token');
     },
   });
+
   const handleCopy = () => {
     if (generatedToken) {
       navigator.clipboard.writeText(generatedToken);
@@ -81,6 +89,7 @@ export function TokensTab() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
   const closeDialog = () => {
     setIsCreateOpen(false);
     setGeneratedToken(null);
@@ -88,20 +97,26 @@ export function TokensTab() {
     setNewTokenRoleId('');
     setMfaCode('');
   };
+
   const closeRevokeDialog = () => {
     setIsRevokeOpen(false);
     setTokenToRevoke(null);
     setMfaCode('');
   };
+
   if (isLoading && !tokensData) {
     return (
       <div className="text-center text-muted-foreground py-8">Loading...</div>
     );
   }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setIsCreateOpen(true)}>Generate Token</Button>
+        <Button onClick={() => setIsCreateOpen(true)} className="gap-1.5">
+          <KeyRound className="size-4" />
+          Generate Token
+        </Button>
         <Modal
           isOpen={isCreateOpen}
           onClose={closeDialog}
@@ -109,42 +124,52 @@ export function TokensTab() {
           showFooter={false}
         >
           {generatedToken ? (
-            <div className="space-y-4 py-4">
-              <p className="text-sm font-medium text-green-600">
-                Token generated successfully
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Please copy it now, as you won&apos;t be able to see it again.
-              </p>
+            <div className="space-y-4 py-3">
+              <div className="p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                <p className="text-sm font-semibold">
+                  Token generated successfully
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Please copy it now, as you won&apos;t be able to see it again.
+                </p>
+              </div>
               <div className="flex gap-2 items-center">
                 <Input
                   disabled
                   placeholder="Token string"
                   variant="default"
                   value={generatedToken}
-                  className="font-mono text-sm flex-1"
+                  className="font-mono text-xs flex-1 bg-muted/40"
                 />
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={handleCopy}
                   aria-label="Copy token"
+                  className="size-9 shrink-0"
                 >
                   {copied ? (
-                    <Check className="size-4 text-green-600" />
+                    <Check className="size-4 text-emerald-600" />
                   ) : (
                     <Copy className="size-4" />
                   )}
                 </Button>
               </div>
-              <div className="flex justify-end pt-2">
-                <Button onClick={closeDialog}>Done</Button>
+              <div className="flex justify-end pt-3 border-t border-border mt-4">
+                <Button onClick={closeDialog} size="sm">
+                  Done
+                </Button>
               </div>
             </div>
           ) : (
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Typography variant="label">Token Name</Typography>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Typography
+                  variant="label"
+                  className="text-xs uppercase tracking-wider font-semibold text-muted-foreground"
+                >
+                  Token Name
+                </Typography>
                 <Input
                   placeholder="e.g. CI/CD Script"
                   value={newTokenName}
@@ -152,8 +177,13 @@ export function TokensTab() {
                   variant="default"
                 />
               </div>
-              <div className="space-y-2">
-                <Typography variant="label">Role</Typography>
+              <div className="space-y-1.5">
+                <Typography
+                  variant="label"
+                  className="text-xs uppercase tracking-wider font-semibold text-muted-foreground"
+                >
+                  Role
+                </Typography>
                 <div>
                   <Dropdown
                     trigger={
@@ -177,8 +207,13 @@ export function TokensTab() {
                   </Dropdown>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Typography variant="label">MFA Code</Typography>
+              <div className="space-y-1.5">
+                <Typography
+                  variant="label"
+                  className="text-xs uppercase tracking-wider font-semibold text-muted-foreground"
+                >
+                  MFA Code
+                </Typography>
                 <Input
                   placeholder="6-digit authenticator code"
                   value={mfaCode}
@@ -186,7 +221,7 @@ export function TokensTab() {
                   variant="default"
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+              <div className="flex justify-end gap-2.5 pt-4 border-t border-border mt-4">
                 <Button type="button" variant="outline" onClick={closeDialog}>
                   Cancel
                 </Button>
@@ -203,13 +238,18 @@ export function TokensTab() {
           title="Revoke Token"
           showFooter={false}
         >
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
               Are you sure you want to revoke this token? This action cannot be
               undone. Please provide your MFA code to confirm.
             </p>
-            <div className="space-y-2">
-              <Typography variant="label">MFA Code</Typography>
+            <div className="space-y-1.5">
+              <Typography
+                variant="label"
+                className="text-xs uppercase tracking-wider font-semibold text-muted-foreground"
+              >
+                MFA Code
+              </Typography>
               <Input
                 placeholder="6-digit authenticator code"
                 value={mfaCode}
@@ -217,7 +257,7 @@ export function TokensTab() {
                 variant="default"
               />
             </div>
-            <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+            <div className="flex justify-end gap-2.5 pt-4 border-t border-border mt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -240,7 +280,7 @@ export function TokensTab() {
           </div>
         </Modal>
       </div>
-      <div className="border rounded-md overflow-x-auto">
+      <div className="border border-border rounded-xl overflow-hidden bg-card shadow-xs w-full max-w-full min-w-0">
         <DataTable
           columns={[
             { label: 'Name', key: 'name', sortable: true },
@@ -255,8 +295,14 @@ export function TokensTab() {
             },
           ]}
           rows={tokens.map((token) => ({
-            name: token.name,
-            role: roles.find((r) => r.id === token.roleId)?.name || 'Unknown',
+            name: (
+              <span className="font-medium text-foreground">{token.name}</span>
+            ),
+            role: (
+              <Badge variant="outline" size="sm" className="font-mono text-xs">
+                {roles.find((r) => r.id === token.roleId)?.name || 'Unknown'}
+              </Badge>
+            ),
             createdAt: new Date(token.createdAt).toLocaleDateString(),
             status: token.revokedAt ? (
               <Badge variant="destructive" size="sm">
@@ -273,7 +319,7 @@ export function TokensTab() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-red-500 hover:text-red-600"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 size-8"
                     onClick={() => {
                       setTokenToRevoke(token.id);
                       setIsRevokeOpen(true);

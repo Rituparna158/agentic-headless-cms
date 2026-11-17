@@ -18,8 +18,11 @@ export interface DrawerProps {
   showOverlay?: boolean;
   closeOnOverlayClick?: boolean;
   title?: React.ReactNode;
+  ariaLabel?: string;
   footer?: React.ReactNode;
   className?: string;
+  headerClassName?: string;
+  bodyClassName?: string;
   animationType?: AnimationType;
   zIndex?: number;
 }
@@ -34,8 +37,11 @@ export const Drawer: React.FC<DrawerProps> = ({
   showOverlay = true,
   closeOnOverlayClick = true,
   title,
+  ariaLabel,
   footer,
   className,
+  headerClassName,
+  bodyClassName,
   animationType = 'slide',
   zIndex = 1000,
 }) => {
@@ -153,6 +159,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby={title ? 'drawer-title' : undefined}
+          aria-label={!title ? ariaLabel : undefined}
         >
           {showOverlay && (
             <motion.div
@@ -180,7 +187,12 @@ export const Drawer: React.FC<DrawerProps> = ({
             exit="hidden"
           >
             {title && (
-              <header className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
+              <header
+                className={cn(
+                  'flex items-center justify-between p-4 border-b border-border flex-shrink-0',
+                  headerClassName,
+                )}
+              >
                 <h2 id="drawer-title" className="text-lg font-semibold">
                   {title}
                 </h2>
@@ -213,7 +225,11 @@ export const Drawer: React.FC<DrawerProps> = ({
                 </button>
               </header>
             )}
-            <main className="p-4 flex-grow overflow-y-auto">{children}</main>
+            <main
+              className={cn('p-4 flex-grow overflow-y-auto', bodyClassName)}
+            >
+              {children}
+            </main>
             {footer && (
               <footer className="p-4 border-t border-border flex-shrink-0">
                 {footer}
