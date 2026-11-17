@@ -14,13 +14,14 @@ export default [
   },
   ...reactInternal,
   {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
+  },
+  {
     files: ['src/**/*.tsx'],
     plugins: { 'jsx-a11y': jsxA11y },
-    rules: {
-      ...jsxA11y.flatConfigs.recommended.rules,
-      // Dialogs intentionally focus their first field on open.
-      'jsx-a11y/no-autofocus': 'off',
-    },
+    rules: {},
   },
   {
     // Test doubles routinely need loose typing
