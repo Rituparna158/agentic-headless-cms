@@ -260,6 +260,22 @@ export interface PageSideDrawerProps {
   isSaving: boolean;
 }
 
+export type PostStatusFilter = 'all' | 'published' | 'draft';
+
+export interface WhatToPostDispatcherModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  siteName: string;
+  pages: PageEntry[];
+  /** Blog types set up on this website. */
+  blogs: Array<{ pageId: string; name: string; postLabel: string }>;
+  onSelectBlog: (pageId: string) => void;
+  /** When false the blog option explains how to turn blogging on. */
+  blogEnabled?: boolean;
+  settingsHref?: string;
+  onSelectPageForm: (pageId: string) => void;
+}
+
 export type {
   PageMetaDrawerHeaderProps,
   PageSchemaListProps,
