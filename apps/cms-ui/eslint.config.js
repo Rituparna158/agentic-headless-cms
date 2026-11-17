@@ -1,5 +1,6 @@
 import { config as reactInternal } from '@repo/eslint-config/react-internal';
 import boundaries from 'eslint-plugin-boundaries';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 
 /** @type {import("eslint").Linter.Config[]} */
 export default [
@@ -12,6 +13,20 @@ export default [
     ],
   },
   ...reactInternal,
+  {
+    files: ['src/**/*.tsx'],
+    plugins: { 'jsx-a11y': jsxA11y },
+    rules: {
+      ...jsxA11y.flatConfigs.recommended.rules,
+      // Dialogs intentionally focus their first field on open.
+      'jsx-a11y/no-autofocus': 'off',
+    },
+  },
+  {
+    // Test doubles routinely need loose typing
+    files: ['__tests__/**/*.{ts,tsx}', 'e2e/**/*.ts'],
+    rules: { '@typescript-eslint/no-explicit-any': 'off' },
+  },
   {
     files: ['src/**/*.{ts,tsx}'],
     plugins: {
@@ -109,6 +124,14 @@ export default [
                     },
                   },
                 },
+                {
+                  to: {
+                    element: {
+                      type: 'feature',
+                      captured: { featureName: 'posts' },
+                    },
+                  },
+                },
               ],
             },
             // Features can import shared, components, internal modules of their own feature, and auth/media for identity & central asset storage
@@ -143,10 +166,35 @@ export default [
                 },
               ],
             },
+            // Content-domain features (pages, posts, blog, menus) are consumed
+            // by site-level features (inbox, settings, developer, render, ...)
+            {
+              from: { element: { type: 'feature' } },
+              allow: [
+                'collections',
+                'posts',
+                'blog',
+                'menus',
+                'site-content',
+              ].map((featureName) => ({
+                to: {
+                  element: { type: 'feature', captured: { featureName } },
+                },
+              })),
+            },
             // Shared code must remain strictly decoupled from features, pages, and layout
             {
               from: { element: { type: 'shared' } },
-              allow: [{ to: { element: { type: 'shared' } } }],
+              allow: [
+                { to: { element: { type: 'shared' } } },
+                // Cross-cutting access hooks (useCan, useSiteConfig) read the
+                // signed-in user and the website list.
+                ...['auth', 'posts'].map((featureName) => ({
+                  to: {
+                    element: { type: 'feature', captured: { featureName } },
+                  },
+                })),
+              ],
             },
           ],
         },
