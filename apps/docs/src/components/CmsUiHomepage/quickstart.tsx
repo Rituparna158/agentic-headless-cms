@@ -48,7 +48,8 @@ export function CmsUiQuickstartSection() {
             Launch in <span className={styles.gradientWord}>Seconds</span>
           </h2>
           <p className={styles.subtitle}>
-            Clone and run the CMS UI studio directly on your machine. Pre-configured to instantly bind to your local backend.
+            Clone and run the CMS UI studio directly on your machine.
+            Pre-configured to instantly bind to your local backend.
           </p>
         </div>
 
