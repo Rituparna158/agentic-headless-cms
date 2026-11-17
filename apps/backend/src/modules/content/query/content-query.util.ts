@@ -1,64 +1,17 @@
 import { SQL, and, asc, desc, or, sql } from 'drizzle-orm';
-import type { SchemaField } from '@repo/types';
-import { contentEntries, entryLocalizations } from '@repo/shared-db';
+import type { SchemaField, ContentQueryOptions } from '@repo/types';
+import { entryLocalizations } from '@repo/shared-db';
 import { BadRequestError } from '@repo/utils';
-import { ContentQueryOptions } from '@repo/types';
-
-const FILTER_OPERATORS = [
-  '$eq',
-  '$ne',
-  '$lt',
-  '$lte',
-  '$gt',
-  '$gte',
-  '$in',
-  '$contains',
-] as const;
-type FilterOperator = (typeof FILTER_OPERATORS)[number];
-
-// Orderable data types
-const ORDERABLE_DATA_TYPES = new Set(['number', 'date', 'datetime']);
-// Text data types
-const TEXT_DATA_TYPES = new Set(['text', 'richtext']);
-
-const DEFAULT_PAGE_SIZE = 25;
-const MAX_PAGE_SIZE = 100;
-
-/** Base columns */
-const SORTABLE_BASE_COLUMNS = {
-  createdAt: contentEntries.createdAt,
-  updatedAt: contentEntries.updatedAt,
-  status: entryLocalizations.status,
-} as const;
-
-const FILTERABLE_BASE_COLUMNS = {
-  status: {
-    column: entryLocalizations.status,
-    allowedOps: new Set<FilterOperator>(['$eq', '$ne', '$in']),
-  },
-  createdAt: {
-    column: contentEntries.createdAt,
-    allowedOps: new Set<FilterOperator>([
-      '$eq',
-      '$ne',
-      '$lt',
-      '$lte',
-      '$gt',
-      '$gte',
-    ]),
-  },
-  updatedAt: {
-    column: contentEntries.updatedAt,
-    allowedOps: new Set<FilterOperator>([
-      '$eq',
-      '$ne',
-      '$lt',
-      '$lte',
-      '$gt',
-      '$gte',
-    ]),
-  },
-} as const;
+import type { FilterOperator } from './content-query.types.js';
+import {
+  FILTER_OPERATORS,
+  ORDERABLE_DATA_TYPES,
+  TEXT_DATA_TYPES,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  SORTABLE_BASE_COLUMNS,
+  FILTERABLE_BASE_COLUMNS,
+} from './content-query.constants.js';
 
 function findField(fields: SchemaField[], apiId: string): SchemaField {
   const field = fields.find((f) => f.apiId === apiId);
@@ -363,6 +316,39 @@ export function parseContentQuery(
   } else if (!hasFilterStatus && defaultStatus && defaultStatus !== 'all') {
     const statusSql = sql`${entryLocalizations.status} = ${defaultStatus}`;
     where = where ? and(where, statusSql) : statusSql;
+  }
+
+  // Entries of a website carry a `kind` (page, post, menus, submission…).
+  // `kind=post,page` keeps only those; `excludeKind=submission` drops them.
+  // A missing kind counts as "page", so older pages stay visible.
+  const kindList = (v: unknown): string[] =>
+    typeof v === 'string'
+      ? v
+          .split(',')
+          .map((k) => k.trim())
+          .filter(Boolean)
+      : [];
+  const kinds = kindList(query.kind);
+  const excluded = kindList(query.excludeKind);
+  for (const k of [...kinds, ...excluded]) {
+    if (!/^[a-z][a-z0-9_-]{0,31}$/i.test(k)) {
+      throw new BadRequestError(`Invalid kind '${k}'.`);
+    }
+  }
+  const kindOf = sql`coalesce(${entryLocalizations.data}->>'kind', 'page')`;
+  if (kinds.length) {
+    const kindSql = sql`${kindOf} IN (${sql.join(
+      kinds.map((k) => sql`${k}`),
+      sql`, `,
+    )})`;
+    where = where ? and(where, kindSql) : kindSql;
+  }
+  if (excluded.length) {
+    const kindSql = sql`${kindOf} NOT IN (${sql.join(
+      excluded.map((k) => sql`${k}`),
+      sql`, `,
+    )})`;
+    where = where ? and(where, kindSql) : kindSql;
   }
 
   if (search && search.trim()) {
