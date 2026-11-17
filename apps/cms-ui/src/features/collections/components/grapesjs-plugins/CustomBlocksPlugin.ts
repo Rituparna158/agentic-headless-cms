@@ -1,3 +1,4 @@
+import { buildFeaturedPostsSection } from '@/features/blog/utils/featureSection';
 import type { Editor } from 'grapesjs';
 import { baseCss } from './shared/base-css';
 import { register_hero_clean } from './blocks/premium/hero-clean';
@@ -40,6 +41,7 @@ import type {
   CmsPageSchema,
   CustomBlocksPluginOptions,
 } from '../../types/collections.types';
+import { DEFAULT_GRAPESJS_MENUS } from '../../constants/grapesjsMenu.constants';
 
 export type { CmsSchemaField, CmsPageSchema, CustomBlocksPluginOptions };
 
@@ -93,7 +95,75 @@ export const CustomBlocksPlugin = (
   register_badge_block(editor);
   register_dynamic_cms_blocks(editor);
   register_responsive_cover_image_block(editor);
+  register_site_blocks(editor);
   register_universal_cms_traits(editor, opts);
+};
+
+/** Ready-made blocks that connect themselves to the website's data. */
+export const register_site_blocks = (editor: Editor) => {
+  const bm = editor.BlockManager;
+  bm.add('site-navigation', {
+    label: '<div class="gjs-block-label">Navigation menu</div>',
+    category: 'Site',
+    content: `<nav data-cms-menu="header-primary" style="padding:18px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;font-weight:600;color:#1c1917;border-bottom:1px solid #e7e5e4;background:#fdfbf7;">Menu: header-primary</nav>`,
+  });
+  bm.add('site-logo', {
+    label: '<div class="gjs-block-label">Logo</div>',
+    category: 'Site',
+    content: `<div data-cms-site="logo" style="display:inline-block;font-weight:800;font-size:18px">Your logo</div>`,
+  });
+  bm.add('site-shared-section', {
+    label: '<div class="gjs-block-label">Shared section</div>',
+    category: 'Site',
+    content: `<div data-cms-include="name-of-section" style="padding:16px;border:1px dashed #a8a29e;font-size:12px;color:#78716c">Shared section: set its name in the block settings (Shared content page)</div>`,
+  });
+  const HP = `<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0">`;
+  const FIELD =
+    'width:100%;padding:10px 12px;border:1px solid #d6d3d1;border-radius:8px;font:inherit;margin-bottom:12px;background:#fff';
+  bm.add('form-contact', {
+    label: '<div class="gjs-block-label">Contact form</div>',
+    category: 'Site',
+    content: `<form data-cms-form="contact" style="max-width:520px;margin:32px auto;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;position:relative"><h3 style="margin:0 0 16px;font-size:22px">Get in touch</h3><input name="name" placeholder="Your name" required style="${FIELD}"><input name="email" type="email" placeholder="Your email" required style="${FIELD}"><textarea name="message" rows="5" placeholder="Your message" required style="${FIELD}"></textarea>${HP}<button type="submit" style="padding:10px 20px;border:0;border-radius:8px;background:#1c1917;color:#fff;font-weight:700;cursor:pointer">Send message</button></form>`,
+  });
+  bm.add('form-newsletter', {
+    label: '<div class="gjs-block-label">Newsletter signup</div>',
+    category: 'Site',
+    content: `<form data-cms-form="newsletter" style="max-width:480px;margin:32px auto;padding:24px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;position:relative"><h3 style="margin:0 0 12px;font-size:20px">Stay in the loop</h3><div style="display:flex;gap:8px"><input name="email" type="email" placeholder="you@example.com" required style="flex:1;padding:10px 12px;border:1px solid #d6d3d1;border-radius:8px;font:inherit"><button type="submit" style="padding:10px 18px;border:0;border-radius:8px;background:#4f46e5;color:#fff;font-weight:700;cursor:pointer">Subscribe</button></div>${HP}</form>`,
+  });
+  bm.add('post-comments', {
+    label: '<div class="gjs-block-label">Comments</div>',
+    category: 'Site',
+    content: `<section data-cms-show="item" style="max-width:720px;margin:40px auto;padding:0 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"><h3 style="font-size:20px;margin:0 0 16px">Comments</h3><div data-cms-repeat="true" data-cms-schema="comments" style="margin-bottom:24px"><div class="cms-post-card" style="padding:12px 0;border-bottom:1px solid #e7e5e4"><strong data-cms-slot="name">{{name}}</strong> <span style="color:#78716c;font-size:12px">{{date}}</span><p style="margin:6px 0 0">{{message}}</p></div></div><form data-cms-form="comment" style="position:relative"><input name="name" placeholder="Your name" required style="${FIELD}"><input name="email" type="email" placeholder="Email (never shown)" style="${FIELD}"><textarea name="message" rows="4" placeholder="Write a comment" required style="${FIELD}"></textarea>${HP}<button type="submit" style="padding:10px 20px;border:0;border-radius:8px;background:#1c1917;color:#fff;font-weight:700;cursor:pointer">Post comment</button></form></section>`,
+  });
+  bm.add('post-tags', {
+    label: '<div class="gjs-block-label">Post tags</div>',
+    category: 'Site',
+    content: `<div data-cms-tags style="margin:12px 0">Tags appear here</div>`,
+  });
+  bm.add('post-next-prev', {
+    label: '<div class="gjs-block-label">Next / previous post</div>',
+    category: 'Site',
+    content: `<div style="display:flex;justify-content:space-between;gap:16px;margin:32px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:600"><a data-cms-action="prev-post" href="#" style="color:#4f46e5;text-decoration:none">← Newer post</a><a data-cms-action="next-post" href="#" style="color:#4f46e5;text-decoration:none">Older post →</a></div>`,
+  });
+  bm.add('post-related', {
+    label: '<div class="gjs-block-label">Related posts</div>',
+    category: 'Site',
+    content: `<section style="padding:32px 0"><h3 style="font-size:20px;font-weight:700;margin:0 0 16px">Related posts</h3><div data-cms-repeat="true" data-cms-schema="related" data-cms-limit="3" class="cms-dynamic-feed" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px"><article class="cms-post-card" style="border:1px solid #e7e5e4;border-radius:12px;padding:16px;cursor:pointer"><h4 data-cms-slot="title" style="margin:0 0 6px;font-size:16px">{{title}}</h4><p data-cms-slot="excerpt" style="margin:0;font-size:13px;color:#78716c">{{excerpt}}</p><a href="#" data-cms-action="view-post" style="font-size:12px;font-weight:700;color:#4f46e5;text-decoration:none">Read →</a></article></div></section>`,
+  });
+  bm.add('post-reading-time', {
+    label: '<div class="gjs-block-label">Reading time</div>',
+    category: 'Site',
+    content: `<span style="font-size:13px;color:#78716c">{{reading_time}}</span>`,
+  });
+  bm.add('site-latest-posts', {
+    label: '<div class="gjs-block-label">Latest posts</div>',
+    category: 'Site',
+    content: buildFeaturedPostsSection({
+      schemaSlug: '',
+      title: 'Latest posts',
+      limit: 3,
+    }),
+  });
 };
 
 export const register_responsive_cover_image_block = (editor: Editor) => {
@@ -204,6 +274,40 @@ export function register_universal_cms_traits(
       options: schemaOptions,
     });
   }
+
+  // Which shared section a block shows
+  cmsTraits.push({
+    type: 'text',
+    label: 'Shared section name',
+    name: 'data-cms-include',
+  });
+
+  // Menu chooser for navigation blocks
+  const menuOptions = (
+    opts.menus && opts.menus.length > 0 ? opts.menus : DEFAULT_GRAPESJS_MENUS
+  ).map((m) => ({
+    id: m.id,
+    name: m.name,
+  }));
+
+  cmsTraits.push({
+    type: 'select',
+    label: 'Navigation Menu',
+    name: 'data-cms-menu',
+    options: [{ id: '', name: '— None (Static Links) —' }, ...menuOptions],
+  });
+
+  // Which view of a blog page this section belongs to
+  cmsTraits.push({
+    type: 'select',
+    label: 'Show on',
+    name: 'data-cms-show',
+    options: [
+      { id: '', name: 'Always' },
+      { id: 'list', name: 'Post list only' },
+      { id: 'item', name: 'Single post only' },
+    ],
+  });
 
   // Dynamic slot selector (filtered by schema section)
   cmsTraits.push({
@@ -353,14 +457,47 @@ export function register_universal_cms_traits(
       typeof traits.find === 'function' &&
       typeof traits.add === 'function'
     ) {
-      const activeSchemaSlug = comp.getAttributes?.()?.['data-cms-schema'] as
+      let activeSchemaSlug = comp.getAttributes?.()?.['data-cms-schema'] as
         | string
         | undefined;
+
+      // Ancestor lookup if active element doesn't have data-cms-schema directly
+      if (!activeSchemaSlug) {
+        let parentComp =
+          typeof (comp as { parent?: () => unknown }).parent === 'function'
+            ? (comp as { parent: () => unknown }).parent()
+            : null;
+        while (parentComp && !activeSchemaSlug) {
+          const pComp = parentComp as {
+            getAttributes?: () => Record<string, unknown>;
+            parent?: () => unknown;
+          };
+          const pAttrs = pComp.getAttributes?.();
+          if (pAttrs?.['data-cms-schema']) {
+            activeSchemaSlug = pAttrs['data-cms-schema'] as string;
+            break;
+          }
+          parentComp =
+            typeof pComp.parent === 'function' ? pComp.parent() : null;
+        }
+      }
+
+      if (
+        activeSchemaSlug &&
+        !comp.getAttributes?.()?.['data-cms-schema'] &&
+        comp.getAttributes?.()?.['data-cms-slot']
+      ) {
+        comp.addAttributes?.({ 'data-cms-schema': activeSchemaSlug });
+      }
+
       const filteredFields = getFilteredFieldOptions(activeSchemaSlug);
 
       const slotTrait = traits.find((t) => t.get?.('name') === 'data-cms-slot');
       if (!slotTrait) {
-        traits.add(cmsTraits);
+        const configuredTraits = cmsTraits.map((t) =>
+          t.name === 'data-cms-slot' ? { ...t, options: filteredFields } : t,
+        );
+        traits.add(configuredTraits);
       } else if (slotTrait.set) {
         slotTrait.set('options', filteredFields);
       }
@@ -557,40 +694,95 @@ export function register_universal_cms_traits(
     },
   );
 
-  // 4. Live WYSIWYG hydration: when data-cms-slot attribute changes, instantly update component in canvas
-  editor.on(
-    'component:update:attributes:data-cms-slot',
-    (component: unknown) => {
-      if (!component || typeof component !== 'object') return;
-      const comp = component as {
-        getAttributes?: () => Record<string, unknown>;
-        is?: (type: string) => boolean;
-        get?: (key: string) => unknown;
-        addAttributes?: (attrs: Record<string, unknown>) => void;
-        components?: (val: string) => void;
-      };
-      const slot = comp.getAttributes?.()?.['data-cms-slot'] as
-        | string
-        | undefined;
-      const schemaSlug = comp.getAttributes?.()?.['data-cms-schema'] as
-        | string
-        | undefined;
-      if (slot && opts.schemaValues) {
-        let val = opts.schemaValues[slot];
-        if (val === undefined && schemaSlug) {
-          val = opts.schemaValues[`${schemaSlug}.${slot}`];
+  // 4. Live WYSIWYG hydration: when data-cms-slot or data-cms-schema attribute changes, instantly update component in canvas
+  const hydrateSlotComponent = (component: unknown) => {
+    if (!component || typeof component !== 'object') return;
+    const comp = component as {
+      getAttributes?: () => Record<string, unknown>;
+      is?: (type: string) => boolean;
+      get?: (key: string) => unknown;
+      addAttributes?: (attrs: Record<string, unknown>) => void;
+      components?: (val: string) => void;
+      parent?: () => unknown;
+      getEl?: () => HTMLElement | null;
+    };
+    const slot = (comp.getAttributes?.()?.['data-cms-slot'] ||
+      comp.getAttributes?.()?.['data-cms-field']) as string | undefined;
+    let schemaSlug = comp.getAttributes?.()?.['data-cms-schema'] as
+      | string
+      | undefined;
+
+    // Ancestor lookup if missing on the element itself
+    if (!schemaSlug && typeof comp.parent === 'function') {
+      let parentComp = comp.parent();
+      while (parentComp && !schemaSlug) {
+        const pComp = parentComp as {
+          getAttributes?: () => Record<string, unknown>;
+          parent?: () => unknown;
+        };
+        const pAttrs = pComp.getAttributes?.();
+        if (pAttrs?.['data-cms-schema']) {
+          schemaSlug = pAttrs['data-cms-schema'] as string;
+          break;
         }
-        if (val !== undefined && val !== null) {
-          const isImg = comp.is?.('image') || comp.get?.('tagName') === 'img';
-          if (isImg) {
-            comp.addAttributes?.({ src: String(val) });
-          } else if (comp.components) {
-            comp.components(typeof val === 'string' ? val : String(val));
+        parentComp = typeof pComp.parent === 'function' ? pComp.parent() : null;
+      }
+    }
+
+    if (slot && opts.schemaValues) {
+      let val = opts.schemaValues[slot];
+      if (val === undefined && schemaSlug) {
+        val = opts.schemaValues[`${schemaSlug}.${slot}`];
+      }
+      if (val !== undefined && val !== null) {
+        const isImg = comp.is?.('image') || comp.get?.('tagName') === 'img';
+        if (isImg) {
+          comp.addAttributes?.({ src: String(val) });
+          const el = comp.getEl?.();
+          if (el && el instanceof HTMLImageElement) {
+            el.src = String(val);
           }
+        } else if (
+          comp.get?.('tagName') === 'a' &&
+          (slot.includes('url') ||
+            slot.includes('link') ||
+            slot.includes('href'))
+        ) {
+          comp.addAttributes?.({ href: String(val) });
+          const el = comp.getEl?.();
+          if (el) el.setAttribute('href', String(val));
+        } else if (comp.components) {
+          comp.components(typeof val === 'string' ? val : String(val));
         }
       }
-    },
+    }
+  };
+
+  editor.on('component:update:attributes:data-cms-slot', hydrateSlotComponent);
+  editor.on('component:update:attributes:data-cms-field', hydrateSlotComponent);
+  editor.on(
+    'component:update:attributes:data-cms-schema',
+    hydrateSlotComponent,
   );
+
+  // 5. Canvas-wide hydration: ensures newly loaded or updated pages immediately reflect schema values on canvas
+  const hydrateAllCanvasSlots = () => {
+    try {
+      const wrapper = editor.getWrapper?.();
+      if (!wrapper || typeof wrapper.find !== 'function') return;
+      const slotted = wrapper.find('[data-cms-slot], [data-cms-field]');
+      if (Array.isArray(slotted)) {
+        for (const item of slotted) {
+          hydrateSlotComponent(item);
+        }
+      }
+    } catch {
+      // Safe no-op in non-DOM or unit test environments
+    }
+  };
+
+  editor.on('load', hydrateAllCanvasSlots);
+  hydrateAllCanvasSlots();
 
   // Trigger refresh on currently selected component if any
   try {
