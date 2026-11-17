@@ -11,12 +11,7 @@ import {
 } from './icons';
 import styles from './interactivePreview.module.css';
 
-type ModuleKey =
-  | 'canvas'
-  | 'tokens'
-  | 'rollback'
-  | 'audit'
-  | 'media';
+type ModuleKey = 'canvas' | 'tokens' | 'rollback' | 'audit' | 'media';
 
 interface TourModule {
   key: ModuleKey;
@@ -43,7 +38,8 @@ export function InteractivePreview() {
       url: 'studio.local:3003/posts/index-page/canvas',
       screenshot: useBaseUrl('/img/cms-ui/page-builder.png'),
       detailTitle: 'GrapesJS Drag-and-Drop Canvas',
-      detailDesc: 'Compose custom forms, buttons, heroes, and grids with direct canvas styling and responsive breakpoint controls.',
+      detailDesc:
+        'Compose custom forms, buttons, heroes, and grids with direct canvas styling and responsive breakpoint controls.',
       docsUrl: '/cms-ui/docs/guides/page-builder',
     },
     {
@@ -54,7 +50,8 @@ export function InteractivePreview() {
       url: 'studio.local:3003/posts/schemas/tokens',
       screenshot: useBaseUrl('/img/cms-ui/dynamic-tokens.png'),
       detailTitle: 'Schema Token Ingestion',
-      detailDesc: 'Inject dynamic tokens into repeating components that automatically hydrate live data from your headless backend.',
+      detailDesc:
+        'Inject dynamic tokens into repeating components that automatically hydrate live data from your headless backend.',
       docsUrl: '/cms-ui/docs/guides/collections-and-schemas',
     },
     {
@@ -65,7 +62,8 @@ export function InteractivePreview() {
       url: 'studio.local:3003/collections/version-history',
       screenshot: useBaseUrl('/img/cms-ui/version-history.png'),
       detailTitle: 'Point-in-Time Revision Control',
-      detailDesc: 'Review historical versions (v22, v21), inspect exact payload deltas, and restore snapshots with zero downtime.',
+      detailDesc:
+        'Review historical versions (v22, v21), inspect exact payload deltas, and restore snapshots with zero downtime.',
       docsUrl: '/cms-ui/docs/guides/version-history',
     },
     {
@@ -76,7 +74,8 @@ export function InteractivePreview() {
       url: 'studio.local:3003/audit-logs',
       screenshot: useBaseUrl('/img/cms-ui/audit-logs.png'),
       detailTitle: 'Tamper-Evident Audit Stream',
-      detailDesc: 'Filter actions by actor, target resource, and date range with one-click JSON compliance export.',
+      detailDesc:
+        'Filter actions by actor, target resource, and date range with one-click JSON compliance export.',
       docsUrl: '/cms-ui/docs/guides/audit-logs',
     },
     {
@@ -87,7 +86,8 @@ export function InteractivePreview() {
       url: 'studio.local:3003/media/all-assets',
       screenshot: useBaseUrl('/img/cms-ui/media-library.png'),
       detailTitle: 'Multi-Format Asset Storage',
-      detailDesc: 'Manage high-resolution banners, photos, and icons with folder categorization and infinite scrolling.',
+      detailDesc:
+        'Manage high-resolution banners, photos, and icons with folder categorization and infinite scrolling.',
       docsUrl: '/cms-ui/docs/guides/media-library',
     },
   ];
@@ -106,7 +106,8 @@ export function InteractivePreview() {
             Inside the <span className={styles.gradientWord}>Admin Studio</span>
           </h2>
           <p className={styles.subtitle}>
-            Select a module from the tour menu to inspect the actual interface in action.
+            Select a module from the tour menu to inspect the actual interface
+            in action.
           </p>
         </div>
 
@@ -147,7 +148,6 @@ export function InteractivePreview() {
                 <div className={styles.urlBar}>
                   <span>https://{currentModule.url}</span>
                 </div>
-                
               </div>
 
               <div className={styles.screenArea}>
@@ -162,7 +162,9 @@ export function InteractivePreview() {
             {/* Info Box Below Window */}
             <div className={styles.infoBox}>
               <div className={styles.infoText}>
-                <div className={styles.infoTitle}>{currentModule.detailTitle}</div>
+                <div className={styles.infoTitle}>
+                  {currentModule.detailTitle}
+                </div>
                 <p className={styles.infoDesc}>{currentModule.detailDesc}</p>
               </div>
               <Link to={currentModule.docsUrl} className={styles.docsLink}>
