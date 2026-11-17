@@ -38,9 +38,15 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
         </h4>
 
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Date and Time</label>
+          <label
+            htmlFor={`${targetComponentId}-target-date`}
+            className="text-xs text-muted-foreground"
+          >
+            Date and Time
+          </label>
           {/* Use datetime-local input type and map to/from ISO string */}
           <input
+            id={`${targetComponentId}-target-date`}
             type="datetime-local"
             value={
               settings.targetDate
@@ -65,10 +71,14 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
         <h4 className="text-sm font-medium text-foreground">Labels</h4>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] text-muted-foreground uppercase">
+            <label
+              htmlFor={`${targetComponentId}-label-days`}
+              className="text-[10px] text-muted-foreground uppercase"
+            >
               Days Label
             </label>
             <input
+              id={`${targetComponentId}-label-days`}
               type="text"
               value={settings.labelDays}
               onChange={(e) => handleChange('labelDays', e.target.value)}
@@ -76,10 +86,14 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] text-muted-foreground uppercase">
+            <label
+              htmlFor={`${targetComponentId}-label-hours`}
+              className="text-[10px] text-muted-foreground uppercase"
+            >
               Hours Label
             </label>
             <input
+              id={`${targetComponentId}-label-hours`}
               type="text"
               value={settings.labelHours}
               onChange={(e) => handleChange('labelHours', e.target.value)}
@@ -87,10 +101,14 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] text-muted-foreground uppercase">
+            <label
+              htmlFor={`${targetComponentId}-label-minutes`}
+              className="text-[10px] text-muted-foreground uppercase"
+            >
               Minutes Label
             </label>
             <input
+              id={`${targetComponentId}-label-minutes`}
               type="text"
               value={settings.labelMinutes}
               onChange={(e) => handleChange('labelMinutes', e.target.value)}
@@ -98,10 +116,14 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] text-muted-foreground uppercase">
+            <label
+              htmlFor={`${targetComponentId}-label-seconds`}
+              className="text-[10px] text-muted-foreground uppercase"
+            >
               Seconds Label
             </label>
             <input
+              id={`${targetComponentId}-label-seconds`}
               type="text"
               value={settings.labelSeconds}
               onChange={(e) => handleChange('labelSeconds', e.target.value)}
@@ -120,11 +142,15 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              className="text-xs text-muted-foreground"
+            >
               Background Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-bg-color`}
                 type="color"
                 value={settings.backgroundColor}
                 onChange={(e) =>
@@ -143,11 +169,15 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-number-color`}
+              className="text-xs text-muted-foreground"
+            >
               Number Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-number-color`}
                 type="color"
                 value={settings.numberColor}
                 onChange={(e) => handleChange('numberColor', e.target.value)}
@@ -162,11 +192,15 @@ export const CountdownSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-label-color`}
+              className="text-xs text-muted-foreground"
+            >
               Label Text Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-label-color`}
                 type="color"
                 value={settings.textColor}
                 onChange={(e) => handleChange('textColor', e.target.value)}

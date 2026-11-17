@@ -100,10 +100,14 @@ export const ButtonGroupSettings: React.FC<{ targetComponentId: string }> = ({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${item.id}-text`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Text
                   </label>
                   <input
+                    id={`${item.id}-text`}
                     type="text"
                     value={item.text}
                     onChange={(e) =>
@@ -114,10 +118,14 @@ export const ButtonGroupSettings: React.FC<{ targetComponentId: string }> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${item.id}-url`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     URL
                   </label>
                   <input
+                    id={`${item.id}-url`}
                     type="text"
                     value={item.url}
                     onChange={(e) =>
@@ -130,10 +138,14 @@ export const ButtonGroupSettings: React.FC<{ targetComponentId: string }> = ({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${item.id}-style`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Style
                   </label>
                   <select
+                    id={`${item.id}-style`}
                     value={item.variant}
                     onChange={(e) =>
                       handleItemChange(item.id, 'variant', e.target.value)
@@ -146,11 +158,15 @@ export const ButtonGroupSettings: React.FC<{ targetComponentId: string }> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${item.id}-color`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Color
                   </label>
                   <div className="flex gap-2">
                     <input
+                      id={`${item.id}-color`}
                       type="color"
                       value={item.color}
                       onChange={(e) =>
@@ -202,9 +218,7 @@ export const ButtonGroupSettings: React.FC<{ targetComponentId: string }> = ({
         </h4>
 
         <div className="space-y-2">
-          <label className="text-xs text-muted-foreground block">
-            Direction
-          </label>
+          <span className="text-xs text-muted-foreground block">Direction</span>
           <div className="flex bg-muted/50 p-1 rounded-md border border-border">
             {(['row', 'column'] as const).map((l) => (
               <button
@@ -223,9 +237,7 @@ export const ButtonGroupSettings: React.FC<{ targetComponentId: string }> = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs text-muted-foreground block">
-            Alignment
-          </label>
+          <span className="text-xs text-muted-foreground block">Alignment</span>
           <div className="flex bg-muted/50 p-1 rounded-md border border-border">
             {[
               { id: 'left', icon: AlignLeft },
@@ -248,8 +260,14 @@ export const ButtonGroupSettings: React.FC<{ targetComponentId: string }> = ({
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Gap (px)</label>
+          <label
+            htmlFor={`${targetComponentId}-gap`}
+            className="text-xs text-muted-foreground"
+          >
+            Gap (px)
+          </label>
           <input
+            id={`${targetComponentId}-gap`}
             type="number"
             value={settings.gap}
             onChange={(e) => handleChange('gap', Number(e.target.value))}

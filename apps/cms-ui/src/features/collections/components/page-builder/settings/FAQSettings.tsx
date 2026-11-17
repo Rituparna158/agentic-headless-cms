@@ -75,17 +75,27 @@ export const FAQSettings: React.FC<{ targetComponentId: string }> = ({
           Header Content
         </h4>
         <div className="space-y-2">
-          <label className="text-xs text-muted-foreground">Title</label>
+          <label
+            htmlFor={`${targetComponentId}-title`}
+            className="text-xs text-muted-foreground"
+          >
+            Title
+          </label>
           <input
+            id={`${targetComponentId}-title`}
             type="text"
             value={settings.title}
             onChange={(e) => handleChange('title', e.target.value)}
             className="w-full px-2 py-1.5 text-xs border border-input rounded bg-background"
           />
-          <label className="text-xs text-muted-foreground">
+          <label
+            htmlFor={`${targetComponentId}-description`}
+            className="text-xs text-muted-foreground"
+          >
             Description (Optional)
           </label>
           <input
+            id={`${targetComponentId}-description`}
             type="text"
             value={settings.description}
             onChange={(e) => handleChange('description', e.target.value)}
@@ -170,11 +180,15 @@ export const FAQSettings: React.FC<{ targetComponentId: string }> = ({
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              className="text-xs text-muted-foreground"
+            >
               Background Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-bg-color`}
                 type="color"
                 value={settings.backgroundColor}
                 onChange={(e) =>
@@ -193,11 +207,15 @@ export const FAQSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-accordion-color`}
+              className="text-xs text-muted-foreground"
+            >
               Accordion Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-accordion-color`}
                 type="color"
                 value={settings.accordionColor}
                 onChange={(e) => handleChange('accordionColor', e.target.value)}
@@ -212,9 +230,15 @@ export const FAQSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Text Color</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Text Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-text-color`}
                 type="color"
                 value={settings.textColor}
                 onChange={(e) => handleChange('textColor', e.target.value)}
