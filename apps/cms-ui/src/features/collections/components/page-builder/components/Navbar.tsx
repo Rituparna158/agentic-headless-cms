@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/anchor-is-valid -- placeholder brand link in a page-builder preview block */
 import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
 import {
   usePageBuilderStore,

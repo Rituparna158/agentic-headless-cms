@@ -1,3 +1,4 @@
+import { activateOnKey } from '@/utils/a11y.util';
 import React, { useState, useRef } from 'react';
 import {
   X,
@@ -7,6 +8,7 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
+  Copy,
 } from 'lucide-react';
 import {
   TemplateImportModalProps,
@@ -19,7 +21,10 @@ export const TemplateImportModal: React.FC<TemplateImportModalProps> = ({
   isOpen,
   onClose,
   onImport,
+  availablePages = [],
 }) => {
+  const [activeTab, setActiveTab] = useState<'upload' | 'inherit'>('upload');
+  const [selectedPageId, setSelectedPageId] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isValidating, setIsValidating] = useState(false);
@@ -96,6 +101,34 @@ export const TemplateImportModal: React.FC<TemplateImportModalProps> = ({
     }
   };
 
+  const handleApplyInheritedPage = () => {
+    const page = availablePages.find((p) => p.id === selectedPageId);
+    if (!page) return;
+    const pData = (page.data || {}) as Record<string, unknown>;
+    const body = pData.body as Record<string, unknown> | undefined;
+    if (body) {
+      onImport({
+        success: true,
+        data: body,
+        projectData:
+          typeof body.projectData === 'object' && body.projectData !== null
+            ? (body.projectData as Record<string, unknown>)
+            : undefined,
+        html: typeof body.html === 'string' ? body.html : undefined,
+        css: typeof body.css === 'string' ? body.css : undefined,
+      });
+    } else {
+      onImport({
+        success: true,
+        html: '',
+        css: '',
+      });
+    }
+    onClose();
+  };
+
+  const selectedPage = availablePages.find((p) => p.id === selectedPageId);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg rounded-xl border border-zinc-800 bg-[#141417] text-zinc-100 shadow-2xl overflow-hidden">
@@ -103,14 +136,22 @@ export const TemplateImportModal: React.FC<TemplateImportModalProps> = ({
         <div className="flex items-center justify-between border-b border-zinc-800/80 px-6 py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex size-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Upload className="size-4" />
+              {activeTab === 'upload' ? (
+                <Upload className="size-4" />
+              ) : (
+                <Copy className="size-4" />
+              )}
             </div>
             <div>
               <h3 className="font-semibold text-zinc-100 text-base">
-                Import JSON Template
+                {activeTab === 'upload'
+                  ? 'Import JSON Template'
+                  : 'Inherit Page Design'}
               </h3>
               <p className="text-xs text-zinc-400">
-                Upload dynamic template structure or GrapesJS project data
+                {activeTab === 'upload'
+                  ? 'Upload dynamic template structure or GrapesJS project data'
+                  : 'Copy layout and styling from an existing page'}
               </p>
             </div>
           </div>
@@ -122,120 +163,216 @@ export const TemplateImportModal: React.FC<TemplateImportModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-5">
-          {/* Dropzone */}
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
-              isDragging
-                ? 'border-indigo-500 bg-indigo-500/5'
-                : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-900/80'
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <div className="flex size-12 items-center justify-center rounded-full bg-zinc-800/80 text-zinc-300 mb-3 border border-zinc-700/50">
-              <FileCode className="size-6 text-indigo-400" />
-            </div>
-            <p className="text-sm font-medium text-zinc-200 mb-1">
-              {selectedFile
-                ? selectedFile.name
-                : 'Click to upload or drag & drop'}
-            </p>
-            <p className="text-xs text-zinc-400">
-              Structured JSON or GrapesJS export files (.json)
-            </p>
-          </div>
-
-          {/* Validation Status */}
-          {isValidating && (
-            <div className="flex items-center gap-2 text-sm text-zinc-400 bg-zinc-900/60 p-3 rounded-lg border border-zinc-800">
-              <Loader2 className="size-4 animate-spin text-indigo-400" />
-              <span>Validating template structure...</span>
-            </div>
-          )}
-
-          {validationResult && validationResult.success && (
-            <div className="flex items-start gap-3 text-sm text-emerald-400 bg-emerald-500/10 p-3.5 rounded-lg border border-emerald-500/20">
-              <CheckCircle2 className="size-5 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-emerald-300">
-                  Valid Template Structure
-                </p>
-                <p className="text-xs text-emerald-400/80 mt-0.5">
-                  Ready to inject directly into your page canvas.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {validationResult && !validationResult.success && (
-            <div className="flex items-start gap-3 text-sm text-rose-400 bg-rose-500/10 p-3.5 rounded-lg border border-rose-500/20">
-              <AlertCircle className="size-5 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-semibold text-rose-300">
-                  Validation Failed ({validationResult.errors?.length || 1}{' '}
-                  issues)
-                </p>
-                <ul className="text-xs text-rose-400/90 list-disc list-inside space-y-0.5 max-h-32 overflow-y-auto">
-                  {validationResult.errors?.map((err, i) => (
-                    <li key={i}>
-                      <span className="font-mono text-zinc-300">
-                        [{err.path}]:
-                      </span>{' '}
-                      {err.message}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* Sample template download button */}
-          <div className="flex items-center justify-between rounded-lg bg-zinc-900/60 p-3 border border-zinc-800/80">
-            <div className="text-xs text-zinc-400">
-              Need a starting format? Download our dynamic starter template.
-            </div>
+        {/* Tab Switcher */}
+        {availablePages.length > 0 && (
+          <div className="flex border-b border-zinc-800/80 bg-zinc-900/40 px-6 text-xs font-medium">
             <button
               type="button"
-              onClick={handleDownloadSample}
-              className="inline-flex items-center gap-1.5 rounded-md bg-zinc-800 px-2.5 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors"
+              onClick={() => setActiveTab('upload')}
+              className={`py-2.5 px-3 border-b-2 transition-colors ${
+                activeTab === 'upload'
+                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
+              }`}
             >
-              <Download className="size-3.5" />
-              <span>Starter JSON</span>
+              Upload JSON Template
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('inherit')}
+              className={`py-2.5 px-3 border-b-2 transition-colors ${
+                activeTab === 'inherit'
+                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Inherit from Existing Page ({availablePages.length})
             </button>
           </div>
+        )}
+
+        {/* Content */}
+        <div className="p-6 space-y-5">
+          {activeTab === 'upload' ? (
+            <>
+              {/* Dropzone */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                role="button"
+                tabIndex={0}
+                aria-label="Upload a template JSON file"
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={activateOnKey(() => fileInputRef.current?.click())}
+                className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
+                  isDragging
+                    ? 'border-indigo-500 bg-indigo-500/5'
+                    : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-900/80'
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <div className="flex size-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 mb-3 border border-indigo-500/20">
+                  <FileCode className="size-6" />
+                </div>
+                <p className="text-sm font-medium text-zinc-200 mb-1">
+                  Drag & drop template JSON, or{' '}
+                  <span className="text-indigo-400 hover:underline">
+                    browse
+                  </span>
+                </p>
+                <p className="text-xs text-zinc-500">
+                  Supports .json files up to 5MB
+                </p>
+              </div>
+
+              {/* Sample link */}
+              <div className="flex items-center justify-between text-xs text-zinc-400">
+                <span>Need a starter structure?</span>
+                <button
+                  onClick={handleDownloadSample}
+                  className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                >
+                  <Download className="size-3.5" />
+                  Download Sample Template
+                </button>
+              </div>
+
+              {/* Validation Status */}
+              {isValidating && (
+                <div className="flex items-center gap-2 rounded-lg bg-zinc-900/80 p-3 text-xs text-zinc-400 border border-zinc-800">
+                  <Loader2 className="size-4 animate-spin text-indigo-400" />
+                  Validating schema and structure...
+                </div>
+              )}
+
+              {validationResult && (
+                <div
+                  className={`rounded-xl border p-4 text-xs ${
+                    validationResult.success
+                      ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+                      : 'border-red-500/20 bg-red-500/10 text-red-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-semibold mb-1">
+                    {validationResult.success ? (
+                      <>
+                        <CheckCircle2 className="size-4 text-emerald-400" />
+                        Valid Template Format ({selectedFile?.name})
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="size-4 text-red-400" />
+                        Invalid Template Structure
+                      </>
+                    )}
+                  </div>
+                  {validationResult.errors && (
+                    <ul className="list-disc list-inside space-y-1 text-red-300/80 mt-2">
+                      {validationResult.errors.map((e, idx) => (
+                        <li key={idx}>
+                          <span className="font-mono text-[11px] text-red-300">
+                            {e.path}:
+                          </span>{' '}
+                          {e.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            /* Inherit from Existing Page Tab */
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="inherit-source-page"
+                  className="block text-xs font-semibold text-zinc-200 mb-1.5"
+                >
+                  Select Source Page
+                </label>
+                <select
+                  id="inherit-source-page"
+                  value={selectedPageId}
+                  onChange={(e) => setSelectedPageId(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500"
+                >
+                  <option value="">
+                    -- Choose a page from this website --
+                  </option>
+                  {availablePages.map((p) => {
+                    const pTitle =
+                      p.title || (p.data?.title as string) || 'Untitled';
+                    const pSlug = p.slug || (p.data?.slug as string) || p.id;
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {pTitle} ({pSlug})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {selectedPage && (
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-zinc-200">
+                      {selectedPage.title ||
+                        (selectedPage.data?.title as string) ||
+                        'Untitled'}
+                    </span>
+                    <span className="font-mono text-zinc-400 text-[11px]">
+                      {selectedPage.slug ||
+                        (selectedPage.data?.slug as string) ||
+                        selectedPage.id}
+                    </span>
+                  </div>
+                  <p className="text-zinc-400 text-[11px] leading-relaxed">
+                    Importing this page will copy all of its canvas components,
+                    layout sections, and styles onto your current workspace.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-zinc-800/80 bg-zinc-900/40 px-6 py-4">
+        <div className="flex items-center justify-end gap-3 border-t border-zinc-800/80 bg-zinc-900/30 px-6 py-4">
           <button
-            type="button"
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+            className="rounded-lg px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
           >
             Cancel
           </button>
-          <button
-            type="button"
-            disabled={!validationResult || !validationResult.success}
-            onClick={handleApply}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <span>Apply to Page</span>
-          </button>
+          {activeTab === 'upload' ? (
+            <button
+              onClick={handleApply}
+              disabled={!validationResult || !validationResult.success}
+              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-indigo-500/20"
+            >
+              Apply Template
+            </button>
+          ) : (
+            <button
+              onClick={handleApplyInheritedPage}
+              disabled={!selectedPageId}
+              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-indigo-500/20"
+            >
+              <Copy className="size-3.5" />
+              Inherit Page Design
+            </button>
+          )}
         </div>
       </div>
     </div>

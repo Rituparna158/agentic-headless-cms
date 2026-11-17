@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/mouse-events-have-key-events -- decorative hover tint in a non-interactive preview block */
 import React from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 import {
