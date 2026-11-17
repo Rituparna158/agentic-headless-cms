@@ -9,6 +9,7 @@ import {
   parseQueryOptions,
   formatPaginatedResponse,
 } from '../../utils/pagination.util.js';
+
 export const createSchema: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('SchemaController: createSchema start');
@@ -33,6 +34,7 @@ export const createSchema: RequestHandler = asyncHandler(
       .json(new ApiResponse(201, schema, 'Schema created successfully'));
   },
 );
+
 export const listSchemas: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     logger.info('SchemaController: listSchemas start');
@@ -42,7 +44,7 @@ export const listSchemas: RequestHandler = asyncHandler(
       options,
       req.context?.applicationId,
     );
-    // A role scoped to some websites only sees those
+    // A role scoped to some websites only sees those scopes
     const perms = await permissionsFor(req);
     const visible = schemas.filter((s) =>
       canSeeSchema(perms, (s as { id: string }).id),
