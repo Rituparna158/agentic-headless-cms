@@ -28,7 +28,9 @@ import { AuditSummaryCards } from '../components/AuditSummaryCards';
 import { AuditTableView } from '../components/AuditTableView';
 import { AuditDetailDrawer } from '../components/AuditDetailDrawer';
 
-export const AuditLogPage: React.FC = () => {
+export const AuditLogPage: React.FC<{ hideHeader?: boolean }> = ({
+  hideHeader = false,
+}) => {
   const [page, setPage] = useState<number>(DEFAULT_AUDIT_PAGE);
   const [limit, setLimit] = useState<number>(DEFAULT_AUDIT_PAGE_SIZE);
   const [actionFilter, setActionFilter] = useState<string>('');
@@ -124,48 +126,50 @@ export const AuditLogPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-full bg-background animate-in fade-in duration-300">
       {/* Top Header */}
-      <div className="p-6 border-b border-border/40 bg-card/40">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Audit Logs
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Historical record of all administrative actions, content
-              mutations, and system events.
-            </p>
-          </div>
+      {!hideHeader && (
+        <div className="p-6 border-b border-border/40 bg-card/40">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Audit Logs
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Historical record of all administrative actions, content
+                mutations, and system events.
+              </p>
+            </div>
 
-          {/* Action Tools */}
-          <div className="flex items-center gap-2">
-            {/* Refresh Button */}
-            <button
-              type="button"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border/60 bg-card text-xs font-medium text-foreground hover:bg-muted/60 transition-colors disabled:opacity-50"
-              title="Refresh log entries"
-            >
-              <RefreshCw
-                className={`size-3.5 ${isFetching ? 'animate-spin text-primary' : 'text-muted-foreground'}`}
-              />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
+            {/* Action Tools */}
+            <div className="flex items-center gap-2">
+              {/* Refresh Button */}
+              <button
+                type="button"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border/60 bg-card text-xs font-medium text-foreground hover:bg-muted/60 transition-colors disabled:opacity-50"
+                title="Refresh log entries"
+              >
+                <RefreshCw
+                  className={`size-3.5 ${isFetching ? 'animate-spin text-primary' : 'text-muted-foreground'}`}
+                />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
 
-            {/* Export Button */}
-            <button
-              type="button"
-              onClick={exportAllFilteredJson}
-              disabled={filteredLogs.length === 0}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border/60 bg-card text-xs font-medium text-foreground hover:bg-muted/60 transition-colors disabled:opacity-50"
-              title="Export visible records to JSON"
-            >
-              <Download className="size-3.5 text-muted-foreground" />
-              <span>Export JSON</span>
-            </button>
+              {/* Export Button */}
+              <button
+                type="button"
+                onClick={exportAllFilteredJson}
+                disabled={filteredLogs.length === 0}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border/60 bg-card text-xs font-medium text-foreground hover:bg-muted/60 transition-colors disabled:opacity-50"
+                title="Export visible records to JSON"
+              >
+                <Download className="size-3.5 text-muted-foreground" />
+                <span>Export JSON</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="flex-1 p-6 space-y-6 max-w-9xl w-full mx-auto">
         {/* KPI / Metric Summary Cards */}
@@ -201,6 +205,7 @@ export const AuditLogPage: React.FC = () => {
             {/* Action Select */}
             <div>
               <select
+                aria-label="Filter by action"
                 value={actionFilter}
                 onChange={(e) => {
                   setActionFilter(e.target.value);
@@ -219,6 +224,7 @@ export const AuditLogPage: React.FC = () => {
             {/* Resource Select */}
             <div>
               <select
+                aria-label="Filter by resource type"
                 value={resourceFilter}
                 onChange={(e) => {
                   setResourceFilter(e.target.value);
@@ -237,6 +243,7 @@ export const AuditLogPage: React.FC = () => {
             {/* Actor Type Select */}
             <div>
               <select
+                aria-label="Filter by actor type"
                 value={actorTypeFilter}
                 onChange={(e) => {
                   setActorTypeFilter(
@@ -264,6 +271,7 @@ export const AuditLogPage: React.FC = () => {
               </span>
               <input
                 type="date"
+                aria-label="Start date"
                 value={startDate}
                 onChange={(e) => {
                   setStartDate(e.target.value);
@@ -274,6 +282,7 @@ export const AuditLogPage: React.FC = () => {
               <span>to</span>
               <input
                 type="date"
+                aria-label="End date"
                 value={endDate}
                 onChange={(e) => {
                   setEndDate(e.target.value);
