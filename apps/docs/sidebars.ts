@@ -32,9 +32,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Developer SDKs',
       collapsed: true,
-      items: [
-        'content-apis/sdks',
-      ],
+      items: ['content-apis/sdks'],
     },
     {
       type: 'category',
