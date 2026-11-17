@@ -269,6 +269,47 @@ export class ContentRepository {
       throw new ApiError(500, REPO_ERRORS.FETCH_ENTRY_FAILED);
     }
   }
+  /**
+   * Creates a draft entry on behalf of nobody in particular (a website
+   * visitor sending a form or a comment). It is recorded as a system action.
+   */
+  async createSystemEntry(
+    schemaId: string,
+    data: Record<string, unknown>,
+    applicationId: string,
+    locale: string = DEFAULT_LOCALE,
+  ) {
+    try {
+      return await withTransaction(this.db, async (tx) => {
+        const [newEntry] = await tx
+          .insert(contentEntries)
+          .values({
+            schemaId,
+            applicationId,
+            actorType: 'system',
+            updatedBy: 'Website visitor',
+            collaborators: JSON.stringify(['Website visitor']),
+          })
+          .returning();
+        if (!newEntry) throw new ApiError(500, REPO_ERRORS.CREATE_ENTRY_FAILED);
+        await createEntryVersion(tx, {
+          entryId: newEntry.id,
+          locale,
+          data,
+          status: 'draft',
+          actorType: 'system',
+          comment: 'Sent from the website',
+        });
+        return { id: newEntry.id };
+      });
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'ContentRepository Error in createSystemEntry:',
+      );
+      throw new ApiError(500, REPO_ERRORS.CREATE_ENTRY_FAILED);
+    }
+  }
   async createEntry(
     schemaId: string,
     data: Record<string, unknown>,
@@ -284,6 +325,15 @@ export class ContentRepository {
       return await withTransaction(this.db, async (tx) => {
         logger.debug('ContentRepository: inserting contentEntries row');
         const actor = options.userEmail || userId;
+        let resolvedAppId = options.applicationId;
+        if (!resolvedAppId) {
+          const [schemaRecord] = await tx
+            .select({ applicationId: schemas.applicationId })
+            .from(schemas)
+            .where(eq(schemas.id, schemaId))
+            .limit(1);
+          resolvedAppId = schemaRecord?.applicationId;
+        }
         const [newEntry] = await tx
           .insert(contentEntries)
           .values({
@@ -292,9 +342,7 @@ export class ContentRepository {
             createdByUserId: userId,
             updatedBy: actor,
             collaborators: JSON.stringify([actor]),
-            ...(options.applicationId
-              ? { applicationId: options.applicationId }
-              : {}),
+            ...(resolvedAppId ? { applicationId: resolvedAppId } : {}),
           })
           .returning();
         if (!newEntry) {
