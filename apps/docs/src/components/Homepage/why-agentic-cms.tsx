@@ -43,7 +43,13 @@ export function WhyAgenticCMSSection() {
     >
       <div style={{ maxWidth: '920px', margin: '0 auto' }}>
         <ScrollReveal delay={50}>
-          <header style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 1.75rem auto' }}>
+          <header
+            style={{
+              textAlign: 'center',
+              maxWidth: '680px',
+              margin: '0 auto 1.75rem auto',
+            }}
+          >
             <div
               style={{
                 display: 'inline-flex',
@@ -77,7 +83,8 @@ export function WhyAgenticCMSSection() {
                 margin: '0.35rem auto 0',
               }}
             >
-              A high-performance headless CMS with visual content modeling, enterprise governance, and type-safe SDKs.
+              A high-performance headless CMS with visual content modeling,
+              enterprise governance, and type-safe SDKs.
             </p>
           </header>
         </ScrollReveal>
