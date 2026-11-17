@@ -1,6 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { DialogContext } from '@repo/shared-ui';
 import { UsersAccessPage } from '../../../../../src/features/access/pages/UsersAccessPage';
 import { accessApi } from '../../../../../src/features/access/api/access.api';
 import { useAuthStore } from '../../../../../src/features/auth/store/auth.store';
@@ -77,9 +78,17 @@ const renderPage = () => {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <UsersAccessPage />
-    </QueryClientProvider>,
+    <DialogContext.Provider
+      value={{
+        // Auto-confirm so deletion flows can be exercised
+        openDialog: (options) => options.confirmationCallBack?.(true),
+        closeDialog: vi.fn(),
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <UsersAccessPage />
+      </QueryClientProvider>
+    </DialogContext.Provider>,
   );
 };
 
@@ -93,7 +102,6 @@ describe('UsersAccessPage deletion guards', () => {
       user: currentUser as never,
       status: 'authenticated',
     });
-    window.confirm = vi.fn(() => true);
     vi.mocked(accessApi.getRoles).mockResolvedValue(
       mockUsersResponse(roles) as never,
     );
