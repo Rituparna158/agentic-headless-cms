@@ -2,6 +2,7 @@ import { ERROR_MESSAGES } from '@repo/constants';
 import { getStorageAdapter } from '@repo/config';
 import { NotFoundError, ApiError } from '@repo/utils';
 import { logger } from '@repo/logger';
+import { StorageNotFoundError } from '@repo/storage';
 import { eventBus } from '@repo/events';
 import { EVENT_NAMES, AUDIT_ACTIONS } from '@repo/constants';
 import { MediaRepository, type MediaAssetRecord } from '@repo/repository';
@@ -141,6 +142,10 @@ export class MediaService {
       return { buffer, mimeType, filename: asset.filename };
     } catch (error) {
       logger.error({ err: error }, 'MediaService Error in getFile:');
+      // A record whose file is gone is "not found", not a server fault
+      if (error instanceof StorageNotFoundError) {
+        throw new NotFoundError(ERROR_MESSAGES.MEDIA.ASSET_NOT_FOUND);
+      }
       throw new ApiError(500, SERVICE_ERRORS.FETCH_MEDIA_FAILED);
     }
   }

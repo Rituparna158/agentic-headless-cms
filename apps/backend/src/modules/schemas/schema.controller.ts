@@ -1,3 +1,4 @@
+import { permissionsFor, canSeeSchema } from '../auth/capability.js';
 import type { Request, Response, RequestHandler } from 'express';
 import type { CreateSchemaInput, UpdateSchemaInput } from '@repo/types';
 import { ERROR_MESSAGES } from '@repo/constants';
@@ -41,6 +42,12 @@ export const listSchemas: RequestHandler = asyncHandler(
       options,
       req.context?.applicationId,
     );
+    // A role scoped to some websites only sees those
+    const perms = await permissionsFor(req);
+    const visible = schemas.filter((s) =>
+      canSeeSchema(perms, (s as { id: string }).id),
+    );
+    const filtered = visible.length !== schemas.length;
     logger.info('SchemaController: listSchemas end');
     res
       .status(200)
@@ -48,8 +55,8 @@ export const listSchemas: RequestHandler = asyncHandler(
         new ApiResponse(
           200,
           formatPaginatedResponse(
-            schemas,
-            total,
+            visible,
+            filtered ? visible.length : total,
             options.page!,
             options.pageSize!,
           ),
@@ -71,6 +78,9 @@ export const getSchemaBySlug: RequestHandler = asyncHandler(
       slug as string,
       req.context?.applicationId,
     );
+    if (!canSeeSchema(await permissionsFor(req), schema.id)) {
+      throw new ApiError(403, ERROR_MESSAGES.RBAC.FORBIDDEN);
+    }
     logger.info({ slug }, 'SchemaController: getSchemaBySlug end');
     res
       .status(200)
