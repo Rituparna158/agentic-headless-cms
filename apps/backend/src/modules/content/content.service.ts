@@ -167,9 +167,16 @@ export class ContentService {
       const beforeState = await this.repository.getEntryById(entryId, locale);
       // Perform mutation
       logger.debug({ entryId }, 'ContentService: mutating data');
+      const beforeData = beforeState?.data as
+        | Record<string, unknown>
+        | undefined;
+      const finalData = { ...data };
+      if (beforeData?.body && finalData.body === undefined) {
+        finalData.body = beforeData.body;
+      }
       const result = await this.repository.updateEntryDraft(
         entryId,
-        data,
+        finalData,
         userId,
         locale,
         userEmail,

@@ -14,6 +14,7 @@ export const globalAuthMiddleware = async (
   const requestPath = req.path || req.url.split('?')[0] || '';
   if (
     requestPath.startsWith('/media/file/') ||
+    requestPath.startsWith('/delivery/') ||
     requestPath.startsWith('/auth/sso') ||
     requestPath === '/telemetry/vitals'
   ) {

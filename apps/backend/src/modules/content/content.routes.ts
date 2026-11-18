@@ -4,8 +4,10 @@ import {
   validateContentPayload,
   validatePartialContentPayload,
 } from './validation/content-validation.middleware.js';
+import { enforceUniqueFields } from './validation/unique-fields.middleware.js';
 import { resolveSchema } from './validation/resolve-schema.middleware.js';
 import { authenticateToken } from '@repo/middlewares';
+import { requireCapability, requireContentAccess } from '../auth/capability.js';
 import { requirePermission } from '../auth/rbac.middleware.js';
 
 export const contentRoutes = Router();
@@ -18,17 +20,44 @@ contentRoutes.use('/:schemaSlug', resolveSchema);
 
 contentRoutes.get(
   '/:schemaSlug',
-  requirePermission('read'),
+  requireCapability(
+    [
+      'manage_content',
+      'publish_content',
+      'manage_appearance',
+      'manage_media',
+      'manage_settings',
+    ],
+    'read',
+  ),
   contentController.listEntries,
 );
 contentRoutes.get(
   '/:schemaSlug/:entryId',
-  requirePermission('read'),
+  requireCapability(
+    [
+      'manage_content',
+      'publish_content',
+      'manage_appearance',
+      'manage_media',
+      'manage_settings',
+    ],
+    'read',
+  ),
   contentController.getEntry,
 );
 contentRoutes.get(
   '/:schemaSlug/:entryId/versions',
-  requirePermission('read'),
+  requireCapability(
+    [
+      'manage_content',
+      'publish_content',
+      'manage_appearance',
+      'manage_media',
+      'manage_settings',
+    ],
+    'read',
+  ),
   contentController.listVersions,
 );
 contentRoutes.get(
@@ -48,39 +77,42 @@ contentRoutes.post(
 );
 contentRoutes.post(
   '/:schemaSlug',
-  requirePermission('create'),
+  requireContentAccess('write'),
   validateContentPayload,
+  enforceUniqueFields,
   contentController.createDraft,
 );
 contentRoutes.put(
   '/:schemaSlug/:entryId',
-  requirePermission('update'),
+  requireContentAccess('write'),
   validateContentPayload,
+  enforceUniqueFields,
   contentController.updateDraft,
 );
 contentRoutes.patch(
   '/:schemaSlug/:entryId',
-  requirePermission('update'),
+  requireContentAccess('write'),
   validatePartialContentPayload,
+  enforceUniqueFields,
   contentController.updatePartialEntry,
 );
 contentRoutes.post(
   '/:schemaSlug/:entryId/publish',
-  requirePermission('publish'),
+  requireContentAccess('publish'),
   contentController.publishEntry,
 );
 contentRoutes.post(
   '/:schemaSlug/:entryId/unpublish',
-  requirePermission('publish'),
+  requireContentAccess('publish'),
   contentController.unpublishEntry,
 );
 contentRoutes.post(
   '/:schemaSlug/:entryId/revert',
-  requirePermission('update'),
+  requireContentAccess('write'),
   contentController.revertEntry,
 );
 contentRoutes.delete(
   '/:schemaSlug/:entryId',
-  requirePermission('delete'),
+  requireContentAccess('delete'),
   contentController.deleteEntry,
 );
