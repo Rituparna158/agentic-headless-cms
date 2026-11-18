@@ -20,7 +20,11 @@ export function CmsUiNavbar() {
       <div className={styles.inner}>
         {/* Brand */}
         <Link to="/cms-ui" className={styles.brand}>
-          <img src={logoUrl} alt="Agentic CMS Flame Logo" className={styles.logoImg} />
+          <img
+            src={logoUrl}
+            alt="Agentic CMS Flame Logo"
+            className={styles.logoImg}
+          />
           <span className={styles.brandTitle}>Agentic CMS</span>
           <span className={styles.brandBadge}>UI Studio</span>
         </Link>
@@ -30,13 +34,19 @@ export function CmsUiNavbar() {
           <a href="#features" className={styles.navLink}>
             Features
           </a>
-          <Link to="/cms-ui/docs/getting-started/introduction" className={styles.navLink}>
+          <Link
+            to="/cms-ui/docs/getting-started/introduction"
+            className={styles.navLink}
+          >
             Studio Docs
           </Link>
           <Link to="/" className={styles.navLink}>
             CMS Core
           </Link>
-          <Link to="/docs/getting-started/introduction" className={styles.navLink}>
+          <Link
+            to="/docs/getting-started/introduction"
+            className={styles.navLink}
+          >
             Core Docs
           </Link>
         </div>

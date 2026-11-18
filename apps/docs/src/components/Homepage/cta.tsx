@@ -11,11 +11,13 @@ export function CTASection() {
         <div className={styles.ctaCard}>
           <div className={styles.innerContent}>
             <h2 className={styles.title}>
-              Ready to Build with <span className={styles.titleHighlight}>Agentic CMS</span>?
+              Ready to Build with{' '}
+              <span className={styles.titleHighlight}>Agentic CMS</span>?
             </h2>
 
             <p className={styles.description}>
-              Deploy in minutes with Docker, design custom content models, and deliver content across web and mobile with type-safe SDKs.
+              Deploy in minutes with Docker, design custom content models, and
+              deliver content across web and mobile with type-safe SDKs.
             </p>
 
             <div className={styles.buttons}>

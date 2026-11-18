@@ -6,10 +6,7 @@ const sidebarsCmsUi: SidebarsConfig = {
       type: 'category',
       label: 'Getting Started',
       collapsed: false,
-      items: [
-        'getting-started/introduction',
-        'getting-started/installation',
-      ],
+      items: ['getting-started/introduction', 'getting-started/installation'],
     },
     {
       type: 'category',
