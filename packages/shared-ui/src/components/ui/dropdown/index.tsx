@@ -1,7 +1,7 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { motion } from 'framer-motion';
+import { motion, type MotionStyle } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../../utils/cn';
@@ -77,7 +77,7 @@ interface DropdownProps extends VariantProps<typeof dropdownVariants> {
   trigger: ReactNode;
   animation?: AnimationVariant;
   className?: string;
-  style?: React.CSSProperties;
+  style?: React.CSSProperties | MotionStyle;
   side?: 'top' | 'bottom' | 'left' | 'right';
   sideOffset?: number;
   align?: 'start' | 'center' | 'end';
@@ -112,7 +112,7 @@ export const Dropdown = ({
             animate="animate"
             exit="exit"
             data-theme={bg === 'dark' ? 'dark' : undefined}
-            style={style}
+            style={style as MotionStyle}
             className={cn(dropdownVariants({ size, rounded, bg }), className)}
           >
             {children}
