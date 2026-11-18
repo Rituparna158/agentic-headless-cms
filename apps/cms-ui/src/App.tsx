@@ -102,9 +102,14 @@ const PageEditorPage = React.lazy(() =>
     default: m.PageEditorPage,
   })),
 );
-const PagePreviewPage = React.lazy(() =>
-  import('./features/collections/pages/PagePreviewPage').then((m) => ({
-    default: m.PagePreviewPage,
+const SitePreviewPage = React.lazy(() =>
+  import('./features/render/SitePreviewPage').then((m) => ({
+    default: m.SitePreviewPage,
+  })),
+);
+const PublicSitePage = React.lazy(() =>
+  import('./features/render/PublicSitePage').then((m) => ({
+    default: m.PublicSitePage,
   })),
 );
 const PostsManagementPage = React.lazy(() =>
@@ -240,15 +245,20 @@ export const App = () => {
                           }
                         >
                           <Route
-                            path="/collections/:schemaSlug/preview"
-                            element={<PagePreviewPage />}
+                            path="/collections/:schemaSlug/preview/*"
+                            element={<SitePreviewPage />}
                           />
                           <Route
-                            path="/collections/:schemaSlug/preview/:slug"
-                            element={<PagePreviewPage />}
+                            path="/sites/:siteId/preview/*"
+                            element={<SitePreviewPage />}
                           />
                         </Route>
                       </Route>
+                      {/* Public website (no login) */}
+                      <Route
+                        path="/live/:siteSlug/*"
+                        element={<PublicSitePage />}
+                      />
                       {/* Error Pages */}
                       <Route path="/error" element={<GeneralErrorPage />} />
                       <Route path="*" element={<NotFoundPage />} />
