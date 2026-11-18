@@ -36,7 +36,7 @@
   },
   {
     "name": "Route: Page Preview",
-    "path": "dist/assets/PagePreviewPage-*.js",
+    "path": "dist/assets/SitePreviewPage-*.js",
     "limit": "250 kB"
   },
   {
