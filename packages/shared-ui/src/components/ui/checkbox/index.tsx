@@ -180,6 +180,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           onChange={handleChange}
           disabled={disabled}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          aria-label={label}
           {...props}
         />
 
@@ -258,6 +259,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
               onChange={handleChange}
               disabled={disabled}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              aria-label={label}
               {...props}
             />
 
