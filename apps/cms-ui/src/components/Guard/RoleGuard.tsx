@@ -1,29 +1,45 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../features/auth/store/auth.store';
-import { isUserAdmin } from '../../features/access/constants/access.constants';
+import { useSiteAccess } from '@/hooks/useCan';
+import { userCan } from '@/lib/capabilities';
 import { RoleGuardProps } from './types';
+
+/** Inside a website: permissions are checked for that website. */
+const SiteRoleGuard = ({
+  siteId,
+  requiredCapability,
+  redirectTo = '/',
+}: RoleGuardProps & { siteId: string }) => {
+  const { can, ready } = useSiteAccess(siteId);
+  if (!ready) return null;
+  if (requiredCapability && !can(requiredCapability)) {
+    return <Navigate to={redirectTo} replace />;
+  }
+  return <Outlet />;
+};
+
 export const RoleGuard = ({
   requiredCapability,
   redirectTo = '/',
 }: RoleGuardProps) => {
   const user = useAuthStore((state) => state.user);
+  const { siteId } = useParams<{ siteId: string }>();
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  // Super admins bypass capability checks via strict canonical role comparison
-  const isSuperAdmin = isUserAdmin(user.roles);
-  if (isSuperAdmin) {
-    return <Outlet />;
-  }
-  if (requiredCapability) {
-    // Check if user has the specific capability
-    const hasCapability = user.permissions?.some(
-      (p) => p.condition?.capability === requiredCapability,
+  if (siteId) {
+    return (
+      <SiteRoleGuard
+        siteId={siteId}
+        requiredCapability={requiredCapability}
+        redirectTo={redirectTo}
+      />
     );
-    if (!hasCapability) {
-      return <Navigate to={redirectTo} replace />;
-    }
+  }
+  // Administrators pass; everyone else needs the capability
+  if (requiredCapability && !userCan(user, requiredCapability)) {
+    return <Navigate to={redirectTo} replace />;
   }
   return <Outlet />;
 };

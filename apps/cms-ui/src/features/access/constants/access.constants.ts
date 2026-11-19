@@ -19,12 +19,13 @@ export const CMS_CAPABILITIES = [
   {
     id: 'manage_content',
     label: 'Manage Content',
-    description: 'Create, edit, and delete Posts, Pages, Tags, and Comments',
+    description:
+      'Write and edit Posts, Pages, Tags, and Comments, and delete their own drafts',
   },
   {
     id: 'publish_content',
     label: 'Publish Content',
-    description: 'Authority to publish content directly',
+    description: 'Put content live or take it down, and delete live content',
   },
   {
     id: 'manage_media',
@@ -52,3 +53,34 @@ export const CMS_CAPABILITIES = [
     description: 'Access and modify Global Settings',
   },
 ] as const;
+
+/** Capabilities that can be limited to certain websites. */
+export const SITE_SCOPED_CAPABILITIES: readonly string[] = [
+  'manage_content',
+  'publish_content',
+  'manage_media',
+  'manage_appearance',
+  'manage_settings',
+];
+
+/**
+ * The permissions saved for a role: one per capability, and for website-level
+ * capabilities one per chosen website (none chosen = every website).
+ */
+export function buildRolePermissions(
+  capabilities: string[],
+  siteIds: string[],
+) {
+  return capabilities.flatMap((capability) => {
+    const targets =
+      SITE_SCOPED_CAPABILITIES.includes(capability) && siteIds.length > 0
+        ? siteIds
+        : [null];
+    return targets.map((schemaId) => ({
+      schemaId,
+      action: 'manage' as const,
+      effect: 'allow' as const,
+      condition: { capability },
+    }));
+  });
+}
