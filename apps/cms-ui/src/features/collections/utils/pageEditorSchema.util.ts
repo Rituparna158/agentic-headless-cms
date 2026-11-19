@@ -83,9 +83,25 @@ export function extractSchemaValues(
       ? (pageData.data as Record<string, unknown>)._schemas
       : undefined);
   if (Array.isArray(raw)) {
-    for (const s of raw as Array<{ values?: Record<string, unknown> }>) {
+    for (const s of raw as Array<{
+      values?: Record<string, unknown>;
+      items?: Array<Record<string, unknown>>;
+      slug?: string;
+    }>) {
       if (s && s.values && typeof s.values === 'object') {
         Object.assign(values, s.values);
+      }
+      if (s && Array.isArray(s.items) && s.items.length > 0) {
+        // Sample fields from multi-entry schema items
+        for (const item of s.items) {
+          if (item && typeof item === 'object') {
+            for (const [k, v] of Object.entries(item)) {
+              if (v !== undefined && v !== null && values[k] === undefined) {
+                values[k] = v;
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -214,14 +230,29 @@ export function extractCollectionSchemaValues(
         for (const s of raw as Array<{
           slug?: string;
           values?: Record<string, unknown>;
+          items?: Array<Record<string, unknown>>;
         }>) {
+          const prefix = s.slug ? `${s.slug}.` : '';
           if (s && s.values && typeof s.values === 'object') {
-            const prefix = s.slug ? `${s.slug}.` : '';
             for (const [k, v] of Object.entries(s.values)) {
               if (v !== undefined && v !== null) {
                 if (values[k] === undefined) values[k] = v;
                 if (prefix && values[`${prefix}${k}`] === undefined) {
                   values[`${prefix}${k}`] = v;
+                }
+              }
+            }
+          }
+          if (s && Array.isArray(s.items)) {
+            for (const item of s.items) {
+              if (item && typeof item === 'object') {
+                for (const [k, v] of Object.entries(item)) {
+                  if (v !== undefined && v !== null) {
+                    if (values[k] === undefined) values[k] = v;
+                    if (prefix && values[`${prefix}${k}`] === undefined) {
+                      values[`${prefix}${k}`] = v;
+                    }
+                  }
                 }
               }
             }
@@ -235,17 +266,35 @@ export function extractCollectionSchemaValues(
   const currentValues = extractSchemaValues(currentPageData);
   Object.assign(values, currentValues);
 
-  // Also index current page values with slug prefix
+  // Also index current page values with slug prefix (both single-entry values and multi-entry items)
   const rawCurrent = currentPageData?._schemas;
   if (Array.isArray(rawCurrent)) {
     for (const s of rawCurrent as Array<{
       slug?: string;
       values?: Record<string, unknown>;
+      items?: Array<Record<string, unknown>>;
     }>) {
-      if (s && s.values && typeof s.values === 'object' && s.slug) {
-        for (const [k, v] of Object.entries(s.values)) {
-          if (v !== undefined && v !== null) {
-            values[`${s.slug}.${k}`] = v;
+      if (s && s.slug) {
+        if (s.values && typeof s.values === 'object') {
+          for (const [k, v] of Object.entries(s.values)) {
+            if (v !== undefined && v !== null) {
+              values[`${s.slug}.${k}`] = v;
+            }
+          }
+        }
+        if (Array.isArray(s.items)) {
+          for (const item of s.items) {
+            if (item && typeof item === 'object') {
+              for (const [k, v] of Object.entries(item)) {
+                if (
+                  v !== undefined &&
+                  v !== null &&
+                  values[`${s.slug}.${k}`] === undefined
+                ) {
+                  values[`${s.slug}.${k}`] = v;
+                }
+              }
+            }
           }
         }
       }

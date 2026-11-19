@@ -93,10 +93,14 @@ export const StatCounterSettings: React.FC<{ targetComponentId: string }> = ({
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${item.id}-prefix`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Prefix
                   </label>
                   <input
+                    id={`${item.id}-prefix`}
                     type="text"
                     value={item.prefix}
                     onChange={(e) =>
@@ -107,10 +111,14 @@ export const StatCounterSettings: React.FC<{ targetComponentId: string }> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${item.id}-value`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Value
                   </label>
                   <input
+                    id={`${item.id}-value`}
                     type="text"
                     value={item.value}
                     onChange={(e) =>
@@ -121,10 +129,14 @@ export const StatCounterSettings: React.FC<{ targetComponentId: string }> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${item.id}-suffix`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Suffix
                   </label>
                   <input
+                    id={`${item.id}-suffix`}
                     type="text"
                     value={item.suffix}
                     onChange={(e) =>
@@ -136,10 +148,14 @@ export const StatCounterSettings: React.FC<{ targetComponentId: string }> = ({
                 </div>
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                <label
+                  htmlFor={`${item.id}-label`}
+                  className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                >
                   Label
                 </label>
                 <input
+                  id={`${item.id}-label`}
                   type="text"
                   value={item.label}
                   onChange={(e) =>
@@ -192,11 +208,15 @@ export const StatCounterSettings: React.FC<{ targetComponentId: string }> = ({
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              className="text-xs text-muted-foreground"
+            >
               Background Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-bg-color`}
                 type="color"
                 value={settings.backgroundColor}
                 onChange={(e) =>
@@ -215,11 +235,15 @@ export const StatCounterSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-val-color`}
+              className="text-xs text-muted-foreground"
+            >
               Number Value Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-val-color`}
                 type="color"
                 value={settings.valueColor}
                 onChange={(e) => handleChange('valueColor', e.target.value)}
@@ -234,11 +258,15 @@ export const StatCounterSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              className="text-xs text-muted-foreground"
+            >
               Label Text Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-text-color`}
                 type="color"
                 value={settings.textColor}
                 onChange={(e) => handleChange('textColor', e.target.value)}

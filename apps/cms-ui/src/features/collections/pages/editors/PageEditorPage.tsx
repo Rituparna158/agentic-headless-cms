@@ -42,6 +42,7 @@ import {
 import { usePageBuilderStore } from '../../components/page-builder/stores/pageBuilderStore';
 import { useCanvasAutoSave } from '../../hooks/useCanvasAutoSave';
 import { useToast } from '@repo/shared-ui';
+import { useCan } from '@/hooks/useCan';
 import { slugify } from '../../utils/slugify.util';
 import { InlineErrorAlert } from '@/components/ui/InlineErrorAlert';
 import { useLiveAnnouncer } from '@/components/ui/LiveAnnouncer';
@@ -54,13 +55,23 @@ const GrapesJSEditor = lazy(() =>
 );
 
 export function PageEditorPage() {
-  const { schemaSlug, pageId } = useParams<{
-    schemaSlug: string;
+  const {
+    schemaSlug: rawSchemaSlug,
+    siteId,
+    pageId,
+  } = useParams<{
+    schemaSlug?: string;
+    siteId?: string;
     pageId: string;
   }>();
+  const schemaSlug = rawSchemaSlug || siteId;
   const navigate = useNavigate();
+  const backUrl = siteId
+    ? `/sites/${siteId}/pages`
+    : `/collections/${schemaSlug}`;
   const queryClient = useQueryClient();
   const toast = useToast();
+  const canPublish = useCan(schemaSlug)('publish_content');
   const { announce } = useLiveAnnouncer();
 
   const pageQuery = useQuery({
@@ -306,7 +317,7 @@ export function PageEditorPage() {
           (bodyData as Record<string, unknown>)?.builder === 'grapesjs'
             ? bodyData
             : {
-                builder: 'grapesjs',
+                builder: 'grapesjs' as const,
                 html: '',
                 css: '',
                 components: [],
@@ -358,6 +369,32 @@ export function PageEditorPage() {
     },
   });
 
+  const handleDiscardDraft = async () => {
+    await discardDraft();
+    const pData = (pageQuery.data?.data || {}) as Record<string, unknown>;
+    const bodyData = (pData.body as Record<string, unknown>) ?? undefined;
+    if (activeBuilder === 'grapesjs') {
+      const serverGrapes =
+        bodyData?.builder === 'grapesjs'
+          ? (bodyData as Partial<GrapesJSData>)
+          : {
+              builder: 'grapesjs' as const,
+              html: '',
+              css: '',
+              projectData: undefined,
+              components: [],
+              styles: [],
+            };
+      bodyRef.current = serverGrapes;
+      grapesEditorRef.current?.loadRawData(serverGrapes);
+    } else {
+      const safeBody = Array.isArray(bodyData) ? bodyData : [];
+      bodyRef.current = safeBody;
+      setInitialBody(safeBody);
+    }
+    toast.success('Local draft discarded. Restored saved version.');
+  };
+
   // Announce canvas hydration readiness
   useEffect(() => {
     if (isBuilderReady) {
@@ -377,7 +414,15 @@ export function PageEditorPage() {
 
   const updateMutation = useMutation({
     mutationFn: () => {
-      const pData = (pageQuery.data?.data as Record<string, unknown>) || {};
+      const freshEntry = queryClient.getQueryData<PageEntry>([
+        'page',
+        schemaSlug,
+        pageId,
+      ]);
+      const pData =
+        (freshEntry?.data as Record<string, unknown>) ||
+        (pageQuery.data?.data as Record<string, unknown>) ||
+        {};
       const sValues: Record<string, unknown> = {};
       const rawSchemas = pData._schemas;
       if (Array.isArray(rawSchemas)) {
@@ -433,6 +478,12 @@ export function PageEditorPage() {
       usePageBuilderStore.getState().markClean(pageId!);
       queryClient.invalidateQueries({ queryKey: ['pages', schemaSlug] });
       queryClient.invalidateQueries({ queryKey: ['page', schemaSlug, pageId] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-pages', schemaSlug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['site-preview-entries', schemaSlug],
+      });
       announce('Page saved successfully to cloud', 'polite');
       toast.success('Page saved successfully!');
     },
@@ -492,7 +543,7 @@ export function PageEditorPage() {
           message={pageQuery.error}
           onRetry={() => pageQuery.refetch()}
           isRetrying={pageQuery.isFetching}
-          onBack={() => navigate(`/collections/${schemaSlug}`)}
+          onBack={() => navigate(backUrl)}
           backText="Back to Pages"
           className="max-w-xl w-full"
         />
@@ -505,7 +556,7 @@ export function PageEditorPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <p className="text-muted-foreground text-base">Page not found</p>
         <button
-          onClick={() => navigate(`/collections/${schemaSlug}`)}
+          onClick={() => navigate(backUrl)}
           className="px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 text-sm shadow-sm"
         >
           Back to Pages
@@ -517,7 +568,7 @@ export function PageEditorPage() {
   return (
     <div className="flex flex-col h-[100vh]">
       <PageEditorHeader
-        schemaSlug={schemaSlug!}
+        schemaSlug={schemaSlug ?? ''}
         slug={slug}
         title={title}
         onTitleChange={handleTitleChange}
@@ -531,14 +582,14 @@ export function PageEditorPage() {
         isSaving={updateMutation.isPending}
         isDirty={isDirty}
         onSave={handleSave}
-        onNavigateBack={() => navigate(`/collections/${schemaSlug}`)}
+        onNavigateBack={() => navigate(backUrl)}
       />
 
       {hasRecoverableDraft && (
         <DraftRecoveryBanner
           draft={recoveredDraft}
           onRestore={restoreDraft}
-          onDiscard={discardDraft}
+          onDiscard={handleDiscardDraft}
         />
       )}
 
@@ -559,7 +610,7 @@ export function PageEditorPage() {
             }
           >
             <CustomBuilderEditor
-              id={pageId!}
+              id={pageId ?? ''}
               initialDesign={initialBody as PageBuilderDesign}
               onChange={handleDesignChange}
               title={title}
@@ -591,6 +642,7 @@ export function PageEditorPage() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImport={handleTemplateImport}
+        availablePages={collectionPages.filter((p) => p.id !== pageId)}
       />
       <ExistingContentDialog
         isOpen={isExistingDialogOpen}
@@ -620,7 +672,12 @@ export function PageEditorPage() {
         collection={activeCollection}
         page={activeDrawerPage}
         collectionPages={collectionPages}
-        onSavePage={async (pId, data, publishImmediately) => {
+        onSavePage={async (pId, data, wantsPublish) => {
+          // Writers without publishing rights save a draft instead
+          const publishImmediately = wantsPublish && canPublish;
+          if (wantsPublish && !canPublish) {
+            toast.info('Saved as a draft. An editor can publish it.');
+          }
           const effectiveSlug = schemaSlug || 'collection';
           await collectionsApi.updatePage(effectiveSlug, pId, {
             ...data,
@@ -635,6 +692,12 @@ export function PageEditorPage() {
           });
           queryClient.invalidateQueries({
             queryKey: ['pages', schemaSlug],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['collection-pages', schemaSlug],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['site-preview-entries', schemaSlug],
           });
           toast.success(
             publishImmediately

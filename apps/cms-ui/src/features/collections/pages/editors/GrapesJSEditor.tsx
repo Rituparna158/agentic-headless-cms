@@ -111,8 +111,14 @@ export const GrapesJSEditor = forwardRef<
         const editor = grapesjs.init({
           container: containerRef.current,
           fromElement: false,
+          storageManager: false, // Prevents GrapesJS from caching to or reading from browser localStorage
           height: '100%',
           width: '100%',
+          canvas: {
+            styles: [
+              'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
+            ],
+          },
           assetManager: {
             custom: {
               open(props?: {
@@ -305,20 +311,52 @@ export const GrapesJSEditor = forwardRef<
         const initialConfig = initialDataRef.current;
         if (initialConfig && initialConfig.builder === 'grapesjs') {
           try {
-            if (initialConfig.projectData) {
+            if (
+              initialConfig.projectData &&
+              typeof initialConfig.projectData === 'object' &&
+              Object.keys(initialConfig.projectData).length > 0
+            ) {
               editor.loadProjectData(initialConfig.projectData);
             } else {
-              // Fallback for old data format
-              if (initialConfig.components) {
+              // Fallback for old data format or custom layouts
+              if (
+                initialConfig.components &&
+                Array.isArray(initialConfig.components) &&
+                initialConfig.components.length > 0
+              ) {
                 editor.setComponents(initialConfig.components);
+              } else if (
+                typeof initialConfig.html === 'string' &&
+                initialConfig.html.trim().length > 0
+              ) {
+                // Pages saved with HTML and CSS
+                editor.setComponents(initialConfig.html);
+              } else {
+                // Explicitly clear canvas for blank pages
+                editor.setComponents('');
               }
-              if (initialConfig.styles) {
+              if (
+                initialConfig.styles &&
+                Array.isArray(initialConfig.styles) &&
+                initialConfig.styles.length > 0
+              ) {
                 editor.setStyle(initialConfig.styles);
+              } else if (
+                typeof initialConfig.css === 'string' &&
+                initialConfig.css.trim().length > 0
+              ) {
+                editor.setStyle(initialConfig.css);
               }
+              // Do not wipe out styles with setStyle('') if css was not passed,
+              // as HTML components may have had embedded <style> tags parsed by GrapesJS.
             }
           } catch (e) {
             browserLogger.error('Error loading GrapesJS data:', e);
           }
+        } else {
+          // No initial config: ensure completely blank canvas
+          editor.setComponents('');
+          editor.setStyle('');
         }
         const handleChange = () => {
           if (!isReadyRef.current) return;
@@ -336,6 +374,15 @@ export const GrapesJSEditor = forwardRef<
           isReadyRef.current = true;
           setActiveDevice(editor.getDevice());
           setIsEngineLoading(false);
+
+          // Synchronize CSS directly to the canvas document head once the iframe is loaded
+          if (
+            initialConfig &&
+            typeof initialConfig.css === 'string' &&
+            initialConfig.css.trim().length > 0
+          ) {
+            editor.addStyle(initialConfig.css);
+          }
         });
 
         editor.on('change:device', () => {
@@ -382,6 +429,7 @@ export const GrapesJSEditor = forwardRef<
             editor.setComponents(result.html);
             if (result.css) {
               editor.setStyle(result.css);
+              editor.addStyle(result.css);
             }
           }
         } else {
@@ -410,16 +458,28 @@ export const GrapesJSEditor = forwardRef<
         const editor = editorRef.current;
         if (data.projectData) {
           editor.loadProjectData(data.projectData);
-        } else if (data.components) {
+        } else if (
+          data.components &&
+          Array.isArray(data.components) &&
+          data.components.length > 0
+        ) {
           editor.setComponents(data.components);
           if (data.styles) {
             editor.setStyle(data.styles);
           }
-        } else if (data.html) {
+        } else if (
+          typeof data.html === 'string' &&
+          data.html.trim().length > 0
+        ) {
           editor.setComponents(data.html);
           if (data.css) {
             editor.setStyle(data.css);
+            editor.addStyle(data.css);
           }
+        } else {
+          // Explicitly clear canvas
+          editor.setComponents('');
+          editor.setStyle('');
         }
       },
 

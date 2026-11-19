@@ -67,6 +67,8 @@ export interface PageEntry {
   scheduledAt?: string | null;
   scheduledStatus?: string | null;
   data?: PageEntryData;
+  /** Legacy location of page sections; prefer `data._schemas`. */
+  schemas?: PageCustomSchema[];
   publishedData?: unknown;
   updatedBy?: string | null;
   collaborators?: string | null;

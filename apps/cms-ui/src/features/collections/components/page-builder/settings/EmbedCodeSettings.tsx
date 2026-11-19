@@ -29,7 +29,10 @@ export const EmbedCodeSettings: React.FC<{ targetComponentId: string }> = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+        <label
+          htmlFor={`${targetComponentId}-html-content`}
+          className="text-sm font-medium text-foreground flex items-center gap-2"
+        >
           <Code className="w-4 h-4 text-muted-foreground" />
           Raw HTML / Iframe
         </label>
@@ -38,6 +41,7 @@ export const EmbedCodeSettings: React.FC<{ targetComponentId: string }> = ({
           exactly as written.
         </p>
         <textarea
+          id={`${targetComponentId}-html-content`}
           value={settings.htmlContent}
           onChange={(e) => handleChange('htmlContent', e.target.value)}
           className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground font-mono whitespace-pre"

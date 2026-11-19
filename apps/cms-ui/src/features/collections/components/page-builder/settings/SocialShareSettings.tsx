@@ -51,10 +51,14 @@ export const SocialShareSettings: React.FC<{ targetComponentId: string }> = ({
 
         {Object.entries(settings.platforms).map(([platform, url]) => (
           <div key={platform} className="space-y-1">
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <label
+              htmlFor={`${targetComponentId}-platform-${platform}`}
+              className="text-[10px] text-muted-foreground uppercase tracking-wider"
+            >
               {platform}
             </label>
             <input
+              id={`${targetComponentId}-platform-${platform}`}
               type="text"
               value={url}
               onChange={(e) => handlePlatformChange(platform, e.target.value)}
@@ -73,7 +77,7 @@ export const SocialShareSettings: React.FC<{ targetComponentId: string }> = ({
         </h4>
 
         <div className="space-y-2">
-          <label className="text-xs text-muted-foreground block">Style</label>
+          <span className="text-xs text-muted-foreground block">Style</span>
           <div className="flex bg-muted/50 p-1 rounded-md border border-border">
             {(['icons', 'buttons'] as const).map((l) => (
               <button
@@ -92,9 +96,7 @@ export const SocialShareSettings: React.FC<{ targetComponentId: string }> = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs text-muted-foreground block">
-            Alignment
-          </label>
+          <span className="text-xs text-muted-foreground block">Alignment</span>
           <div className="flex bg-muted/50 p-1 rounded-md border border-border">
             {[
               { id: 'left', icon: AlignLeft },
@@ -126,9 +128,15 @@ export const SocialShareSettings: React.FC<{ targetComponentId: string }> = ({
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Base Color</label>
+            <label
+              htmlFor={`${targetComponentId}-icon-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Base Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-icon-color`}
                 type="color"
                 value={settings.iconColor}
                 onChange={(e) => handleChange('iconColor', e.target.value)}
@@ -143,9 +151,15 @@ export const SocialShareSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Hover Color</label>
+            <label
+              htmlFor={`${targetComponentId}-hover-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Hover Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-hover-color`}
                 type="color"
                 value={settings.hoverColor}
                 onChange={(e) => handleChange('hoverColor', e.target.value)}

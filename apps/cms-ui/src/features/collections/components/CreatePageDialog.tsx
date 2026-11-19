@@ -70,6 +70,7 @@ export function CreatePageDialog({
     >
       <div
         onClick={handleClose}
+        aria-hidden="true"
         className="absolute inset-0 bg-background/80 backdrop-blur-sm"
       />
       <div

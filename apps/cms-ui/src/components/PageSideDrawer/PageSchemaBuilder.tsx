@@ -66,10 +66,14 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+            <label
+              htmlFor="schema-builder-name"
+              className="block text-xs font-semibold text-zinc-300 mb-1.5"
+            >
               Schema Name <span className="text-rose-400">*</span>
             </label>
             <input
+              id="schema-builder-name"
               type="text"
               required
               value={builderName}
@@ -87,10 +91,14 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+            <label
+              htmlFor="schema-builder-slug"
+              className="block text-xs font-semibold text-zinc-300 mb-1.5"
+            >
               Schema API Key (Slug) <span className="text-rose-400">*</span>
             </label>
             <input
+              id="schema-builder-slug"
               type="text"
               required
               value={builderSlug}
@@ -107,9 +115,9 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
 
         {/* Schema Architecture: Single-Entry vs Multi-Entry */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-300 mb-2">
+          <span className="block text-xs font-semibold text-zinc-300 mb-2">
             Schema Architecture (Entry Configuration)
-          </label>
+          </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               type="button"
@@ -160,10 +168,14 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label
+            htmlFor="schema-builder-desc"
+            className="block text-xs font-medium text-zinc-400 mb-1.5"
+          >
             Description (Optional)
           </label>
           <input
+            id="schema-builder-desc"
             type="text"
             value={builderDesc}
             onChange={(e) => setBuilderDesc(e.target.value)}
@@ -278,10 +290,14 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block text-[11px] text-zinc-400 mb-1 font-medium">
+              <label
+                htmlFor="builder-new-field-name"
+                className="block text-[11px] text-zinc-400 mb-1 font-medium"
+              >
                 Field Name <span className="text-rose-400">*</span>
               </label>
               <input
+                id="builder-new-field-name"
                 type="text"
                 required
                 value={newFieldName}
@@ -297,10 +313,14 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] text-zinc-400 mb-1 font-medium">
+              <label
+                htmlFor="builder-new-field-api-id"
+                className="block text-[11px] text-zinc-400 mb-1 font-medium"
+              >
                 API ID (snake_case) <span className="text-rose-400">*</span>
               </label>
               <input
+                id="builder-new-field-api-id"
                 type="text"
                 required
                 value={newFieldApiId}
@@ -315,10 +335,14 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] text-zinc-400 mb-1 font-medium">
+              <label
+                htmlFor="builder-new-field-type"
+                className="block text-[11px] text-zinc-400 mb-1 font-medium"
+              >
                 Data Type
               </label>
               <select
+                id="builder-new-field-type"
                 value={newFieldType}
                 onChange={(e) =>
                   setNewFieldType(e.target.value as DynamicFieldDataType)
@@ -338,10 +362,14 @@ export const PageSchemaBuilder: React.FC<PageSchemaBuilderProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] text-zinc-400 mb-1 font-medium">
+              <label
+                htmlFor="builder-new-field-initial-value"
+                className="block text-[11px] text-zinc-400 mb-1 font-medium"
+              >
                 Initial Value (Optional)
               </label>
               <input
+                id="builder-new-field-initial-value"
                 type="text"
                 value={newFieldInitialValue}
                 onChange={(e) => setNewFieldInitialValue(e.target.value)}

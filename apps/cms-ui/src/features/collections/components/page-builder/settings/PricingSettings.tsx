@@ -140,10 +140,14 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
               {/* Tier Basics */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${tier.id}-name`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Name
                   </label>
                   <input
+                    id={`${tier.id}-name`}
                     type="text"
                     value={tier.name}
                     onChange={(e) =>
@@ -153,9 +157,9 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">
                     Highlight
-                  </label>
+                  </span>
                   <label className="flex items-center gap-2 px-2 py-1.5 text-xs border border-input rounded bg-background cursor-pointer">
                     <input
                       type="checkbox"
@@ -169,10 +173,14 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
                   </label>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${tier.id}-price`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Price
                   </label>
                   <input
+                    id={`${tier.id}-price`}
                     type="text"
                     value={tier.price}
                     onChange={(e) =>
@@ -182,10 +190,14 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  <label
+                    htmlFor={`${tier.id}-cycle`}
+                    className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                  >
                     Cycle
                   </label>
                   <input
+                    id={`${tier.id}-cycle`}
                     type="text"
                     value={tier.cycle}
                     onChange={(e) =>
@@ -310,11 +322,15 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              className="text-xs text-muted-foreground"
+            >
               Background Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-bg-color`}
                 type="color"
                 value={settings.backgroundColor}
                 onChange={(e) =>
@@ -333,9 +349,15 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Card Color</label>
+            <label
+              htmlFor={`${targetComponentId}-card-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Card Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-card-color`}
                 type="color"
                 value={settings.cardColor}
                 onChange={(e) => handleChange('cardColor', e.target.value)}
@@ -350,9 +372,15 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Text Color</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Text Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-text-color`}
                 type="color"
                 value={settings.textColor}
                 onChange={(e) => handleChange('textColor', e.target.value)}
@@ -367,11 +395,15 @@ export const PricingSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-accent-color`}
+              className="text-xs text-muted-foreground"
+            >
               Accent Color (Buttons/Popular)
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-accent-color`}
                 type="color"
                 value={settings.accentColor}
                 onChange={(e) => handleChange('accentColor', e.target.value)}

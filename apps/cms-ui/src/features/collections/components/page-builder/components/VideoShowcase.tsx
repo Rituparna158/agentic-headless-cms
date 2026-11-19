@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/media-has-caption -- user-embedded video; captions are not available */
 import { forwardRef, useLayoutEffect, useState, useEffect } from 'react';
 import {
   usePageBuilderStore,

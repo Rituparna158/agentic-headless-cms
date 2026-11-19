@@ -78,8 +78,11 @@ export default function FeatureGridSettings({
     >
       {/* Header */}
       <div style={sectionStyle}>
-        <label style={labelStyle}>Section Title</label>
+        <label htmlFor={`${targetComponentId}-title`} style={labelStyle}>
+          Section Title
+        </label>
         <input
+          id={`${targetComponentId}-title`}
           style={inputStyle}
           value={s.title}
           onChange={(e) => u({ title: e.target.value })}
@@ -88,8 +91,11 @@ export default function FeatureGridSettings({
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Subtitle</label>
+        <label htmlFor={`${targetComponentId}-subtitle`} style={labelStyle}>
+          Subtitle
+        </label>
         <input
+          id={`${targetComponentId}-subtitle`}
           style={inputStyle}
           value={s.subtitle}
           onChange={(e) => u({ subtitle: e.target.value })}
@@ -98,8 +104,11 @@ export default function FeatureGridSettings({
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Columns</label>
+        <label htmlFor={`${targetComponentId}-columns`} style={labelStyle}>
+          Columns
+        </label>
         <select
+          id={`${targetComponentId}-columns`}
           style={inputStyle}
           value={s.columns}
           onChange={(e) => u({ columns: Number(e.target.value) as 2 | 3 | 4 })}
@@ -214,7 +223,7 @@ export default function FeatureGridSettings({
 
       {/* Colors */}
       <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
-        <label style={labelStyle}>Colors</label>
+        <span style={labelStyle}>Colors</span>
         <div
           style={{
             display: 'grid',
@@ -223,10 +232,14 @@ export default function FeatureGridSettings({
           }}
         >
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Background
             </label>
             <input
+              id={`${targetComponentId}-bg-color`}
               type="color"
               style={{
                 width: '100%',
@@ -240,8 +253,14 @@ export default function FeatureGridSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>Cards</label>
+            <label
+              htmlFor={`${targetComponentId}-cards-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
+              Cards
+            </label>
             <input
+              id={`${targetComponentId}-cards-color`}
               type="color"
               style={{
                 width: '100%',
@@ -255,8 +274,14 @@ export default function FeatureGridSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>Title</label>
+            <label
+              htmlFor={`${targetComponentId}-title-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
+              Title
+            </label>
             <input
+              id={`${targetComponentId}-title-color`}
               type="color"
               style={{
                 width: '100%',
@@ -270,8 +295,14 @@ export default function FeatureGridSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>Icons</label>
+            <label
+              htmlFor={`${targetComponentId}-icons-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
+              Icons
+            </label>
             <input
+              id={`${targetComponentId}-icons-color`}
               type="color"
               style={{
                 width: '100%',

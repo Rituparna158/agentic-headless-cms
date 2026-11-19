@@ -84,6 +84,7 @@ export interface CustomBlocksPluginOptions {
   schemaFields?: CmsSchemaField[];
   availableSchemas?: CmsPageSchema[];
   schemaValues?: Record<string, unknown>;
+  menus?: Array<{ id: string; name: string }>;
 }
 
 export interface GrapesJSData {
