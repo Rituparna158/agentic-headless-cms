@@ -73,6 +73,7 @@ export const AuditDetailDrawer: React.FC<AuditDetailDrawerProps> = ({
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in"
+        role="presentation"
         onClick={onClose}
       />
 
@@ -348,7 +349,7 @@ export const AuditDetailDrawer: React.FC<AuditDetailDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() =>
-                            copyText(log.actorUserId!, 'tech_user_id')
+                            copyText(log.actorUserId ?? '', 'tech_user_id')
                           }
                           className="text-muted-foreground hover:text-foreground"
                         >
@@ -372,7 +373,7 @@ export const AuditDetailDrawer: React.FC<AuditDetailDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() =>
-                            copyText(log.actorAgentId!, 'tech_agent_id')
+                            copyText(log.actorAgentId ?? '', 'tech_agent_id')
                           }
                           className="text-muted-foreground hover:text-foreground"
                         >

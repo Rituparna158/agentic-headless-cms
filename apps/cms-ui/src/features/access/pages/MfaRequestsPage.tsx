@@ -32,7 +32,11 @@ import {
 import { MFA_SORTABLE_COLUMNS } from '../constants/access.constants';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
-export const MfaRequestsPage = () => {
+export const MfaRequestsPage = ({
+  hideHeader = false,
+}: {
+  hideHeader?: boolean;
+} = {}) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<MfaTabId>('pending');
 
@@ -140,19 +144,21 @@ export const MfaRequestsPage = () => {
 
   return (
     <div className="flex flex-col h-full bg-background animate-in fade-in duration-300">
-      <div className="px-6 py-6 border-b border-border/40">
-        <div className="flex items-center justify-between">
-          <div>
-            <Typography variant="h2" className="tracking-tight mb-1">
-              MFA Reset Requests
-            </Typography>
-            <Typography variant="body" className="text-muted-foreground">
-              Review and approve or reject user requests to reset their
-              Multi-Factor Authentication.
-            </Typography>
+      {!hideHeader && (
+        <div className="px-6 py-6 border-b border-border/40">
+          <div className="flex items-center justify-between">
+            <div>
+              <Typography variant="h2" className="tracking-tight mb-1">
+                MFA Reset Requests
+              </Typography>
+              <Typography variant="body" className="text-muted-foreground">
+                Review and approve or reject user requests to reset their
+                Multi-Factor Authentication.
+              </Typography>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Summary */}

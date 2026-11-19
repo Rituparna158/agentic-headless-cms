@@ -12,16 +12,22 @@ import { Plus, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
 import { InviteUserDialog } from '../components/InviteUserDialog';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useConfirm } from '@/hooks/useConfirm';
 import {
   USER_SORTABLE_COLUMNS,
   USER_SEARCHABLE_LABEL,
   isUserAdmin,
 } from '../constants/access.constants';
 
-export const UsersAccessPage = () => {
+export const UsersAccessPage = ({
+  hideHeader = false,
+}: {
+  hideHeader?: boolean;
+} = {}) => {
   const currentUser = useAuthStore((state) => state.user);
   const isSuperAdmin = isUserAdmin(currentUser?.roles);
   const queryClient = useQueryClient();
+  const confirmAction = useConfirm();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
   const [page, setPage] = useState(1);
@@ -95,12 +101,17 @@ export const UsersAccessPage = () => {
       return 'Cannot delete the last active administrator';
     return null;
   };
-  const handleDelete = (id: string, blockReason: string | null) => {
+  const handleDelete = async (id: string, blockReason: string | null) => {
     if (blockReason) {
       setDeleteError(blockReason);
       return;
     }
-    if (confirm('Are you sure you want to remove this user?')) {
+    const confirmed = await confirmAction({
+      title: 'Remove user?',
+      message: 'This user will lose access to the CMS immediately.',
+      confirmText: 'Remove user',
+    });
+    if (confirmed) {
       deleteMutation.mutate(id);
     }
   };
@@ -109,20 +120,22 @@ export const UsersAccessPage = () => {
   };
   return (
     <div className="flex flex-col h-full bg-background animate-in fade-in duration-300">
-      <div className="flex items-center justify-between p-6 border-b border-border/40">
-        <div>
-          <Typography variant="h3" className="font-semibold text-foreground">
-            All Users
-          </Typography>
-          <Typography variant="body" className="text-muted-foreground mt-1">
-            Manage your team members and their roles.
-          </Typography>
+      {!hideHeader && (
+        <div className="flex items-center justify-between p-6 border-b border-border/40">
+          <div>
+            <Typography variant="h3" className="font-semibold text-foreground">
+              All Users
+            </Typography>
+            <Typography variant="body" className="text-muted-foreground mt-1">
+              Manage your team members and their roles.
+            </Typography>
+          </div>
+          <Button onClick={() => setIsInviteDialogOpen(true)} className="gap-2">
+            <Plus size={16} />
+            Invite User
+          </Button>
         </div>
-        <Button onClick={() => setIsInviteDialogOpen(true)} className="gap-2">
-          <Plus size={16} />
-          Invite User
-        </Button>
-      </div>
+      )}
       <div className="flex-1 overflow-auto p-6">
         {usersLoading ? (
           <div className="p-8 text-center text-muted-foreground">

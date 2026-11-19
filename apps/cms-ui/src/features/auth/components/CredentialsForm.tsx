@@ -92,7 +92,11 @@ export function CredentialsForm() {
           name="rememberMe"
           render={({ field }) => (
             <FormField className="flex flex-row items-center gap-2 space-y-0 mt-2">
-              <Checkbox checked={field.value} onChange={field.onChange} />
+              <Checkbox
+                checked={field.value}
+                onChange={field.onChange}
+                aria-label="Remember me"
+              />
               <Typography variant="label" className="font-normal">
                 Remember me
               </Typography>
