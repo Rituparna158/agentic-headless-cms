@@ -1,5 +1,6 @@
+import { activateOnKey } from '@/utils/a11y.util';
 import React, { useState } from 'react';
-import { Copy, Check, Eye, Trash2, FileText, Film } from 'lucide-react';
+import { Copy, Check, Eye, Trash2, FileText, Film, Tag } from 'lucide-react';
 import type { MediaAssetCardProps } from '../types/media.types';
 import {
   formatBytes,
@@ -17,6 +18,7 @@ export const MediaAssetCard: React.FC<MediaAssetCardProps> = ({
   onDelete,
   onSelect,
   isPickerMode = false,
+  usedInSites = [],
 }) => {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -49,8 +51,14 @@ export const MediaAssetCard: React.FC<MediaAssetCardProps> = ({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- card holds its own controls, so it cannot be role=button
     <div
+      role="group"
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- see above
+      tabIndex={0}
+      aria-label={asset.filename}
       onClick={handleCardClick}
+      onKeyDown={activateOnKey(handleCardClick)}
       className={`group relative flex flex-col bg-card text-card-foreground rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden shadow-xs hover:shadow-md ${
         isSelected
           ? 'border-primary ring-2 ring-primary/40 bg-primary/5'
@@ -89,6 +97,17 @@ export const MediaAssetCard: React.FC<MediaAssetCardProps> = ({
         {/* Selection Checkbox */}
         {onToggleSelect && (
           <div
+            role="checkbox"
+            aria-checked={isSelected}
+            aria-label={`Select ${asset.filename}`}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleSelect(asset);
+              }
+            }}
             onClick={(e) => {
               e.stopPropagation();
               onToggleSelect(asset);
@@ -178,6 +197,24 @@ export const MediaAssetCard: React.FC<MediaAssetCardProps> = ({
             </span>
           ) : (
             <span className="capitalize">{category}</span>
+          )}
+        </div>
+
+        {/* Screen 9: Multi-Site Usage Badge */}
+        <div className="pt-1 mt-0.5 border-t border-border/40 flex items-center justify-between">
+          {usedInSites && usedInSites.length > 0 ? (
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 truncate max-w-full"
+              title={`Used on: ${usedInSites.join(', ')}`}
+            >
+              <Tag className="size-2.5 shrink-0" />
+              <span className="truncate">{usedInSites.join(', ')}</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground bg-muted/60 border border-border/60">
+              <Tag className="size-2.5 shrink-0" />
+              <span>Unused</span>
+            </span>
           )}
         </div>
       </div>
