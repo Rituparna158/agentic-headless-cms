@@ -1,4 +1,4 @@
-import { eq, sql, and, inArray, desc } from 'drizzle-orm';
+import { eq, sql, and, inArray, desc, isNull } from 'drizzle-orm';
 import type {
   BaseQueryOptions,
   CreateWorkflowInput,
@@ -6,6 +6,8 @@ import type {
   WorkflowRecord,
   ContentWorkflowStateRecord,
   WorkflowHistoryRecord,
+  PendingReviewItem,
+  PendingReviewsResult,
 } from '@repo/types';
 import { getDatabaseAdapter } from '@repo/config';
 import { logger } from '@repo/logger';
@@ -15,6 +17,8 @@ import {
   schemas,
   contentWorkflowStates,
   workflowHistories,
+  contentEntries,
+  entryLocalizations,
   users,
   RecordNotFoundError,
   buildPaginationOptions,
@@ -842,6 +846,225 @@ export class WorkflowsRepository {
         'WorkflowsRepository Error in getWorkflowHistory:',
       );
       throw new ApiError(500, REPO_ERRORS.FETCH_WORKFLOW_HISTORY_FAILED);
+    }
+  }
+
+  async getEntryCreatorUserId(
+    entryId: string,
+    applicationId?: string,
+  ): Promise<string | null> {
+    try {
+      logger.info({ entryId }, 'WorkflowsRepository: getEntryCreatorUserId');
+      const conditions = [eq(contentEntries.id, entryId)];
+      if (applicationId) {
+        conditions.push(eq(contentEntries.applicationId, applicationId));
+      }
+
+      const [entry] = await this.db
+        .select({ createdByUserId: contentEntries.createdByUserId })
+        .from(contentEntries)
+        .where(and(...conditions))
+        .limit(1);
+
+      return entry?.createdByUserId ?? null;
+    } catch (error) {
+      logger.error(
+        { err: error, entryId },
+        'WorkflowsRepository Error in getEntryCreatorUserId:',
+      );
+      return null;
+    }
+  }
+
+  async countActiveEntriesInStage(
+    workflowId: string,
+    stageSlug: string,
+    applicationId?: string,
+  ): Promise<number> {
+    try {
+      logger.info(
+        { workflowId, stageSlug },
+        'WorkflowsRepository: countActiveEntriesInStage',
+      );
+      const conditions = [
+        eq(contentWorkflowStates.workflowId, workflowId),
+        sql`REPLACE(LOWER(${contentWorkflowStates.currentStage}), '-', '_') = REPLACE(LOWER(${stageSlug}), '-', '_')`,
+        isNull(contentEntries.deletedAt),
+      ];
+      if (applicationId) {
+        conditions.push(
+          sql`(${contentWorkflowStates.applicationId} = ${applicationId} OR ${contentWorkflowStates.applicationId} IS NULL)`,
+        );
+      }
+
+      const [res] = await this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(contentWorkflowStates)
+        .innerJoin(
+          contentEntries,
+          eq(contentWorkflowStates.entryId, contentEntries.id),
+        )
+        .where(and(...conditions));
+
+      return Number(res?.count ?? 0);
+    } catch (error) {
+      logger.error(
+        { err: error, workflowId, stageSlug },
+        'WorkflowsRepository Error in countActiveEntriesInStage:',
+      );
+      return 0;
+    }
+  }
+
+  async countActiveEntriesForWorkflow(
+    workflowId: string,
+    applicationId?: string,
+  ): Promise<number> {
+    try {
+      logger.info(
+        { workflowId },
+        'WorkflowsRepository: countActiveEntriesForWorkflow',
+      );
+      const conditions = [
+        eq(contentWorkflowStates.workflowId, workflowId),
+        isNull(contentEntries.deletedAt),
+      ];
+      if (applicationId) {
+        conditions.push(eq(contentWorkflowStates.applicationId, applicationId));
+      }
+
+      const [res] = await this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(contentWorkflowStates)
+        .innerJoin(
+          contentEntries,
+          eq(contentWorkflowStates.entryId, contentEntries.id),
+        )
+        .where(and(...conditions));
+
+      return Number(res?.count ?? 0);
+    } catch (error) {
+      logger.error(
+        { err: error, workflowId },
+        'WorkflowsRepository Error in countActiveEntriesForWorkflow:',
+      );
+      return 0;
+    }
+  }
+
+  async getPendingReviews(
+    applicationId?: string,
+    limit = 20,
+  ): Promise<PendingReviewsResult> {
+    try {
+      logger.info({ applicationId }, 'WorkflowsRepository: getPendingReviews');
+
+      const conditions = [
+        isNull(contentEntries.deletedAt),
+        sql`LOWER(${contentWorkflowStates.currentStage}) LIKE '%review%'`,
+      ];
+      if (applicationId) {
+        conditions.push(
+          sql`(${contentWorkflowStates.applicationId} = ${applicationId} OR ${contentWorkflowStates.applicationId} IS NULL)`,
+        );
+      }
+
+      const rows = await this.db
+        .select({
+          entryId: contentEntries.id,
+          schemaId: contentEntries.schemaId,
+          schemaName: schemas.name,
+          schemaSlug: schemas.slug,
+          currentStage: contentWorkflowStates.currentStage,
+          workflowStages: workflows.stages,
+          updatedAt: contentEntries.updatedAt,
+          data: entryLocalizations.data,
+          user: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+          },
+        })
+        .from(contentWorkflowStates)
+        .innerJoin(
+          contentEntries,
+          eq(contentWorkflowStates.entryId, contentEntries.id),
+        )
+        .innerJoin(schemas, eq(contentEntries.schemaId, schemas.id))
+        .leftJoin(workflows, eq(contentWorkflowStates.workflowId, workflows.id))
+        .leftJoin(users, eq(contentEntries.createdByUserId, users.id))
+        .leftJoin(
+          entryLocalizations,
+          and(
+            eq(contentEntries.id, entryLocalizations.entryId),
+            eq(entryLocalizations.locale, 'en'),
+          ),
+        )
+        .where(and(...conditions))
+        .orderBy(desc(contentEntries.updatedAt))
+        .limit(limit);
+
+      const [countRow] = await this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(contentWorkflowStates)
+        .innerJoin(
+          contentEntries,
+          eq(contentWorkflowStates.entryId, contentEntries.id),
+        )
+        .where(and(...conditions));
+
+      const total = Number(countRow?.count ?? 0);
+
+      const items: PendingReviewItem[] = rows.map((r) => {
+        const stagesList =
+          (r.workflowStages as Array<{
+            slug: string;
+            name: string;
+            color?: string;
+          }>) || [];
+        const stageObj = stagesList.find((s) => s.slug === r.currentStage);
+        const stageName =
+          stageObj?.name || r.currentStage.replace(/[_-]/g, ' ');
+        const stageColor = stageObj?.color || '#f59e0b';
+
+        const dataObj = (r.data as Record<string, unknown>) || {};
+        const titleKey = Object.keys(dataObj).find((k) =>
+          ['title', 'name', 'headline', 'subject'].includes(k.toLowerCase()),
+        );
+        const title =
+          titleKey && typeof dataObj[titleKey] === 'string'
+            ? (dataObj[titleKey] as string)
+            : `Entry ${r.entryId.slice(0, 8)}`;
+
+        const authorName = r.user?.firstName
+          ? `${r.user.firstName}${r.user.lastName ? ` ${r.user.lastName}` : ''}`
+          : (r.user?.email ?? null);
+
+        return {
+          entryId: r.entryId,
+          schemaId: r.schemaId,
+          schemaName: r.schemaName,
+          schemaSlug: r.schemaSlug,
+          currentStage: r.currentStage,
+          stageName,
+          stageColor,
+          title,
+          updatedAt: r.updatedAt
+            ? new Date(r.updatedAt).toISOString()
+            : new Date().toISOString(),
+          authorEmail: r.user?.email ?? null,
+          authorName,
+        };
+      });
+
+      return { total, items };
+    } catch (error) {
+      logger.error(
+        { err: error },
+        'WorkflowsRepository Error in getPendingReviews:',
+      );
+      return { total: 0, items: [] };
     }
   }
 }

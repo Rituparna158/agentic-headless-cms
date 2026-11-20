@@ -150,7 +150,49 @@ export class WebhooksRepository {
       });
       const matching = allActive.filter((w) => {
         const events = Array.isArray(w.events) ? w.events : [];
-        return events.includes(eventType) || events.includes('*');
+        if (events.includes(eventType) || events.includes('*')) return true;
+        // Event aliases for consistency and backwards compatibility
+        if (
+          eventType === 'content.unpublished' &&
+          events.includes('content.unpublish')
+        )
+          return true;
+        if (
+          eventType === 'content.unpublish' &&
+          events.includes('content.unpublished')
+        )
+          return true;
+        if (
+          eventType === 'content.created' &&
+          events.includes('content.create')
+        )
+          return true;
+        if (
+          eventType === 'content.create' &&
+          events.includes('content.created')
+        )
+          return true;
+        if (
+          eventType === 'content.updated' &&
+          events.includes('content.update')
+        )
+          return true;
+        if (
+          eventType === 'content.update' &&
+          events.includes('content.updated')
+        )
+          return true;
+        if (
+          eventType === 'content.deleted' &&
+          events.includes('content.delete')
+        )
+          return true;
+        if (
+          eventType === 'content.delete' &&
+          events.includes('content.deleted')
+        )
+          return true;
+        return false;
       });
       logger.debug(
         { eventType, count: matching.length },

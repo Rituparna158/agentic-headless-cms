@@ -8,6 +8,7 @@ import {
   contentVersions,
   entryLocalizations,
   users,
+  contentWorkflowStates,
   createEntryVersion,
   withTransaction,
   RecordNotFoundError,
@@ -107,6 +108,7 @@ export class ContentRepository {
           schemaId: contentEntries.schemaId,
           locale: entryLocalizations.locale,
           status: entryLocalizations.status,
+          workflowStage: contentWorkflowStates.currentStage,
           data: entryLocalizations.data,
           publishedData: entryLocalizations.publishedData,
           createdAt: contentEntries.createdAt,
@@ -129,6 +131,10 @@ export class ContentRepository {
             eq(contentEntries.id, entryLocalizations.entryId),
             eq(entryLocalizations.locale, locale),
           ),
+        )
+        .leftJoin(
+          contentWorkflowStates,
+          eq(contentEntries.id, contentWorkflowStates.entryId),
         )
         .leftJoin(users, eq(contentEntries.createdByUserId, users.id))
         .where(where);
@@ -189,6 +195,10 @@ export class ContentRepository {
               eq(entryLocalizations.locale, locale),
             ),
           )
+          .leftJoin(
+            contentWorkflowStates,
+            eq(contentEntries.id, contentWorkflowStates.entryId),
+          )
           .where(where);
       });
       logger.debug(
@@ -230,6 +240,7 @@ export class ContentRepository {
             schemaId: contentEntries.schemaId,
             locale: entryLocalizations.locale,
             status: entryLocalizations.status,
+            workflowStage: contentWorkflowStates.currentStage,
             data: entryLocalizations.data,
             publishedData: entryLocalizations.publishedData,
             publishedAt: entryLocalizations.publishedAt,
@@ -253,6 +264,10 @@ export class ContentRepository {
               eq(contentEntries.id, entryLocalizations.entryId),
               eq(entryLocalizations.locale, locale),
             ),
+          )
+          .leftJoin(
+            contentWorkflowStates,
+            eq(contentEntries.id, contentWorkflowStates.entryId),
           )
           .leftJoin(users, eq(contentEntries.createdByUserId, users.id))
           .where(and(...conditions))
