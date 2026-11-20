@@ -874,6 +874,60 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               </Button>
             ) : null}
 
+            {/* Version History Button */}
+            {entry ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1.5 text-xs font-medium"
+                onClick={() => setIsVersionHistoryOpen(true)}
+              >
+                <History className="size-3.5 text-muted-foreground" />
+                <span>View history</span>
+              </Button>
+            ) : null}
+
+            {/* More Actions Dropdown (Workflow Log & Unpublish) */}
+            {entry && (
+              <Dropdown
+                align="end"
+                className="min-w-[13rem] p-1.5"
+                trigger={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="size-8 p-0 border-border/80 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+                    aria-label="More actions"
+                    title="More options & history"
+                  >
+                    <MoreVertical className="size-4" />
+                  </Button>
+                }
+              >
+                {workflowState?.hasWorkflow && (
+                  <DropdownItem onSelect={() => setIsWorkflowHistoryOpen(true)}>
+                    <div className="flex items-center gap-2 text-xs">
+                      <WorkflowIcon className="size-3.5 text-primary" />
+                      <span>Workflow Log</span>
+                    </div>
+                  </DropdownItem>
+                )}
+
+                {currentStatus === 'published' && canPublish && (
+                  <DropdownItem
+                    onSelect={() => setIsUnpublishConfirmOpen(true)}
+                  >
+                    <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                      <Undo2 className="size-3.5" />
+                      <span>Unpublish</span>
+                    </div>
+                  </DropdownItem>
+                )}
+              </Dropdown>
+            )}
+
             {/* Workflow Stage Transitions */}
             {entry &&
               !isViewingHistorical &&
@@ -896,12 +950,14 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               ))}
 
             {currentStatus === 'published' ? (
-              <Badge
-                variant="outline"
-                className="text-emerald-600 bg-emerald-500/10 border-emerald-500/20 text-xs px-2.5 py-1 font-medium"
+              <Button
+                type="button"
+                size="sm"
+                className="text-xs font-medium opacity-70 cursor-not-allowed"
+                disabled
               >
-                Live
-              </Badge>
+                Published
+              </Button>
             ) : entry ? (
               <span
                 title={
@@ -930,66 +986,32 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               </span>
             ) : null}
 
-            {/* More Actions Dropdown (History, Logs, Unpublish, Delete) */}
-            {entry && (
-              <Dropdown
-                align="end"
-                className="min-w-[13rem] p-1.5"
-                trigger={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="size-8 p-0 border-border/80 text-muted-foreground hover:text-foreground shrink-0"
-                    aria-label="More actions"
-                    title="More options & history"
-                  >
-                    <MoreVertical className="size-4" />
-                  </Button>
+            {/* Delete Button */}
+            {entry && canDelete && (
+              <span
+                title={
+                  !canDelete ? 'You do not have permission to delete.' : ''
                 }
               >
-                {workflowState?.hasWorkflow && (
-                  <DropdownItem onSelect={() => setIsWorkflowHistoryOpen(true)}>
-                    <div className="flex items-center gap-2 text-xs">
-                      <WorkflowIcon className="size-3.5 text-primary" />
-                      <span>Workflow Log</span>
-                    </div>
-                  </DropdownItem>
-                )}
-
-                <DropdownItem onSelect={() => setIsVersionHistoryOpen(true)}>
-                  <div className="flex items-center gap-2 text-xs">
-                    <History className="size-3.5 text-muted-foreground" />
-                    <span>View history</span>
-                  </div>
-                </DropdownItem>
-
-                {currentStatus === 'published' && canPublish && (
-                  <>
-                    <div className="my-1 border-t border-border/40" />
-                    <DropdownItem
-                      onSelect={() => setIsUnpublishConfirmOpen(true)}
-                    >
-                      <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
-                        <Undo2 className="size-3.5" />
-                        <span>Unpublish</span>
-                      </div>
-                    </DropdownItem>
-                  </>
-                )}
-
-                {canDelete && (
-                  <>
-                    <div className="my-1 border-t border-border/40" />
-                    <DropdownItem onSelect={() => setIsDeleteConfirmOpen(true)}>
-                      <div className="flex items-center gap-2 text-xs text-destructive">
-                        <Trash2 className="size-3.5" />
-                        <span>Delete</span>
-                      </div>
-                    </DropdownItem>
-                  </>
-                )}
-              </Dropdown>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs font-medium flex items-center gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                  disabled={
+                    isViewingHistorical ||
+                    !canDelete ||
+                    deleteMutation.isPending ||
+                    isLocalizedLoading
+                  }
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>
+                    {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                  </span>
+                </Button>
+              </span>
             )}
           </div>
         </div>

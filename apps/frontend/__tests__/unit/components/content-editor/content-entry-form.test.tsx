@@ -277,8 +277,7 @@ describe('ContentEntryForm', () => {
     const user = userEvent.setup();
     renderForm(entry);
 
-    await user.click(screen.getByRole('button', { name: /more actions/i }));
-    await user.click(screen.getByText('Delete'));
+    await user.click(screen.getByRole('button', { name: /^delete$/i }));
 
     expect(screen.getByText('Delete Entry')).toBeInTheDocument();
     expect(

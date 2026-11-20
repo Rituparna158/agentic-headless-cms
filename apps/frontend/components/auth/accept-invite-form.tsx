@@ -26,11 +26,9 @@ export function AcceptInviteForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitError(null);
 
     if (!token) {
       toast.error('Invalid invitation link');
@@ -59,7 +57,6 @@ export function AcceptInviteForm() {
     } catch (error: unknown) {
       const msg =
         error instanceof Error ? error.message : 'Failed to accept invitation';
-      setSubmitError(msg);
       toast.error(msg);
     } finally {
       setIsSubmitting(false);
@@ -112,16 +109,6 @@ export function AcceptInviteForm() {
 
       <form method="POST" onSubmit={handleSubmit} className="space-y-4">
         <CardContent className="space-y-4">
-          {submitError && (
-            <div
-              role="alert"
-              className="flex items-start gap-2 text-destructive text-xs p-3 bg-destructive/10 rounded-lg border border-destructive/20"
-            >
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <span>{submitError}</span>
-            </div>
-          )}
-
           <div className="space-y-1.5 text-left">
             <label htmlFor="password">
               <Typography

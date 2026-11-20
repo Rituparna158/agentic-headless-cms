@@ -387,6 +387,36 @@ export function parseContentQuery(
     where = where ? and(where, statusSql) : statusSql;
   }
 
+  const kindList = (v: unknown): string[] =>
+    typeof v === 'string'
+      ? v
+          .split(',')
+          .map((k) => k.trim())
+          .filter(Boolean)
+      : [];
+  const kinds = kindList(query.kind);
+  const excluded = kindList(query.excludeKind);
+  for (const k of [...kinds, ...excluded]) {
+    if (!/^[a-z][a-z0-9_-]{0,31}$/i.test(k)) {
+      throw new BadRequestError(`Invalid kind '${k}'.`);
+    }
+  }
+  const kindOf = sql`coalesce(${entryLocalizations.data}->>'kind', 'page')`;
+  if (kinds.length) {
+    const kindSql = sql`${kindOf} IN (${sql.join(
+      kinds.map((k) => sql`${k}`),
+      sql`, `,
+    )})`;
+    where = where ? and(where, kindSql) : kindSql;
+  }
+  if (excluded.length) {
+    const kindSql = sql`${kindOf} NOT IN (${sql.join(
+      excluded.map((k) => sql`${k}`),
+      sql`, `,
+    )})`;
+    where = where ? and(where, kindSql) : kindSql;
+  }
+
   if (search && search.trim()) {
     const term = search.trim();
     const pattern = `%${term}%`;
