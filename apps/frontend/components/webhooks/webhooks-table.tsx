@@ -23,11 +23,56 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2, History, MoreVertical, Radio, Plus } from 'lucide-react';
 import { WebhookDeliveriesDrawer } from './webhook-deliveries-drawer';
 
-const AVAILABLE_EVENTS = [
-  'content.published',
-  'content.updated',
-  'content.deleted',
-  'media.uploaded',
+const EVENT_CATEGORIES = [
+  {
+    category: 'Content Lifecycle',
+    events: [
+      {
+        id: 'content.created',
+        description: 'When a new draft entry is created',
+      },
+      {
+        id: 'content.updated',
+        description: 'When an entry is modified or updated',
+      },
+      {
+        id: 'content.published',
+        description: 'When an entry is published live',
+      },
+      {
+        id: 'content.unpublished',
+        description: 'When an entry is reverted from published',
+      },
+      { id: 'content.deleted', description: 'When an entry is deleted' },
+    ],
+  },
+  {
+    category: 'Editorial Workflow',
+    events: [
+      {
+        id: 'workflow.transition',
+        description: 'When an entry transitions between any workflow stages',
+      },
+      {
+        id: 'workflow.review_requested',
+        description: 'When an entry is submitted for editorial review',
+      },
+      {
+        id: 'workflow.approved',
+        description: 'When an entry is approved by an assigned reviewer',
+      },
+      {
+        id: 'workflow.changes_requested',
+        description: 'When a reviewer requests changes on an entry',
+      },
+    ],
+  },
+  {
+    category: 'Media Assets',
+    events: [
+      { id: 'media.uploaded', description: 'When a media asset is uploaded' },
+    ],
+  },
 ];
 
 export function WebhooksTable() {
@@ -143,18 +188,35 @@ export function WebhooksTable() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Events</label>
-            <div className="space-y-2">
-              {AVAILABLE_EVENTS.map((event) => (
-                <label
-                  key={event}
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                >
-                  <Checkbox
-                    checked={events.includes(event)}
-                    onChange={() => toggleEvent(event)}
-                  />
-                  <span>{event}</span>
-                </label>
+            <div className="space-y-4 max-h-64 overflow-y-auto pr-1 border border-border/50 rounded-lg p-2.5 bg-muted/10">
+              {EVENT_CATEGORIES.map((cat) => (
+                <div key={cat.category} className="space-y-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
+                    {cat.category}
+                  </span>
+                  <div className="space-y-1">
+                    {cat.events.map((event) => (
+                      <label
+                        key={event.id}
+                        className="flex items-start gap-2.5 text-sm cursor-pointer hover:bg-muted/40 p-1.5 rounded-md transition-colors"
+                      >
+                        <Checkbox
+                          checked={events.includes(event.id)}
+                          onChange={() => toggleEvent(event.id)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-mono text-xs font-medium text-foreground">
+                            {event.id}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {event.description}
+                          </span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

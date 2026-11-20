@@ -63,6 +63,23 @@ export const API_PATHS = {
       `/api/v1/content/${schemaSlug}/${entryId}/revert`,
     VERSIONS: (schemaSlug: string, entryId: string) =>
       `/api/v1/content/${schemaSlug}/${entryId}/versions`,
+    WORKFLOW_STATE: (schemaSlug: string, entryId: string) =>
+      `/api/v1/content/${schemaSlug}/${entryId}/workflow-state`,
+    TRANSITION: (schemaSlug: string, entryId: string) =>
+      `/api/v1/content/${schemaSlug}/${entryId}/transition`,
+    WORKFLOW_HISTORY: (schemaSlug: string, entryId: string) =>
+      `/api/v1/content/${schemaSlug}/${entryId}/workflow-history`,
+  },
+  WORKFLOWS: {
+    BASE: (qs?: string) => `/api/v1/workflows${qs ? `?${qs}` : ''}`,
+    PENDING_REVIEWS: (limit?: number) =>
+      `/api/v1/workflows/pending-reviews${limit ? `?limit=${limit}` : ''}`,
+    BY_ID: (id: string) => `/api/v1/workflows/${id}`,
+    ASSIGN_SCHEMA: (workflowId: string, schemaId: string) =>
+      `/api/v1/workflows/${workflowId}/schemas/${schemaId}`,
+    REMOVE_SCHEMA: (schemaId: string) =>
+      `/api/v1/workflows/schemas/${schemaId}`,
+    BY_SCHEMA: (schemaId: string) => `/api/v1/workflows/schema/${schemaId}`,
   },
   AUDIT_LOGS: {
     BASE: '/api/v1/audit-logs',

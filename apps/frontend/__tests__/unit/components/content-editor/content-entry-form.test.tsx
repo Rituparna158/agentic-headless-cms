@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ContentEntryForm } from '@/components/content-editor/content-entry-form';
+import { ApiError } from '@/lib/api-client';
 
 const {
   mockPush,
@@ -20,6 +21,9 @@ const {
   mockToastSuccess,
   mockToastError,
   mockTranslateEntry,
+  mockGetEntryWorkflowState,
+  mockTransitionEntry,
+  mockGetWorkflowHistory,
 } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockRefresh: vi.fn(),
@@ -33,6 +37,9 @@ const {
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
   mockTranslateEntry: vi.fn(),
+  mockGetEntryWorkflowState: vi.fn(),
+  mockTransitionEntry: vi.fn(),
+  mockGetWorkflowHistory: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({
@@ -70,6 +77,12 @@ vi.mock('@/lib/api/content', () => ({
   publishContentEntry: mockPublish,
   unpublishContentEntry: mockUnpublish,
   deleteContentEntry: mockDelete,
+}));
+
+vi.mock('@/lib/api/workflows', () => ({
+  getEntryWorkflowState: mockGetEntryWorkflowState,
+  transitionEntry: mockTransitionEntry,
+  getWorkflowHistory: mockGetWorkflowHistory,
 }));
 
 const definition: SchemaDefinition = {
@@ -125,6 +138,14 @@ describe('ContentEntryForm', () => {
     vi.clearAllMocks();
     mockListLocales.mockResolvedValue({ data: [] });
     mockGetEntry.mockResolvedValue(undefined);
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: false,
+      workflow: null,
+      currentStage: null,
+      availableTransitions: [],
+      isFinal: true,
+    });
+    mockGetWorkflowHistory.mockResolvedValue([]);
   });
 
   it('renders one control per schema field and a "Not saved" status for a new entry', () => {
@@ -256,7 +277,7 @@ describe('ContentEntryForm', () => {
     const user = userEvent.setup();
     renderForm(entry);
 
-    await user.click(screen.getByRole('button', { name: /delete/i }));
+    await user.click(screen.getByRole('button', { name: /^delete$/i }));
 
     expect(screen.getByText('Delete Entry')).toBeInTheDocument();
     expect(
@@ -359,7 +380,8 @@ describe('ContentEntryForm', () => {
     renderForm(entry);
 
     expect(screen.getByText('published')).toBeInTheDocument();
-    const unpublishBtn = screen.getByRole('button', { name: /unpublish/i });
+    await user.click(screen.getByRole('button', { name: /more actions/i }));
+    const unpublishBtn = screen.getByText('Unpublish');
     expect(unpublishBtn).toBeInTheDocument();
 
     await user.click(unpublishBtn);
@@ -606,5 +628,131 @@ describe('ContentEntryForm', () => {
     expect(mockToastSuccess).toHaveBeenCalledWith(
       expect.stringContaining('Auto-translated 1 field from EN to ES'),
     );
+  });
+
+  it('renders workflow stage badge, transition buttons, and enforces publish stage guard', async () => {
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial Workflow' },
+      currentStage: {
+        id: 's-1',
+        name: 'In Review',
+        slug: 'in_review',
+        color: '#3b82f6',
+        order: 1,
+        isInitial: false,
+        isFinal: false,
+      },
+      availableTransitions: [
+        {
+          id: 't-1',
+          name: 'Approve Content',
+          fromStage: 'in_review',
+          toStage: 'approved',
+          requiredRoleIds: ['editor'],
+        },
+      ],
+      isFinal: false,
+    });
+
+    const entry: ContentEntryRecord = {
+      id: 'entry-wf-1',
+      status: 'draft',
+      data: { title: 'Workflow Article', views: 10 },
+      publishedData: null,
+    };
+
+    const user = userEvent.setup();
+    renderForm(entry);
+
+    // Stage badge should be visible
+    expect(await screen.findByText('In Review')).toBeInTheDocument();
+
+    // Transition button should be visible
+    expect(
+      await screen.findByRole('button', { name: /Approve Content/i }),
+    ).toBeInTheDocument();
+
+    // Publish button must be disabled because isFinal is false
+    const publishBtn = screen.getByRole('button', { name: /^publish$/i });
+    expect(publishBtn).toBeDisabled();
+
+    // Workflow log should be accessible via more actions menu
+    await user.click(screen.getByRole('button', { name: /more actions/i }));
+    expect(screen.getByText('Workflow Log')).toBeInTheDocument();
+  });
+
+  it('handles 409 conflict during stage transition by alerting and refreshing state', async () => {
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial Workflow' },
+      currentStage: {
+        id: 's-1',
+        name: 'In Review',
+        slug: 'in_review',
+        color: '#3b82f6',
+        order: 1,
+        isInitial: false,
+        isFinal: false,
+      },
+      availableTransitions: [
+        {
+          id: 't-1',
+          name: 'Approve Content',
+          fromStage: 'in_review',
+          toStage: 'approved',
+          requiredRoleIds: ['editor'],
+        },
+      ],
+      isFinal: false,
+    });
+
+    mockTransitionEntry.mockRejectedValue(
+      new ApiError(
+        'This entry was modified by another reviewer. Updating to the latest state...',
+        409,
+      ),
+    );
+
+    const entry: ContentEntryRecord = {
+      id: 'entry-wf-conflict',
+      status: 'draft',
+      data: { title: 'Concurrent Article' },
+      publishedData: null,
+    };
+
+    const user = userEvent.setup();
+    renderForm(entry);
+
+    const approveBtn = await screen.findByRole('button', {
+      name: /Approve Content/i,
+    });
+    await user.click(approveBtn);
+
+    // Confirm transition in modal
+    const confirmBtn = await screen.findByRole('button', {
+      name: /^confirm$/i,
+    });
+    await user.click(confirmBtn);
+
+    // Verify 409 error toast was shown
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith(
+        'This entry was modified by another reviewer. Updating to the latest state...',
+      );
+    });
+
+    // Verify transition was called with expectedStage
+    expect(mockTransitionEntry).toHaveBeenCalledWith(
+      'article',
+      'entry-wf-conflict',
+      expect.objectContaining({
+        toStage: 'approved',
+        expectedStage: 'in_review',
+      }),
+    );
+
+    // Verify state was refetched
+    expect(mockGetEntryWorkflowState).toHaveBeenCalled();
   });
 });

@@ -41,6 +41,7 @@ module.exports = {
         'cms',
         'content',
         'editor',
+        'workflow',
         'features',
         'guards',
         'hooks',

@@ -176,6 +176,17 @@ describe('parseContentQuery', () => {
     expect(result.orderBy).toHaveLength(1);
   });
 
+  it('allows sorting on workflowStage base column', () => {
+    const ascResult = parseContentQuery({ sort: 'workflowStage:asc' }, fields);
+    expect(ascResult.orderBy).toHaveLength(1);
+
+    const descResult = parseContentQuery(
+      { sort: 'workflowStage:desc' },
+      fields,
+    );
+    expect(descResult.orderBy).toHaveLength(1);
+  });
+
   it('rejects an invalid sort direction', () => {
     expect(() => parseContentQuery({ sort: 'title:sideways' }, fields)).toThrow(
       /Invalid sort direction/,

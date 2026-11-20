@@ -9,9 +9,12 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Button,
+  Input,
+  Typography,
 } from '@repo/shared-ui';
-import { Button, Input, Typography } from '@repo/shared-ui';
 import { toast } from 'sonner';
+import { KeyRound, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 import { API_PATHS } from '@/lib/constants/api-paths';
 
@@ -62,16 +65,28 @@ export function AcceptInviteForm() {
 
   if (!token) {
     return (
-      <Card className="w-full">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">Invalid Link</CardTitle>
-          <CardDescription className="text-center text-red-500">
-            This invitation link is invalid or missing the token.
+      <Card className="w-full border-border/80 shadow-md">
+        <CardHeader className="text-center space-y-2 pb-4">
+          <div className="size-11 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto mb-1 border border-destructive/20">
+            <AlertCircle className="size-5" />
+          </div>
+          <CardTitle className="text-xl font-bold tracking-tight text-foreground">
+            Invalid Link
+          </CardTitle>
+          <CardDescription className="text-xs text-muted-foreground max-w-xs mx-auto">
+            This invitation link is invalid or missing the token. Please contact
+            your administrator for a new invitation.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button className="w-full" onClick={() => router.push('/login')}>
-            Go to Login
+        <CardContent className="pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2 cursor-pointer"
+            onClick={() => router.push('/login')}
+          >
+            <ArrowLeft className="size-4" />
+            <span>Go to Login</span>
           </Button>
         </CardContent>
       </Card>
@@ -79,20 +94,27 @@ export function AcceptInviteForm() {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">
+    <Card className="w-full border-border/80 shadow-md">
+      <CardHeader className="text-center space-y-2 pb-4">
+        <div className="size-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-1 border border-primary/20">
+          <KeyRound className="size-5" />
+        </div>
+        <CardTitle className="text-xl font-bold tracking-tight text-foreground">
           Set your password
         </CardTitle>
-        <CardDescription className="text-center">
+        <CardDescription className="text-xs text-muted-foreground">
           Please set a password to activate your account.
         </CardDescription>
       </CardHeader>
-      <form method="POST" onSubmit={handleSubmit}>
+
+      <form method="POST" onSubmit={handleSubmit} className="space-y-4">
         <CardContent className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-1.5 text-left">
             <label htmlFor="password">
-              <Typography variant="label" className="block mb-1">
+              <Typography
+                variant="label"
+                className="block text-xs font-medium text-foreground cursor-pointer"
+              >
                 New Password
               </Typography>
             </label>
@@ -102,12 +124,21 @@ export function AcceptInviteForm() {
               value={password}
               onChange={(val: string) => setPassword(val)}
               variant="default"
-              placeholder="Enter new password"
+              placeholder="Enter at least 8 characters"
+              showPasswordToggle={true}
+              autoComplete="new-password"
             />
+            <p className="text-[11px] text-muted-foreground">
+              Must be at least 8 characters long.
+            </p>
           </div>
-          <div className="space-y-2">
+
+          <div className="space-y-1.5 text-left">
             <label htmlFor="confirmPassword">
-              <Typography variant="label" className="block mb-1">
+              <Typography
+                variant="label"
+                className="block text-xs font-medium text-foreground cursor-pointer"
+              >
                 Confirm Password
               </Typography>
             </label>
@@ -117,13 +148,27 @@ export function AcceptInviteForm() {
               value={confirmPassword}
               onChange={(val: string) => setConfirmPassword(val)}
               variant="default"
-              placeholder="Confirm new password"
+              placeholder="Re-enter your password"
+              showPasswordToggle={true}
+              autoComplete="new-password"
             />
           </div>
         </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Activating...' : 'Activate Account'}
+
+        <CardFooter className="pt-2">
+          <Button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 cursor-pointer"
+            disabled={isSubmitting || !password || !confirmPassword}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                <span>Activating Account...</span>
+              </>
+            ) : (
+              <span>Activate Account</span>
+            )}
           </Button>
         </CardFooter>
       </form>
