@@ -1,6 +1,10 @@
 import { SQL, and, asc, desc, or, sql } from 'drizzle-orm';
 import type { SchemaField } from '@repo/types';
-import { contentEntries, entryLocalizations } from '@repo/shared-db';
+import {
+  contentEntries,
+  entryLocalizations,
+  contentWorkflowStates,
+} from '@repo/shared-db';
 import { BadRequestError } from '@repo/utils';
 import { ContentQueryOptions } from '@repo/types';
 
@@ -29,6 +33,7 @@ const SORTABLE_BASE_COLUMNS = {
   createdAt: contentEntries.createdAt,
   updatedAt: contentEntries.updatedAt,
   status: entryLocalizations.status,
+  workflowStage: sql`COALESCE(${contentWorkflowStates.currentStage}, 'draft')`,
 } as const;
 
 const FILTERABLE_BASE_COLUMNS = {
@@ -58,6 +63,10 @@ const FILTERABLE_BASE_COLUMNS = {
       '$gte',
     ]),
   },
+  workflowStage: {
+    column: contentWorkflowStates.currentStage,
+    allowedOps: new Set<FilterOperator>(['$eq', '$ne', '$in']),
+  },
 } as const;
 
 function findField(fields: SchemaField[], apiId: string): SchemaField {
@@ -84,6 +93,19 @@ function buildBaseColumnComparison(
 
   switch (operator) {
     case '$eq':
+      if (apiId === 'workflowStage') {
+        const alt = rawValue.includes('-')
+          ? rawValue.replace(/-/g, '_')
+          : rawValue.replace(/_/g, '-');
+        if (rawValue.toLowerCase() === 'draft') {
+          return or(
+            sql`${col} = ${rawValue}`,
+            sql`${col} = ${alt}`,
+            sql`${col} IS NULL`,
+          )!;
+        }
+        return or(sql`${col} = ${rawValue}`, sql`${col} = ${alt}`)!;
+      }
       return sql`${col} = ${rawValue}`;
     case '$ne':
       return sql`${col} != ${rawValue}`;

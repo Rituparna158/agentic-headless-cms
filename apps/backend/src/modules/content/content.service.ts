@@ -174,6 +174,18 @@ export class ContentService {
         locale,
         userEmail,
       );
+
+      // Auto-demotion guard: Reset in-review or approved entry back to initial stage on content edit
+      if (
+        beforeState?.schemaId &&
+        typeof this.workflowsService?.handleContentUpdated === 'function'
+      ) {
+        await this.workflowsService.handleContentUpdated(
+          entryId,
+          beforeState.schemaId,
+          { id: userId, email: userEmail },
+        );
+      }
       // Emit audit event
       logger.debug({ entryId }, 'ContentService: emitting audit log');
       const { actorUserId, actorAgentId, context } = getAuditContext();
@@ -215,6 +227,18 @@ export class ContentService {
         locale,
         userEmail,
       );
+
+      // Auto-demotion guard: Reset in-review or approved entry back to initial stage on content edit
+      if (
+        beforeState?.schemaId &&
+        typeof this.workflowsService?.handleContentUpdated === 'function'
+      ) {
+        await this.workflowsService.handleContentUpdated(
+          entryId,
+          beforeState.schemaId,
+          { id: userId, email: userEmail },
+        );
+      }
       const { actorUserId, actorAgentId, context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.UPDATE,
@@ -294,6 +318,8 @@ export class ContentService {
     userId: string,
     locale: string = DEFAULT_LOCALE,
     userEmail?: string,
+    applicationId?: string,
+    schemaId?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: unpublishEntry start');
@@ -304,6 +330,21 @@ export class ContentService {
         locale,
         userEmail,
       );
+
+      // Reset workflow stage to Draft upon unpublish
+      const targetSchemaId = beforeState?.schemaId || schemaId;
+      if (
+        typeof this.workflowsService?.handleEntryUnpublished === 'function' &&
+        targetSchemaId
+      ) {
+        await this.workflowsService.handleEntryUnpublished(
+          entryId,
+          targetSchemaId,
+          { id: userId },
+          applicationId,
+        );
+      }
+
       const { actorUserId, actorAgentId, context } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.UNPUBLISH,

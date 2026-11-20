@@ -204,6 +204,16 @@ export const createDraft: RequestHandler = asyncHandler(
       { schemaId, entryId: entry.id },
       'ContentController: createDraft end',
     );
+    void webhookDispatcher.dispatch(
+      'content.created',
+      {
+        schemaSlug: req.params.schemaSlug,
+        entryId: entry.id,
+        entry,
+        locale,
+      },
+      req.context?.applicationId,
+    );
     res
       .status(201)
       .json(new ApiResponse(201, entry, 'Draft created successfully'));
@@ -325,10 +335,12 @@ export const unpublishEntry: RequestHandler = asyncHandler(
       userId,
       locale,
       userEmail,
+      req.context?.applicationId,
+      req.schemaId,
     );
     logger.info({ entryId }, 'ContentController: unpublishEntry end');
     void webhookDispatcher.dispatch(
-      'content.unpublish',
+      'content.unpublished',
       {
         schemaSlug: req.params.schemaSlug,
         entryId,
