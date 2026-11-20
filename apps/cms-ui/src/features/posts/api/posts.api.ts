@@ -11,6 +11,7 @@ import {
   SchemaMetadata,
 } from '../types/posts.types';
 import { FORKABLE_SHARED_TEMPLATES } from '../constants/posts.constants';
+import { DEFAULT_PAGE_FIELDS } from '@/features/collections/constants/collections.constants';
 
 export function extractArrayPayload<T>(payload: unknown): T[] {
   if (!payload) return [];
@@ -160,11 +161,22 @@ export const postsApi = {
   // List Pages / Layouts under a Collection
   listPagesForCollection: async (schemaSlug: string): Promise<PageEntry[]> => {
     try {
-      const res = await requestHandler.get<{ data: PageEntry[] }>(
-        ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug),
-        { params: { pageSize: 100, status: 'all' } },
-      );
-      const rawEntries = extractArrayPayload<PageEntry>(res.data ?? res);
+      // The server caps a page at 100 entries; read every page so a busy
+      // site (many posts, comments, messages) never silently loses entries.
+      const rawEntries: PageEntry[] = [];
+      for (let page = 1; page <= 50; page++) {
+        const res = await requestHandler.get<{
+          data: PageEntry[];
+          meta?: { pagination?: { pageCount?: number } };
+        }>(ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug), {
+          params: { pageSize: 100, page, status: 'all' },
+        });
+        rawEntries.push(...extractArrayPayload<PageEntry>(res.data ?? res));
+        const pageCount =
+          (res.data as { meta?: { pagination?: { pageCount?: number } } })?.meta
+            ?.pagination?.pageCount ?? 1;
+        if (page >= pageCount) break;
+      }
       return rawEntries.map((entry) => {
         const title =
           entry.title ||
@@ -186,6 +198,80 @@ export const postsApi = {
     } catch {
       return [];
     }
+  },
+
+  /**
+   * Server-side paginated + searchable listing of a site's entries.
+   * Search, status filtering and pagination are all executed by the backend.
+   */
+  listPagesPaged: async (
+    schemaSlug: string,
+    params: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+      status?: 'all' | 'published' | 'draft';
+      /** Comma separated entry kinds to leave out (see NON_PAGE_KINDS) */
+      excludeKind?: string;
+    } = {},
+  ): Promise<{
+    items: PageEntry[];
+    total: number;
+    page: number;
+    pageSize: number;
+  }> => {
+    const {
+      search,
+      status = 'all',
+      page = 1,
+      pageSize = 10,
+      excludeKind,
+    } = params;
+    const res = await requestHandler.get<{
+      data: PageEntry[];
+      meta?: {
+        pagination?: { total?: number; page?: number; pageSize?: number };
+      };
+    }>(ENDPOINTS.CONTENT.BY_SCHEMA(schemaSlug), {
+      params: {
+        page,
+        pageSize,
+        status,
+        ...(search && search.trim() ? { search: search.trim() } : {}),
+        ...(excludeKind ? { excludeKind } : {}),
+      },
+    });
+    const body = (res.data ?? res) as {
+      meta?: {
+        pagination?: { total?: number; page?: number; pageSize?: number };
+      };
+    };
+    const raw = extractArrayPayload<PageEntry>(res.data ?? res);
+    const items = raw.map((entry) => {
+      const title =
+        entry.title ||
+        (entry.data?.title as string) ||
+        (entry.data?.name as string) ||
+        'Untitled Page';
+      const slug = entry.slug || (entry.data?.slug as string) || entry.id;
+      return {
+        ...entry,
+        title,
+        slug,
+        data: {
+          ...entry.data,
+          title: (entry.data?.title as string) || title,
+          slug: (entry.data?.slug as string) || slug,
+        },
+      };
+    });
+    const pagination = body?.meta?.pagination;
+    return {
+      items,
+      total: pagination?.total ?? items.length,
+      page: pagination?.page ?? page,
+      pageSize: pagination?.pageSize ?? pageSize,
+    };
   },
 
   // Create Custom Dynamic Schema
@@ -553,6 +639,15 @@ export const postsApi = {
       forked_at: new Date().toISOString(),
     };
 
+    // Ensure DEFAULT_PAGE_FIELDS (title, slug, description, body) are always the base schema fields.
+    // Extra template-specific fields are merged as optional so they never block page creation.
+    const pageFieldIds = new Set(DEFAULT_PAGE_FIELDS.map((f) => f.apiId));
+    const extraFields = (template.schema.fields || [])
+      .filter((f) => !pageFieldIds.has(f.apiId))
+      .map((f) => ({ ...f, isRequired: false }));
+
+    const mergedFields = [...DEFAULT_PAGE_FIELDS, ...extraFields];
+
     const schemaToCreate: DynamicSchemaDefinition = {
       name: customName || `${template.title} (Forked)`,
       slug:
@@ -560,7 +655,7 @@ export const postsApi = {
         `${template.schema.slug}-forked-${Math.random().toString(36).substring(2, 6)}`,
       description: `Forked from ${template.authorSite}: ${template.description}`,
       type: 'collection',
-      fields: template.schema.fields,
+      fields: mergedFields as DynamicFieldDefinition[],
       metadata: meta,
     };
 
@@ -588,12 +683,20 @@ export const postsApi = {
       forked_at: new Date().toISOString(),
     };
 
+    // Ensure DEFAULT_PAGE_FIELDS are preserved and non-page fields are optional
+    const pageFieldIds = new Set(DEFAULT_PAGE_FIELDS.map((f) => f.apiId));
+    const extraFields = (sourceCollection.fields || [])
+      .filter((f) => !pageFieldIds.has(f.apiId))
+      .map((f) => ({ ...f, isRequired: false }));
+
+    const mergedFields = [...DEFAULT_PAGE_FIELDS, ...extraFields];
+
     const created = await postsApi.createDynamicSchema({
       name: finalName,
       slug: finalSlug,
       description: `Forked from schema ${sourceCollection.name} (${sourceCollection.slug})`,
       type: 'collection',
-      fields: sourceCollection.fields,
+      fields: mergedFields as DynamicFieldDefinition[],
       metadata: meta,
     });
 

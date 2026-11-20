@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/media-has-caption -- uploaded assets carry no caption track */
 import React, { useState } from 'react';
 import {
   X,

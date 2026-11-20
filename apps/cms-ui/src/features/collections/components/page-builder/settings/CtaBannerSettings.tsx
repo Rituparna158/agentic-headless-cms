@@ -50,8 +50,11 @@ export default function CtaBannerSettings(props: {
       }}
     >
       <div style={sectionStyle}>
-        <label style={labelStyle}>Title</label>
+        <label htmlFor={`${targetComponentId}-title`} style={labelStyle}>
+          Title
+        </label>
         <input
+          id={`${targetComponentId}-title`}
           style={inputStyle}
           value={s.title}
           onChange={(e) => u({ title: e.target.value })}
@@ -60,8 +63,11 @@ export default function CtaBannerSettings(props: {
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Subtitle</label>
+        <label htmlFor={`${targetComponentId}-subtitle`} style={labelStyle}>
+          Subtitle
+        </label>
         <input
+          id={`${targetComponentId}-subtitle`}
           style={inputStyle}
           value={s.subtitle}
           onChange={(e) => u({ subtitle: e.target.value })}
@@ -70,8 +76,11 @@ export default function CtaBannerSettings(props: {
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Alignment</label>
+        <label htmlFor={`${targetComponentId}-alignment`} style={labelStyle}>
+          Alignment
+        </label>
         <select
+          id={`${targetComponentId}-alignment`}
           style={inputStyle}
           value={s.alignment}
           onChange={(e) =>
@@ -111,8 +120,11 @@ export default function CtaBannerSettings(props: {
       {s.showButton && (
         <>
           <div style={sectionStyle}>
-            <label style={labelStyle}>Button Text</label>
+            <label htmlFor={`${targetComponentId}-btn-text`} style={labelStyle}>
+              Button Text
+            </label>
             <input
+              id={`${targetComponentId}-btn-text`}
               style={inputStyle}
               value={s.buttonText}
               onChange={(e) => u({ buttonText: e.target.value })}
@@ -120,8 +132,11 @@ export default function CtaBannerSettings(props: {
             />
           </div>
           <div style={sectionStyle}>
-            <label style={labelStyle}>Button URL</label>
+            <label htmlFor={`${targetComponentId}-btn-url`} style={labelStyle}>
+              Button URL
+            </label>
             <input
+              id={`${targetComponentId}-btn-url`}
               style={inputStyle}
               value={s.buttonUrl}
               onChange={(e) => u({ buttonUrl: e.target.value })}
@@ -132,7 +147,7 @@ export default function CtaBannerSettings(props: {
       )}
 
       <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
-        <label style={labelStyle}>Colors</label>
+        <span style={labelStyle}>Colors</span>
         <div
           style={{
             display: 'grid',
@@ -141,10 +156,14 @@ export default function CtaBannerSettings(props: {
           }}
         >
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Background
             </label>
             <input
+              id={`${targetComponentId}-bg-color`}
               type="color"
               style={{
                 width: '100%',
@@ -158,8 +177,14 @@ export default function CtaBannerSettings(props: {
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>Text</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
+              Text
+            </label>
             <input
+              id={`${targetComponentId}-text-color`}
               type="color"
               style={{
                 width: '100%',
@@ -173,8 +198,14 @@ export default function CtaBannerSettings(props: {
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>Button</label>
+            <label
+              htmlFor={`${targetComponentId}-btn-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
+              Button
+            </label>
             <input
+              id={`${targetComponentId}-btn-color`}
               type="color"
               style={{
                 width: '100%',
@@ -188,10 +219,14 @@ export default function CtaBannerSettings(props: {
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-btn-text-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Button Text
             </label>
             <input
+              id={`${targetComponentId}-btn-text-color`}
               type="color"
               style={{
                 width: '100%',

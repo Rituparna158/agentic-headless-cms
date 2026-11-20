@@ -1,3 +1,4 @@
+import { activateOnKey } from '@/utils/a11y.util';
 import React, { useState, useRef } from 'react';
 import {
   UploadCloud,
@@ -118,7 +119,11 @@ export const MediaUploadZone: React.FC<MediaUploadZoneProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        role="button"
+        tabIndex={0}
+        aria-label="Upload files"
         onClick={() => fileInputRef.current?.click()}
+        onKeyDown={activateOnKey(() => fileInputRef.current?.click())}
         className={`relative flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-200 ${
           isDragOver
             ? 'border-primary bg-primary/10 scale-[0.99]'

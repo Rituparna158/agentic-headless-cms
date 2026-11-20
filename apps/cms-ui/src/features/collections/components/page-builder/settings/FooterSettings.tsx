@@ -74,11 +74,15 @@ export const FooterSettings: React.FC<{ targetComponentId: string }> = ({
       <div className="space-y-4">
         {/* Brand */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground flex items-center gap-2">
+          <label
+            htmlFor={`${targetComponentId}-brand-text`}
+            className="text-sm font-medium text-foreground flex items-center gap-2"
+          >
             <Type className="w-4 h-4 text-muted-foreground" />
             Brand/Logo Text
           </label>
           <input
+            id={`${targetComponentId}-brand-text`}
             type="text"
             value={settings.brandText}
             onChange={(e) => handleChange('brandText', e.target.value)}
@@ -89,11 +93,15 @@ export const FooterSettings: React.FC<{ targetComponentId: string }> = ({
 
         {/* Description */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground flex items-center gap-2">
+          <label
+            htmlFor={`${targetComponentId}-brand-desc`}
+            className="text-sm font-medium text-foreground flex items-center gap-2"
+          >
             <AlignLeft className="w-4 h-4 text-muted-foreground" />
             Description
           </label>
           <textarea
+            id={`${targetComponentId}-brand-desc`}
             value={settings.description}
             onChange={(e) => handleChange('description', e.target.value)}
             className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground"
@@ -104,11 +112,15 @@ export const FooterSettings: React.FC<{ targetComponentId: string }> = ({
 
         {/* Copyright */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground flex items-center gap-2">
+          <label
+            htmlFor={`${targetComponentId}-copyright-text`}
+            className="text-sm font-medium text-foreground flex items-center gap-2"
+          >
             <Type className="w-4 h-4 text-muted-foreground" />
             Copyright Text
           </label>
           <input
+            id={`${targetComponentId}-copyright-text`}
             type="text"
             value={settings.copyrightText}
             onChange={(e) => handleChange('copyrightText', e.target.value)}
@@ -191,11 +203,15 @@ export const FooterSettings: React.FC<{ targetComponentId: string }> = ({
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              className="text-xs text-muted-foreground"
+            >
               Background Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-bg-color`}
                 type="color"
                 value={settings.backgroundColor}
                 onChange={(e) =>
@@ -214,9 +230,15 @@ export const FooterSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Text Color</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Text Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-text-color`}
                 type="color"
                 value={settings.textColor}
                 onChange={(e) => handleChange('textColor', e.target.value)}
@@ -231,11 +253,15 @@ export const FooterSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-divider-color`}
+              className="text-xs text-muted-foreground"
+            >
               Divider Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-divider-color`}
                 type="color"
                 value={settings.dividerColor}
                 onChange={(e) => handleChange('dividerColor', e.target.value)}

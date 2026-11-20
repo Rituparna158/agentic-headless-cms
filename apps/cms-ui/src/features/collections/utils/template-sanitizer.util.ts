@@ -3,28 +3,16 @@ import {
   DynamicComponentNode,
   TemplateValidationError,
 } from '../types/template.types';
-
-const FORBIDDEN_TAGS = new Set([
-  'script',
-  'iframe',
-  'object',
-  'embed',
-  'applet',
-  'base',
-  'meta',
-  'link',
-]);
-
-const DANGEROUS_PROTOCOLS = [
-  'javascript:',
-  'vbscript:',
-  'data:text/html',
-  'data:application/javascript',
-];
+import {
+  FORBIDDEN_HTML_TAGS as FORBIDDEN_TAGS,
+  DANGEROUS_PROTOCOLS,
+} from '../constants/sanitizer.constants';
 
 export function sanitizeHtmlContent(rawHtml: string): string {
   if (!rawHtml) return '';
   return DOMPurify.sanitize(rawHtml, {
+    ADD_TAGS: ['style'],
+    ADD_ATTR: ['type', 'media'],
     FORBID_TAGS: Array.from(FORBIDDEN_TAGS),
     FORBID_ATTR: [
       'onerror',

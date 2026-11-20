@@ -26,21 +26,14 @@ ENV VITE_APP_ID=${VITE_APP_ID:-CMS_UI}
 RUN pnpm turbo run build --filter=cms-ui...
 
 # ---- Runtime ----
-FROM base AS runner
-WORKDIR /app/apps/cms-ui
+# Static nginx (non-root, uid 101) instead of `vite preview`: smaller, faster and
+# carries the security headers / CSP defined in nginx.conf.
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS runner
 
-RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 --ingroup nodejs viteuser
+COPY --chown=nginx:nginx apps/cms-ui/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder --chown=nginx:nginx /app/apps/cms-ui/dist /usr/share/nginx/html
 
-COPY --from=builder --chown=viteuser:nodejs /app/apps/cms-ui/dist ./dist
-COPY --from=builder --chown=viteuser:nodejs /app/apps/cms-ui/package.json ./package.json
-COPY --from=installer --chown=viteuser:nodejs /app/node_modules /app/node_modules
-
-USER viteuser
-ENV NODE_ENV=production
 EXPOSE 5173
 
 HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
-  CMD wget -qO- http://localhost:5173/healthz || exit 1
-
-CMD ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "5173"]
+  CMD wget -qO- http://127.0.0.1:5173/healthz || exit 1

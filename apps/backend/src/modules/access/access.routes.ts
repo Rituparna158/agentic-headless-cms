@@ -17,7 +17,7 @@ import {
   rejectMfaResetRequest,
 } from './access.controller.js';
 import { authenticateToken, requireAdminOrSupport } from '@repo/middlewares';
-import { requirePermission } from '../auth/rbac.middleware.js';
+import { requireCapability } from '../auth/capability.js';
 import { schemaService } from '../schemas/schema.service.js';
 import type { Request, Response, NextFunction } from 'express';
 
@@ -29,7 +29,9 @@ const requireSystemPermission = (action: string, schemaSlug: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const schema = await schemaService.getBySlug(schemaSlug);
-      return requirePermission(action, schema.id)(req, res, next);
+      // Raw action on this system schema, or the "manage users" capability
+      req.schemaId = schema.id;
+      return requireCapability('manage_users', action)(req, res, next);
     } catch (error) {
       next(error);
     }

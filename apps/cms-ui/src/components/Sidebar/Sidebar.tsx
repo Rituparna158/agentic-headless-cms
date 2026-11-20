@@ -4,7 +4,10 @@ import { ChevronDown, ChevronRight, Menu, LogOut, Loader2 } from 'lucide-react';
 import { sidebarNavConfig } from './SidebarNavConfig';
 import { useAuthStore } from '../../features/auth/store/auth.store';
 import { useLogoutMutation } from '../../features/auth/hooks/useAuthMutations';
+import { userCan } from '@/lib/capabilities';
 import { isUserAdmin } from '../../features/access/constants/access.constants';
+import { CMS_THEME_CLASSES } from '@/tokens/colorTokens';
+
 export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
@@ -13,14 +16,12 @@ export const Sidebar = () => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const { mutate: logout, isPending } = useLogoutMutation();
-  // Extract user capabilities from permissions
-  const userCapabilities =
-    user?.permissions
-      ?.filter((p) => p.action === 'manage')
-      ?.map((p) => (p.condition as Record<string, string>)?.capability)
-      ?.filter(Boolean) || [];
+
+  const { sidebar: sbClasses } = CMS_THEME_CLASSES;
+
   // Super admins bypass capability checks via strict canonical role comparison
   const isSuperAdmin = isUserAdmin(user?.roles);
+
   // Filter navigation items
   const filteredNavConfig = sidebarNavConfig.filter((item) => {
     if (item.requiredRoles) {
@@ -32,8 +33,9 @@ export const Sidebar = () => {
       );
     }
     if (!item.requiredCapability) return true;
-    return isSuperAdmin || userCapabilities.includes(item.requiredCapability);
+    return isSuperAdmin || userCan(user, item.requiredCapability);
   });
+
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const toggleExpanded = (title: string) => {
     // If sidebar is collapsed, expand it when clicking a nested menu
@@ -45,16 +47,16 @@ export const Sidebar = () => {
       [title]: !prev[title],
     }));
   };
+
   const isActive = (href: string) => location.pathname === href;
   const hasActiveChild = (item: (typeof sidebarNavConfig)[0]) => {
     if (isActive(item.href)) return true;
     return item.subItems?.some((sub) => isActive(sub.href)) ?? false;
   };
+
   return (
     <aside
-      className={`flex flex-col h-full bg-zinc-950 text-zinc-300 transition-all duration-300 ease-in-out border-r border-zinc-800 ${
-        isCollapsed ? 'w-[72px]' : 'w-64'
-      }`}
+      className={`${sbClasses.aside} ${isCollapsed ? 'w-[72px]' : 'w-64'}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-zinc-800 overflow-hidden">
@@ -73,7 +75,7 @@ export const Sidebar = () => {
         <button
           type="button"
           onClick={toggleCollapse}
-          className="p-2 rounded-md hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-600 ml-auto shrink-0"
+          className={sbClasses.collapseToggle}
           aria-label={
             isCollapsed
               ? 'Expand sidebar navigation'
@@ -82,9 +84,10 @@ export const Sidebar = () => {
           aria-expanded={!isCollapsed}
           aria-controls="sidebar-nav"
         >
-          <Menu size={20} className="text-zinc-400 hover:text-zinc-100" />
+          <Menu size={20} className="text-[#A1A1AA] hover:text-zinc-100" />
         </button>
       </div>
+
       {/* Navigation Links */}
       <nav
         id="sidebar-nav"
@@ -112,17 +115,17 @@ export const Sidebar = () => {
                       aria-expanded={Boolean(!isCollapsed && isExpanded)}
                       aria-controls={submenuId}
                       aria-haspopup="true"
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-600 ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1] ${
                         active
-                          ? 'bg-zinc-800 text-zinc-100 font-medium'
-                          : 'hover:bg-zinc-800/50 hover:text-zinc-100'
+                          ? 'bg-[#27272A] text-zinc-100 font-medium'
+                          : 'hover:bg-[#27272A]/50 text-[#A1A1AA] hover:text-zinc-100'
                       }`}
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         {item.icon && (
                           <item.icon
                             size={20}
-                            className={`shrink-0 ${active ? 'text-zinc-100' : 'text-zinc-400'}`}
+                            className={`shrink-0 ${active ? 'text-zinc-100' : 'text-[#A1A1AA]'}`}
                           />
                         )}
                         <span
@@ -169,10 +172,10 @@ export const Sidebar = () => {
                               <NavLink
                                 to={subItem.href}
                                 className={() =>
-                                  `block pl-11 pr-3 py-2 rounded-md text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-600 ${
+                                  `block pl-11 pr-3 py-2 rounded-md text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1] ${
                                     isSubActive
-                                      ? 'text-zinc-100 bg-zinc-800/50 font-medium'
-                                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30'
+                                      ? 'text-zinc-100 bg-[#27272A] font-medium'
+                                      : 'text-[#A1A1AA] hover:text-zinc-200 hover:bg-[#27272A]/40'
                                   }`
                                 }
                               >
@@ -188,17 +191,17 @@ export const Sidebar = () => {
                   <NavLink
                     to={item.href}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-md transition-colors overflow-hidden focus:outline-none focus:ring-2 focus:ring-zinc-600 ${
+                      `flex items-center gap-3 px-3 py-2 rounded-md transition-colors overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#6366F1] ${
                         isActive
-                          ? 'bg-zinc-800 text-zinc-100 font-medium'
-                          : 'hover:bg-zinc-800/50 hover:text-zinc-100'
+                          ? 'bg-[#27272A] text-zinc-100 font-medium'
+                          : 'hover:bg-[#27272A]/50 text-[#A1A1AA] hover:text-zinc-100'
                       }`
                     }
                   >
                     {item.icon && (
                       <item.icon
                         size={20}
-                        className={`shrink-0 ${isActive(item.href) ? 'text-zinc-100' : 'text-zinc-400'}`}
+                        className={`shrink-0 ${isActive(item.href) ? 'text-zinc-100' : 'text-[#A1A1AA]'}`}
                       />
                     )}
                     <span
@@ -217,16 +220,15 @@ export const Sidebar = () => {
           })}
         </ul>
       </nav>
+
       {/* Footer / User Area */}
-      <div className="p-4 border-t border-zinc-800 overflow-hidden">
+      <div className={sbClasses.footer}>
         <button
           type="button"
           onClick={() => logout()}
           disabled={isPending}
-          aria-label="Log out of application"
-          className={`flex items-center gap-3 w-full px-3 py-2 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-600 disabled:opacity-50 overflow-hidden ${
-            isCollapsed ? 'justify-center px-0' : ''
-          }`}
+          aria-label="Logout"
+          className={sbClasses.logoutButton}
         >
           {isPending ? (
             <Loader2 size={20} className="shrink-0 animate-spin" />

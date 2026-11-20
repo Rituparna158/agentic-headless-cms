@@ -1,687 +1,629 @@
-import React, { useState, useMemo } from 'react';
+import { NON_PAGE_KIND_PARAM, isPageEntry } from '@/lib/entryKinds';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   FileText,
   Plus,
   Search,
-  CheckCircle2,
   Clock,
   Trash2,
-  Eye,
-  Palette,
-  Boxes,
-  ChevronRight,
-  X,
+  PenTool,
+  Filter,
+  Loader2,
 } from 'lucide-react';
-import { postsApi, extractArrayPayload } from '../api/posts.api';
-import type { PageEntry, ContentCollectionMeta } from '@/types/content.types';
-import { PageSideDrawer } from '@/components/PageSideDrawer';
-import { slugify } from '@/utils/slugify.util';
-import { useToast } from '@repo/shared-ui';
-import { InlineErrorAlert } from '@/components/ui/InlineErrorAlert';
-import { EmptyStateCard } from '@/components/ui/EmptyStateCard';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useSiteConfig } from '@/hooks/useSiteConfig';
+import { useConfirm } from '@/hooks/useConfirm';
+import { useCmsToast } from '@/hooks/useCmsToast';
 import { DeletePageModal } from '@/components/modals/DeletePageModal';
+import { CMS_THEME_CLASSES } from '@/tokens/colorTokens';
+import type { PageEntry } from '@/types/content.types';
+import { postsApi, extractArrayPayload } from '../api/posts.api';
+import { WhatToPostDispatcherModal } from '../components/WhatToPostDispatcherModal';
+import { useBlogPages } from '@/features/blog/hooks/useBlogPages';
+import { blogApi, type BlogPost } from '@/features/blog/api/blog.api';
+import type { PostStatusFilter as StatusFilter } from '../types/posts.types';
+import { POSTS_PAGE_SIZE as PAGE_SIZE } from '../constants/posts.constants';
+
+const formatDate = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString() : 'Recent';
+
+const StatusBadge: React.FC<{ live: boolean }> = ({ live }) =>
+  live ? (
+    <span className={CMS_THEME_CLASSES.badges.live}>
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+      Live
+    </span>
+  ) : (
+    <span className={CMS_THEME_CLASSES.badges.draft}>
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+      Draft
+    </span>
+  );
+
+const Pager: React.FC<{
+  total: number;
+  page: number;
+  totalPages: number;
+  onPrev: () => void;
+  onNext: () => void;
+  noun: string;
+}> = ({ total, page, totalPages, onPrev, onNext, noun }) => (
+  <div className="flex items-center justify-between gap-3 px-6 py-2.5 border-t border-border bg-muted/30 text-xs text-muted-foreground">
+    <span>
+      {total} {noun}
+      {total === 1 ? '' : 's'} · Page {page} of {totalPages}
+    </span>
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        disabled={page <= 1}
+        onClick={onPrev}
+        className={`${CMS_THEME_CLASSES.buttons.secondary} disabled:opacity-40`}
+      >
+        Previous
+      </button>
+      <button
+        type="button"
+        disabled={page >= totalPages}
+        onClick={onNext}
+        className={`${CMS_THEME_CLASSES.buttons.secondary} disabled:opacity-40`}
+      >
+        Next
+      </button>
+    </div>
+  </div>
+);
 
 export const PostsManagementPage: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const toast = useToast();
-  const [searchParams] = useSearchParams();
+  const toast = useCmsToast();
+  const confirmAction = useConfirm();
+  const { siteId } = useParams<{ siteId?: string }>();
 
-  // Selected collection slug state (defaults to first collection or URL param)
-  const [selectedCollectionSlug, setSelectedCollectionSlug] = useState<string>(
-    () => searchParams.get('collection') || '',
+  const collectionsQuery = useQuery({
+    queryKey: ['post-collections'],
+    queryFn: () => postsApi.listCollections(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const collections = useMemo(
+    () =>
+      extractArrayPayload<{ slug: string; id: string; name: string }>(
+        collectionsQuery.data,
+      ),
+    [collectionsQuery.data],
   );
+  const activeCollection = useMemo(() => {
+    if (!collections.length) return null;
+    return (
+      collections.find((c) => c.slug === siteId || c.id === siteId) ??
+      collections[0] ??
+      null
+    );
+  }, [collections, siteId]);
+  const currentSlug = activeCollection?.slug || siteId || '';
+  const activeSiteName = activeCollection?.name || siteId || 'Current Website';
+  const siteConfig = useSiteConfig(currentSlug);
 
-  // Search filter for collections list in left sidebar
-  const [collectionSearch, setCollectionSearch] = useState('');
+  const { blogPages, legacyCount } = useBlogPages(currentSlug);
+  const migrateMutation = useMutation({
+    mutationFn: async () => {
+      for (const b of blogPages) await blogApi.migratePosts(currentSlug, b);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['collection-pages', currentSlug],
+      });
+      toast.show({
+        title: 'Posts updated',
+        message: 'Your posts now have their own entries.',
+        type: 'success',
+      });
+    },
+    onError: () =>
+      toast.show({
+        title: 'Could not update posts',
+        message: 'Some posts were not moved. Please try again.',
+        type: 'error',
+      }),
+  });
 
-  // Selected page for the side drawer
-  const [activePageId, setActivePageId] = useState<string | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // 'pages' or the pageId of a blog type
+  const [tab, setTab] = useState<string>('pages');
+  const activeBlog = blogPages.find((b) => b.pageId === tab) ?? null;
+  const effectiveTab = activeBlog ? tab : 'pages';
 
-  // Search filter for pages in active collection
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
-
-  // New Page Modal State
-  const [isCreatePageOpen, setIsCreatePageOpen] = useState(false);
-  const [newPageTitle, setNewPageTitle] = useState('');
-  const [newPageSlug, setNewPageSlug] = useState('');
-
-  // Delete Page Modal State
+  const debouncedSearch = useDebouncedValue(search, 350);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [isDispatcherOpen, setIsDispatcherOpen] = useState(false);
   const [pageToDelete, setPageToDelete] = useState<{
     id: string;
     title: string;
   } | null>(null);
 
-  // 1. Fetch Collections
-  const collectionsQuery = useQuery({
-    queryKey: ['post-collections'],
-    queryFn: () => postsApi.listCollections(),
-  });
+  useEffect(() => {
+    setPageNumber(1);
+  }, [debouncedSearch, statusFilter, effectiveTab, currentSlug]);
 
-  // Sort collections chronologically (earliest created collection appears first)
-  const collections: ContentCollectionMeta[] = useMemo(() => {
-    const list = extractArrayPayload<ContentCollectionMeta>(
-      collectionsQuery.data,
-    );
-    return list
-      .filter((c) => !c.type || c.type === 'collection')
-      .sort((a, b) => {
-        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return timeA - timeB;
-      });
-  }, [collectionsQuery.data]);
-
-  // Filtered collections for master list
-  const filteredCollections = useMemo(() => {
-    if (!collectionSearch.trim()) return collections;
-    const q = collectionSearch.toLowerCase().trim();
-    return collections.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q),
-    );
-  }, [collections, collectionSearch]);
-
-  // Determine active collection
-  const activeCollection = useMemo(() => {
-    if (!collections.length) return null;
-    if (selectedCollectionSlug) {
-      const match = collections.find((c) => c.slug === selectedCollectionSlug);
-      if (match) return match;
-    }
-    // Default to first collection
-    return collections[0] || null;
-  }, [collections, selectedCollectionSlug]);
-
-  const currentSlug = activeCollection?.slug || '';
-
-  // 2. Fetch Pages for active collection
+  // ---- Page content: server-side search, status filter and pagination ----
   const pagesQuery = useQuery({
-    queryKey: ['collection-pages', currentSlug],
-    queryFn: () => postsApi.listPagesForCollection(currentSlug),
-    enabled: !!currentSlug,
+    queryKey: [
+      'collection-pages',
+      currentSlug,
+      'posts-hub',
+      pageNumber,
+      debouncedSearch,
+      statusFilter,
+    ],
+    queryFn: () =>
+      postsApi.listPagesPaged(currentSlug, {
+        page: pageNumber,
+        pageSize: PAGE_SIZE,
+        search: debouncedSearch,
+        status: statusFilter,
+        excludeKind: NON_PAGE_KIND_PARAM,
+      }),
+    enabled: Boolean(currentSlug) && effectiveTab === 'pages',
+    placeholderData: (prev) => prev,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
   });
-
-  const pages: PageEntry[] = useMemo(
-    () => extractArrayPayload<PageEntry>(pagesQuery.data),
+  const pageItems: PageEntry[] = useMemo(
+    () =>
+      (pagesQuery.data?.items ?? []).filter(
+        (p) => p.data?.isBlogPage !== true && isPageEntry(p),
+      ),
     [pagesQuery.data],
   );
+  const pagesTotal = pagesQuery.data?.total ?? 0;
+  const pagesTotalPages = Math.max(1, Math.ceil(pagesTotal / PAGE_SIZE));
 
-  // Determine active page for side drawer
-  const activePage = useMemo(() => {
-    if (!pages.length || !activePageId) return null;
-    return pages.find((p) => p.id === activePageId) || null;
-  }, [pages, activePageId]);
-
-  // Create page
-  const createPageMutation = useMutation({
-    mutationFn: async ({ title, slug }: { title: string; slug: string }) => {
-      if (!currentSlug) throw new Error('No collection selected');
-      return await postsApi.createEntry(currentSlug, {
-        title,
-        slug,
-        body: [],
-      });
-    },
-    onSuccess: (newPage) => {
-      queryClient.invalidateQueries({
-        queryKey: ['collection-pages', currentSlug],
-      });
-      queryClient.invalidateQueries({ queryKey: ['post-collections'] });
-      setIsCreatePageOpen(false);
-      setNewPageTitle('');
-      setNewPageSlug('');
-      setActivePageId(newPage.id);
-      setIsDrawerOpen(true);
-      toast.success(`Page "${newPage.title}" created!`);
-    },
-    onError: () => {
-      toast.error('Failed to create page.');
-    },
+  // Page list for the dispatcher's "target page" dropdown (no blog pages)
+  const allPagesQuery = useQuery({
+    queryKey: ['collection-pages', currentSlug],
+    queryFn: () => postsApi.listPagesForCollection(currentSlug),
+    enabled: Boolean(currentSlug),
+    staleTime: 5 * 60 * 1000,
   });
+  const selectablePages = useMemo(
+    () =>
+      extractArrayPayload<PageEntry>(allPagesQuery.data).filter(
+        (p) => p.data?.isBlogPage !== true && isPageEntry(p),
+      ),
+    [allPagesQuery.data],
+  );
 
-  // Delete page
+  // ---- Blog posts: live inside the blog page, so filtering runs in the browser ----
+  const filteredPosts = useMemo(() => {
+    if (!activeBlog) return [];
+    const q = debouncedSearch.trim().toLowerCase();
+    return activeBlog.posts.filter((p) => {
+      if (statusFilter !== 'all' && p.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        p.title.toLowerCase().includes(q) ||
+        p.slug.toLowerCase().includes(q) ||
+        String(p.author ?? '')
+          .toLowerCase()
+          .includes(q)
+      );
+    });
+  }, [activeBlog, debouncedSearch, statusFilter]);
+  const postsTotalPages = Math.max(
+    1,
+    Math.ceil(filteredPosts.length / PAGE_SIZE),
+  );
+  const visiblePosts = filteredPosts.slice(
+    (pageNumber - 1) * PAGE_SIZE,
+    pageNumber * PAGE_SIZE,
+  );
+
   const deletePageMutation = useMutation({
     mutationFn: async (pageId: string) => {
-      if (!currentSlug) return;
       await postsApi.deleteEntry(currentSlug, pageId);
     },
-    onSuccess: (_, deletedId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['collection-pages', currentSlug],
       });
       queryClient.invalidateQueries({ queryKey: ['post-collections'] });
-      if (activePageId === deletedId) {
-        setIsDrawerOpen(false);
-        setActivePageId(null);
-      }
-      toast.success('Page deleted successfully.');
+      toast.show({
+        title: 'Page deleted',
+        message: 'The page was removed.',
+        type: 'success',
+      });
     },
-    onError: () => {
-      toast.error('Failed to delete page.');
-    },
+    onError: () =>
+      toast.show({
+        title: 'Error',
+        message: 'Failed to delete page.',
+        type: 'error',
+      }),
   });
 
-  // Save / Update page data
-  const updatePageMutation = useMutation({
-    mutationFn: async ({
-      pageId,
-      data,
-      publishImmediately,
-    }: {
-      pageId: string;
-      data: Record<string, unknown>;
-      publishImmediately: boolean;
-    }) => {
-      if (!currentSlug) throw new Error('No collection selected');
-      const updated = await postsApi.updateEntry(currentSlug, pageId, {
-        title: typeof data.title === 'string' ? data.title : 'Untitled',
-        slug: typeof data.slug === 'string' ? data.slug : 'page',
-        ...data,
-      });
-
-      if (publishImmediately) {
-        await postsApi.publishEntry(currentSlug, pageId);
-      }
-
-      return { updated, publishImmediately };
+  const deletePostMutation = useMutation({
+    mutationFn: async (post: BlogPost) => {
+      if (!activeBlog) return;
+      await blogApi.deletePost(currentSlug, activeBlog.pageId, post);
     },
-    onSuccess: ({ publishImmediately }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['collection-pages', currentSlug],
       });
-      toast.success(
-        publishImmediately
-          ? 'Page published live!'
-          : 'Page draft saved successfully!',
-      );
+      toast.show({
+        title: 'Post deleted',
+        message: 'The post was removed.',
+        type: 'success',
+      });
     },
-    onError: () => {
-      toast.error('Failed to save page data.');
-    },
+    onError: () =>
+      toast.show({
+        title: 'Error',
+        message: 'Failed to delete the post.',
+        type: 'error',
+      }),
   });
 
-  // Filtered pages for table
-  const filteredPages = useMemo(() => {
-    if (!search.trim()) return pages;
-    const q = search.toLowerCase().trim();
-    return pages.filter(
-      (p) =>
-        (p.data?.title || p.title)?.toLowerCase().includes(q) ||
-        (p.data?.slug || p.slug)?.toLowerCase().includes(q),
-    );
-  }, [pages, search]);
-
-  const handleOpenPageDrawer = (pageId: string) => {
-    setActivePageId(pageId);
-    setIsDrawerOpen(true);
+  const handleDeletePost = async (post: BlogPost) => {
+    const ok = await confirmAction({
+      title: 'Delete this post?',
+      message: `"${post.title}" will be removed${post.status === 'published' ? ' from your live site' : ''}. This cannot be undone.`,
+      confirmText: 'Delete post',
+    });
+    if (ok) deletePostMutation.mutate(post);
   };
 
+  const noun = activeBlog ? 'post' : 'page';
+  const isLoading = effectiveTab === 'pages' ? pagesQuery.isLoading : false;
+
+  const tabClass = (active: boolean) =>
+    `px-4 py-2 rounded-xl text-xs transition-colors whitespace-nowrap ${
+      active
+        ? 'bg-card text-foreground font-semibold shadow-xs border border-border'
+        : 'text-muted-foreground hover:text-foreground'
+    }`;
+
   return (
-    <div className="flex flex-col h-full bg-[#09090b] text-zinc-100 animate-in fade-in duration-300">
-      {/* Top Header - Matches Roles & Access Page layout with Dark Palette */}
-      <div className="px-6 py-6 border-b border-zinc-800/80 bg-[#09090b]">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
-          Posts
-        </h1>
-        <p className="text-xs text-zinc-400 mt-1">
-          Manage collections, pages, and schema dynamic bindings.
-        </p>
-      </div>
-
-      {/* Split Master / Detail Layout below header */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Column: Master List of Collections */}
-        <div className="w-64 border-r border-zinc-800 bg-[#0c0c0e] flex flex-col shrink-0">
-          <div className="p-4 flex items-center justify-between border-b border-zinc-800/80">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-              Collections
+    <div className="flex flex-col h-full bg-background text-foreground animate-in fade-in duration-200">
+      <header className="px-8 py-6 border-b border-border bg-card/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <span className="font-medium text-foreground">
+              {activeSiteName}
             </span>
+            <span>/</span>
+            <span>Posts &amp; Publishing Studio</span>
           </div>
-
-          {/* Quick Filter */}
-          <div className="p-3 border-b border-zinc-800/60">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
-              <input
-                type="text"
-                value={collectionSearch}
-                onChange={(e) => setCollectionSearch(e.target.value)}
-                placeholder="Filter collections..."
-                className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Collections List */}
-          <div className="flex-1 overflow-y-auto py-2">
-            {collectionsQuery.isError ? (
-              <div className="p-3">
-                <InlineErrorAlert
-                  title="Failed to load"
-                  message={collectionsQuery.error}
-                  onRetry={() => collectionsQuery.refetch()}
-                  isRetrying={collectionsQuery.isFetching}
-                />
-              </div>
-            ) : collectionsQuery.isLoading ? (
-              <div className="px-4 py-2 text-xs text-zinc-500">
-                Loading collections...
-              </div>
-            ) : filteredCollections.length === 0 ? (
-              <div className="px-4 py-2 text-xs text-zinc-500">
-                {collectionSearch ? 'No collections found' : 'No collections'}
-              </div>
-            ) : (
-              <ul className="space-y-1 px-2">
-                {filteredCollections.map((col) => {
-                  const isSelected = col.slug === currentSlug;
-                  return (
-                    <li key={col.id}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCollectionSlug(col.slug)}
-                        className={`w-full text-left px-3 py-2.5 text-xs rounded-xl transition-all flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-indigo-600/15 border border-indigo-500/30 text-indigo-300 font-semibold shadow-xs'
-                            : 'border border-transparent hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-400 hover:text-zinc-200'
-                        }`}
-                      >
-                        <span className="truncate">{col.name}</span>
-                        <span className="text-xs text-zinc-400 font-mono ml-2 shrink-0 px-1.5 py-0.5 rounded bg-zinc-800/80">
-                          {col.entryCount ?? 0}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <FileText className="h-6 w-6 text-primary" />
+            Posts / Publishing Studio
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Update page content and publish blog posts for this website.
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsDispatcherOpen(true)}
+          className={`${CMS_THEME_CLASSES.buttons.primary} text-sm py-2.5 px-4 shadow-sm`}
+        >
+          <Plus size={16} />
+          <span>Create New Post</span>
+        </button>
+      </header>
 
-        {/* Right Column: Detail Panel */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#09090b]">
-          {!activeCollection ? (
-            <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
-              Select a collection to view pages or manage content.
-            </div>
-          ) : (
-            <div className="flex flex-col h-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
-              {/* Detail Header */}
-              <div className="flex items-center justify-between p-6 border-b border-zinc-800/80 bg-[#09090b]">
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-xl font-bold text-zinc-100 tracking-tight">
-                      {activeCollection.name}
-                    </h2>
-                    <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-xs font-mono text-zinc-400 border border-zinc-800">
-                      /{activeCollection.slug}
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    {activeCollection.description ||
-                      `Manage pages and content schemas for ${activeCollection.name}. Click any page to open the side drawer.`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsCreatePageOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all"
-                  >
-                    <Plus className="size-4" />
-                    <span>New Page</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Detail Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Search & Stats Bar */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="relative w-full sm:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
-                    <input
-                      type="text"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder={`Search pages in ${activeCollection.name}...`}
-                      className="w-full pl-9 pr-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 self-start sm:self-auto text-xs text-zinc-400">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800">
-                      <span className="size-1.5 rounded-full bg-emerald-400" />
-                      {pages.length} Pages
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800">
-                      <Boxes className="size-3 text-indigo-400" />
-                      {activeCollection.fields?.length || 0} Schema Slots
-                    </span>
-                  </div>
-                </div>
-
-                {/* Table, Error, or Empty State */}
-                {pagesQuery.isError && (
-                  <InlineErrorAlert
-                    title="Failed to load collection pages"
-                    message={pagesQuery.error}
-                    onRetry={() => pagesQuery.refetch()}
-                    isRetrying={pagesQuery.isFetching}
-                  />
-                )}
-
-                {pagesQuery.isLoading ? (
-                  <div className="py-24 flex flex-col items-center justify-center text-zinc-500 space-y-2">
-                    <div className="size-5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-                    <p className="text-xs">Loading collection pages...</p>
-                  </div>
-                ) : !pagesQuery.isError && filteredPages.length === 0 ? (
-                  <EmptyStateCard
-                    icon={FileText}
-                    title={
-                      search
-                        ? 'No matching pages'
-                        : 'No pages in this collection yet'
-                    }
-                    description={
-                      search
-                        ? `No pages matched "${search}". Try adjusting your search term.`
-                        : `There are no pages created for "${activeCollection.name}" yet.`
-                    }
-                    actionLabel={search ? 'Clear Search' : 'Create First Page'}
-                    onAction={() => {
-                      if (search) setSearch('');
-                      else setIsCreatePageOpen(true);
-                    }}
-                    tip="Pages support dynamic schema slots, GrapesJS layouts, and instant previews"
-                  />
-                ) : (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 overflow-hidden shadow-xl">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-zinc-800 bg-zinc-900/80 text-zinc-400 font-medium">
-                          <th className="py-3.5 px-4">Page Title & Slug</th>
-                          <th className="py-3.5 px-4">Schema Status</th>
-                          <th className="py-3.5 px-4">Publish Status</th>
-                          <th className="py-3.5 px-4">Updated</th>
-                          <th className="py-3.5 px-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-800/60">
-                        {filteredPages.map((page) => {
-                          const isPublished = page.status === 'published';
-                          const cleanSlug = String(
-                            page.data?.slug || page.slug || page.id || '',
-                          ).replace(/^\/+/, '');
-                          const pageTitle =
-                            page.data?.title ||
-                            page.title ||
-                            (page.data?.name as string) ||
-                            'Untitled Page';
-
-                          return (
-                            <tr
-                              key={page.id}
-                              onClick={() => handleOpenPageDrawer(page.id)}
-                              className="hover:bg-zinc-800/40 transition-colors group cursor-pointer"
-                            >
-                              {/* Page Title & Slug */}
-                              <td className="py-3.5 px-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="size-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">
-                                    {pageTitle.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="font-semibold text-zinc-200 group-hover:text-indigo-300 transition-colors truncate max-w-md">
-                                      {pageTitle}
-                                    </span>
-                                    <span className="text-[11px] font-mono text-zinc-500">
-                                      /{cleanSlug}
-                                    </span>
-                                  </div>
-                                </div>
-                              </td>
-
-                              {/* Schema Status */}
-                              <td className="py-3.5 px-4">
-                                {Array.isArray(page.data?._schemas) &&
-                                (page.data._schemas as unknown[]).length > 0 ? (
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-600/10 border border-indigo-500/20 text-[11px] text-indigo-300 font-mono">
-                                    <Boxes className="size-3 text-indigo-400" />
-                                    <span>
-                                      {(page.data._schemas as unknown[]).length}{' '}
-                                      {(page.data._schemas as unknown[])
-                                        .length === 1
-                                        ? 'Schema'
-                                        : 'Schemas'}
-                                    </span>
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/50 border border-zinc-700/30 text-[11px] text-zinc-500 font-mono">
-                                    <span>No Schema</span>
-                                  </span>
-                                )}
-                              </td>
-
-                              {/* Publish Status */}
-                              <td className="py-3.5 px-4">
-                                <span
-                                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${
-                                    isPublished
-                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                  }`}
-                                >
-                                  {isPublished ? (
-                                    <CheckCircle2 className="size-2.5" />
-                                  ) : (
-                                    <Clock className="size-2.5" />
-                                  )}
-                                  <span>{isPublished ? 'Live' : 'Draft'}</span>
-                                </span>
-                              </td>
-
-                              {/* Updated Date */}
-                              <td className="py-3.5 px-4 text-zinc-400 font-mono text-[11px]">
-                                {(() => {
-                                  const dateVal =
-                                    page.updatedAt || page.createdAt;
-                                  return dateVal
-                                    ? new Date(dateVal).toLocaleDateString()
-                                    : '-';
-                                })()}
-                              </td>
-
-                              {/* Actions */}
-                              <td className="py-3.5 px-4 text-right">
-                                <div
-                                  className="flex items-center justify-end gap-1"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      window.open(
-                                        `/collections/${activeCollection.slug}/preview/${cleanSlug}`,
-                                        '_blank',
-                                      )
-                                    }
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-sky-400 hover:bg-zinc-800 transition-colors"
-                                    title="Live Preview"
-                                  >
-                                    <Eye className="size-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      navigate(
-                                        `/collections/${activeCollection.slug}/${page.id}`,
-                                      )
-                                    }
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-indigo-400 hover:bg-zinc-800 transition-colors"
-                                    title="Open Visual Builder"
-                                  >
-                                    <Palette className="size-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleOpenPageDrawer(page.id)
-                                    }
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
-                                    title="Edit Details & Schema"
-                                  >
-                                    <ChevronRight className="size-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setPageToDelete({
-                                        id: page.id,
-                                        title: pageTitle,
-                                      })
-                                    }
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors"
-                                    title="Delete Page"
-                                  >
-                                    <Trash2 className="size-4" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* The Page Side Drawer */}
-      <PageSideDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => {
-          setIsDrawerOpen(false);
-          setActivePageId(null);
-        }}
-        collection={activeCollection}
-        page={activePage}
-        collectionPages={pages}
-        onSavePage={async (pageId, data, publishImmediately) => {
-          await updatePageMutation.mutateAsync({
-            pageId,
-            data,
-            publishImmediately,
-          });
-        }}
-        isSaving={updatePageMutation.isPending}
-      />
-
-      {/* Quick Create Page Modal */}
-      {isCreatePageOpen && activeCollection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="text-sm font-bold text-zinc-100">
-                New Page in {activeCollection.name}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsCreatePageOpen(false)}
-                className="text-zinc-500 hover:text-zinc-300"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!newPageTitle.trim() || !newPageSlug.trim()) return;
-                createPageMutation.mutate({
-                  title: newPageTitle.trim(),
-                  slug: newPageSlug.trim(),
-                });
-              }}
-              className="space-y-3 text-xs"
-            >
-              <div>
-                <label className="block text-zinc-300 font-medium mb-1">
-                  Page Title <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  autoFocus
-                  value={newPageTitle}
-                  onChange={(e) => {
-                    setNewPageTitle(e.target.value);
-                    setNewPageSlug(slugify(e.target.value).replace(/^\/+/, ''));
-                  }}
-                  placeholder="e.g. Summer Special 2026"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-zinc-300 font-medium mb-1">
-                  Page Slug <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newPageSlug}
-                  onChange={(e) =>
-                    setNewPageSlug(
-                      e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
-                    )
-                  }
-                  placeholder="summer-special"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-300 font-mono focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreatePageOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={
-                    createPageMutation.isPending ||
-                    !newPageTitle.trim() ||
-                    !newPageSlug.trim()
-                  }
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium disabled:opacity-50"
-                >
-                  <Plus className="size-3.5" />
-                  <span>
-                    {createPageMutation.isPending
-                      ? 'Creating...'
-                      : 'Create Page'}
-                  </span>
-                </button>
-              </div>
-            </form>
-          </div>
+      {legacyCount > 0 && (
+        <div className="px-8 py-2.5 bg-amber-500/10 border-b border-border flex items-center justify-between gap-3 text-xs">
+          <span>
+            {legacyCount} post{legacyCount === 1 ? ' is' : 's are'} saved the
+            older way. Update them so each post can be edited and published on
+            its own.
+          </span>
+          <button
+            type="button"
+            disabled={migrateMutation.isPending}
+            onClick={() => migrateMutation.mutate()}
+            className={`${CMS_THEME_CLASSES.buttons.primary} text-xs py-1.5 px-3`}
+          >
+            {migrateMutation.isPending ? 'Updating…' : 'Update posts'}
+          </button>
         </div>
       )}
 
-      {/* Double-confirmation Destructive Page Delete Modal */}
+      <div className="px-8 py-3 bg-muted/30 border-b border-border flex items-center gap-2 overflow-x-auto shrink-0">
+        <button
+          type="button"
+          onClick={() => setTab('pages')}
+          className={tabClass(effectiveTab === 'pages')}
+        >
+          Page Content
+        </button>
+        {blogPages.map((b) => (
+          <button
+            key={b.pageId}
+            type="button"
+            onClick={() => setTab(b.pageId)}
+            className={tabClass(effectiveTab === b.pageId)}
+          >
+            {b.name} ({b.posts.length})
+          </button>
+        ))}
+      </div>
+
+      <div className="px-8 py-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <div className="relative w-full sm:w-96">
+          <Search
+            size={14}
+            className="absolute left-3 top-2.5 text-muted-foreground"
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={
+              activeBlog ? 'Search posts by title or author…' : 'Search pages…'
+            }
+            aria-label="Search"
+            className="w-full text-xs pl-8 pr-3 py-1.5 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-muted-foreground flex items-center gap-1">
+            <Filter size={13} />
+            <span>Status:</span>
+          </span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            aria-label="Filter by status"
+            className="bg-card border border-border rounded-lg px-2.5 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="all">All statuses</option>
+            <option value="published">Live</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-8">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            <span className="text-xs">Loading…</span>
+          </div>
+        ) : (
+            activeBlog ? visiblePosts.length === 0 : pageItems.length === 0
+          ) ? (
+          <div className="text-center py-16 border border-dashed border-border rounded-2xl bg-card">
+            <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />
+            <h3 className="text-sm font-semibold text-foreground">
+              {search ? `No ${noun}s match your search` : `No ${noun}s yet`}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1 mb-4 max-w-sm mx-auto">
+              {activeBlog
+                ? `Write your first ${activeBlog.postLabel.toLowerCase()} to see it here.`
+                : 'Pages you add appear here so you can edit their content.'}
+            </p>
+            {activeBlog && (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/sites/${currentSlug}/posts/blog/${activeBlog.pageId}/new`,
+                  )
+                }
+                className={CMS_THEME_CLASSES.buttons.primary}
+              >
+                <Plus size={14} />
+                <span>New {activeBlog.postLabel}</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-muted/50 border-b border-border text-muted-foreground font-semibold">
+                <tr>
+                  <th className="py-3.5 px-6">
+                    {activeBlog ? 'POST' : 'PAGE'}
+                  </th>
+                  <th className="py-3.5 px-4">
+                    {activeBlog ? 'AUTHOR' : 'TYPE'}
+                  </th>
+                  <th className="py-3.5 px-4">URL</th>
+                  <th className="py-3.5 px-4">LAST UPDATED</th>
+                  <th className="py-3.5 px-4">STATUS</th>
+                  <th className="py-3.5 px-6 text-right">ACTION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {activeBlog
+                  ? visiblePosts.map((post) => {
+                      const open = () =>
+                        navigate(
+                          `/sites/${currentSlug}/posts/blog/${activeBlog.pageId}/${post.id}`,
+                        );
+                      return (
+                        <tr
+                          key={post.id}
+                          onClick={open}
+                          className="hover:bg-muted/30 transition-colors group cursor-pointer"
+                        >
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-xl border shrink-0 bg-indigo-500/10 text-indigo-500 border-indigo-500/20">
+                                <PenTool size={18} />
+                              </div>
+                              <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                                {post.title}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-muted-foreground">
+                            {String(post.author ?? '—')}
+                          </td>
+                          <td className="py-4 px-4 font-mono text-[11px] text-foreground">
+                            {activeBlog.pageSlug}#{post.slug}
+                          </td>
+                          <td className="py-4 px-4 text-muted-foreground text-[11px]">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Clock
+                                size={12}
+                                className="text-muted-foreground/60"
+                              />
+                              {formatDate(post.updatedAt)}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <StatusBadge live={post.status === 'published'} />
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <div
+                              role="presentation"
+                              className="inline-flex items-center gap-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={open}
+                                className={`${CMS_THEME_CLASSES.buttons.primary} text-xs py-1.5 px-3`}
+                              >
+                                Edit post
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePost(post)}
+                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                title="Delete post"
+                                aria-label={`Delete ${post.title}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  : pageItems.map((p) => {
+                      const title =
+                        p.title || (p.data?.title as string) || 'Untitled Page';
+                      const slug = p.slug
+                        ? p.slug.startsWith('/')
+                          ? p.slug
+                          : `/${p.slug}`
+                        : '/';
+                      const open = () =>
+                        navigate(`/sites/${currentSlug}/posts/editor/${p.id}`);
+                      return (
+                        <tr
+                          key={p.id}
+                          onClick={open}
+                          className="hover:bg-muted/30 transition-colors group cursor-pointer"
+                        >
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-xl border shrink-0 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                                <FileText size={18} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                                  {slug === '/'
+                                    ? 'Homepage Content'
+                                    : `${title} Content`}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  Form schema sections
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="inline-flex px-2.5 py-1 rounded-md text-[11px] font-medium bg-muted text-foreground border border-border">
+                              Page sections
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 font-mono text-[11px] text-foreground">
+                            {slug === '/' ? '/ (Home)' : slug}
+                          </td>
+                          <td className="py-4 px-4 text-muted-foreground text-[11px]">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Clock
+                                size={12}
+                                className="text-muted-foreground/60"
+                              />
+                              {formatDate(p.updatedAt || p.createdAt)}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <StatusBadge live={p.status === 'published'} />
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <div
+                              role="presentation"
+                              className="inline-flex items-center gap-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={open}
+                                className={`${CMS_THEME_CLASSES.buttons.primary} text-xs py-1.5 px-3`}
+                              >
+                                Edit content &amp; sections
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPageToDelete({ id: p.id, title })
+                                }
+                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                title="Delete page"
+                                aria-label={`Delete ${title}`}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+              </tbody>
+            </table>
+            <Pager
+              noun={noun}
+              page={pageNumber}
+              total={activeBlog ? filteredPosts.length : pagesTotal}
+              totalPages={activeBlog ? postsTotalPages : pagesTotalPages}
+              onPrev={() => setPageNumber((n) => Math.max(1, n - 1))}
+              onNext={() => setPageNumber((n) => n + 1)}
+            />
+          </div>
+        )}
+      </div>
+
+      <WhatToPostDispatcherModal
+        isOpen={isDispatcherOpen}
+        onClose={() => setIsDispatcherOpen(false)}
+        siteName={activeSiteName}
+        pages={selectablePages}
+        blogs={blogPages.map((b) => ({
+          pageId: b.pageId,
+          name: b.name,
+          postLabel: b.postLabel,
+        }))}
+        blogEnabled={siteConfig.articlesEnabled}
+        settingsHref={`/sites/${currentSlug}/settings`}
+        onSelectBlog={(pageId) =>
+          navigate(`/sites/${currentSlug}/posts/blog/${pageId}/new`)
+        }
+        onSelectPageForm={(targetPageId) =>
+          navigate(`/sites/${currentSlug}/posts/editor/${targetPageId}`)
+        }
+      />
+
       <DeletePageModal
         page={pageToDelete}
         onClose={() => setPageToDelete(null)}

@@ -86,10 +86,14 @@ export const TabsSettings: React.FC<{ targetComponentId: string }> = ({
                 </button>
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                <label
+                  htmlFor={`${item.id}-title`}
+                  className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                >
                   Tab Title
                 </label>
                 <input
+                  id={`${item.id}-title`}
                   type="text"
                   value={item.title}
                   onChange={(e) =>
@@ -100,10 +104,14 @@ export const TabsSettings: React.FC<{ targetComponentId: string }> = ({
                 />
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                <label
+                  htmlFor={`${item.id}-content`}
+                  className="text-[10px] text-muted-foreground uppercase tracking-wider"
+                >
                   Tab Content (Text)
                 </label>
                 <textarea
+                  id={`${item.id}-content`}
                   value={item.content}
                   onChange={(e) =>
                     handleItemChange(item.id, 'content', e.target.value)
@@ -147,11 +155,15 @@ export const TabsSettings: React.FC<{ targetComponentId: string }> = ({
 
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              className="text-xs text-muted-foreground"
+            >
               Background Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-bg-color`}
                 type="color"
                 value={settings.backgroundColor}
                 onChange={(e) =>
@@ -170,11 +182,15 @@ export const TabsSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-active-color`}
+              className="text-xs text-muted-foreground"
+            >
               Active Tab Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-active-color`}
                 type="color"
                 value={settings.activeColor}
                 onChange={(e) => handleChange('activeColor', e.target.value)}
@@ -189,11 +205,15 @@ export const TabsSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-inactive-color`}
+              className="text-xs text-muted-foreground"
+            >
               Inactive Tab Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-inactive-color`}
                 type="color"
                 value={settings.inactiveColor}
                 onChange={(e) => handleChange('inactiveColor', e.target.value)}
@@ -208,9 +228,15 @@ export const TabsSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Text Color</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Text Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-text-color`}
                 type="color"
                 value={settings.textColor}
                 onChange={(e) => handleChange('textColor', e.target.value)}

@@ -44,6 +44,7 @@ export interface TemplateValidationError {
 
 export interface TemplateValidationResult {
   success: boolean;
+  data?: Record<string, unknown>;
   isGrapesJsProjectData?: boolean;
   projectData?: Record<string, unknown>;
   html?: string;
@@ -76,6 +77,12 @@ export interface TemplateImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onImport: (result: TemplateValidationResult) => void;
+  availablePages?: Array<{
+    id: string;
+    title?: string;
+    slug?: string;
+    data?: Record<string, unknown>;
+  }>;
 }
 
 export interface TemplateErrorModalProps {

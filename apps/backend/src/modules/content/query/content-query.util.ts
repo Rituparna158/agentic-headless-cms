@@ -1,12 +1,11 @@
 import { SQL, and, asc, desc, or, sql } from 'drizzle-orm';
-import type { SchemaField } from '@repo/types';
+import type { SchemaField, ContentQueryOptions } from '@repo/types';
 import {
   contentEntries,
   entryLocalizations,
   contentWorkflowStates,
 } from '@repo/shared-db';
 import { BadRequestError } from '@repo/utils';
-import { ContentQueryOptions } from '@repo/types';
 
 const FILTER_OPERATORS = [
   '$eq',

@@ -49,8 +49,11 @@ export default function NewsletterFormSettings({
       }}
     >
       <div style={sectionStyle}>
-        <label style={labelStyle}>Title</label>
+        <label htmlFor={`${targetComponentId}-title`} style={labelStyle}>
+          Title
+        </label>
         <input
+          id={`${targetComponentId}-title`}
           style={inputStyle}
           value={s.title}
           onChange={(e) => u({ title: e.target.value })}
@@ -59,8 +62,11 @@ export default function NewsletterFormSettings({
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Subtitle</label>
+        <label htmlFor={`${targetComponentId}-subtitle`} style={labelStyle}>
+          Subtitle
+        </label>
         <textarea
+          id={`${targetComponentId}-subtitle`}
           style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
           value={s.subtitle}
           onChange={(e) => u({ subtitle: e.target.value })}
@@ -69,8 +75,11 @@ export default function NewsletterFormSettings({
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Placeholder</label>
+        <label htmlFor={`${targetComponentId}-placeholder`} style={labelStyle}>
+          Placeholder
+        </label>
         <input
+          id={`${targetComponentId}-placeholder`}
           style={inputStyle}
           value={s.placeholder}
           onChange={(e) => u({ placeholder: e.target.value })}
@@ -79,8 +88,11 @@ export default function NewsletterFormSettings({
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Button Text</label>
+        <label htmlFor={`${targetComponentId}-btn-text`} style={labelStyle}>
+          Button Text
+        </label>
         <input
+          id={`${targetComponentId}-btn-text`}
           style={inputStyle}
           value={s.buttonText}
           onChange={(e) => u({ buttonText: e.target.value })}
@@ -90,8 +102,11 @@ export default function NewsletterFormSettings({
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Alignment</label>
+          <label htmlFor={`${targetComponentId}-alignment`} style={labelStyle}>
+            Alignment
+          </label>
           <select
+            id={`${targetComponentId}-alignment`}
             style={inputStyle}
             value={s.alignment}
             onChange={(e) =>
@@ -104,8 +119,11 @@ export default function NewsletterFormSettings({
           </select>
         </div>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Layout</label>
+          <label htmlFor={`${targetComponentId}-layout`} style={labelStyle}>
+            Layout
+          </label>
           <select
+            id={`${targetComponentId}-layout`}
             style={inputStyle}
             value={s.layout}
             onChange={(e) =>
@@ -119,7 +137,7 @@ export default function NewsletterFormSettings({
       </div>
 
       <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
-        <label style={labelStyle}>Colors</label>
+        <span style={labelStyle}>Colors</span>
         <div
           style={{
             display: 'grid',
@@ -128,10 +146,14 @@ export default function NewsletterFormSettings({
           }}
         >
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Section BG
             </label>
             <input
+              id={`${targetComponentId}-bg-color`}
               type="color"
               style={{
                 width: '100%',
@@ -149,8 +171,14 @@ export default function NewsletterFormSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>Text</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
+              Text
+            </label>
             <input
+              id={`${targetComponentId}-text-color`}
               type="color"
               style={{
                 width: '100%',
@@ -164,10 +192,14 @@ export default function NewsletterFormSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-input-bg-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Input BG
             </label>
             <input
+              id={`${targetComponentId}-input-bg-color`}
               type="color"
               style={{
                 width: '100%',
@@ -181,10 +213,14 @@ export default function NewsletterFormSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-input-border-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Input Border
             </label>
             <input
+              id={`${targetComponentId}-input-border-color`}
               type="color"
               style={{
                 width: '100%',
@@ -198,10 +234,14 @@ export default function NewsletterFormSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-button-bg-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Button BG
             </label>
             <input
+              id={`${targetComponentId}-button-bg-color`}
               type="color"
               style={{
                 width: '100%',
@@ -215,10 +255,14 @@ export default function NewsletterFormSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-button-text-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Button Text
             </label>
             <input
+              id={`${targetComponentId}-button-text-color`}
               type="color"
               style={{
                 width: '100%',

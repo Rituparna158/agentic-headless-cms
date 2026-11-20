@@ -1,7 +1,7 @@
 import { createSchemaSchema, updateSchemaSchema } from '@repo/validation';
 import { Router } from 'express';
 import { authenticateToken, validateBody } from '@repo/middlewares';
-import { requirePermission } from '../auth/rbac.middleware.js';
+import { requireCapability } from '../auth/capability.js';
 import {
   createSchema,
   listSchemas,
@@ -13,32 +13,54 @@ export const schemaRouter = Router();
 schemaRouter.post(
   '/',
   authenticateToken,
-  requirePermission('create'),
+  requireCapability('manage_settings', 'create'),
   validateBody(createSchemaSchema),
   createSchema,
 );
 schemaRouter.get(
   '/',
   authenticateToken,
-  requirePermission('read'),
+  requireCapability(
+    [
+      'manage_content',
+      'publish_content',
+      'manage_media',
+      'manage_appearance',
+      'manage_settings',
+      'manage_users',
+      'manage_plugins',
+    ],
+    'read',
+  ),
   listSchemas,
 );
 schemaRouter.get(
   '/slug/:slug',
   authenticateToken,
-  requirePermission('read'),
+  requireCapability(
+    [
+      'manage_content',
+      'publish_content',
+      'manage_media',
+      'manage_appearance',
+      'manage_settings',
+      'manage_users',
+      'manage_plugins',
+    ],
+    'read',
+  ),
   getSchemaBySlug,
 );
 schemaRouter.put(
   '/:id',
   authenticateToken,
-  requirePermission('update'),
+  requireCapability('manage_settings', 'update'),
   validateBody(updateSchemaSchema),
   updateSchema,
 );
 schemaRouter.delete(
   '/:id',
   authenticateToken,
-  requirePermission('delete'),
+  requireCapability('manage_settings', 'delete'),
   deleteSchema,
 );

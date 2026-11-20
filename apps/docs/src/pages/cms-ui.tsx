@@ -7,7 +7,6 @@ import { CmsUiCTASection } from '../components/CmsUiHomepage/cta';
 import CmsUiFooter from '../components/CmsUiHomepage/footer';
 import { InteractivePreview } from '../components/CmsUiHomepage/interactivePreview';
 
-
 export default function CmsUiHome(): React.JSX.Element {
   return (
     <Layout

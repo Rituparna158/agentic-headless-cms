@@ -32,6 +32,7 @@ export function CreateCollectionModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+        role="presentation"
         onClick={onClose}
       />
       <div className="relative bg-card rounded-xl shadow-lg border border-border w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">

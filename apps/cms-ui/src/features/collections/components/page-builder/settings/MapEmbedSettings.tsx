@@ -32,7 +32,10 @@ export const MapEmbedSettings: React.FC<{ targetComponentId: string }> = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+        <label
+          htmlFor={`${targetComponentId}-address`}
+          className="text-sm font-medium text-foreground flex items-center gap-2"
+        >
           <MapPin className="w-4 h-4 text-muted-foreground" />
           Address / Location
         </label>
@@ -40,6 +43,7 @@ export const MapEmbedSettings: React.FC<{ targetComponentId: string }> = ({
           Enter any valid address or location name to show on the map.
         </p>
         <textarea
+          id={`${targetComponentId}-address`}
           value={settings.address}
           onChange={(e) => handleChange('address', e.target.value)}
           className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background"

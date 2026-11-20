@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useNavigate } from 'react-router-dom';
 import type {
   DynamicFieldDataType,
@@ -37,6 +38,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   const toast = useToast();
 
   // Page title and slug (completely isolated from schema content forms)
+  const confirmAction = useConfirm();
   const [pageTitle, setPageTitle] = useState('');
   const [pageSlug, setPageSlug] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
@@ -287,7 +289,10 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
           if (s && (s.name || s.slug || s.id)) {
             list.push({
               pageId: otherId,
-              pageTitle: otherTitle,
+              pageTitle:
+                otherData.isBlogPage === true
+                  ? `Blog: ${String(otherData.blogName ?? otherTitle)}`
+                  : otherTitle,
               schema: {
                 ...s,
                 id: s.id || `schema_${Date.now()}`,
@@ -717,8 +722,12 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
 
   // Delete a schema from this page
   const handleDeleteSchema = async (schemaId: string, schemaName: string) => {
-    if (!confirm(`Are you sure you want to remove schema "${schemaName}"?`))
-      return;
+    const confirmed = await confirmAction({
+      title: 'Remove section?',
+      message: `Are you sure you want to remove "${schemaName}"? Its content on this page will be removed.`,
+      confirmText: 'Remove',
+    });
+    if (!confirmed) return;
 
     const updatedSchemas = pageSchemas.filter((s) => s.id !== schemaId);
     setPageSchemas(updatedSchemas);

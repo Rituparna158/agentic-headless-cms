@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useConfirm } from '@/hooks/useConfirm';
+import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
@@ -33,13 +34,19 @@ import { MediaAssetPickerModal } from '@/features/media/components/MediaAssetPic
 import { getMediaFileUrl } from '@/features/media/utils/media.util';
 import { SchemaRichTextEditorProps } from '@/types/pageSchemaMedia.types';
 import { convertHtmlToMarkdown } from '@/utils/covertHtmlToMarkdown';
+import type { SlashState, SlashCommand } from './types/schemaRichText.types';
+import { filterSlashCommands } from './constants/schemaRichText.constants';
 
 export const SchemaRichTextEditor: React.FC<SchemaRichTextEditorProps> = ({
   value,
   fieldApiId: _fieldApiId,
   fieldDisplayName: _fieldDisplayName = 'Content',
   onChange,
+  variant = 'default',
 }) => {
+  const isPaper = variant !== 'default';
+  const isArticle = variant === 'article';
+  const confirmAction = useConfirm();
   const [activeTab, setActiveTab] = useState<'visual' | 'markdown' | 'html'>(
     'visual',
   );
@@ -51,6 +58,44 @@ export const SchemaRichTextEditor: React.FC<SchemaRichTextEditorProps> = ({
     null,
   );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Slash ("/") command menu state (paper variant only)
+  const [slash, setSlash] = useState<SlashState | null>(null);
+  const [slashIndex, setSlashIndex] = useState(0);
+  const slashRef = useRef<SlashState | null>(null);
+  const slashIndexRef = useRef(0);
+  const runSlashRef = useRef<(item: SlashCommand) => void>(() => {});
+  slashRef.current = slash;
+  slashIndexRef.current = slashIndex;
+
+  const syncSlashMenu = (ed: Editor) => {
+    if (!isPaper) return;
+    const { selection } = ed.state;
+    if (!selection.empty) {
+      setSlash(null);
+      return;
+    }
+    const { $from } = selection;
+    const textBefore = $from.parent.textBetween(
+      0,
+      $from.parentOffset,
+      undefined,
+      '\ufffc',
+    );
+    const match = /(?:^|\s)\/([\w-]*)$/.exec(textBefore);
+    if (!match) {
+      setSlash(null);
+      return;
+    }
+    const query = match[1] ?? '';
+    const coords = ed.view.coordsAtPos($from.pos);
+    setSlash({
+      query,
+      from: $from.pos - query.length - 1,
+      top: coords.bottom + 6,
+      left: coords.left,
+    });
+  };
 
   const editor = useEditor({
     extensions: [
@@ -72,22 +117,52 @@ export const SchemaRichTextEditor: React.FC<SchemaRichTextEditorProps> = ({
         },
       }),
       Placeholder.configure({
-        placeholder:
-          'Write engaging rich text or drop a Markdown/HTML file here...',
+        placeholder: isPaper
+          ? 'Tell your story freely. Type / for headings, images, quotes and more...'
+          : 'Write engaging rich text or drop a Markdown/HTML file here...',
       }),
     ],
     content: value || '',
     editorProps: {
       attributes: {
-        class:
-          'prose prose-invert max-w-none focus:outline-none min-h-[220px] max-h-[500px] overflow-y-auto px-4 py-3 text-sm leading-relaxed text-zinc-200 select-text',
+        class: isPaper
+          ? 'prose prose-stone max-w-none focus:outline-none min-h-[60vh] text-[17px] leading-[1.75] text-stone-800 select-text'
+          : 'prose prose-invert max-w-none focus:outline-none min-h-[220px] max-h-[500px] overflow-y-auto px-4 py-3 text-sm leading-relaxed text-zinc-200 select-text',
+      },
+      handleKeyDown: (_view, event) => {
+        const current = slashRef.current;
+        if (!current) return false;
+        const items = filterSlashCommands(current.query);
+        if (event.key === 'Escape') {
+          setSlash(null);
+          return true;
+        }
+        if (items.length === 0) return false;
+        if (event.key === 'ArrowDown') {
+          setSlashIndex((slashIndexRef.current + 1) % items.length);
+          return true;
+        }
+        if (event.key === 'ArrowUp') {
+          setSlashIndex(
+            (slashIndexRef.current - 1 + items.length) % items.length,
+          );
+          return true;
+        }
+        if (event.key === 'Enter' || event.key === 'Tab') {
+          const item = items[Math.min(slashIndexRef.current, items.length - 1)];
+          if (item) runSlashRef.current(item);
+          return true;
+        }
+        return false;
       },
     },
     onUpdate: ({ editor: ed }) => {
       const html = ed.getHTML();
       onChange(html);
       setRawText(html);
+      syncSlashMenu(ed);
     },
+    onSelectionUpdate: ({ editor: ed }) => syncSlashMenu(ed),
   });
 
   // Sync external value changes into editor
@@ -207,6 +282,413 @@ export const SchemaRichTextEditor: React.FC<SchemaRichTextEditorProps> = ({
   const wordCount = plainText.trim() ? plainText.trim().split(/\s+/).length : 0;
   const charCount = plainText.length;
   const readingTimeMin = Math.ceil(wordCount / 200) || 1;
+
+  runSlashRef.current = (item: SlashCommand) => {
+    const current = slashRef.current;
+    if (!editor || !current) return;
+    const to = editor.state.selection.from;
+    const chain = editor
+      .chain()
+      .focus()
+      .deleteRange({ from: current.from, to });
+    if (item.id === 'image') {
+      chain.run();
+      setIsMediaModalOpen(true);
+    } else {
+      item.run(chain).run();
+    }
+    setSlash(null);
+    setSlashIndex(0);
+  };
+
+  if (isPaper) {
+    const items = slash ? filterSlashCommands(slash.query) : [];
+    const modeTabs: Array<{
+      id: 'visual' | 'markdown' | 'html';
+      label: string;
+      icon: typeof Eye;
+    }> = [
+      { id: 'visual', label: 'Visual', icon: Eye },
+      { id: 'markdown', label: 'Markdown', icon: FileText },
+      { id: 'html', label: 'Raw HTML', icon: CodeXml },
+    ];
+    type ToolItem = {
+      id: string;
+      title: string;
+      icon: typeof Bold;
+      active?: boolean;
+      disabled?: boolean;
+      onClick: () => void;
+    };
+    const tools: ToolItem[][] = editor
+      ? [
+          [1, 2, 3].map((level) => ({
+            id: `h${level}`,
+            title: `Heading ${level}`,
+            icon: [Heading1, Heading2, Heading3][level - 1]!,
+            active: editor.isActive('heading', { level }),
+            onClick: () =>
+              editor
+                .chain()
+                .focus()
+                .toggleHeading({ level: level as 1 | 2 | 3 })
+                .run(),
+          })),
+          [
+            {
+              id: 'bold',
+              title: 'Bold',
+              icon: Bold,
+              active: editor.isActive('bold'),
+              onClick: () => editor.chain().focus().toggleBold().run(),
+            },
+            {
+              id: 'italic',
+              title: 'Italic',
+              icon: Italic,
+              active: editor.isActive('italic'),
+              onClick: () => editor.chain().focus().toggleItalic().run(),
+            },
+            {
+              id: 'strike',
+              title: 'Strikethrough',
+              icon: Strikethrough,
+              active: editor.isActive('strike'),
+              onClick: () => editor.chain().focus().toggleStrike().run(),
+            },
+            {
+              id: 'code',
+              title: 'Inline code',
+              icon: Code,
+              active: editor.isActive('code'),
+              onClick: () => editor.chain().focus().toggleCode().run(),
+            },
+          ],
+          [
+            {
+              id: 'ul',
+              title: 'Bulleted list',
+              icon: List,
+              active: editor.isActive('bulletList'),
+              onClick: () => editor.chain().focus().toggleBulletList().run(),
+            },
+            {
+              id: 'ol',
+              title: 'Numbered list',
+              icon: ListOrdered,
+              active: editor.isActive('orderedList'),
+              onClick: () => editor.chain().focus().toggleOrderedList().run(),
+            },
+            {
+              id: 'quote',
+              title: 'Quote',
+              icon: Quote,
+              active: editor.isActive('blockquote'),
+              onClick: () => editor.chain().focus().toggleBlockquote().run(),
+            },
+            {
+              id: 'hr',
+              title: 'Divider',
+              icon: Minus,
+              onClick: () => editor.chain().focus().setHorizontalRule().run(),
+            },
+          ],
+          [
+            {
+              id: 'link',
+              title: 'Link',
+              icon: Link2,
+              active: editor.isActive('link'),
+              onClick: setLink,
+            },
+            {
+              id: 'image',
+              title: 'Insert image',
+              icon: ImageIcon,
+              onClick: () => setIsMediaModalOpen(true),
+            },
+          ],
+          [
+            {
+              id: 'undo',
+              title: 'Undo',
+              icon: Undo2,
+              disabled: !editor.can().undo(),
+              onClick: () => editor.chain().focus().undo().run(),
+            },
+            {
+              id: 'redo',
+              title: 'Redo',
+              icon: Redo2,
+              disabled: !editor.can().redo(),
+              onClick: () => editor.chain().focus().redo().run(),
+            },
+          ],
+        ]
+      : [];
+
+    return (
+      <div
+        className={`transition-colors ${
+          isArticle
+            ? isDraggingFile
+              ? 'rounded-xl ring-2 ring-indigo-200'
+              : ''
+            : `rounded-2xl border bg-[#FAF8F3] overflow-hidden ${
+                isDraggingFile
+                  ? 'border-indigo-400 ring-2 ring-indigo-200'
+                  : 'border-stone-300/70'
+              }`
+        }`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDraggingFile(true);
+        }}
+        onDragLeave={() => setIsDraggingFile(false)}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".md,.markdown,.html,.htm,.txt"
+          onChange={handleFileInputChange}
+          className="hidden"
+        />
+
+        {/* Mode tabs + file import + copy */}
+        <div
+          className={`flex items-center justify-between gap-2 flex-wrap ${
+            isArticle
+              ? 'sticky top-0 z-10 px-0 py-2 bg-[#FDFBF7]/95 backdrop-blur border-b border-stone-200/60'
+              : 'px-3 py-2 border-b border-stone-200 bg-[#F5F2EA]'
+          }`}
+        >
+          <div
+            role="tablist"
+            aria-label="Editor mode"
+            className="flex items-center gap-1 p-0.5 rounded-lg bg-stone-200/60"
+          >
+            {modeTabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === t.id}
+                onClick={() => handleTabChange(t.id)}
+                className={`px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                  activeTab === t.id
+                    ? 'bg-[#FAF8F3] text-stone-900 shadow-sm'
+                    : 'text-stone-500 hover:text-stone-800'
+                }`}
+              >
+                <t.icon className="size-3.5" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Import a .md or .html file into this article"
+              className="px-2.5 py-1.5 rounded-lg border border-stone-200 bg-[#FAF8F3] text-xs font-medium text-stone-700 hover:bg-stone-100 flex items-center gap-1.5 transition-colors"
+            >
+              <UploadCloud className="size-3.5 text-indigo-500" />
+              Import .md / .html
+            </button>
+            <button
+              type="button"
+              aria-label="Copy content"
+              title="Copy content to clipboard"
+              onClick={async () => {
+                const text =
+                  activeTab === 'visual' ? editor?.getHTML() || '' : rawText;
+                await navigator.clipboard.writeText(text);
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000);
+              }}
+              className="p-1.5 rounded-lg border border-stone-200 bg-[#FAF8F3] text-stone-600 hover:bg-stone-100 transition-colors"
+            >
+              {isCopied ? (
+                <Check className="size-3.5 text-emerald-600" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {importNotification && (
+          <div className="px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 border-b border-emerald-100 flex items-center gap-2">
+            <Check className="size-3.5" />
+            {importNotification}
+          </div>
+        )}
+
+        {/* Formatting toolbar (visual mode) */}
+        {activeTab === 'visual' && editor && (
+          <div
+            className={`flex items-center gap-0.5 flex-wrap ${
+              isArticle
+                ? 'sticky top-[49px] z-10 px-0 py-1.5 bg-[#FDFBF7]/95 backdrop-blur'
+                : 'px-2 py-1.5 border-b border-stone-200 bg-[#FAF8F3]'
+            }`}
+          >
+            {tools.map((group, gi) => (
+              <div key={gi} className="flex items-center gap-0.5">
+                {gi > 0 && (
+                  <span className="w-px h-4 bg-stone-200 mx-1.5" aria-hidden />
+                )}
+                {group.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    title={t.title}
+                    aria-label={t.title}
+                    aria-pressed={t.active}
+                    disabled={t.disabled}
+                    onClick={t.onClick}
+                    className={`p-1.5 rounded-md transition-colors disabled:opacity-30 ${
+                      t.active
+                        ? 'bg-indigo-50 text-indigo-700'
+                        : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                    }`}
+                  >
+                    <t.icon className="size-4" />
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Content area */}
+        <div className={isArticle ? 'px-0 py-8' : 'px-6 sm:px-8 py-5'}>
+          {activeTab === 'visual' && <EditorContent editor={editor} />}
+          {activeTab === 'markdown' && (
+            <textarea
+              rows={18}
+              value={rawText}
+              onChange={(e) => {
+                setRawText(e.target.value);
+                onChange((marked.parse(e.target.value) as string) || '');
+              }}
+              placeholder="# Write Markdown here..."
+              aria-label="Markdown source"
+              className={`w-full font-mono text-xs leading-relaxed text-stone-800 focus:outline-none resize-y ${
+                isArticle
+                  ? 'bg-transparent border-0 px-0 py-0 min-h-[60vh] focus:ring-0'
+                  : 'px-3 py-2.5 rounded-xl bg-[#F5F2EA] border border-stone-200 focus:ring-2 focus:ring-indigo-200'
+              }`}
+            />
+          )}
+          {activeTab === 'html' && (
+            <textarea
+              rows={18}
+              value={rawText}
+              onChange={(e) => {
+                setRawText(e.target.value);
+                onChange(e.target.value);
+              }}
+              placeholder="<p>Write raw HTML markup...</p>"
+              aria-label="HTML source"
+              className={`w-full font-mono text-xs leading-relaxed text-stone-800 focus:outline-none resize-y ${
+                isArticle
+                  ? 'bg-transparent border-0 px-0 py-0 min-h-[60vh] focus:ring-0'
+                  : 'px-3 py-2.5 rounded-xl bg-[#F5F2EA] border border-stone-200 focus:ring-2 focus:ring-indigo-200'
+              }`}
+            />
+          )}
+        </div>
+
+        {/* Status bar */}
+        <div
+          className={`flex items-center justify-between gap-2 flex-wrap text-[11px] text-stone-500 ${
+            isArticle
+              ? 'px-0 py-4'
+              : 'px-4 py-2 border-t border-stone-200 bg-[#F5F2EA]'
+          }`}
+        >
+          <span>
+            <strong className="text-stone-700">{wordCount}</strong> words ·{' '}
+            <strong className="text-stone-700">{charCount}</strong> characters ·
+            ~{readingTimeMin} min read
+          </span>
+          <span className="flex items-center gap-3">
+            <span className="hidden sm:inline">
+              Type / for quick blocks · drop a .md / .html file to import
+            </span>
+            <button
+              type="button"
+              onClick={async () => {
+                const confirmed = await confirmAction({
+                  title: 'Clear article content?',
+                  message: 'All text in this article will be removed.',
+                  confirmText: 'Clear',
+                });
+                if (confirmed) {
+                  editor?.commands.clearContent();
+                  onChange('');
+                  setRawText('');
+                }
+              }}
+              className="hover:text-rose-600 transition-colors"
+            >
+              Clear
+            </button>
+          </span>
+        </div>
+
+        {slash && items.length > 0 && (
+          <div
+            role="listbox"
+            aria-label="Insert block"
+            style={{ position: 'fixed', top: slash.top, left: slash.left }}
+            className="z-50 w-64 rounded-xl border border-stone-200 bg-[#FAF8F3] shadow-xl py-1.5 max-h-72 overflow-y-auto"
+          >
+            {items.map((item, i) => (
+              <button
+                key={item.id}
+                type="button"
+                role="option"
+                aria-selected={i === slashIndex}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  runSlashRef.current(item);
+                }}
+                onMouseEnter={() => setSlashIndex(i)}
+                className={`w-full text-left px-3 py-2 flex flex-col transition-colors ${
+                  i === slashIndex ? 'bg-stone-100' : 'hover:bg-[#F5F2EA]'
+                }`}
+              >
+                <span className="text-sm font-medium text-stone-900">
+                  {item.label}
+                </span>
+                <span className="text-[11px] text-stone-500">{item.hint}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <MediaAssetPickerModal
+          isOpen={isMediaModalOpen}
+          onClose={() => setIsMediaModalOpen(false)}
+          onSelect={(asset) => {
+            if (editor) {
+              const url = getMediaFileUrl(asset.url);
+              const alt =
+                asset.altText ||
+                (asset as { filename?: string }).filename ||
+                'image';
+              editor.chain().focus().setImage({ src: url, alt }).run();
+            }
+            setIsMediaModalOpen(false);
+          }}
+          title="Insert Image into Article Content"
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -599,8 +1081,13 @@ export const SchemaRichTextEditor: React.FC<SchemaRichTextEditorProps> = ({
           </span>
           <button
             type="button"
-            onClick={() => {
-              if (confirm('Clear editor content?')) {
+            onClick={async () => {
+              const confirmed = await confirmAction({
+                title: 'Clear content?',
+                message: 'All text in this editor will be removed.',
+                confirmText: 'Clear',
+              });
+              if (confirmed) {
                 editor?.commands.clearContent();
                 onChange('');
                 setRawText('');

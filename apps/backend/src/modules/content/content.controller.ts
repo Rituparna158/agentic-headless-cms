@@ -10,6 +10,7 @@ import {
 } from '@repo/utils';
 import { DEFAULT_LOCALE, ERROR_MESSAGES } from '@repo/constants';
 import type { SchemaDefinition } from '@repo/types';
+import { hasCapability, type CapPermission } from '../auth/capability.js';
 import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
 import { WorkflowsService } from '../workflows/workflows.service.js';
 import { transitionEntryValidationSchema } from '@repo/validation';
@@ -21,6 +22,16 @@ function checkAuthorizedForDrafts(req: Request, schemaId?: string): boolean {
   if (
     userRoles.some((r: string) =>
       ['admin', 'super_admin', 'editor', 'author'].includes(r),
+    )
+  ) {
+    return true;
+  }
+  // Roles built from capabilities (writers, publishers) may see drafts too
+  if (
+    hasCapability(
+      (req.user?.permissions || []) as unknown as CapPermission[],
+      ['manage_content', 'publish_content', 'manage_appearance'],
+      schemaId,
     )
   ) {
     return true;

@@ -42,6 +42,7 @@ export interface MediaAssetCardProps {
   onDelete?: (asset: MediaAsset) => void;
   onSelect?: (asset: MediaAsset) => void;
   isPickerMode?: boolean;
+  usedInSites?: string[];
 }
 
 export interface MediaAssetDetailModalProps {
@@ -83,6 +84,7 @@ export interface MediaGridProps {
   onOpenUpload?: () => void;
   isPickerMode?: boolean;
   className?: string;
+  getAssetSites?: (asset: MediaAsset) => string[];
 }
 
 export interface MediaUploadZoneProps {
