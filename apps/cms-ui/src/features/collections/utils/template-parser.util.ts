@@ -205,9 +205,22 @@ export function validateAndParseDynamicTemplate(
 
   // Format 3: Raw HTML and CSS export
   if (typeof raw.html === 'string' && raw.html.trim().length > 0) {
+    const styleTagRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    let extractedStyles = '';
+    let match: RegExpExecArray | null;
+    while ((match = styleTagRegex.exec(raw.html)) !== null) {
+      if (match[1]) {
+        extractedStyles += '\n' + match[1].trim();
+      }
+    }
+
     const sanitizedHtml = sanitizeHtmlContent(raw.html);
-    const sanitizedCss =
-      typeof raw.css === 'string' ? sanitizeCssContent(raw.css) : '';
+    const incomingCss = typeof raw.css === 'string' ? raw.css : '';
+    const combinedCss = [incomingCss, extractedStyles]
+      .filter(Boolean)
+      .join('\n');
+    const sanitizedCss = sanitizeCssContent(combinedCss);
+
     return {
       success: true,
       isGrapesJsProjectData: false,

@@ -18,12 +18,16 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
   };
 });
 
-vi.mock('@repo/shared-ui', () => ({
-  useToast: () => ({
-    success: vi.fn(),
-    error: vi.fn(),
-  }),
-}));
+vi.mock('@repo/shared-ui', async () => {
+  const React = await import('react');
+  return {
+    useToast: () => ({
+      success: vi.fn(),
+      error: vi.fn(),
+    }),
+    DialogContext: React.createContext(undefined),
+  };
+});
 
 // Mock react-router-dom useParams
 vi.mock('react-router-dom', async (importOriginal) => {

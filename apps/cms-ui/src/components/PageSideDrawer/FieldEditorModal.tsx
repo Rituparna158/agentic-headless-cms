@@ -27,10 +27,14 @@ export const FieldEditorModal: React.FC<FieldEditorModalProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Field Name */}
         <div>
-          <label className="block text-[11px] text-zinc-400 mb-1 font-medium">
+          <label
+            htmlFor="field-display-name-input"
+            className="block text-[11px] text-zinc-400 mb-1 font-medium"
+          >
             Field Name <span className="text-rose-400">*</span>
           </label>
           <input
+            id="field-display-name-input"
             type="text"
             required
             value={editingFieldData.displayName}
@@ -47,10 +51,14 @@ export const FieldEditorModal: React.FC<FieldEditorModalProps> = ({
 
         {/* API Key */}
         <div>
-          <label className="block text-[11px] text-zinc-400 mb-1 font-medium">
+          <label
+            htmlFor="field-api-id-input"
+            className="block text-[11px] text-zinc-400 mb-1 font-medium"
+          >
             API Key (snake_case) <span className="text-rose-400">*</span>
           </label>
           <input
+            id="field-api-id-input"
             type="text"
             required
             value={editingFieldData.apiId}
@@ -69,10 +77,14 @@ export const FieldEditorModal: React.FC<FieldEditorModalProps> = ({
 
         {/* Data Type */}
         <div>
-          <label className="block text-[11px] text-zinc-400 mb-1 font-medium">
+          <label
+            htmlFor="field-data-type-select"
+            className="block text-[11px] text-zinc-400 mb-1 font-medium"
+          >
             Data Type
           </label>
           <select
+            id="field-data-type-select"
             value={editingFieldData.dataType}
             onChange={(e) => {
               const val = e.target.value as DynamicFieldDataType;
@@ -96,10 +108,14 @@ export const FieldEditorModal: React.FC<FieldEditorModalProps> = ({
 
         {/* Initial / Default Value */}
         <div>
-          <label className="block text-[11px] text-zinc-400 mb-1 font-medium">
+          <label
+            htmlFor="field-initial-value-input"
+            className="block text-[11px] text-zinc-400 mb-1 font-medium"
+          >
             Default / Initial Value
           </label>
           <input
+            id="field-initial-value-input"
             type="text"
             value={editingFieldData.initialValue}
             onChange={(e) => {

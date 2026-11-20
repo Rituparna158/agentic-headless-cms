@@ -240,3 +240,19 @@ describe('parseContentQuery', () => {
     expect(result.where).toBeDefined();
   });
 });
+
+describe('kind filters', () => {
+  it('accepts a list of kinds to keep or leave out', () => {
+    expect(
+      () => parseContentQuery({ kind: 'post,page' }, [], 'all').where,
+    ).not.toThrow();
+    const q = parseContentQuery({ excludeKind: 'submission,menus' }, [], 'all');
+    expect(q.where).toBeDefined();
+  });
+  it('rejects anything that is not a plain kind name', () => {
+    expect(() => parseContentQuery({ kind: "a'b" }, [], 'all')).toThrow();
+    expect(() =>
+      parseContentQuery({ excludeKind: 'x;drop table' }, [], 'all'),
+    ).toThrow();
+  });
+});

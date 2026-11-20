@@ -10,8 +10,14 @@ import {
   UpdateRolePayload,
   RoleDetailPanelProps,
 } from '../types/access.types';
-import { CMS_CAPABILITIES } from '../constants/access.constants';
+import {
+  CMS_CAPABILITIES,
+  buildRolePermissions,
+} from '../constants/access.constants';
+import { postsApi, extractArrayPayload } from '@/features/posts/api/posts.api';
+import type { ContentCollectionMeta } from '@/types/content.types';
 import { Plus } from 'lucide-react';
+import { useCmsToast } from '@/hooks/useCmsToast';
 export const RolesTab = () => {
   const { data: rolesResponse, isLoading: rolesLoading } = useQuery({
     queryKey: ['roles'],
@@ -27,7 +33,11 @@ export const RolesTab = () => {
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Roles
           </span>
-          <button className="text-muted-foreground hover:text-foreground">
+          <button
+            type="button"
+            aria-label="Add role"
+            className="text-muted-foreground hover:text-foreground"
+          >
             <Plus size={16} />
           </button>
         </div>
@@ -88,6 +98,7 @@ export const RolesTab = () => {
 
 const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
   const queryClient = useQueryClient();
+  const toast = useCmsToast();
   const isNew = role === 'new';
   const { data: roleDetailsResponse, isLoading } = useQuery({
     queryKey: ['role', !isNew ? role.id : 'new'],
@@ -101,18 +112,26 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
   const fullRole = (data && 'data' in data ? data.data : data) as
     | RoleWithPermissions
     | undefined;
+  const { data: rawSites } = useQuery({
+    queryKey: ['post-collections'],
+    queryFn: () => postsApi.listCollections(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const sites = extractArrayPayload<ContentCollectionMeta>(rawSites);
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
     mfaRequired: boolean;
     application: ApplicationType;
     capabilities: string[];
+    siteIds: string[];
   }>({
     name: isNew ? '' : role.name,
     description: isNew ? '' : role.description || '',
     mfaRequired: isNew ? false : role.mfaRequired,
     application: isNew ? 'CMS_UI' : role.application,
     capabilities: [] as string[],
+    siteIds: [] as string[],
   });
   useEffect(() => {
     if (fullRole) {
@@ -122,6 +141,13 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
           (fullRole.permissions
             ?.map((p) => (p.condition as Record<string, string>)?.capability)
             .filter(Boolean) as string[]) || [],
+        siteIds: [
+          ...new Set(
+            (fullRole.permissions
+              ?.map((p) => p.schemaId)
+              .filter(Boolean) as string[]) || [],
+          ),
+        ],
       }));
     }
   }, [fullRole]);
@@ -132,12 +158,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
         description: data.description,
         mfaRequired: data.mfaRequired,
         application: data.application,
-        permissions: data.capabilities.map((cap) => ({
-          schemaId: null,
-          action: 'manage',
-          effect: 'allow',
-          condition: { capability: cap },
-        })),
+        permissions: buildRolePermissions(data.capabilities, data.siteIds),
       };
       return accessApi.createRole(payload);
     },
@@ -147,7 +168,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
     },
     onError: (error) => {
       browserLogger.error('Failed to create role', error);
-      alert('Failed to create role');
+      toast.error('Failed to create role. Please try again.');
     },
   });
   const updateMutation = useMutation({
@@ -157,12 +178,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
         name: data.name,
         description: data.description,
         mfaRequired: data.mfaRequired,
-        permissions: data.capabilities.map((cap) => ({
-          schemaId: null,
-          action: 'manage',
-          effect: 'allow',
-          condition: { capability: cap },
-        })),
+        permissions: buildRolePermissions(data.capabilities, data.siteIds),
       };
       return accessApi.updateRole(role.id, payload);
     },
@@ -175,7 +191,7 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
     },
     onError: (error) => {
       browserLogger.error('Failed to update role', error);
-      alert('Failed to update role');
+      toast.error('Failed to update role. Please try again.');
     },
   });
   const mutation = isNew ? createMutation : updateMutation;
@@ -206,10 +222,14 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
         {/* Basic Info */}
         <div className="space-y-4 max-w-2xl">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="role-name-input"
+              className="text-sm font-medium text-foreground"
+            >
               Role Name
             </label>
             <input
+              id="role-name-input"
               type="text"
               className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               value={formData.name}
@@ -220,10 +240,14 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="role-description-input"
+              className="text-sm font-medium text-foreground"
+            >
               Description
             </label>
             <textarea
+              id="role-description-input"
               className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
               rows={3}
               value={formData.description}
@@ -236,16 +260,60 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
             <input type="hidden" value={formData.application} />
           </div>
         </div>
+        {/* Which websites the role applies to */}
+        <div className="space-y-3">
+          <h3 className="text-lg font-medium">Websites</h3>
+          <p className="text-xs text-muted-foreground">
+            Choose where these capabilities apply. Leave everything unchecked
+            for all websites. Managing users always applies to the whole CMS.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {sites.map((site) => {
+              const on = formData.siteIds.includes(site.id);
+              return (
+                <label
+                  key={site.id}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs cursor-pointer ${
+                    on
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border bg-card text-muted-foreground'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="w-3.5 h-3.5"
+                    checked={on}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        siteIds: e.target.checked
+                          ? [...formData.siteIds, site.id]
+                          : formData.siteIds.filter((id) => id !== site.id),
+                      })
+                    }
+                  />
+                  {site.name}
+                </label>
+              );
+            })}
+            {formData.siteIds.length === 0 && (
+              <span className="text-xs text-muted-foreground self-center">
+                All websites
+              </span>
+            )}
+          </div>
+        </div>
         {/* Permissions Grid */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Role Capabilities</h3>
           <div className="space-y-3">
             {CMS_CAPABILITIES.map((cap) => (
-              <label
+              <div
                 key={cap.id}
-                className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
+                className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
               >
                 <input
+                  id={`role-cap-${cap.id}`}
                   type="checkbox"
                   className="mt-1 w-4 h-4 rounded border-input bg-background text-primary focus:ring-1 focus:ring-ring focus:ring-offset-background"
                   checked={formData.capabilities.includes(cap.id)}
@@ -256,15 +324,18 @@ const RoleDetailPanel = ({ role, onClose }: RoleDetailPanelProps) => {
                     setFormData({ ...formData, capabilities: newCaps });
                   }}
                 />
-                <div className="flex flex-col">
+                <label
+                  htmlFor={`role-cap-${cap.id}`}
+                  className="flex flex-col cursor-pointer flex-1"
+                >
                   <span className="text-sm font-medium text-foreground">
                     {cap.label}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {cap.description}
                   </span>
-                </div>
-              </label>
+                </label>
+              </div>
             ))}
           </div>
         </div>

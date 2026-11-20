@@ -9,8 +9,10 @@ import {
 } from '../types/access.types';
 import { Button, FormField, Typography } from '@repo/shared-ui';
 import { X, Copy, Check } from 'lucide-react';
+import { useCmsToast } from '@/hooks/useCmsToast';
 
 export const InviteUserDialog = ({ onClose }: InviteUserDialogProps) => {
+  const toast = useCmsToast();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<InviteUserPayload>({
     email: '',
@@ -37,7 +39,7 @@ export const InviteUserDialog = ({ onClose }: InviteUserDialogProps) => {
     },
     onError: (error) => {
       browserLogger.error('Failed to invite user', error);
-      alert('Failed to invite user');
+      toast.error('Failed to invite user. Please try again.');
     },
   });
   const handleCopy = async () => {

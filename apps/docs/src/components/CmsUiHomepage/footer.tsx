@@ -27,31 +27,48 @@ export default function CmsUiFooter() {
         }}
       >
         <p style={{ margin: 0, fontWeight: 500 }}>
-          © {new Date().getFullYear()} Mindfire Digital LLP · Agentic CMS UI · MIT License
+          © {new Date().getFullYear()} Mindfire Digital LLP · Agentic CMS UI ·
+          MIT License
         </p>
 
         <div style={{ display: 'flex', gap: '1.75rem', alignItems: 'center' }}>
           <Link
             to="/cms-ui/docs/getting-started/introduction"
-            style={{ color: 'var(--muted-foreground)', textDecoration: 'none', fontWeight: 500 }}
+            style={{
+              color: 'var(--muted-foreground)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
           >
             Studio Docs
           </Link>
           <Link
             to="/cms-ui/docs/getting-started/installation"
-            style={{ color: 'var(--muted-foreground)', textDecoration: 'none', fontWeight: 500 }}
+            style={{
+              color: 'var(--muted-foreground)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
           >
             Installation
           </Link>
           <Link
             to="/"
-            style={{ color: 'var(--muted-foreground)', textDecoration: 'none', fontWeight: 500 }}
+            style={{
+              color: 'var(--muted-foreground)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
           >
             CMS Core Docs
           </Link>
           <Link
             to="https://github.com/mindfiredigital/agentic-headless-cms"
-            style={{ color: '#ff3344', textDecoration: 'none', fontWeight: 650 }}
+            style={{
+              color: '#ff3344',
+              textDecoration: 'none',
+              fontWeight: 650,
+            }}
           >
             GitHub
           </Link>

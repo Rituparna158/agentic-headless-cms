@@ -20,6 +20,9 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({
     refetchQueries: vi.fn().mockResolvedValue(undefined),
   }),
+  useQuery: () => ({ data: undefined, isLoading: false }),
+  useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+  keepPreviousData: vi.fn(),
 }));
 
 const mockUser = { id: 'u1', mfaEnabled: false };

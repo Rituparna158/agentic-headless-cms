@@ -20,6 +20,7 @@ export const SchemaMediaField: React.FC<SchemaMediaFieldProps> = ({
   fieldDisplayName = 'Media Asset',
   onChange,
   onOpenMediaPicker,
+  tone = 'dark',
 }) => {
   const [naturalSize, setNaturalSize] = useState<{
     width: number;
@@ -78,7 +79,7 @@ export const SchemaMediaField: React.FC<SchemaMediaFieldProps> = ({
   };
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5" data-tone={tone}>
       {value && !imageError ? (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-3 shadow-lg space-y-3">
           {/* Main Visual Image Card - Spacious, Manageable Height (260px–320px) */}

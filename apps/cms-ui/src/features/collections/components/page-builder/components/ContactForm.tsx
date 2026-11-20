@@ -146,8 +146,11 @@ const ContactForm = forwardRef<HTMLDivElement, ContactFormProps>(
           >
             {s.showName && (
               <div>
-                <label style={labelStyle}>Full Name</label>
+                <label htmlFor={`${id}-full-name`} style={labelStyle}>
+                  Full Name
+                </label>
                 <input
+                  id={`${id}-full-name`}
                   type="text"
                   placeholder="John Doe"
                   style={inputStyle}
@@ -157,8 +160,11 @@ const ContactForm = forwardRef<HTMLDivElement, ContactFormProps>(
             )}
 
             <div>
-              <label style={labelStyle}>Email Address</label>
+              <label htmlFor={`${id}-email`} style={labelStyle}>
+                Email Address
+              </label>
               <input
+                id={`${id}-email`}
                 type="email"
                 placeholder="john@example.com"
                 style={inputStyle}
@@ -168,8 +174,11 @@ const ContactForm = forwardRef<HTMLDivElement, ContactFormProps>(
 
             {s.showPhone && (
               <div>
-                <label style={labelStyle}>Phone Number</label>
+                <label htmlFor={`${id}-phone`} style={labelStyle}>
+                  Phone Number
+                </label>
                 <input
+                  id={`${id}-phone`}
                   type="tel"
                   placeholder="(555) 123-4567"
                   style={inputStyle}
@@ -180,8 +189,11 @@ const ContactForm = forwardRef<HTMLDivElement, ContactFormProps>(
 
             {s.showCompany && (
               <div>
-                <label style={labelStyle}>Company</label>
+                <label htmlFor={`${id}-company`} style={labelStyle}>
+                  Company
+                </label>
                 <input
+                  id={`${id}-company`}
                   type="text"
                   placeholder="Acme Inc."
                   style={inputStyle}
@@ -191,8 +203,11 @@ const ContactForm = forwardRef<HTMLDivElement, ContactFormProps>(
             )}
 
             <div>
-              <label style={labelStyle}>Message</label>
+              <label htmlFor={`${id}-message`} style={labelStyle}>
+                Message
+              </label>
               <textarea
+                id={`${id}-message`}
                 placeholder="How can we help you?"
                 style={{
                   ...inputStyle,

@@ -77,11 +77,15 @@ export const VideoShowcaseSettings: React.FC<{ targetComponentId: string }> = ({
 
       {/* Layout Type */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+        <label
+          htmlFor={`${targetComponentId}-layout`}
+          className="text-sm font-medium text-foreground flex items-center gap-2"
+        >
           <LayoutTemplate className="w-4 h-4 text-muted-foreground" />
           Layout Type
         </label>
         <select
+          id={`${targetComponentId}-layout`}
           value={settings.layout}
           onChange={(e) => handleChange('layout', e.target.value)}
           className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground"
@@ -194,11 +198,15 @@ export const VideoShowcaseSettings: React.FC<{ targetComponentId: string }> = ({
         <div className="space-y-4">
           {settings.layout !== 'hero' && (
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">
+              <label
+                htmlFor={`${targetComponentId}-bg-color`}
+                className="text-xs text-muted-foreground"
+              >
                 Background Color
               </label>
               <div className="flex gap-2">
                 <input
+                  id={`${targetComponentId}-bg-color`}
                   type="color"
                   value={settings.backgroundColor}
                   onChange={(e) =>
@@ -219,9 +227,15 @@ export const VideoShowcaseSettings: React.FC<{ targetComponentId: string }> = ({
           )}
 
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Text Color</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Text Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-text-color`}
                 type="color"
                 value={settings.textColor}
                 onChange={(e) => handleChange('textColor', e.target.value)}
@@ -239,7 +253,10 @@ export const VideoShowcaseSettings: React.FC<{ targetComponentId: string }> = ({
           {settings.layout === 'hero' && (
             <div className="space-y-2">
               <div className="flex justify-between">
-                <label className="text-xs text-muted-foreground">
+                <label
+                  htmlFor={`${targetComponentId}-overlay-opacity`}
+                  className="text-xs text-muted-foreground"
+                >
                   Overlay Opacity
                 </label>
                 <span className="text-xs font-medium">
@@ -247,6 +264,7 @@ export const VideoShowcaseSettings: React.FC<{ targetComponentId: string }> = ({
                 </span>
               </div>
               <input
+                id={`${targetComponentId}-overlay-opacity`}
                 type="range"
                 min="0"
                 max="1"

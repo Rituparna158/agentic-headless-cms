@@ -420,3 +420,5 @@ export const POSTS_SHARED_TEMPLATES_STORAGE_KEY =
   'agentic_cms_shared_templates_v1';
 export const POSTS_FORKED_TEMPLATES_STORAGE_KEY =
   'agentic_cms_forked_templates_v1';
+
+export const POSTS_PAGE_SIZE = 10;

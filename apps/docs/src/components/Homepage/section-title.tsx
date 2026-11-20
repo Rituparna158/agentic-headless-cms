@@ -25,11 +25,7 @@ export function SectionTitleCapsule({
   };
 
   if (typeof children !== 'string' || !highlight || highlight.length === 0) {
-    return (
-      <h2 style={headingStyle}>
-        {children}
-      </h2>
-    );
+    return <h2 style={headingStyle}>{children}</h2>;
   }
 
   const source = children;
@@ -37,11 +33,7 @@ export function SectionTitleCapsule({
   const haystack = caseInsensitive ? source.toLowerCase() : source;
 
   if (!haystack.includes(needle)) {
-    return (
-      <h2 style={headingStyle}>
-        {children}
-      </h2>
-    );
+    return <h2 style={headingStyle}>{children}</h2>;
   }
 
   const parts: React.ReactNode[] = [];
@@ -67,14 +59,10 @@ export function SectionTitleCapsule({
         }}
       >
         {match}
-      </span>
+      </span>,
     );
     start = idx + highlight.length;
   }
 
-  return (
-    <h2 style={headingStyle}>
-      {parts}
-    </h2>
-  );
+  return <h2 style={headingStyle}>{parts}</h2>;
 }

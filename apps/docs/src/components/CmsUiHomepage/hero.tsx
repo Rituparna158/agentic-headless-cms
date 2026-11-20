@@ -1,13 +1,14 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import {
-  ArrowRightIcon,
-  GitHubIcon,
-} from './icons';
+import { ArrowRightIcon, GitHubIcon } from './icons';
 import styles from './hero.module.css';
 
-export function CmsUiHeroSection({ screenshotUrl }: { screenshotUrl?: string }) {
+export function CmsUiHeroSection({
+  screenshotUrl,
+}: {
+  screenshotUrl?: string;
+}) {
   const defaultScreenshot = useBaseUrl('/img/cms-ui/page-builder.png');
   const heroImage = screenshotUrl || defaultScreenshot;
 
@@ -18,7 +19,6 @@ export function CmsUiHeroSection({ screenshotUrl }: { screenshotUrl?: string }) 
 
       <div className={styles.container}>
         {/* Announcement Badge */}
-        
 
         {/* Centered Editorial Headline */}
         <h1 className={styles.headline}>
@@ -28,8 +28,9 @@ export function CmsUiHeroSection({ screenshotUrl }: { screenshotUrl?: string }) 
 
         {/* Subtitle */}
         <p className={styles.subtitle}>
-          An open-source visual studio that connects directly to your headless backend with
-          live previews, dynamic schema tokens, and tamper-evident audit logs.
+          An open-source visual studio that connects directly to your headless
+          backend with live previews, dynamic schema tokens, and tamper-evident
+          audit logs.
         </p>
 
         {/* CTAs */}

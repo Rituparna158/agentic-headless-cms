@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { SkipLink, MAIN_CONTENT_ID } from '../ui/SkipLink';
 import { useAuthStore } from '../../features/auth/store/auth.store';
 
 export const AuthLayout = () => {
@@ -25,6 +26,7 @@ export const AuthLayout = () => {
 
   return (
     <div className="flex min-h-svh flex-col md:flex-row">
+      <SkipLink />
       <div className="hidden w-full bg-zinc-950 md:flex md:w-1/2 lg:w-2/3 items-center justify-center p-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-zinc-950">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
@@ -55,11 +57,15 @@ export const AuthLayout = () => {
         </div>
       </div>
 
-      <div className="flex w-full items-center justify-center p-6 md:w-1/2 lg:w-1/3 bg-background">
+      <main
+        id={MAIN_CONTENT_ID}
+        tabIndex={-1}
+        className="flex w-full items-center justify-center p-6 md:w-1/2 lg:w-1/3 bg-background focus:outline-none"
+      >
         <div className="w-full max-w-sm">
           <Outlet />
         </div>
-      </div>
+      </main>
     </div>
   );
 };

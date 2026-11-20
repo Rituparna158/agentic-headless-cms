@@ -17,14 +17,12 @@ export function CmsUiCTASection() {
           <div className={styles.badge}>Documentation</div>
 
           <h2 className={styles.heading}>
-            Start with{' '}
-            <span className={styles.gradientText}>CMS UI</span>
-            {' '}Today
+            Start with <span className={styles.gradientText}>CMS UI</span> Today
           </h2>
 
           <p className={styles.subtext}>
-            Full documentation, quick-start guide, component reference, and API docs —
-            everything you need to ship faster.
+            Full documentation, quick-start guide, component reference, and API
+            docs — everything you need to ship faster.
           </p>
 
           <div className={styles.buttons}>
@@ -35,11 +33,7 @@ export function CmsUiCTASection() {
             >
               Open Documentation <ArrowRightIcon size={15} />
             </Link>
-            <Link
-              to="/"
-              id="cms-ui-cta-core-btn"
-              className={styles.btnGhost}
-            >
+            <Link to="/" id="cms-ui-cta-core-btn" className={styles.btnGhost}>
               View CMS Core Docs
             </Link>
           </div>

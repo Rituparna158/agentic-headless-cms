@@ -57,7 +57,11 @@ const FEATURES: FeatureCardData[] = [
 
 export function CmsUiFeaturesSection() {
   return (
-    <section id="features" className={styles.section} aria-label="CMS UI Core Capabilities">
+    <section
+      id="features"
+      className={styles.section}
+      aria-label="CMS UI Core Capabilities"
+    >
       <div className={styles.inner}>
         {/* Section Header */}
         <div className={styles.header}>
@@ -65,10 +69,12 @@ export function CmsUiFeaturesSection() {
             <span>Core Capabilities</span>
           </div>
           <h2 className={styles.title}>
-            Engineered for <span className={styles.gradientWord}>Speed &amp; Control</span>
+            Engineered for{' '}
+            <span className={styles.gradientWord}>Speed &amp; Control</span>
           </h2>
           <p className={styles.subtitle}>
-            Everything content teams need to design and publish beautiful pages, backed by enterprise-grade versioning and governance.
+            Everything content teams need to design and publish beautiful pages,
+            backed by enterprise-grade versioning and governance.
           </p>
         </div>
 

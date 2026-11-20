@@ -74,11 +74,15 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
       <div className="space-y-4">
         {/* Brand */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground flex items-center gap-2">
+          <label
+            htmlFor={`${targetComponentId}-brand-text`}
+            className="text-sm font-medium text-foreground flex items-center gap-2"
+          >
             <Type className="w-4 h-4 text-muted-foreground" />
             Brand/Logo Text
           </label>
           <input
+            id={`${targetComponentId}-brand-text`}
             type="text"
             value={settings.brandText}
             onChange={(e) => handleChange('brandText', e.target.value)}
@@ -89,11 +93,15 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
 
         {/* Layout */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground flex items-center gap-2">
+          <label
+            htmlFor={`${targetComponentId}-links-alignment`}
+            className="text-sm font-medium text-foreground flex items-center gap-2"
+          >
             <AlignLeft className="w-4 h-4 text-muted-foreground" />
             Links Alignment
           </label>
           <select
+            id={`${targetComponentId}-links-alignment`}
             value={settings.layout}
             onChange={(e) => handleChange('layout', e.target.value)}
             className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-foreground"
@@ -108,13 +116,13 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
         <div className="flex items-center gap-2 pt-2">
           <input
             type="checkbox"
-            id="isSticky"
+            id={`${targetComponentId}-isSticky`}
             checked={settings.isSticky}
             onChange={(e) => handleChange('isSticky', e.target.checked)}
             className="w-4 h-4 text-primary bg-background border-input rounded focus:ring-primary"
           />
           <label
-            htmlFor="isSticky"
+            htmlFor={`${targetComponentId}-isSticky`}
             className="text-sm font-medium text-foreground"
           >
             Sticky Top Navbar
@@ -191,8 +199,14 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
         <h4 className="text-sm font-medium text-foreground">CTA Button</h4>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Text</label>
+            <label
+              htmlFor={`${targetComponentId}-cta-text`}
+              className="text-xs text-muted-foreground"
+            >
+              Text
+            </label>
             <input
+              id={`${targetComponentId}-cta-text`}
               type="text"
               value={settings.ctaText}
               onChange={(e) => handleChange('ctaText', e.target.value)}
@@ -201,8 +215,14 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">URL</label>
+            <label
+              htmlFor={`${targetComponentId}-cta-url`}
+              className="text-xs text-muted-foreground"
+            >
+              URL
+            </label>
             <input
+              id={`${targetComponentId}-cta-url`}
               type="text"
               value={settings.ctaUrl}
               onChange={(e) => handleChange('ctaUrl', e.target.value)}
@@ -222,11 +242,15 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              className="text-xs text-muted-foreground"
+            >
               Background Color
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-bg-color`}
                 type="color"
                 value={settings.backgroundColor}
                 onChange={(e) =>
@@ -245,9 +269,15 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Text Color</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              className="text-xs text-muted-foreground"
+            >
+              Text Color
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-text-color`}
                 type="color"
                 value={settings.textColor}
                 onChange={(e) => handleChange('textColor', e.target.value)}
@@ -262,11 +292,15 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">
+            <label
+              htmlFor={`${targetComponentId}-cta-button-color`}
+              className="text-xs text-muted-foreground"
+            >
               CTA Background
             </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-cta-button-color`}
                 type="color"
                 value={settings.ctaButtonColor}
                 onChange={(e) => handleChange('ctaButtonColor', e.target.value)}
@@ -281,9 +315,15 @@ export const NavbarSettings: React.FC<{ targetComponentId: string }> = ({
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">CTA Text</label>
+            <label
+              htmlFor={`${targetComponentId}-cta-button-text-color`}
+              className="text-xs text-muted-foreground"
+            >
+              CTA Text
+            </label>
             <div className="flex gap-2">
               <input
+                id={`${targetComponentId}-cta-button-text-color`}
                 type="color"
                 value={settings.ctaButtonTextColor}
                 onChange={(e) =>

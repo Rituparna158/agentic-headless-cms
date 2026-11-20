@@ -47,8 +47,11 @@ export default function SearchBarSettings({
       }}
     >
       <div style={sectionStyle}>
-        <label style={labelStyle}>Placeholder Text</label>
+        <label htmlFor={`${targetComponentId}-placeholder`} style={labelStyle}>
+          Placeholder Text
+        </label>
         <input
+          id={`${targetComponentId}-placeholder`}
           style={inputStyle}
           value={s.placeholder}
           onChange={(e) => u({ placeholder: e.target.value })}
@@ -57,8 +60,11 @@ export default function SearchBarSettings({
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Max Width</label>
+        <label htmlFor={`${targetComponentId}-max-width`} style={labelStyle}>
+          Max Width
+        </label>
         <input
+          id={`${targetComponentId}-max-width`}
           style={inputStyle}
           value={s.maxWidth}
           onChange={(e) => u({ maxWidth: e.target.value })}
@@ -67,8 +73,11 @@ export default function SearchBarSettings({
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Alignment</label>
+        <label htmlFor={`${targetComponentId}-alignment`} style={labelStyle}>
+          Alignment
+        </label>
         <select
+          id={`${targetComponentId}-alignment`}
           style={inputStyle}
           value={s.alignment}
           onChange={(e) =>
@@ -82,8 +91,14 @@ export default function SearchBarSettings({
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>Border Radius (px)</label>
+        <label
+          htmlFor={`${targetComponentId}-border-radius`}
+          style={labelStyle}
+        >
+          Border Radius (px)
+        </label>
         <input
+          id={`${targetComponentId}-border-radius`}
           type="number"
           style={inputStyle}
           value={s.borderRadius}
@@ -119,8 +134,11 @@ export default function SearchBarSettings({
 
       {s.showButton && (
         <div style={sectionStyle}>
-          <label style={labelStyle}>Button Text</label>
+          <label htmlFor={`${targetComponentId}-btn-text`} style={labelStyle}>
+            Button Text
+          </label>
           <input
+            id={`${targetComponentId}-btn-text`}
             style={inputStyle}
             value={s.buttonText}
             onChange={(e) => u({ buttonText: e.target.value })}
@@ -130,7 +148,7 @@ export default function SearchBarSettings({
       )}
 
       <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
-        <label style={labelStyle}>Colors</label>
+        <span style={labelStyle}>Colors</span>
         <div
           style={{
             display: 'grid',
@@ -139,10 +157,14 @@ export default function SearchBarSettings({
           }}
         >
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+            <label
+              htmlFor={`${targetComponentId}-bg-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
               Background
             </label>
             <input
+              id={`${targetComponentId}-bg-color`}
               type="color"
               style={{
                 width: '100%',
@@ -160,8 +182,14 @@ export default function SearchBarSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>Text</label>
+            <label
+              htmlFor={`${targetComponentId}-text-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
+              Text
+            </label>
             <input
+              id={`${targetComponentId}-text-color`}
               type="color"
               style={{
                 width: '100%',
@@ -175,8 +203,14 @@ export default function SearchBarSettings({
             />
           </div>
           <div>
-            <label style={{ ...labelStyle, fontSize: '0.7rem' }}>Icon</label>
+            <label
+              htmlFor={`${targetComponentId}-icon-color`}
+              style={{ ...labelStyle, fontSize: '0.7rem' }}
+            >
+              Icon
+            </label>
             <input
+              id={`${targetComponentId}-icon-color`}
               type="color"
               style={{
                 width: '100%',
@@ -192,10 +226,14 @@ export default function SearchBarSettings({
           {s.showButton && (
             <>
               <div>
-                <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+                <label
+                  htmlFor={`${targetComponentId}-button-bg-color`}
+                  style={{ ...labelStyle, fontSize: '0.7rem' }}
+                >
                   Button BG
                 </label>
                 <input
+                  id={`${targetComponentId}-button-bg-color`}
                   type="color"
                   style={{
                     width: '100%',
@@ -209,10 +247,14 @@ export default function SearchBarSettings({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, fontSize: '0.7rem' }}>
+                <label
+                  htmlFor={`${targetComponentId}-button-text-color`}
+                  style={{ ...labelStyle, fontSize: '0.7rem' }}
+                >
                   Button Text
                 </label>
                 <input
+                  id={`${targetComponentId}-button-text-color`}
                   type="color"
                   style={{
                     width: '100%',
