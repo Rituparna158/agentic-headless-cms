@@ -1,6 +1,10 @@
 export const EVENT_NAMES = {
   AUDIT_LOG: 'audit.log',
   MEDIA_UPLOADED: 'media.uploaded',
+  WORKFLOW_TRANSITION: 'workflow.transition',
+  WORKFLOW_REVIEW_REQUESTED: 'workflow.review_requested',
+  WORKFLOW_APPROVED: 'workflow.approved',
+  WORKFLOW_CHANGES_REQUESTED: 'workflow.changes_requested',
 } as const;
 
 export const AUDIT_ACTIONS = {

@@ -35,8 +35,6 @@ export const primaryNavItems: NavItem[] = [
     label: 'Workflows',
     href: '/workflows',
     icon: Workflow,
-    disabled: true,
-    disabledBadge: 'Soon',
   },
   {
     label: 'Approvals',

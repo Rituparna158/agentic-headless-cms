@@ -438,7 +438,11 @@ const Switch = React.forwardRef<
     ref,
   ) => {
     const selectedVariant = variants[variant] || variants.default;
-    const [isChecked, setIsChecked] = useState(props.checked || false);
+    const isControlled = props.checked !== undefined;
+    const [internalChecked, setInternalChecked] = useState(
+      props.defaultChecked ?? false,
+    );
+    const isChecked = isControlled ? Boolean(props.checked) : internalChecked;
     const [isHovered, setIsHovered] = useState(false);
 
     const thumbOffset = selectedVariant.thumbOffset || 20;
@@ -450,14 +454,10 @@ const Switch = React.forwardRef<
       },
     } as unknown as Variants;
 
-    React.useEffect(() => {
-      if (props.checked !== undefined) {
-        setIsChecked(props.checked);
-      }
-    }, [props.checked]);
-
     const handleCheckedChange = (checked: boolean) => {
-      setIsChecked(checked);
+      if (!isControlled) {
+        setInternalChecked(checked);
+      }
       props.onCheckedChange?.(checked);
     };
 

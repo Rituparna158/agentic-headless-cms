@@ -18,6 +18,7 @@ export function ConfirmDialog({
   cancelLabel = 'Cancel',
   destructive,
   onConfirm,
+  overlayClassName,
 }: ConfirmDialogProps) {
   return (
     <Modal
@@ -29,6 +30,7 @@ export function ConfirmDialog({
       cancelText={cancelLabel}
       onConfirm={onConfirm}
       onCancel={() => onOpenChange(false)}
+      overlayClassName={overlayClassName}
       colorScheme={destructive ? 'destructive' : 'primary'}
       colorOverrides={{
         confirmButton: destructive

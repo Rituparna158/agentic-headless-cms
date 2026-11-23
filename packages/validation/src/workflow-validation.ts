@@ -45,4 +45,5 @@ export const assignWorkflowValidationSchema = z.object({
 export const transitionEntryValidationSchema = z.object({
   toStage: z.string().min(1, 'Target stage slug is required'),
   comment: z.string().max(2000).optional(),
+  expectedStage: z.string().optional(),
 });

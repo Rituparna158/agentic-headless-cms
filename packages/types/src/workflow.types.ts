@@ -58,6 +58,7 @@ export interface SchemaWorkflowAssignment {
 export interface TransitionEntryInput {
   toStage: string;
   comment?: string;
+  expectedStage?: string;
 }
 
 export interface EntryWorkflowState {
@@ -92,6 +93,27 @@ export interface WorkflowHistoryRecord {
   comment?: string | null;
   actorType: 'user' | 'agent' | 'system';
   actorUserId?: string | null;
+  actorName?: string | null;
+  actorEmail?: string | null;
   applicationId: string;
   createdAt: string | Date;
+}
+
+export interface PendingReviewItem {
+  entryId: string;
+  schemaId: string;
+  schemaName: string;
+  schemaSlug: string;
+  currentStage: string;
+  stageName: string;
+  stageColor?: string;
+  title: string;
+  updatedAt: string;
+  authorEmail?: string | null;
+  authorName?: string | null;
+}
+
+export interface PendingReviewsResult {
+  total: number;
+  items: PendingReviewItem[];
 }

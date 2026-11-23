@@ -1,0 +1,37 @@
+---
+title: Workflows
+sidebar_label: Workflows
+description: Multi-stage content approval pipelines and editorial governance.
+sidebar_position: 4
+---
+
+**Workflows** enable teams to define structured review and approval stages before content goes live. Administrators can customize stage progressions, assign reviewer roles, and enforce editorial policies.
+
+---
+
+## Workflow Stages & Lifecycle
+
+A typical content pipeline moves through structured stages:
+
+| Stage | Default Action | Description |
+| :--- | :--- | :--- |
+| **Draft** | Submit for Review | Initial authoring phase. Changes remain private. |
+| **In Review** | Approve / Request Changes | Content is locked for review. Four-eyes rule applies. |
+| **Approved** | Publish Live | Content is verified and ready for public release. |
+
+---
+
+## Core Governance Rules
+
+- **Four-Eyes Principle**: Content creators cannot approve their own entries, guaranteeing independent verification.
+- **Role-Based Guards**: Administrators configure which specific roles are permitted to execute each stage transition.
+- **Concurrency Protection**: Optimistic locking blocks race conditions if two reviewers act simultaneously, automatically refreshing the entry.
+- **Audit Timeline**: View revision history, reviewer notes, and stage movements in the **Workflow Log** drawer.
+
+---
+
+## How It Works
+
+1. **Configure Stages**: Go to **Workflows**, define custom stages (e.g. *Legal Review*, *SEO Check*), and map valid transitions.
+2. **Submit for Review**: In the Content Editor, click **Submit for Review** to move the entry into the review queue.
+3. **Review & Sign-Off**: An authorized reviewer approves or requests changes. Once approved, the entry is unlocked for publishing.

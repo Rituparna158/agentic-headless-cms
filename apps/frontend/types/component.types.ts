@@ -102,6 +102,7 @@ export interface ConfirmDialogProps {
   /** Styles the confirm action red — use for destructive actions like delete. */
   destructive?: boolean;
   onConfirm: () => void;
+  overlayClassName?: string;
 }
 
 export interface MediaLibraryProps {

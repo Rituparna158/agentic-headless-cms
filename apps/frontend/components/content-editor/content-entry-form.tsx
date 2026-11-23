@@ -33,10 +33,12 @@ import {
   History,
   Languages,
   Loader2,
+  MoreVertical,
   Settings2,
   Sparkles,
   Trash2,
   Undo2,
+  Workflow as WorkflowIcon,
 } from 'lucide-react';
 import {
   translateContentEntry,
@@ -49,6 +51,10 @@ import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DynamicField } from './dynamic-field';
 import { VersionHistoryDrawer } from './version-history-drawer';
+import { WorkflowTransitionModal } from './workflow-transition-modal';
+import { WorkflowHistoryDrawer } from './workflow-history-drawer';
+import { getEntryWorkflowState, transitionEntry } from '@/lib/api/workflows';
+import type { WorkflowTransition } from '@repo/types';
 import type { ContentEntryFormProps } from '@/types/component.types';
 import { useHasPermission } from '@/hooks/use-permissions';
 
@@ -152,6 +158,10 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
   const [isUnpublishConfirmOpen, setIsUnpublishConfirmOpen] = useState(false);
   const [isLocaleConfirmOpen, setIsLocaleConfirmOpen] = useState(false);
   const [pendingLocale, setPendingLocale] = useState<string | null>(null);
+  const [isWorkflowHistoryOpen, setIsWorkflowHistoryOpen] = useState(false);
+  const [pendingTransition, setPendingTransition] =
+    useState<WorkflowTransition | null>(null);
+  const [isTransitionModalOpen, setIsTransitionModalOpen] = useState(false);
 
   const canCreate = useHasPermission('create', schema.id);
   const canUpdate = useHasPermission('update', schema.id);
@@ -426,6 +436,14 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
       await queryClient.invalidateQueries({
         queryKey: ['content', schema.slug, 'entry', saved.id],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['entry-workflow-state'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['entry-workflow-history'],
+      });
+      await refetchWorkflowState();
+      form.reset(form.getValues());
       toast.success(
         `Draft saved successfully${selectedLocale ? ` (${selectedLocale})` : ''}`,
       );
@@ -474,6 +492,13 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
       await queryClient.invalidateQueries({
         queryKey: ['content', schema.slug, 'entry', entry?.id],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['entry-workflow-state'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['entry-workflow-history'],
+      });
+      await refetchWorkflowState();
       toast.success(
         `Entry unpublished successfully${selectedLocale ? ` (${selectedLocale})` : ''}`,
       );
@@ -505,6 +530,53 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         error instanceof ApiError
           ? error.message
           : 'Failed to delete entry. Please try again.',
+      );
+    },
+  });
+
+  const { data: workflowState, refetch: refetchWorkflowState } = useQuery({
+    queryKey: ['entry-workflow-state', schema.slug, entry?.id],
+    queryFn: () => getEntryWorkflowState(schema.slug, entry!.id),
+    enabled: !!entry?.id,
+  });
+
+  const transitionMutation = useMutation({
+    mutationFn: (variables: { toStage: string; comment?: string }) => {
+      if (!entry) throw new Error('Entry not found.');
+      return transitionEntry(schema.slug, entry.id, {
+        ...variables,
+        expectedStage: workflowState?.currentStage?.slug,
+      });
+    },
+    onSuccess: (newState) => {
+      toast.success(
+        `Stage changed to ${newState.currentStage?.name || newState.currentStage?.slug}`,
+      );
+      refetchWorkflowState();
+      queryClient.invalidateQueries({
+        queryKey: ['entry-workflow-history', schema.slug, entry?.id],
+      });
+      setIsTransitionModalOpen(false);
+      setPendingTransition(null);
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.statusCode === 409) {
+        toast.error(error.message);
+        refetchWorkflowState();
+        queryClient.invalidateQueries({
+          queryKey: ['content', schema.slug, 'entry', entry?.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['entry-workflow-history', schema.slug, entry?.id],
+        });
+        setIsTransitionModalOpen(false);
+        setPendingTransition(null);
+        return;
+      }
+      toast.error(
+        error instanceof ApiError
+          ? error.message
+          : 'Failed to transition stage. Please try again.',
       );
     },
   });
@@ -544,12 +616,40 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
       >
         {/* Sleek Top Action Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 p-3.5 sm:p-4 rounded-xl border bg-muted/30 backdrop-blur-sm">
-          {/* Status Badge & Locale Selector */}
+          {/* Status Badge & Document Metadata */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Status
-              </span>
+            {/* Unified Status / Workflow Stage Badge */}
+            {workflowState?.hasWorkflow && workflowState.currentStage ? (
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="px-2.5 py-1 rounded-full text-xs font-medium border flex items-center gap-1.5 shadow-2xs"
+                  style={{
+                    borderColor: `${workflowState.currentStage.color || '#3b82f6'}66`,
+                    backgroundColor: `${workflowState.currentStage.color || '#3b82f6'}18`,
+                    color: workflowState.currentStage.color || '#3b82f6',
+                  }}
+                >
+                  <span
+                    className="size-1.5 rounded-full"
+                    style={{
+                      backgroundColor:
+                        workflowState.currentStage.color || '#3b82f6',
+                    }}
+                  />
+                  {workflowState.currentStage.name}
+                </span>
+
+                {currentStatus === 'published' && (
+                  <Badge
+                    variant="success"
+                    size="sm"
+                    className="capitalize font-medium text-xs px-2 py-0.5"
+                  >
+                    Published
+                  </Badge>
+                )}
+              </div>
+            ) : (
               <Badge
                 variant={
                   currentStatus === 'published'
@@ -559,13 +659,13 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                       : 'outline'
                 }
                 size="sm"
-                className="capitalize font-medium flex items-center gap-1.5"
+                className="capitalize font-medium flex items-center gap-1.5 text-xs px-2.5 py-1"
               >
                 {currentStatus === 'untranslated'
                   ? 'Not translated'
                   : (currentStatus ?? 'Not saved')}
               </Badge>
-            </div>
+            )}
 
             {/* Locale Selector Dropdown */}
             <Dropdown
@@ -697,7 +797,6 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                             ? 'Standard'
                             : translationConfig.provider}
                         </span>
-                        ...
                       </span>
                     </div>
                   </DropdownItem>
@@ -751,20 +850,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           </div>
 
           {/* Action Buttons Group */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {entry ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1.5 text-xs font-medium"
-                onClick={() => setIsVersionHistoryOpen(true)}
-              >
-                <History className="size-3.5 text-muted-foreground" />
-                <span>View history</span>
-              </Button>
-            ) : null}
-
+          <div className="flex flex-wrap items-center gap-2">
             {!canEdit ? (
               <Badge
                 variant="outline"
@@ -778,56 +864,108 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 variant="outline"
                 size="sm"
                 className="text-xs font-medium"
-                disabled={isSubmitting || isLocalizedLoading}
+                disabled={
+                  isSubmitting ||
+                  isLocalizedLoading ||
+                  (!!entry && !form.formState.isDirty)
+                }
               >
                 {isSubmitting ? 'Saving…' : 'Save Draft'}
               </Button>
             ) : null}
 
-            {currentStatus === 'published' ? (
-              <>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="text-xs font-medium opacity-70 cursor-not-allowed"
-                  disabled
-                >
-                  Published
-                </Button>
+            {/* Version History Button */}
+            {entry ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1.5 text-xs font-medium"
+                onClick={() => setIsVersionHistoryOpen(true)}
+              >
+                <History className="size-3.5 text-muted-foreground" />
+                <span>View history</span>
+              </Button>
+            ) : null}
 
-                <span
-                  title={
-                    !canPublish
-                      ? 'You do not have permission to unpublish.'
-                      : ''
-                  }
-                >
+            {/* More Actions Dropdown (Workflow Log & Unpublish) */}
+            {entry && (
+              <Dropdown
+                align="end"
+                className="min-w-[13rem] p-1.5"
+                trigger={
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="text-xs font-medium flex items-center gap-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400"
-                    disabled={
-                      !canPublish ||
-                      unpublishMutation.isPending ||
-                      isLocalizedLoading
-                    }
-                    onClick={() => setIsUnpublishConfirmOpen(true)}
+                    className="size-8 p-0 border-border/80 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+                    aria-label="More actions"
+                    title="More options & history"
                   >
-                    <Undo2 className="size-3.5" />
-                    <span>
-                      {unpublishMutation.isPending
-                        ? 'Unpublishing…'
-                        : 'Unpublish'}
-                    </span>
+                    <MoreVertical className="size-4" />
                   </Button>
-                </span>
-              </>
+                }
+              >
+                {workflowState?.hasWorkflow && (
+                  <DropdownItem onSelect={() => setIsWorkflowHistoryOpen(true)}>
+                    <div className="flex items-center gap-2 text-xs">
+                      <WorkflowIcon className="size-3.5 text-primary" />
+                      <span>Workflow Log</span>
+                    </div>
+                  </DropdownItem>
+                )}
+
+                {currentStatus === 'published' && canPublish && (
+                  <DropdownItem
+                    onSelect={() => setIsUnpublishConfirmOpen(true)}
+                  >
+                    <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                      <Undo2 className="size-3.5" />
+                      <span>Unpublish</span>
+                    </div>
+                  </DropdownItem>
+                )}
+              </Dropdown>
+            )}
+
+            {/* Workflow Stage Transitions */}
+            {entry &&
+              !isViewingHistorical &&
+              workflowState?.hasWorkflow &&
+              workflowState.availableTransitions?.map((trans) => (
+                <Button
+                  key={trans.id}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPendingTransition(trans);
+                    setIsTransitionModalOpen(true);
+                  }}
+                  disabled={transitionMutation.isPending || isLocalizedLoading}
+                  className="text-xs font-medium border-border/80 text-foreground hover:bg-muted/40 shadow-2xs"
+                >
+                  <span>{trans.name}</span>
+                </Button>
+              ))}
+
+            {currentStatus === 'published' ? (
+              <Button
+                type="button"
+                size="sm"
+                className="text-xs font-medium opacity-70 cursor-not-allowed"
+                disabled
+              >
+                Published
+              </Button>
             ) : entry ? (
               <span
                 title={
-                  !canPublish ? 'You do not have permission to publish.' : ''
+                  workflowState?.hasWorkflow && !workflowState.isFinal
+                    ? `Workflow requires entry to reach the final publish stage (currently: "${workflowState?.currentStage?.name || workflowState?.currentStage?.slug}").`
+                    : !canPublish
+                      ? 'You do not have permission to publish.'
+                      : ''
                 }
               >
                 <Button
@@ -837,6 +975,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   disabled={
                     isViewingHistorical ||
                     !canPublish ||
+                    (workflowState?.hasWorkflow && !workflowState.isFinal) ||
                     publishMutation.isPending ||
                     isLocalizedLoading
                   }
@@ -847,7 +986,8 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               </span>
             ) : null}
 
-            {entry ? (
+            {/* Delete Button */}
+            {entry && canDelete && (
               <span
                 title={
                   !canDelete ? 'You do not have permission to delete.' : ''
@@ -872,7 +1012,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   </span>
                 </Button>
               </span>
-            ) : null}
+            )}
           </div>
         </div>
 
@@ -1025,14 +1165,40 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
       />
 
       {entry ? (
-        <VersionHistoryDrawer
-          schemaSlug={schema.slug}
-          entryId={entry.id}
-          currentEntry={localizedEntry ?? entry}
-          schema={schema}
-          open={isVersionHistoryOpen}
-          onOpenChange={setIsVersionHistoryOpen}
-        />
+        <>
+          <VersionHistoryDrawer
+            schemaSlug={schema.slug}
+            entryId={entry.id}
+            currentEntry={localizedEntry ?? entry}
+            schema={schema}
+            open={isVersionHistoryOpen}
+            onOpenChange={setIsVersionHistoryOpen}
+          />
+
+          <WorkflowHistoryDrawer
+            schemaSlug={schema.slug}
+            entryId={entry.id}
+            open={isWorkflowHistoryOpen}
+            onOpenChange={setIsWorkflowHistoryOpen}
+          />
+
+          <WorkflowTransitionModal
+            open={isTransitionModalOpen}
+            onOpenChange={setIsTransitionModalOpen}
+            transition={pendingTransition}
+            currentStage={workflowState?.currentStage || null}
+            targetStageName={pendingTransition?.toStage}
+            onConfirm={(comment) => {
+              if (pendingTransition) {
+                transitionMutation.mutate({
+                  toStage: pendingTransition.toStage,
+                  comment,
+                });
+              }
+            }}
+            isPending={transitionMutation.isPending}
+          />
+        </>
       ) : null}
     </FormProvider>
   );

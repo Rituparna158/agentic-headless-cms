@@ -1,17 +1,72 @@
 import { SQL, and, asc, desc, or, sql } from 'drizzle-orm';
 import type { SchemaField, ContentQueryOptions } from '@repo/types';
-import { entryLocalizations } from '@repo/shared-db';
-import { BadRequestError } from '@repo/utils';
-import type { FilterOperator } from './content-query.types.js';
 import {
-  FILTER_OPERATORS,
-  ORDERABLE_DATA_TYPES,
-  TEXT_DATA_TYPES,
-  DEFAULT_PAGE_SIZE,
-  MAX_PAGE_SIZE,
-  SORTABLE_BASE_COLUMNS,
-  FILTERABLE_BASE_COLUMNS,
-} from './content-query.constants.js';
+  contentEntries,
+  entryLocalizations,
+  contentWorkflowStates,
+} from '@repo/shared-db';
+import { BadRequestError } from '@repo/utils';
+
+const FILTER_OPERATORS = [
+  '$eq',
+  '$ne',
+  '$lt',
+  '$lte',
+  '$gt',
+  '$gte',
+  '$in',
+  '$contains',
+] as const;
+type FilterOperator = (typeof FILTER_OPERATORS)[number];
+
+// Orderable data types
+const ORDERABLE_DATA_TYPES = new Set(['number', 'date', 'datetime']);
+// Text data types
+const TEXT_DATA_TYPES = new Set(['text', 'richtext']);
+
+const DEFAULT_PAGE_SIZE = 25;
+const MAX_PAGE_SIZE = 100;
+
+/** Base columns */
+const SORTABLE_BASE_COLUMNS = {
+  createdAt: contentEntries.createdAt,
+  updatedAt: contentEntries.updatedAt,
+  status: entryLocalizations.status,
+  workflowStage: sql`COALESCE(${contentWorkflowStates.currentStage}, 'draft')`,
+} as const;
+
+const FILTERABLE_BASE_COLUMNS = {
+  status: {
+    column: entryLocalizations.status,
+    allowedOps: new Set<FilterOperator>(['$eq', '$ne', '$in']),
+  },
+  createdAt: {
+    column: contentEntries.createdAt,
+    allowedOps: new Set<FilterOperator>([
+      '$eq',
+      '$ne',
+      '$lt',
+      '$lte',
+      '$gt',
+      '$gte',
+    ]),
+  },
+  updatedAt: {
+    column: contentEntries.updatedAt,
+    allowedOps: new Set<FilterOperator>([
+      '$eq',
+      '$ne',
+      '$lt',
+      '$lte',
+      '$gt',
+      '$gte',
+    ]),
+  },
+  workflowStage: {
+    column: contentWorkflowStates.currentStage,
+    allowedOps: new Set<FilterOperator>(['$eq', '$ne', '$in']),
+  },
+} as const;
 
 function findField(fields: SchemaField[], apiId: string): SchemaField {
   const field = fields.find((f) => f.apiId === apiId);
@@ -37,6 +92,19 @@ function buildBaseColumnComparison(
 
   switch (operator) {
     case '$eq':
+      if (apiId === 'workflowStage') {
+        const alt = rawValue.includes('-')
+          ? rawValue.replace(/-/g, '_')
+          : rawValue.replace(/_/g, '-');
+        if (rawValue.toLowerCase() === 'draft') {
+          return or(
+            sql`${col} = ${rawValue}`,
+            sql`${col} = ${alt}`,
+            sql`${col} IS NULL`,
+          )!;
+        }
+        return or(sql`${col} = ${rawValue}`, sql`${col} = ${alt}`)!;
+      }
       return sql`${col} = ${rawValue}`;
     case '$ne':
       return sql`${col} != ${rawValue}`;
@@ -318,9 +386,6 @@ export function parseContentQuery(
     where = where ? and(where, statusSql) : statusSql;
   }
 
-  // Entries of a website carry a `kind` (page, post, menus, submission…).
-  // `kind=post,page` keeps only those; `excludeKind=submission` drops them.
-  // A missing kind counts as "page", so older pages stay visible.
   const kindList = (v: unknown): string[] =>
     typeof v === 'string'
       ? v

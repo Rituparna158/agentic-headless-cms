@@ -67,7 +67,7 @@ export class WebhookDispatcherService {
                 'Content-Type': 'application/json',
                 'x-agentic-signature': signature,
                 'x-agentic-event': eventType,
-                'User-Agent': 'Agentic-CMS-Webhook/1.0',
+                'User-Agent': 'Headless-CMS-Webhook/1.0',
               },
               body: bodyString,
               signal: AbortSignal.timeout(5000),
@@ -128,7 +128,7 @@ export class WebhookDispatcherService {
     const testPayload = {
       event: 'ping',
       timestamp: new Date().toISOString(),
-      message: 'Test ping from Agentic CMS',
+      message: 'Test ping from Headless CMS',
       webhookId: webhook.id,
       webhookName: webhook.name,
     };
@@ -146,7 +146,7 @@ export class WebhookDispatcherService {
           'Content-Type': 'application/json',
           'x-agentic-signature': signature,
           'x-agentic-event': 'ping',
-          'User-Agent': 'Agentic-CMS-Webhook/1.0',
+          'User-Agent': 'Headless-CMS-Webhook/1.0',
         },
         body: bodyString,
         signal: AbortSignal.timeout(5000),

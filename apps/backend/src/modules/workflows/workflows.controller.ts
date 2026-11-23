@@ -235,3 +235,48 @@ export const getWorkflowSchemas: RequestHandler = asyncHandler(
       );
   },
 );
+
+export const getActiveEntriesInStage: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const stageSlug = req.params.stageSlug as string;
+    logger.info(
+      { id, stageSlug },
+      'WorkflowsController: getActiveEntriesInStage start',
+    );
+    const count = await workflowsService.countActiveEntriesInStage(
+      id,
+      stageSlug,
+      req.context?.applicationId,
+    );
+    res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new ApiResponse(
+          HTTP_STATUS.OK,
+          { count },
+          'Active entries count retrieved successfully',
+        ),
+      );
+  },
+);
+
+export const getPendingReviews: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('WorkflowsController: getPendingReviews start');
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+    const result = await workflowsService.getPendingReviews(
+      req.context?.applicationId,
+      limit,
+    );
+    res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new ApiResponse(
+          HTTP_STATUS.OK,
+          result,
+          'Pending review requests retrieved successfully',
+        ),
+      );
+  },
+);

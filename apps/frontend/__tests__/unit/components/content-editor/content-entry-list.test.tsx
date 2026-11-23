@@ -5,9 +5,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContentEntryList } from '@/components/content-editor/content-entry-list';
-const { mockList, mockDelete } = vi.hoisted(() => ({
+const { mockList, mockDelete, mockGetWorkflow } = vi.hoisted(() => ({
   mockList: vi.fn(),
   mockDelete: vi.fn(),
+  mockGetWorkflow: vi.fn(),
 }));
 vi.mock('@/hooks/use-permissions', () => ({
   useHasPermission: vi.fn(() => true),
@@ -15,6 +16,9 @@ vi.mock('@/hooks/use-permissions', () => ({
 vi.mock('@/lib/api/content', () => ({
   listContentEntries: mockList,
   deleteContentEntry: mockDelete,
+}));
+vi.mock('@/lib/api/workflows', () => ({
+  getWorkflowBySchemaId: mockGetWorkflow,
 }));
 const definition: SchemaDefinition = {
   fields: [
@@ -54,6 +58,7 @@ function renderList() {
 describe('ContentEntryList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetWorkflow.mockResolvedValue(null);
   });
   it('shows an empty state when there are no entries', async () => {
     mockList.mockResolvedValue({
@@ -82,7 +87,7 @@ describe('ContentEntryList', () => {
     await waitFor(() => {
       expect(screen.getByText('Hello World')).toBeInTheDocument();
     });
-    expect(screen.getByText('published')).toBeInTheDocument();
+    expect(screen.getByText('Published')).toBeInTheDocument();
   });
   it('re-queries with a $contains filter on the title field when searching', async () => {
     mockList.mockResolvedValue({
@@ -152,5 +157,56 @@ describe('ContentEntryList', () => {
       expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
     });
     expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
+  });
+
+  it('filters entries by workflow stage when selected', async () => {
+    mockGetWorkflow.mockResolvedValue({
+      id: 'wf-1',
+      name: 'Editorial Workflow',
+      stages: [
+        { id: 's-1', name: 'Draft', slug: 'draft', color: '#6b7280' },
+        { id: 's-2', name: 'In Review', slug: 'in-review', color: '#f59e0b' },
+        { id: 's-3', name: 'Approved', slug: 'approved', color: '#10b981' },
+      ],
+    });
+    mockList.mockResolvedValue({
+      data: [],
+      meta: { pagination: { page: 1, pageSize: 25, total: 0, pageCount: 0 } },
+    });
+    const user = userEvent.setup();
+    renderList();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /filter by workflow stage/i }),
+      ).toBeInTheDocument();
+    });
+
+    const trigger = screen.getByRole('button', {
+      name: /filter by workflow stage/i,
+    });
+    await user.click(trigger);
+
+    const stageOption = await screen.findByText('In Review');
+    await user.click(stageOption);
+
+    await waitFor(() => {
+      const lastCall = mockList.mock.calls.at(-1)!;
+      expect(lastCall[0]).toBe('article');
+      expect(lastCall[1]).toMatchObject({
+        filters: { workflowStage: { $eq: 'in-review' } },
+      });
+    });
+
+    // Reset button should now be visible
+    const resetButton = screen.getByRole('button', { name: /reset filter/i });
+    expect(resetButton).toBeInTheDocument();
+
+    await user.click(resetButton);
+
+    await waitFor(() => {
+      const lastCall = mockList.mock.calls.at(-1)!;
+      expect(lastCall[1]?.filters).toBeUndefined();
+    });
   });
 });

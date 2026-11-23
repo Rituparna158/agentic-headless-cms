@@ -20,6 +20,7 @@ export interface PaginationMeta {
 export interface ContentEntryRecord {
   id: string;
   status: 'draft' | 'published';
+  workflowStage?: string | null;
   data: Record<string, unknown>;
   publishedData: Record<string, unknown> | null;
   publishedAt?: string | null;
