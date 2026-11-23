@@ -11,6 +11,7 @@ export interface AuditEventPayload {
   beforeState?: Record<string, unknown> | null;
   afterState?: Record<string, unknown> | null;
   context?: Record<string, unknown> | null;
+  applicationId?: string;
 }
 
 export interface MediaUploadedEventPayload {
