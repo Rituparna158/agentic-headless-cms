@@ -180,4 +180,63 @@ describe('AuditService', () => {
       NotFoundError,
     );
   });
+
+  it('should list audit logs scoped to applicationId', async () => {
+    const mockResponse = {
+      data: [
+        {
+          id: '1',
+          applicationId: 'cms-ui-uuid',
+          action: 'create',
+          resourceType: 'content',
+          resourceId: 'res-1',
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 15,
+      totalPages: 1,
+    };
+
+    mockRepository.findMany.mockResolvedValue(mockResponse as any);
+
+    const result = await auditService.list({
+      page: 1,
+      limit: 15,
+      applicationId: 'cms-ui-uuid',
+    });
+
+    expect(mockRepository.findMany).toHaveBeenCalledWith({
+      page: 1,
+      limit: 15,
+      applicationId: 'cms-ui-uuid',
+    });
+    expect(result).toEqual(mockResponse);
+  });
+
+  it('should get audit log by id scoped to applicationId', async () => {
+    const mockLog = {
+      id: 'log-123',
+      applicationId: 'cms-ui-uuid',
+      action: 'publish',
+      resourceType: 'content',
+      resourceId: 'entry-1',
+    };
+
+    mockRepository.findById.mockResolvedValue(mockLog as any);
+
+    const result = await auditService.getById('log-123', 'cms-ui-uuid');
+
+    expect(mockRepository.findById).toHaveBeenCalledWith(
+      'log-123',
+      'cms-ui-uuid',
+    );
+    expect(result).toEqual(mockLog);
+  });
+
+  it('should invalidate cache scoped to applicationId', async () => {
+    await expect(
+      auditService.invalidateCache('cms-ui-uuid'),
+    ).resolves.toBeUndefined();
+  });
 });
