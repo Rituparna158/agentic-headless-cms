@@ -19,6 +19,7 @@ export interface AuditFilters {
   startDate?: string;
   endDate?: string;
   search: string;
+  applicationId?: string;
 }
 
 export type DiffChangeType = 'added' | 'removed' | 'modified';

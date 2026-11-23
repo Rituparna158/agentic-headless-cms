@@ -22,6 +22,8 @@ export function buildAuditQueryString(options?: GetAuditLogsQuery): string {
   if (options.sortDirection)
     params.append('sortDirection', options.sortDirection);
   else if (options.sortOrder) params.append('sortOrder', options.sortOrder);
+  if (options.applicationId)
+    params.append('applicationId', options.applicationId);
   const str = params.toString();
   return str ? `?${str}` : '';
 }

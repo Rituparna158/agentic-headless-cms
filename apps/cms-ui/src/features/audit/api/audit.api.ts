@@ -35,6 +35,9 @@ export function buildAuditQueryString(
   if (options.search && options.search.trim()) {
     params.append('search', options.search.trim());
   }
+  if (options.applicationId) {
+    params.append('applicationId', options.applicationId);
+  }
 
   const qs = params.toString();
   return qs ? `?${qs}` : '';
