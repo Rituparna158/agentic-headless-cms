@@ -42,16 +42,44 @@ export const Sidebar = () => {
     if (isCollapsed) {
       setIsCollapsed(false);
     }
-    setExpandedItems((prev) => ({
-      ...prev,
-      [title]: !prev[title],
-    }));
+    setExpandedItems((prev) => {
+      const isCurrentlyExpanded =
+        prev[title] ??
+        hasActiveChild(
+          filteredNavConfig.find((i) => i.title === title) ?? {
+            title,
+            href: '',
+          },
+        );
+      return {
+        ...prev,
+        [title]: !isCurrentlyExpanded,
+      };
+    });
   };
 
-  const isActive = (href: string) => location.pathname === href;
+  const isActive = (href: string) => {
+    const [path, search] = href.split('?');
+    if (search) {
+      return location.pathname === path && location.search === `?${search}`;
+    }
+    return location.pathname === path && !location.search;
+  };
+
   const hasActiveChild = (item: (typeof sidebarNavConfig)[0]) => {
-    if (isActive(item.href)) return true;
-    return item.subItems?.some((sub) => isActive(sub.href)) ?? false;
+    const [itemPath] = item.href.split('?');
+    if (location.pathname === itemPath) return true;
+    return (
+      item.subItems?.some((sub) => {
+        const [subPath, subSearch] = sub.href.split('?');
+        if (subSearch) {
+          return (
+            location.pathname === subPath && location.search === `?${subSearch}`
+          );
+        }
+        return location.pathname === subPath;
+      }) ?? false
+    );
   };
 
   return (
@@ -97,7 +125,8 @@ export const Sidebar = () => {
         <ul className="space-y-1 px-3">
           {filteredNavConfig.map((item) => {
             const active = hasActiveChild(item);
-            const isExpanded = expandedItems[item.title];
+            const isExpanded =
+              expandedItems[item.title] ?? hasActiveChild(item);
             const itemSlug = item.title
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, '-');
@@ -154,37 +183,39 @@ export const Sidebar = () => {
                     </button>
                     {/* Submenu */}
                     {!isCollapsed && isExpanded && (
-                      <ul
+                      <div
                         id={submenuId}
                         role="region"
                         aria-labelledby={buttonId}
-                        className="mt-1 mb-2 space-y-1 animate-fade-in"
+                        className="mt-1 mb-2 animate-fade-in"
                       >
-                        {item.subItems.map((subItem) => {
-                          const [path, search] = subItem.href.split('?');
-                          const isSubActive = search
-                            ? location.pathname === path &&
-                              location.search === `?${search}`
-                            : location.pathname === path && !location.search;
+                        <ul className="space-y-1">
+                          {item.subItems.map((subItem) => {
+                            const [path, search] = subItem.href.split('?');
+                            const isSubActive = search
+                              ? location.pathname === path &&
+                                location.search === `?${search}`
+                              : location.pathname === path && !location.search;
 
-                          return (
-                            <li key={subItem.title}>
-                              <NavLink
-                                to={subItem.href}
-                                className={() =>
-                                  `block pl-11 pr-3 py-2 rounded-md text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1] ${
-                                    isSubActive
-                                      ? 'text-zinc-100 bg-[#27272A] font-medium'
-                                      : 'text-[#A1A1AA] hover:text-zinc-200 hover:bg-[#27272A]/40'
-                                  }`
-                                }
-                              >
-                                {subItem.title}
-                              </NavLink>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                            return (
+                              <li key={subItem.title}>
+                                <NavLink
+                                  to={subItem.href}
+                                  className={() =>
+                                    `block pl-11 pr-3 py-2 rounded-md text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1] ${
+                                      isSubActive
+                                        ? 'text-zinc-100 bg-[#27272A] font-medium'
+                                        : 'text-[#A1A1AA] hover:text-zinc-200 hover:bg-[#27272A]/40'
+                                    }`
+                                  }
+                                >
+                                  {subItem.title}
+                                </NavLink>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
                     )}
                   </div>
                 ) : (

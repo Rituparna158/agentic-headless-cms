@@ -13,10 +13,12 @@ import {
 import {
   auditLogs,
   users,
+  applications,
   withTransaction,
   auditActionEnum,
 } from '@repo/shared-db';
 import { getDatabaseAdapter } from '@repo/config';
+import { contextStorage } from '@repo/context';
 import { logger } from '@repo/logger';
 import type {
   CreateAuditLogInput,
@@ -27,34 +29,67 @@ import type {
 import { ApiError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
 
+function isUuid(val: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    val,
+  );
+}
+
 export class AuditRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
   }
 
+  private async resolveApplicationId(
+    appIdOrName?: string,
+  ): Promise<string | undefined> {
+    if (!appIdOrName) return undefined;
+    if (isUuid(appIdOrName)) return appIdOrName;
+    try {
+      const app = await this.db
+        .select({ id: applications.id })
+        .from(applications)
+        .where(eq(applications.name, appIdOrName))
+        .limit(1);
+      return app[0]?.id;
+    } catch {
+      return undefined;
+    }
+  }
+
   async create(input: CreateAuditLogInput): Promise<void> {
     try {
+      const store = contextStorage.getStore();
+      const rawAppId = input.applicationId || store?.applicationId;
+      const applicationId = await this.resolveApplicationId(rawAppId);
+
       logger.info(
         {
+          applicationId,
           action: input.action,
           resourceType: input.resourceType,
           resourceId: input.resourceId,
         },
         'AuditRepository: inserting audit log',
       );
-      await withTransaction(this.db, async (tx) => {
-        return await tx.insert(auditLogs).values({
-          actorType: input.actorType,
-          actorUserId: input.actorUserId,
-          actorAgentId: input.actorAgentId,
-          action: input.action as (typeof auditActionEnum.enumValues)[number],
-          resourceType: input.resourceType,
-          resourceId: input.resourceId,
-          beforeState: input.beforeState,
-          afterState: input.afterState,
-          context: input.context,
-        });
-      });
+      await withTransaction(
+        this.db,
+        async (tx) => {
+          return await tx.insert(auditLogs).values({
+            ...(applicationId ? { applicationId } : {}),
+            actorType: input.actorType,
+            actorUserId: input.actorUserId,
+            actorAgentId: input.actorAgentId,
+            action: input.action as (typeof auditActionEnum.enumValues)[number],
+            resourceType: input.resourceType,
+            resourceId: input.resourceId,
+            beforeState: input.beforeState,
+            afterState: input.afterState,
+            context: input.context,
+          });
+        },
+        applicationId ? { applicationId } : undefined,
+      );
       logger.debug('AuditRepository: audit log insert complete');
     } catch (error) {
       logger.error({ err: error }, 'AuditRepository Error in create:');
@@ -71,7 +106,15 @@ export class AuditRepository {
       const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
       const offset = (page - 1) * limit;
 
+      const store = contextStorage.getStore();
+      const rawAppId = query.applicationId || store?.applicationId;
+      const applicationId = await this.resolveApplicationId(rawAppId);
+
       const conditions: SQL[] = [];
+
+      if (applicationId) {
+        conditions.push(eq(auditLogs.applicationId, applicationId));
+      }
 
       if (query.action) {
         conditions.push(
@@ -132,40 +175,48 @@ export class AuditRepository {
           break;
       }
 
-      const data = await withTransaction(this.db, async (tx) => {
-        return await tx
-          .select({
-            id: auditLogs.id,
-            applicationId: auditLogs.applicationId,
-            actorType: auditLogs.actorType,
-            actorUserId: auditLogs.actorUserId,
-            actorAgentId: auditLogs.actorAgentId,
-            action: auditLogs.action,
-            resourceType: auditLogs.resourceType,
-            resourceId: auditLogs.resourceId,
-            beforeState: auditLogs.beforeState,
-            afterState: auditLogs.afterState,
-            context: auditLogs.context,
-            timestamp: auditLogs.timestamp,
-            actorEmail: users.email,
-            actorFirstName: users.firstName,
-            actorLastName: users.lastName,
-          })
-          .from(auditLogs)
-          .leftJoin(users, eq(auditLogs.actorUserId, users.id))
-          .where(whereClause)
-          .limit(limit)
-          .offset(offset)
-          .orderBy(orderByClause);
-      });
+      const data = await withTransaction(
+        this.db,
+        async (tx) => {
+          return await tx
+            .select({
+              id: auditLogs.id,
+              applicationId: auditLogs.applicationId,
+              actorType: auditLogs.actorType,
+              actorUserId: auditLogs.actorUserId,
+              actorAgentId: auditLogs.actorAgentId,
+              action: auditLogs.action,
+              resourceType: auditLogs.resourceType,
+              resourceId: auditLogs.resourceId,
+              beforeState: auditLogs.beforeState,
+              afterState: auditLogs.afterState,
+              context: auditLogs.context,
+              timestamp: auditLogs.timestamp,
+              actorEmail: users.email,
+              actorFirstName: users.firstName,
+              actorLastName: users.lastName,
+            })
+            .from(auditLogs)
+            .leftJoin(users, eq(auditLogs.actorUserId, users.id))
+            .where(whereClause)
+            .limit(limit)
+            .offset(offset)
+            .orderBy(orderByClause);
+        },
+        applicationId ? { applicationId } : undefined,
+      );
 
-      const countResult = await withTransaction(this.db, async (tx) => {
-        return await tx
-          .select({ count: sql<number>`count(*)` })
-          .from(auditLogs)
-          .leftJoin(users, eq(auditLogs.actorUserId, users.id))
-          .where(whereClause);
-      });
+      const countResult = await withTransaction(
+        this.db,
+        async (tx) => {
+          return await tx
+            .select({ count: sql<number>`count(*)` })
+            .from(auditLogs)
+            .leftJoin(users, eq(auditLogs.actorUserId, users.id))
+            .where(whereClause);
+        },
+        applicationId ? { applicationId } : undefined,
+      );
 
       const total = Number(countResult[0]?.count || 0);
       const totalPages = Math.ceil(total / limit) || 1;
@@ -183,33 +234,52 @@ export class AuditRepository {
     }
   }
 
-  async findById(id: string): Promise<AuditLogRecord | null> {
+  async findById(
+    id: string,
+    applicationId?: string,
+  ): Promise<AuditLogRecord | null> {
     try {
-      logger.info({ id }, 'AuditRepository: fetching audit log by ID');
-      const rows = await withTransaction(this.db, async (tx) => {
-        return await tx
-          .select({
-            id: auditLogs.id,
-            applicationId: auditLogs.applicationId,
-            actorType: auditLogs.actorType,
-            actorUserId: auditLogs.actorUserId,
-            actorAgentId: auditLogs.actorAgentId,
-            action: auditLogs.action,
-            resourceType: auditLogs.resourceType,
-            resourceId: auditLogs.resourceId,
-            beforeState: auditLogs.beforeState,
-            afterState: auditLogs.afterState,
-            context: auditLogs.context,
-            timestamp: auditLogs.timestamp,
-            actorEmail: users.email,
-            actorFirstName: users.firstName,
-            actorLastName: users.lastName,
-          })
-          .from(auditLogs)
-          .leftJoin(users, eq(auditLogs.actorUserId, users.id))
-          .where(eq(auditLogs.id, id))
-          .limit(1);
-      });
+      logger.info(
+        { id, applicationId },
+        'AuditRepository: fetching audit log by ID',
+      );
+      const store = contextStorage.getStore();
+      const rawAppId = applicationId || store?.applicationId;
+      const appId = await this.resolveApplicationId(rawAppId);
+
+      const conditions: SQL[] = [eq(auditLogs.id, id)];
+      if (appId) {
+        conditions.push(eq(auditLogs.applicationId, appId));
+      }
+
+      const rows = await withTransaction(
+        this.db,
+        async (tx) => {
+          return await tx
+            .select({
+              id: auditLogs.id,
+              applicationId: auditLogs.applicationId,
+              actorType: auditLogs.actorType,
+              actorUserId: auditLogs.actorUserId,
+              actorAgentId: auditLogs.actorAgentId,
+              action: auditLogs.action,
+              resourceType: auditLogs.resourceType,
+              resourceId: auditLogs.resourceId,
+              beforeState: auditLogs.beforeState,
+              afterState: auditLogs.afterState,
+              context: auditLogs.context,
+              timestamp: auditLogs.timestamp,
+              actorEmail: users.email,
+              actorFirstName: users.firstName,
+              actorLastName: users.lastName,
+            })
+            .from(auditLogs)
+            .leftJoin(users, eq(auditLogs.actorUserId, users.id))
+            .where(and(...conditions))
+            .limit(1);
+        },
+        appId ? { applicationId: appId } : undefined,
+      );
 
       return (rows[0] as AuditLogRecord) || null;
     } catch (error) {

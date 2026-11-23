@@ -32,7 +32,7 @@ export const sidebarNavConfig: NavItem[] = [
     requiredCapability: 'manage_settings',
     subItems: [
       { title: 'Security Overview', href: '/security' },
-      { title: 'MFA Reset Requests', href: '/users/mfa-requests' },
+      { title: 'MFA Reset Requests', href: '/security?tab=mfa' },
       { title: 'Audit Trail', href: '/audit-logs' },
     ],
   },

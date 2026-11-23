@@ -182,13 +182,14 @@ export class AuthService {
         authRepository.getUserPermissions(user.id, appId),
       ]);
       const session = this.createAuthSession(user, roles, permissions);
-      const { context } = getAuditContext();
+      const { context, applicationId: ctxAppId } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.LOGIN,
         resourceType: 'user',
         resourceId: user.id,
         actorUserId: user.id,
         actorAgentId: undefined,
+        applicationId: ctxAppId || appId,
         beforeState: null,
         afterState: { email: user.email, sso: true, isNewUser },
         context,
@@ -263,13 +264,14 @@ export class AuthService {
         { userId: user.id },
         'AuthService: login successful, emitting audit log',
       );
-      const { context } = getAuditContext();
+      const { context, applicationId: ctxAppId } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.LOGIN,
         resourceType: 'user',
         resourceId: user.id,
         actorUserId: user.id,
         actorAgentId: undefined,
+        applicationId: ctxAppId || appId,
         beforeState: null,
         afterState: { email: user.email },
         context,
@@ -325,13 +327,14 @@ export class AuthService {
         { userId: user.id },
         'AuthService: acceptInvite successful, emitting audit log',
       );
-      const { context } = getAuditContext();
+      const { context, applicationId: ctxAppId } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.UPDATE,
         resourceType: 'user',
         resourceId: user.id,
         actorUserId: user.id,
         actorAgentId: undefined,
+        applicationId: ctxAppId,
         beforeState: { status: 'invited' },
         afterState: { status: 'active' },
         context,
@@ -464,13 +467,14 @@ export class AuthService {
       logger.debug({ userId: user.id }, 'AuthService: signing session JWT');
       const session = this.createAuthSession(user, roles, permissions, true);
       // Emit login event since the challenge is now complete
-      const { context } = getAuditContext();
+      const { context, applicationId: ctxAppId } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.LOGIN,
         resourceType: 'user',
         resourceId: user.id,
         actorUserId: user.id,
         actorAgentId: undefined,
+        applicationId: ctxAppId || appId,
         beforeState: null,
         afterState: { email: user.email, mfaCompleted: true },
         context,
@@ -689,13 +693,14 @@ export class AuthService {
         { userId: request.userId },
         'AuthService: password reset completed successfully',
       );
-      const { context } = getAuditContext();
+      const { context, applicationId: ctxAppId } = getAuditContext();
       eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
         action: AUDIT_ACTIONS.UPDATE,
         resourceType: 'user',
         resourceId: request.userId,
         actorUserId: request.userId,
         actorAgentId: undefined,
+        applicationId: ctxAppId,
         beforeState: null,
         afterState: { passwordReset: true },
         context,

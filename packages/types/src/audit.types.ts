@@ -10,6 +10,7 @@ export interface CreateAuditLogInput {
   beforeState?: Record<string, unknown> | null;
   afterState?: Record<string, unknown> | null;
   context?: Record<string, unknown> | null;
+  applicationId?: string;
 }
 
 export interface AuditLogRecord {
@@ -42,6 +43,7 @@ export interface GetAuditLogsQuery {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   sortDirection?: 'asc' | 'desc';
+  applicationId?: string;
 }
 
 export interface PaginatedAuditLogsResponse {

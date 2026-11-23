@@ -57,6 +57,21 @@ async function seedSystemSchemas(db: Database): Promise<void> {
     logger.info({ headlessAppId }, 'Created HEADLESS_CMS application.');
   }
 
+  const existingCms = await db
+    .select()
+    .from(applications)
+    .where(eq(applications.name, 'CMS_UI'))
+    .limit(1);
+
+  if (existingCms.length === 0) {
+    await db.insert(applications).values({
+      name: 'CMS_UI',
+      apiKeyHash: 'seed_hash_cms_ui',
+      type: 'SYSTEM_DASHBOARD',
+    });
+    logger.info('Created CMS_UI application.');
+  }
+
   const defaultSchemas = [
     {
       name: 'Roles',

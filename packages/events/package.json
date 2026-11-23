@@ -23,6 +23,7 @@
   "dependencies": {
     "eventemitter2": "^6.4.9",
     "@repo/config": "workspace:*",
+    "@repo/context": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/constants": "workspace:*",
     "@repo/repository": "workspace:*"

@@ -10,6 +10,7 @@ export function getAuditContext() {
       : store?.userId
         ? 'user'
         : ('system' as const),
+    applicationId: store?.applicationId,
     context: {
       ip: store?.ip,
       mcpToolName: store?.mcpToolName,

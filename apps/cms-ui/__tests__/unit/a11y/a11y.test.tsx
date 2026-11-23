@@ -115,6 +115,17 @@ describe('Automated Accessibility (WCAG 2.1 AA) & ARIA Verification', () => {
       expect(results).toHaveNoViolations();
     });
 
+    it('passes automated axe audit with zero violations when submenus are expanded', async () => {
+      const { container } = render(
+        <MemoryRouter initialEntries={['/users']}>
+          <Sidebar />
+        </MemoryRouter>,
+      );
+
+      const results = await axe(container);
+      expect(results).toHaveNoViolations();
+    });
+
     it('contains valid landmark tags, aria-expanded, and aria-controls on toggles', () => {
       render(
         <MemoryRouter initialEntries={['/']}>

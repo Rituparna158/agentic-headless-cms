@@ -14,6 +14,15 @@ export const listAuditLogs: RequestHandler = asyncHandler(
         ? Number(req.query.pageSize)
         : 15;
 
+    const applicationId =
+      req.context?.applicationId ||
+      (req.headers['x-app-id'] as string | undefined) ||
+      (req.headers['x-api-id'] as string | undefined) ||
+      (req.headers['x-application-id'] as string | undefined) ||
+      (req.query.applicationId as string | undefined) ||
+      (req.query.appId as string | undefined) ||
+      (req.query.apiId as string | undefined);
+
     const query: GetAuditLogsQuery = {
       page: req.query.page ? Number(req.query.page) : 1,
       limit,
@@ -25,9 +34,14 @@ export const listAuditLogs: RequestHandler = asyncHandler(
       search: (req.query.search || req.query.searchQuery) as string | undefined,
       sortBy: (req.query.sortBy || req.query.sortKey) as string | undefined,
       sortOrder: (req.query.sortOrder || req.query.sortDirection) as
-        'asc' | 'desc' | undefined,
+        | 'asc'
+        | 'desc'
+        | undefined,
       sortDirection: (req.query.sortDirection || req.query.sortOrder) as
-        'asc' | 'desc' | undefined,
+        | 'asc'
+        | 'desc'
+        | undefined,
+      applicationId,
     };
 
     const result = await auditService.list(query);
@@ -47,7 +61,16 @@ export const getAuditLog: RequestHandler = asyncHandler(
     const { id } = req.params;
     logger.info({ id }, 'AuditController: getAuditLog start');
 
-    const log = await auditService.getById(id as string);
+    const applicationId =
+      req.context?.applicationId ||
+      (req.headers['x-app-id'] as string | undefined) ||
+      (req.headers['x-api-id'] as string | undefined) ||
+      (req.headers['x-application-id'] as string | undefined) ||
+      (req.query.applicationId as string | undefined) ||
+      (req.query.appId as string | undefined) ||
+      (req.query.apiId as string | undefined);
+
+    const log = await auditService.getById(id as string, applicationId);
     logger.debug({ id: log.id }, 'AuditController: getAuditLog success');
 
     res

@@ -1,48 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, useInRouterContext, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ShieldCheck,
-  KeyRound,
-  Users,
-  ScrollText,
-  Fingerprint,
-  Building2,
-} from 'lucide-react';
+import { ShieldCheck, KeyRound, Fingerprint, Building2 } from 'lucide-react';
 import { accessApi } from '@/features/access/api/access.api';
 import { MfaRequestsPage } from '@/features/access/pages/MfaRequestsPage';
-import { UsersAccessPage } from '@/features/access/pages/UsersAccessPage';
-import { RolesTab } from '@/features/access/components/RolesTab';
-import { AuditLogPage } from '@/features/audit/pages/AuditLogPage';
 import { PersonalMfaSettings } from './PersonalMfaSettings';
-
-// Router-safe hook consumer
-function SearchParamsBridge({
-  onChange,
-}: {
-  onChange: (tab: string, setFn: (tab: string) => void) => void;
-}) {
-  const inRouter = useInRouterContext();
-  if (!inRouter) return null;
-  return <SearchParamsInner onChange={onChange} />;
-}
-
-function SearchParamsInner({
-  onChange,
-}: {
-  onChange: (tab: string, setFn: (tab: string) => void) => void;
-}) {
-  const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') || 'mfa';
-
-  useEffect(() => {
-    onChange(tab, (newTab: string) => {
-      setParams({ tab: newTab });
-    });
-  }, [tab, setParams, onChange]);
-
-  return null;
-}
 
 function SafeLink({
   to,
@@ -68,15 +30,15 @@ function SafeLink({
   );
 }
 
-export const SecurityPage: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<string>('mfa');
-  const [setRouterTabFn, setSetRouterTabFn] = useState<
-    ((tab: string) => void) | null
-  >(null);
-  const [rolesSubTab, setRolesSubTab] = useState<'members' | 'roles'>(
-    'members',
-  );
+interface SecurityPageContentProps {
+  currentTab: string;
+  onSelectTab: (tab: string) => void;
+}
 
+const SecurityPageContent: React.FC<SecurityPageContentProps> = ({
+  currentTab,
+  onSelectTab,
+}) => {
   // Query live count of pending MFA reset requests
   const { data: pendingMfaResponse } = useQuery({
     queryKey: ['mfa-requests', 'pending-count'],
@@ -88,23 +50,9 @@ export const SecurityPage: React.FC = () => {
   const pendingMfaCount =
     pendingMfaResponse?.data?.meta?.pagination?.total ?? 0;
 
-  const handleSelectTab = (tab: string) => {
-    setCurrentTab(tab);
-    if (setRouterTabFn) {
-      setRouterTabFn(tab);
-    }
-  };
-
   return (
     <div className="flex flex-col h-full bg-background text-foreground animate-in fade-in duration-200">
-      <SearchParamsBridge
-        onChange={(tab, setFn) => {
-          setCurrentTab(tab);
-          setSetRouterTabFn(() => setFn);
-        }}
-      />
-
-      {/* Top Header - Blueprint Screen 13 */}
+      {/* Top Header */}
       <header className="px-8 py-5 border-b border-border bg-card/60 shrink-0">
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
           <SafeLink
@@ -127,17 +75,17 @@ export const SecurityPage: React.FC = () => {
               <span>Company Security & IT Ops</span>
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Administrative command center for team MFA recovery, permission
-              roles, and corporate audit logs.
+              Administrative command center for team MFA recovery and personal
+              two-factor credentials.
             </p>
           </div>
         </div>
 
-        {/* Blueprint Screen 13: Tab Navigation */}
+        {/* Tab Navigation: MFA Reset Requests & My 2FA Settings */}
         <div className="flex items-center gap-2 overflow-x-auto pt-4 scrollbar-none border-t border-border/40 mt-4">
           <button
             type="button"
-            onClick={() => handleSelectTab('mfa')}
+            onClick={() => onSelectTab('mfa')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
               currentTab === 'mfa'
                 ? 'bg-foreground text-background shadow-xs'
@@ -161,33 +109,7 @@ export const SecurityPage: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => handleSelectTab('roles')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
-              currentTab === 'roles'
-                ? 'bg-foreground text-background shadow-xs'
-                : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-          >
-            <Users className="size-3.5" />
-            <span>User Roles & Permissions</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSelectTab('audit')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
-              currentTab === 'audit'
-                ? 'bg-foreground text-background shadow-xs'
-                : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-          >
-            <ScrollText className="size-3.5" />
-            <span>Audit Logs History</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSelectTab('my_mfa')}
+            onClick={() => onSelectTab('my_mfa')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 flex items-center gap-2 ${
               currentTab === 'my_mfa'
                 ? 'bg-foreground text-background shadow-xs'
@@ -203,68 +125,8 @@ export const SecurityPage: React.FC = () => {
       {/* Main Tab Content */}
       <div className="flex-1 overflow-hidden flex flex-col">
         {currentTab === 'mfa' && (
-          <div className="flex-1 overflow-y-auto p-6 space-y-8">
+          <div className="flex-1 overflow-y-auto p-6">
             <MfaRequestsPage hideHeader />
-
-            {/* Administrator Device Security Integration */}
-            <div className="pt-6 border-t border-border/60">
-              <div className="mb-4">
-                <h3 className="text-sm font-bold text-foreground">
-                  Administrator MFA Key & Authenticator Settings
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Manage your own administrator authentication credentials and
-                  two-factor device pairing.
-                </p>
-              </div>
-              <PersonalMfaSettings />
-            </div>
-          </div>
-        )}
-
-        {currentTab === 'roles' && (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Roles Sub-Switch: Team Members vs Roles Matrix */}
-            <div className="px-8 py-3 border-b border-border bg-card/40 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setRolesSubTab('members')}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  rolesSubTab === 'members'
-                    ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-              >
-                Team Members
-              </button>
-              <button
-                type="button"
-                onClick={() => setRolesSubTab('roles')}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  rolesSubTab === 'roles'
-                    ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-              >
-                Roles & Capabilities
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {rolesSubTab === 'members' ? (
-                <UsersAccessPage hideHeader />
-              ) : (
-                <div className="p-6">
-                  <RolesTab />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {currentTab === 'audit' && (
-          <div className="flex-1 overflow-y-auto">
-            <AuditLogPage hideHeader />
           </div>
         )}
 
@@ -276,4 +138,34 @@ export const SecurityPage: React.FC = () => {
       </div>
     </div>
   );
+};
+
+const SecurityPageWithRouter: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const currentTab = tabParam === 'my_mfa' ? 'my_mfa' : 'mfa';
+
+  const handleSelectTab = (tab: string) => {
+    setSearchParams({ tab });
+  };
+
+  return (
+    <SecurityPageContent
+      currentTab={currentTab}
+      onSelectTab={handleSelectTab}
+    />
+  );
+};
+
+const SecurityPageStandalone: React.FC = () => {
+  const [currentTab, setCurrentTab] = useState<string>('mfa');
+
+  return (
+    <SecurityPageContent currentTab={currentTab} onSelectTab={setCurrentTab} />
+  );
+};
+
+export const SecurityPage: React.FC = () => {
+  const inRouter = useInRouterContext();
+  return inRouter ? <SecurityPageWithRouter /> : <SecurityPageStandalone />;
 };
