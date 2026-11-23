@@ -42,16 +42,44 @@ export const Sidebar = () => {
     if (isCollapsed) {
       setIsCollapsed(false);
     }
-    setExpandedItems((prev) => ({
-      ...prev,
-      [title]: !prev[title],
-    }));
+    setExpandedItems((prev) => {
+      const isCurrentlyExpanded =
+        prev[title] ??
+        hasActiveChild(
+          filteredNavConfig.find((i) => i.title === title) ?? {
+            title,
+            href: '',
+          },
+        );
+      return {
+        ...prev,
+        [title]: !isCurrentlyExpanded,
+      };
+    });
   };
 
-  const isActive = (href: string) => location.pathname === href;
+  const isActive = (href: string) => {
+    const [path, search] = href.split('?');
+    if (search) {
+      return location.pathname === path && location.search === `?${search}`;
+    }
+    return location.pathname === path && !location.search;
+  };
+
   const hasActiveChild = (item: (typeof sidebarNavConfig)[0]) => {
-    if (isActive(item.href)) return true;
-    return item.subItems?.some((sub) => isActive(sub.href)) ?? false;
+    const [itemPath] = item.href.split('?');
+    if (location.pathname === itemPath) return true;
+    return (
+      item.subItems?.some((sub) => {
+        const [subPath, subSearch] = sub.href.split('?');
+        if (subSearch) {
+          return (
+            location.pathname === subPath && location.search === `?${subSearch}`
+          );
+        }
+        return location.pathname === subPath;
+      }) ?? false
+    );
   };
 
   return (
@@ -97,7 +125,8 @@ export const Sidebar = () => {
         <ul className="space-y-1 px-3">
           {filteredNavConfig.map((item) => {
             const active = hasActiveChild(item);
-            const isExpanded = expandedItems[item.title];
+            const isExpanded =
+              expandedItems[item.title] ?? hasActiveChild(item);
             const itemSlug = item.title
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, '-');

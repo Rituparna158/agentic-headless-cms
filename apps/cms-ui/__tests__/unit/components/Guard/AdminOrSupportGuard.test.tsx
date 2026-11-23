@@ -8,9 +8,19 @@ vi.mock('../../../../src/features/auth/store/auth.store', () => ({
   useAuthStore: vi.fn(),
 }));
 
-const renderGuard = (roles: string[] | undefined) => {
+const renderGuard = (
+  roles: string[] | undefined,
+  permissions?: Array<{
+    action: string;
+    schemaId?: string | null;
+    effect?: string;
+    condition?: Record<string, unknown>;
+  }>,
+) => {
   vi.mocked(useAuthStore).mockImplementation((selector) =>
-    selector({ user: { id: 'u1', roles: roles ?? [] } } as never),
+    selector({
+      user: { id: 'u1', roles: roles ?? [], permissions: permissions ?? [] },
+    } as never),
   );
   return render(
     <MemoryRouter initialEntries={['/users/mfa-requests']}>
@@ -34,6 +44,25 @@ describe('AdminOrSupportGuard', () => {
 
   it('renders children for admin users', () => {
     renderGuard(['admin']);
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+  });
+
+  it('renders children for super_admin users', () => {
+    renderGuard(['super_admin']);
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+  });
+
+  it('renders children for users with manage_settings capability', () => {
+    renderGuard(
+      [],
+      [
+        {
+          action: 'manage',
+          effect: 'allow',
+          condition: { capability: 'manage_settings' },
+        },
+      ],
+    );
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
 
