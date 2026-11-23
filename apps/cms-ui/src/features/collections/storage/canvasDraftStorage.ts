@@ -10,6 +10,16 @@ export type { CanvasDraftRecord };
 
 const memoryFallback = new Map<string, CanvasDraftRecord>();
 
+function getRequestError(target: EventTarget | null | IDBRequest): unknown {
+  try {
+    return (
+      (target as IDBRequest)?.error ?? new Error('IndexedDB request error')
+    );
+  } catch (err) {
+    return err instanceof Error ? err : new Error(String(err));
+  }
+}
+
 function isIndexedDBAvailable(): boolean {
   return (
     typeof window !== 'undefined' && typeof window.indexedDB !== 'undefined'
@@ -43,7 +53,7 @@ function openDB(): Promise<IDBDatabase> {
     };
 
     request.onerror = (event) => {
-      reject((event.target as IDBOpenDBRequest).error);
+      reject(getRequestError(event.target));
     };
   });
 }
@@ -64,7 +74,7 @@ export async function saveCanvasDraft(
       const request = store.put(record);
 
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(getRequestError(request));
       tx.oncomplete = () => db.close();
     });
   } catch (error) {
@@ -93,7 +103,7 @@ export async function getCanvasDraft(
       request.onsuccess = () => {
         resolve((request.result as CanvasDraftRecord) || null);
       };
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(getRequestError(request));
       tx.oncomplete = () => db.close();
     });
   } catch (error) {
@@ -120,7 +130,7 @@ export async function deleteCanvasDraft(pageId: string): Promise<void> {
       const request = store.delete(pageId);
 
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(getRequestError(request));
       tx.oncomplete = () => db.close();
     });
   } catch (error) {
@@ -146,7 +156,7 @@ export async function listCanvasDrafts(): Promise<CanvasDraftRecord[]> {
       request.onsuccess = () => {
         resolve((request.result as CanvasDraftRecord[]) || []);
       };
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(getRequestError(request));
       tx.oncomplete = () => db.close();
     });
   } catch (error) {
@@ -202,7 +212,7 @@ export async function clearAllCanvasDrafts(): Promise<void> {
       const request = store.clear();
 
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      request.onerror = () => reject(getRequestError(request));
       tx.oncomplete = () => db.close();
     });
   } catch (error) {

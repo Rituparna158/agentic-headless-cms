@@ -89,7 +89,17 @@ describe('canvasDraftStorage (IndexedDB)', () => {
     const open = window.indexedDB.open.bind(window.indexedDB);
     vi.spyOn(window.indexedDB, 'open').mockImplementation((...a) => {
       const req = open(...a);
-      setTimeout(() => req.onerror?.({ target: req } as never), 0);
+      setTimeout(() => {
+        try {
+          Object.defineProperty(req, 'error', {
+            value: new Error('Failed to open database'),
+            configurable: true,
+          });
+        } catch {
+          // Ignore
+        }
+        req.onerror?.({ target: req } as never);
+      }, 0);
       return req;
     });
     await saveCanvasDraft(draft('e'));
