@@ -51,6 +51,26 @@ async function seedAdmin() {
         .returning({ id: applications.id });
       headlessAppId = newApp[0]!.id;
     }
+
+    let cmsUiAppId: string;
+    const existingCmsUi = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.name, 'CMS_UI'))
+      .limit(1);
+    if (existingCmsUi.length > 0) {
+      cmsUiAppId = existingCmsUi[0]!.id;
+    } else {
+      const newApp = await db
+        .insert(applications)
+        .values({
+          name: 'CMS_UI',
+          apiKeyHash: 'seed_hash_cms_ui',
+          type: 'SYSTEM_DASHBOARD',
+        })
+        .returning({ id: applications.id });
+      cmsUiAppId = newApp[0]!.id;
+    }
     // Create admin role
     let roleId: string;
     const existingRole = await db
@@ -148,6 +168,75 @@ async function seedAdmin() {
       });
       logger.info('Linked Admin user to HEADLESS_CMS Admin role.');
     }
+
+    // Create CMS_UI admin role
+    let cmsRoleId: string;
+    const existingCmsRole = await db
+      .select()
+      .from(roles)
+      .where(and(eq(roles.name, 'admin'), eq(roles.applicationId, cmsUiAppId)))
+      .limit(1);
+    if (existingCmsRole.length > 0) {
+      cmsRoleId = existingCmsRole[0]!.id;
+      logger.info({ cmsRoleId }, 'CMS_UI Admin role already exists.');
+    } else {
+      const newRole = await db
+        .insert(roles)
+        .values({
+          name: 'admin',
+          applicationId: cmsUiAppId,
+          description: 'CMS UI Administrator with full access',
+        })
+        .returning({ id: roles.id });
+      cmsRoleId = newRole[0]!.id;
+      logger.info({ cmsRoleId }, 'Created new CMS_UI Admin role.');
+      await db.insert(permissions).values({
+        roleId: cmsRoleId,
+        applicationId: cmsUiAppId,
+        action: '*',
+        effect: 'allow',
+      });
+      logger.info('Granted wildcard (*) permission to CMS_UI Admin role.');
+    }
+
+    // Link user to CMS_UI role via user_applications
+    let cmsUserAppId: string;
+    const existingCmsUserApp = await db
+      .select()
+      .from(userApplications)
+      .where(
+        and(
+          eq(userApplications.userId, userId),
+          eq(userApplications.applicationId, cmsUiAppId),
+        ),
+      )
+      .limit(1);
+    if (existingCmsUserApp.length > 0) {
+      cmsUserAppId = existingCmsUserApp[0]!.id;
+    } else {
+      const newUserApp = await db
+        .insert(userApplications)
+        .values({
+          userId,
+          applicationId: cmsUiAppId,
+          status: 'active',
+        })
+        .returning({ id: userApplications.id });
+      cmsUserAppId = newUserApp[0]!.id;
+    }
+    const existingCmsUserRole = await db
+      .select()
+      .from(userRoles)
+      .where(eq(userRoles.userApplicationId, cmsUserAppId))
+      .limit(1);
+    if (existingCmsUserRole.length === 0) {
+      await db.insert(userRoles).values({
+        userApplicationId: cmsUserAppId,
+        roleId: cmsRoleId,
+      });
+      logger.info('Linked Admin user to CMS_UI Admin role.');
+    }
+
     logger.info('Admin seeding complete!');
     process.exit(0);
   } catch (error) {
