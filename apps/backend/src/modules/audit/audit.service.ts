@@ -37,6 +37,12 @@ export class AuditService {
     return page === 1 && limit === 15 && !hasFilters;
   }
 
+  private getDefaultPage1CacheKey(applicationId?: string): string {
+    return applicationId
+      ? `audit:logs:${applicationId}:default_page1`
+      : DEFAULT_PAGE1_CACHE_KEY;
+  }
+
   private async getRedisClient() {
     try {
       const redis = getRedisConnection();
@@ -55,12 +61,13 @@ export class AuditService {
     try {
       logger.info({ query }, 'AuditService: list start');
       const isDefaultPage1 = this.isDefaultPage1Query(query);
+      const cacheKey = this.getDefaultPage1CacheKey(query.applicationId);
 
       if (isDefaultPage1) {
         try {
           const redis = await this.getRedisClient();
           if (redis) {
-            const cached = await redis.get(DEFAULT_PAGE1_CACHE_KEY);
+            const cached = await redis.get(cacheKey);
             if (cached) {
               logger.debug(
                 'AuditService: list Redis cache HIT for default page 1',
@@ -87,7 +94,7 @@ export class AuditService {
           const redis = await this.getRedisClient();
           if (redis) {
             await redis.set(
-              DEFAULT_PAGE1_CACHE_KEY,
+              cacheKey,
               JSON.stringify(result),
               'EX',
               CACHE_TTL_SECONDS,
@@ -109,21 +116,28 @@ export class AuditService {
     }
   }
 
-  async invalidateCache(): Promise<void> {
+  async invalidateCache(applicationId?: string): Promise<void> {
     try {
       const redis = await this.getRedisClient();
       if (!redis) return;
 
-      // Invalidate default page 1 key immediately
+      // Invalidate default page 1 key(s)
+      if (applicationId) {
+        await redis.del(this.getDefaultPage1CacheKey(applicationId));
+      }
       await redis.del(DEFAULT_PAGE1_CACHE_KEY);
 
       // Pattern-based invalidation for all audit query cache keys using non-blocking SCAN
+      const matchPattern = applicationId
+        ? `audit:logs:${applicationId}:*`
+        : 'audit:logs:*';
+
       let cursor = '0';
       do {
         const [nextCursor, keys] = await redis.scan(
           cursor,
           'MATCH',
-          'audit:logs:*',
+          matchPattern,
           'COUNT',
           100,
         );
@@ -133,7 +147,10 @@ export class AuditService {
         }
       } while (cursor !== '0');
 
-      logger.debug('AuditService: invalidated all audit:logs:* cache keys');
+      logger.debug(
+        { applicationId },
+        'AuditService: invalidated audit cache keys',
+      );
     } catch (cacheErr) {
       logger.warn(
         { err: cacheErr },
@@ -142,10 +159,12 @@ export class AuditService {
     }
   }
 
-  async getById(id: string): Promise<AuditLogRecord> {
+  async getById(id: string, applicationId?: string): Promise<AuditLogRecord> {
     try {
-      logger.info({ id }, 'AuditService: getById start');
-      const log = await this.repository.findById(id);
+      logger.info({ id, applicationId }, 'AuditService: getById start');
+      const log = applicationId
+        ? await this.repository.findById(id, applicationId)
+        : await this.repository.findById(id);
       if (!log) {
         throw new NotFoundError('Audit log not found');
       }

@@ -23,7 +23,9 @@ export const globalAuthMiddleware = async (
   try {
     const db = getDatabaseAdapter().getDb();
     const apiKey = req.headers['x-api-key'] as string;
-    const appIdString = req.headers['x-app-id'] as string;
+    const appIdString = (req.headers['x-app-id'] ||
+      req.headers['x-api-id'] ||
+      req.headers['x-application-id']) as string;
     if (apiKey) {
       const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
       const appRecords = await db
@@ -38,7 +40,11 @@ export const globalAuthMiddleware = async (
       }
       const resolvedApp = appRecords[0]!;
       // Verify the mapping! If they provided an App ID, it MUST match the API Key's true application
-      if (appIdString && resolvedApp.name !== appIdString) {
+      if (
+        appIdString &&
+        resolvedApp.name !== appIdString &&
+        resolvedApp.id !== appIdString
+      ) {
         return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: {
             message: `Mismatch: The provided API Key does not belong to the application '${appIdString}'`,
@@ -50,10 +56,18 @@ export const globalAuthMiddleware = async (
       return next();
     }
     if (appIdString) {
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          appIdString,
+        );
       const appRecords = await db
         .select()
         .from(applications)
-        .where(eq(applications.name, appIdString))
+        .where(
+          isUuid
+            ? eq(applications.id, appIdString)
+            : eq(applications.name, appIdString),
+        )
         .limit(1);
       if (appRecords.length === 0) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
@@ -62,6 +76,7 @@ export const globalAuthMiddleware = async (
           },
         });
       }
+      req.headers['x-app-id'] = appRecords[0]!.name;
       req.context = { ...req.context, applicationId: appRecords[0]!.id };
       return next();
     }
