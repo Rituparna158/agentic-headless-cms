@@ -51,12 +51,19 @@ Unified asset management for images, documents, and videos.
 - Drag-and-drop file uploads with automatic thumbnail generation.
 - Responsive preview drawer with file metadata and CDN/API URLs ready to copy.
 
-### 4. Audit Log (`/audit-log`)
+### 4. Workflows (`/workflows`)
+Enterprise editorial pipelines and multi-stage approval governance.
+- Design custom stage progressions (Draft &rarr; Review &rarr; Approved) per schema.
+- Enforce the four-eyes rule so authors cannot self-approve their own content.
+- Concurrency conflict resolution with optimistic locking.
+- Track stage transitions, reviewer notes, and decision history in the audit drawer.
+
+### 5. Audit Log (`/audit-log`)
 Operational transparency and compliance out of the box.
 - Real-time immutable activity stream capturing every `CREATE`, `UPDATE`, `DELETE`, and `PUBLISH` event.
 - Filter by actor, resource type, or date range, with a sliding drawer showing before/after change snapshots.
 
-### 5. Roles & Access Control (`/roles-access`)
+### 6. Roles & Access Control (`/roles-access`)
 Enterprise-grade permission governance.
 - Configure granular role permissions (`Super Admin`, `Admin`, `Editor`, `Viewer`) down to specific content operations.
 - Send email invitations to onboard new team members seamlessly.
