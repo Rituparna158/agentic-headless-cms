@@ -1,4 +1,5 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SecurityPage } from '../../../../src/pages/Security/SecurityPage';
 import { useAuthStore } from '../../../../src/features/auth/store/auth.store';
@@ -35,8 +36,57 @@ describe('SecurityPage', () => {
     );
   });
 
-  it('renders MFA setup section when MFA is not enabled', () => {
+  it('renders only 2 tabs: MFA Reset Requests and My 2FA Settings', () => {
     render(<SecurityPage />);
+    expect(
+      screen.getByRole('button', { name: /MFA Reset Requests/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /My 2FA Settings/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /User Roles & Permissions/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Audit Logs History/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('switches between tabs on click in standalone mode', () => {
+    render(<SecurityPage />);
+    // By default, MFA tab is active and shows MFA requests
+    expect(screen.queryByText('MFA is Not Set Up')).not.toBeInTheDocument();
+
+    // Click My 2FA Settings tab
+    fireEvent.click(screen.getByRole('button', { name: /My 2FA Settings/i }));
+    expect(screen.getByText('MFA is Not Set Up')).toBeInTheDocument();
+
+    // Click MFA Reset Requests tab again
+    fireEvent.click(
+      screen.getByRole('button', { name: /MFA Reset Requests/i }),
+    );
+    expect(screen.queryByText('MFA is Not Set Up')).not.toBeInTheDocument();
+  });
+
+  it('switches between tabs on click in router mode', () => {
+    render(
+      <MemoryRouter initialEntries={['/security']}>
+        <SecurityPage />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText('MFA is Not Set Up')).not.toBeInTheDocument();
+
+    // Click My 2FA Settings
+    fireEvent.click(screen.getByRole('button', { name: /My 2FA Settings/i }));
+    expect(screen.getByText('MFA is Not Set Up')).toBeInTheDocument();
+  });
+
+  it('renders MFA setup section when MFA is not enabled in My 2FA Settings tab', () => {
+    render(
+      <MemoryRouter initialEntries={['/security?tab=my_mfa']}>
+        <SecurityPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText('MFA is Not Set Up')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Add MFA Integration/i }),
@@ -48,7 +98,11 @@ describe('SecurityPage', () => {
       secret: 'SECRET123',
       qrCode: 'data:image/png;base64,qr',
     } as never);
-    render(<SecurityPage />);
+    render(
+      <MemoryRouter initialEntries={['/security?tab=my_mfa']}>
+        <SecurityPage />
+      </MemoryRouter>,
+    );
     fireEvent.click(
       screen.getByRole('button', { name: /Add MFA Integration/i }),
     );
@@ -61,11 +115,15 @@ describe('SecurityPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows remove MFA section when MFA is enabled', () => {
+  it('shows remove MFA section when MFA is enabled in My 2FA Settings tab', () => {
     vi.mocked(useAuthStore).mockImplementation((selector) =>
       selector({ user: { ...mockUser, mfaEnabled: true } } as never),
     );
-    render(<SecurityPage />);
+    render(
+      <MemoryRouter initialEntries={['/security?tab=my_mfa']}>
+        <SecurityPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText('MFA is Enabled')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Remove MFA Integration/i }),
@@ -80,7 +138,11 @@ describe('SecurityPage', () => {
       id: 'u1',
       mfaEnabled: false,
     } as never);
-    render(<SecurityPage />);
+    render(
+      <MemoryRouter initialEntries={['/security?tab=my_mfa']}>
+        <SecurityPage />
+      </MemoryRouter>,
+    );
     fireEvent.click(
       screen.getByRole('button', { name: /Remove MFA Integration/i }),
     );
