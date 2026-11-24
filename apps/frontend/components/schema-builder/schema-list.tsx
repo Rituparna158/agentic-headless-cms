@@ -82,6 +82,7 @@ export function SchemaList() {
           { label: 'Type', key: 'type', sortable: true },
           { label: 'Fields', key: 'fields', sortable: true },
           { label: 'Localized', key: 'localized', sortable: true },
+          { label: 'Created By', key: 'createdBy', sortable: false },
           { label: 'Actions', key: 'actions', sortable: false, align: 'right' },
         ]}
         rows={data.map((schema) => {
@@ -128,6 +129,14 @@ export function SchemaList() {
               </Badge>
             ) : (
               <span className="text-muted-foreground text-xs">No</span>
+            ),
+            createdBy: (
+              <span
+                className="text-xs text-foreground font-medium truncate max-w-[130px] block"
+                title={schema.createdBy || 'Admin'}
+              >
+                {schema.createdBy || 'Admin'}
+              </span>
             ),
             actions: (
               <div className="flex items-center justify-end">

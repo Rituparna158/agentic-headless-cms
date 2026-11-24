@@ -729,6 +729,84 @@ describe('WorkflowsService', () => {
       );
     });
 
+    it('should prevent original creator from approving an entry even if submitted by another editor (strict four-eyes principle)', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'in-review',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-editor',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockRepository.getEntryCreatorUserId.mockResolvedValue('user-admin');
+
+      // 1. In getEntryWorkflowState, creator should have no approval transitions and isSelfReviewer=true
+      const state = await workflowsService.getEntryWorkflowState(
+        'entry-1',
+        'schema-1',
+        { id: 'user-admin', roles: ['admin'] },
+        'app-1',
+      );
+      expect(state.isSelfReviewer).toBe(true);
+      expect(state.availableTransitions).toEqual([]);
+
+      // 2. In transitionEntry, creator attempting to approve must be blocked
+      await expect(
+        workflowsService.transitionEntry(
+          'entry-1',
+          'schema-1',
+          { toStage: 'approved' },
+          { id: 'user-admin', roles: ['admin'] },
+          'app-1',
+        ),
+      ).rejects.toThrow(
+        'You cannot approve your own entry; another editor must review it',
+      );
+    });
+
+    it('should allow an independent third party (neither creator nor submitter) to approve', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'in-review',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-editor',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockRepository.getEntryCreatorUserId.mockResolvedValue('user-admin');
+      mockRepository.upsertEntryWorkflowState.mockResolvedValue({} as any);
+      mockRepository.recordWorkflowHistory.mockResolvedValue({} as any);
+
+      // 'user-reviewer' is neither the creator ('user-admin') nor the submitter ('user-editor')
+      const result = await workflowsService.transitionEntry(
+        'entry-1',
+        'schema-1',
+        { toStage: 'approved' },
+        { id: 'user-reviewer', roles: ['editor'] },
+        'app-1',
+      );
+
+      expect(result).toBeDefined();
+      expect(mockRepository.upsertEntryWorkflowState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entryId: 'entry-1',
+          currentStage: 'approved',
+          updatedByUserId: 'user-reviewer',
+        }),
+        'app-1',
+      );
+    });
+
     it('should require a mandatory comment when requesting changes or rejecting', async () => {
       mockRepository.getWorkflowBySchemaId.mockResolvedValue(
         multiStageWorkflow,

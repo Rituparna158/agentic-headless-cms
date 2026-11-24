@@ -380,34 +380,122 @@ export class WorkflowsService {
 
       const initialStage =
         workflow.stages.find((s) => s.isInitial) || workflow.stages[0]!;
-      const currentStageSlug = entryState?.currentStage || initialStage.slug;
+      let currentStageSlug = entryState?.currentStage || initialStage.slug;
 
-      const currentStage =
+      let currentStage =
         workflow.stages.find((s) => s.slug === currentStageSlug) ||
         initialStage;
+
+      // Self-heal: If an entry is marked as approved/final, but has unapproved draft edits saved after approval,
+      // auto-demote back to the initial draft stage so review transitions and publish locking are restored.
+      if (
+        entryState &&
+        currentStage.isFinal &&
+        typeof this.repository.hasUnapprovedDraftEdits === 'function'
+      ) {
+        try {
+          const hasDraftEdits = await this.repository.hasUnapprovedDraftEdits(
+            entryId,
+            entryState.updatedAt ? new Date(entryState.updatedAt) : null,
+            applicationId,
+          );
+          if (hasDraftEdits) {
+            logger.info(
+              {
+                entryId,
+                fromStage: currentStageSlug,
+                toStage: initialStage.slug,
+              },
+              'WorkflowsService: auto-healing workflow state back to initial stage due to unapproved draft edits',
+            );
+            await this.handleContentUpdated(
+              entryId,
+              schemaId,
+              { id: user?.id || entryState.updatedByUserId || 'system' },
+              applicationId,
+            );
+            currentStageSlug = initialStage.slug;
+            currentStage = initialStage;
+          }
+        } catch (healErr) {
+          logger.warn(
+            { err: healErr, entryId },
+            'WorkflowsService: self-heal workflow check skipped',
+          );
+        }
+      }
 
       const isAdmin =
         user?.roles?.some((r) =>
           ADMIN_ROLES.includes(r as (typeof ADMIN_ROLES)[number]),
         ) ?? false;
 
+      let actors: {
+        creator: {
+          id: string;
+          email?: string | null;
+          name?: string | null;
+        } | null;
+        submitter: {
+          id: string;
+          email?: string | null;
+          name?: string | null;
+        } | null;
+      } = { creator: null, submitter: null };
+
+      if (typeof this.repository.getEntryWorkflowActors === 'function') {
+        try {
+          const res = await this.repository.getEntryWorkflowActors(
+            entryId,
+            applicationId,
+          );
+          if (res) {
+            actors = res;
+          }
+        } catch {
+          // Fall back gracefully if actors cannot be resolved
+        }
+      }
+
       const creatorUserId =
-        typeof this.repository.getEntryCreatorUserId === 'function'
+        actors?.creator?.id ||
+        (typeof this.repository.getEntryCreatorUserId === 'function'
           ? await this.repository.getEntryCreatorUserId(entryId, applicationId)
-          : null;
+          : null);
+
+      // Four-eyes principle: Prevent self-review (neither original creator nor review submitter can approve/reject)
+      const submitterUserId =
+        actors?.submitter?.id ||
+        (entryState?.currentStage !== initialStage.slug
+          ? entryState?.updatedByUserId
+          : null);
       const isCreator = !!(
         creatorUserId &&
         user?.id &&
         creatorUserId === user.id
       );
+      const isSubmitter = !!(
+        submitterUserId &&
+        user?.id &&
+        submitterUserId === user.id
+      );
+      const isSelfReviewer = isCreator || isSubmitter;
+      const selfReviewReason =
+        isCreator && isSubmitter
+          ? 'You created and submitted this content; another editor must review and approve it.'
+          : isCreator
+            ? 'You created this content; another editor must review and approve it.'
+            : isSubmitter
+              ? 'You submitted this content for review; another editor must review and approve it.'
+              : null;
 
       const candidateTransitions = workflow.transitions.filter(
         (t) => t.fromStage === currentStage.slug,
       );
 
       const availableTransitions = candidateTransitions.filter((t) => {
-        // Four-eyes principle: The entry creator cannot review or approve their own submission
-        if (isCreator) {
+        // Four-eyes principle: The submitter cannot review or approve their own submission
+        if (isSelfReviewer) {
           const targetStageDef = workflow.stages.find(
             (s) => s.slug === t.toStage,
           );
@@ -429,10 +517,39 @@ export class WorkflowsService {
 
         if (isAdmin) return true;
         if (!t.requiredRoleIds || t.requiredRoleIds.length === 0) return true;
-        return (
-          user?.roles?.some((r) => t.requiredRoleIds!.includes(r)) ?? false
+
+        const userRolesNormalized = (user?.roles || []).map((r) =>
+          r.toLowerCase().trim(),
+        );
+        return t.requiredRoleIds.some((reqRole) =>
+          userRolesNormalized.includes(reqRole.toLowerCase().trim()),
         );
       });
+
+      let requiresEditsBeforeResubmit = false;
+      let rejectionComment: string | null = null;
+
+      if (
+        currentStage.slug === initialStage.slug &&
+        typeof this.repository.getEntryRejectionInfo === 'function'
+      ) {
+        try {
+          const rejectionInfo = await this.repository.getEntryRejectionInfo(
+            entryId,
+            initialStage.slug,
+            applicationId,
+          );
+          if (
+            rejectionInfo.hasRequestedChanges &&
+            !rejectionInfo.hasDraftSavedSinceRejection
+          ) {
+            requiresEditsBeforeResubmit = true;
+            rejectionComment = rejectionInfo.rejectionComment ?? null;
+          }
+        } catch {
+          // Graceful fallback
+        }
+      }
 
       return {
         hasWorkflow: true,
@@ -443,6 +560,12 @@ export class WorkflowsService {
         currentStage,
         availableTransitions,
         isFinal: !!currentStage.isFinal,
+        createdBy: actors.creator,
+        submittedBy: actors.submitter,
+        requiresEditsBeforeResubmit,
+        rejectionComment,
+        isSelfReviewer,
+        selfReviewReason,
       };
     } catch (error) {
       logger.error(
@@ -521,9 +644,12 @@ export class WorkflowsService {
         transition.requiredRoleIds &&
         transition.requiredRoleIds.length > 0
       ) {
-        const hasRequiredRole =
-          user.roles?.some((r) => transition.requiredRoleIds!.includes(r)) ??
-          false;
+        const userRolesNormalized = (user.roles || []).map((r) =>
+          r.toLowerCase().trim(),
+        );
+        const hasRequiredRole = transition.requiredRoleIds.some((reqRole) =>
+          userRolesNormalized.includes(reqRole.toLowerCase().trim()),
+        );
         if (!hasRequiredRole) {
           throw new ForbiddenError(
             ERROR_MESSAGES.WORKFLOWS.UNAUTHORIZED_TRANSITION,
@@ -531,16 +657,55 @@ export class WorkflowsService {
         }
       }
 
-      // Four-eyes principle: Prevent authors/creators from reviewing or approving their own entries
+      // Four-eyes principle: Prevent self-review (cannot approve/reject review submission made by oneself)
+      let actors: {
+        creator: {
+          id: string;
+          email?: string | null;
+          name?: string | null;
+        } | null;
+        submitter: {
+          id: string;
+          email?: string | null;
+          name?: string | null;
+        } | null;
+      } = { creator: null, submitter: null };
+
+      if (typeof this.repository.getEntryWorkflowActors === 'function') {
+        try {
+          const res = await this.repository.getEntryWorkflowActors(
+            entryId,
+            applicationId,
+          );
+          if (res) {
+            actors = res;
+          }
+        } catch {
+          // Fall back gracefully if actors cannot be resolved
+        }
+      }
+
       const creatorUserId =
-        typeof this.repository.getEntryCreatorUserId === 'function'
+        actors?.creator?.id ||
+        (typeof this.repository.getEntryCreatorUserId === 'function'
           ? await this.repository.getEntryCreatorUserId(entryId, applicationId)
-          : null;
+          : null);
+      const submitterUserId =
+        actors?.submitter?.id ||
+        (entryState?.currentStage !== initialStage.slug
+          ? entryState?.updatedByUserId
+          : null);
       const isCreator = !!(
         creatorUserId &&
         user?.id &&
         creatorUserId === user.id
       );
+      const isSubmitter = !!(
+        submitterUserId &&
+        user?.id &&
+        submitterUserId === user.id
+      );
+      const isSelfReviewer = isCreator || isSubmitter;
 
       const isApprovalTransition =
         !!targetStage.isFinal ||
@@ -554,15 +719,19 @@ export class WorkflowsService {
         (currentStageSlug !== initialStage.slug &&
           targetStage.slug === initialStage.slug);
 
-      if (isCreator) {
+      if (isSelfReviewer) {
         if (isApprovalTransition) {
           throw new ForbiddenError(
-            'You cannot approve your own submission; another editor must review it',
+            isSubmitter
+              ? 'You cannot approve your own submission; another editor must review it'
+              : 'You cannot approve your own entry; another editor must review it',
           );
         }
         if (isReviewAction) {
           throw new ForbiddenError(
-            'You cannot review or request changes on your own submission; another editor must review it',
+            isSubmitter
+              ? 'You cannot review or request changes on your own submission; another editor must review it'
+              : 'You cannot review or request changes on your own entry; another editor must review it',
           );
         }
       }
@@ -854,8 +1023,24 @@ export class WorkflowsService {
         applicationId,
       );
 
-      // If entry is not yet tracked or is already at initial stage, no demotion needed
-      if (!entryState || entryState.currentStage === initialStage.slug) {
+      // If entry is not yet tracked, initialize it to initial stage
+      if (!entryState) {
+        if (typeof this.repository.upsertEntryWorkflowState === 'function') {
+          await this.repository.upsertEntryWorkflowState(
+            {
+              entryId,
+              workflowId: workflow.id,
+              currentStage: initialStage.slug,
+              updatedByUserId: user.id,
+            },
+            applicationId,
+          );
+        }
+        return { demoted: false };
+      }
+
+      // If entry is already at initial stage, no demotion needed
+      if (entryState.currentStage === initialStage.slug) {
         return { demoted: false };
       }
 

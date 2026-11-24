@@ -113,6 +113,13 @@ export class ContentRepository {
           publishedData: entryLocalizations.publishedData,
           createdAt: contentEntries.createdAt,
           updatedAt: contentEntries.updatedAt,
+          createdByUserId: contentEntries.createdByUserId,
+          createdBy: sql<
+            string | null
+          >`COALESCE(NULLIF(TRIM(CONCAT(${users.firstName}, ' ', ${users.lastName})), ''), ${users.email}, 'Admin')`.as(
+            'createdBy',
+          ),
+          createdByEmail: users.email,
           updatedBy: sql<
             string | null
           >`COALESCE(${contentEntries.updatedBy}, ${users.email}, 'Admin')`.as(
@@ -246,6 +253,13 @@ export class ContentRepository {
             publishedAt: entryLocalizations.publishedAt,
             createdAt: contentEntries.createdAt,
             updatedAt: contentEntries.updatedAt,
+            createdByUserId: contentEntries.createdByUserId,
+            createdBy: sql<
+              string | null
+            >`COALESCE(NULLIF(TRIM(CONCAT(${users.firstName}, ' ', ${users.lastName})), ''), ${users.email}, 'Admin')`.as(
+              'createdBy',
+            ),
+            createdByEmail: users.email,
             updatedBy: sql<
               string | null
             >`COALESCE(${contentEntries.updatedBy}, ${users.email}, 'Admin')`.as(

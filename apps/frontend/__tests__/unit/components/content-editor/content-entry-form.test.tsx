@@ -277,7 +277,15 @@ describe('ContentEntryForm', () => {
     const user = userEvent.setup();
     renderForm(entry);
 
-    await user.click(screen.getByRole('button', { name: /^delete$/i }));
+    const moreActionsButton = screen.queryByRole('button', {
+      name: /more actions/i,
+    });
+    if (moreActionsButton) {
+      await user.click(moreActionsButton);
+      await user.click(screen.getByText('Delete'));
+    } else {
+      await user.click(screen.getByRole('button', { name: /^delete$/i }));
+    }
 
     expect(screen.getByText('Delete Entry')).toBeInTheDocument();
     expect(
@@ -754,5 +762,32 @@ describe('ContentEntryForm', () => {
 
     // Verify state was refetched
     expect(mockGetEntryWorkflowState).toHaveBeenCalled();
+  });
+
+  it('displays the awaiting peer review badge when current user is a self-reviewer in review stage', async () => {
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial' },
+      currentStage: {
+        id: 's2',
+        name: 'In Review',
+        slug: 'in_review',
+        order: 1,
+      },
+      availableTransitions: [],
+      isFinal: false,
+      isSelfReviewer: true,
+      selfReviewReason:
+        'You created this content; another editor must review and approve it.',
+    });
+
+    renderForm({
+      id: 'entry-1',
+      status: 'draft',
+      data: { title: 'Test entry' },
+      publishedData: null,
+    });
+
+    expect(await screen.findByText('Awaiting Peer Review')).toBeInTheDocument();
   });
 });

@@ -214,6 +214,7 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
             key: titleField?.apiId ?? 'id',
             sortable: true,
           },
+          { label: 'Author', key: 'createdBy', sortable: false },
           { label: 'Workflow Stage', key: 'workflowStage', sortable: true },
           { label: 'Publication Status', key: 'status', sortable: true },
           { label: 'Last Updated', key: 'updatedAt', sortable: true },
@@ -256,6 +257,14 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
                   {entry.id}
                 </Link>
               ),
+            createdBy: (
+              <span
+                className="text-xs text-foreground font-medium truncate max-w-[140px] block"
+                title={entry.createdByEmail || entry.createdBy || 'Admin'}
+              >
+                {entry.createdBy || entry.createdByEmail || 'Admin'}
+              </span>
+            ),
             workflowStage: getWorkflowStageBadge(entry.workflowStage),
             status: (
               <Badge

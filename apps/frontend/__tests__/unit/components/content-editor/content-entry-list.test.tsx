@@ -78,6 +78,7 @@ describe('ContentEntryList', () => {
           status: 'published',
           data: { title: 'Hello World' },
           publishedData: null,
+          createdBy: 'Sarah Connor',
           updatedAt: new Date().toISOString(),
         },
       ],
@@ -88,6 +89,7 @@ describe('ContentEntryList', () => {
       expect(screen.getByText('Hello World')).toBeInTheDocument();
     });
     expect(screen.getByText('Published')).toBeInTheDocument();
+    expect(screen.getByText('Sarah Connor')).toBeInTheDocument();
   });
   it('re-queries with a $contains filter on the title field when searching', async () => {
     mockList.mockResolvedValue({
