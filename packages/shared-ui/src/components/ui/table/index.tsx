@@ -582,8 +582,8 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
   filterPlaceholder = 'Filter rows...',
   enablePagination = true,
   initialPage = 1,
-  initialRowsPerPage = 5,
-  rowsPerPageOptions = [5, 10, 20],
+  initialRowsPerPage = 10,
+  rowsPerPageOptions = [5, 10, 20, 25, 50],
   manualPagination,
   manualSorting,
   manualFiltering,
@@ -922,19 +922,6 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
         ? `Showing ${startRowIndex}–${endRowIndex} of ${totalFilteredCount} filtered results (${totalCount} total)`
         : `Showing ${startRowIndex}–${endRowIndex} of ${totalFilteredCount} entries`;
 
-  /**
-   * Array of page numbers for pagination controls.
-   * Memoized to avoid recalculating on every render.
-   */
-  const pageNumbers = useMemo(() => {
-    if (!enablePagination) return [];
-    const pages: number[] = [];
-    for (let i = 1; i <= totalPages; i += 1) {
-      pages.push(i);
-    }
-    return pages;
-  }, [enablePagination, totalPages]);
-
   return (
     <div
       className={cn(
@@ -1065,13 +1052,18 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
         {/* Pagination controls */}
         {enablePagination && totalPages > 1 && (
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-t border-border bg-muted/10">
-            <div className="flex items-center gap-1">
+            <div className="text-xs text-muted-foreground font-medium">
+              {paginationSummaryText}
+            </div>
+
+            <div className="flex items-center gap-1.5">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => handlePageChange(1)}
                 disabled={activePage === 1}
                 aria-label="First page"
+                className="h-8 w-8"
               >
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
@@ -1081,25 +1073,21 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
                 onClick={() => handlePageChange(activePage - 1)}
                 disabled={activePage === 1}
                 aria-label="Previous page"
+                className="h-8 w-8"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
 
-              <div className="flex flex-wrap items-center gap-1">
-                {pageNumbers.map((pageNumber) => (
-                  <Button
-                    key={pageNumber}
-                    variant={pageNumber === activePage ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => handlePageChange(pageNumber)}
-                    aria-current={
-                      pageNumber === activePage ? 'page' : undefined
-                    }
-                  >
-                    {pageNumber}
-                  </Button>
-                ))}
-              </div>
+              <span className="px-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                Page{' '}
+                <span className="font-semibold text-foreground">
+                  {activePage}
+                </span>{' '}
+                of{' '}
+                <span className="font-semibold text-foreground">
+                  {totalPages}
+                </span>
+              </span>
 
               <Button
                 variant="outline"
@@ -1107,6 +1095,7 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
                 onClick={() => handlePageChange(activePage + 1)}
                 disabled={activePage === totalPages}
                 aria-label="Next page"
+                className="h-8 w-8"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -1116,6 +1105,7 @@ export const AdvancedTable: React.FC<AdvancedTableProps> = ({
                 onClick={() => handlePageChange(totalPages)}
                 disabled={activePage === totalPages}
                 aria-label="Last page"
+                className="h-8 w-8"
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>

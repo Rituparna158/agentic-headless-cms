@@ -211,4 +211,46 @@ describe('ContentEntryList', () => {
       expect(lastCall[1]?.filters).toBeUndefined();
     });
   });
+
+  it('defaults to 10 rows per page and re-queries when rows per page changes', async () => {
+    mockList.mockResolvedValue({
+      data: [
+        {
+          id: 'entry-1',
+          status: 'draft',
+          data: { title: 'Entry 1' },
+          publishedData: null,
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      meta: { pagination: { page: 1, pageSize: 10, total: 30, pageCount: 3 } },
+    });
+    const user = userEvent.setup();
+    renderList();
+
+    await waitFor(() => {
+      const firstCall = mockList.mock.calls[0]!;
+      expect(firstCall[0]).toBe('article');
+      expect(firstCall[1]).toMatchObject({
+        page: 1,
+        pageSize: 10,
+      });
+    });
+
+    const select = await screen.findByRole('combobox', {
+      name: /rows per page/i,
+    });
+    expect(select).toHaveValue('10');
+
+    await user.selectOptions(select, '20');
+
+    await waitFor(() => {
+      const lastCall = mockList.mock.calls.at(-1)!;
+      expect(lastCall[0]).toBe('article');
+      expect(lastCall[1]).toMatchObject({
+        page: 1,
+        pageSize: 20,
+      });
+    });
+  });
 });
