@@ -68,6 +68,7 @@ export const REPO_ERRORS = {
   DELETE_WEBHOOK_FAILED: 'Failed to delete webhook',
   FETCH_WEBHOOK_FAILED: 'Failed to fetch webhook',
   RECORD_WEBHOOK_DELIVERY_FAILED: 'Failed to record webhook delivery',
+  UPDATE_WEBHOOK_DELIVERY_FAILED: 'Failed to update webhook delivery',
   LIST_WEBHOOK_DELIVERIES_FAILED: 'Failed to list webhook deliveries',
 
   // Workflows
