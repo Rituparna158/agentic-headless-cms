@@ -42,11 +42,18 @@ export function WebhookEventsCombobox({
         setIsOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
@@ -253,6 +260,7 @@ export function WebhookEventsCombobox({
                           <Checkbox
                             checked={isChecked}
                             onChange={() => toggleEvent(event.id)}
+                            aria-label={event.id}
                             className="mt-0.5 shrink-0"
                           />
                           <div className="flex flex-col min-w-0">
