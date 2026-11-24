@@ -12,7 +12,6 @@ import { WebhookRecord } from '@repo/types';
 import {
   Button,
   Input,
-  Checkbox,
   Modal,
   DataTable,
   Dropdown,
@@ -22,6 +21,7 @@ import {
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Trash2, History, MoreVertical, Radio, Plus } from 'lucide-react';
 import { WebhookDeliveriesDrawer } from './webhook-deliveries-drawer';
+import { WebhookEventsCombobox } from './webhook-events-combobox';
 
 const EVENT_CATEGORIES = [
   {
@@ -124,14 +124,6 @@ export function WebhooksTable() {
     setEvents([]);
   };
 
-  const toggleEvent = (event: string) => {
-    setEvents((prev) =>
-      prev.includes(event)
-        ? prev.filter((e: string) => e !== event)
-        : [...prev, event],
-    );
-  };
-
   return (
     <div className="flex flex-col gap-4">
       {/* Top Header Row with Action */}
@@ -153,6 +145,9 @@ export function WebhooksTable() {
       <Modal
         isOpen={isCreateOpen}
         onClose={closeDialog}
+        size="lg"
+        className="min-h-[540px] sm:min-h-[580px]"
+        bodyClassName="px-6 py-4 flex flex-col"
         title="Register Webhook"
         confirmText={createMutation.isPending ? 'Registering...' : 'Register'}
         cancelText="Cancel"
@@ -167,7 +162,7 @@ export function WebhooksTable() {
             'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm border border-primary/20',
         }}
       >
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 flex flex-col flex-1 min-h-[380px]">
           <div className="space-y-2">
             <label className="text-sm font-medium">Name</label>
             <Input
@@ -187,38 +182,19 @@ export function WebhooksTable() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Events</label>
-            <div className="space-y-4 max-h-64 overflow-y-auto pr-1 border border-border/50 rounded-lg p-2.5 bg-muted/10">
-              {EVENT_CATEGORIES.map((cat) => (
-                <div key={cat.category} className="space-y-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
-                    {cat.category}
-                  </span>
-                  <div className="space-y-1">
-                    {cat.events.map((event) => (
-                      <label
-                        key={event.id}
-                        className="flex items-start gap-2.5 text-sm cursor-pointer hover:bg-muted/40 p-1.5 rounded-md transition-colors"
-                      >
-                        <Checkbox
-                          checked={events.includes(event.id)}
-                          onChange={() => toggleEvent(event.id)}
-                          className="mt-0.5"
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-mono text-xs font-medium text-foreground">
-                            {event.id}
-                          </span>
-                          <span className="text-[11px] text-muted-foreground">
-                            {event.description}
-                          </span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Events</label>
+              {events.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {events.length} selected
+                </span>
+              )}
             </div>
+            <WebhookEventsCombobox
+              categories={EVENT_CATEGORIES}
+              selectedEvents={events}
+              onChange={setEvents}
+            />
           </div>
         </div>
       </Modal>
@@ -376,7 +352,11 @@ export function WebhooksTable() {
             page={page}
             pageCount={webhooksData?.meta?.pagination?.pageCount ?? 1}
             pageSize={pageSize}
-            onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+            rowsPerPageOptions={[5, 10, 20, 25, 50]}
+            onPageSizeChange={(newSize: number) => {
+              setPageSize(newSize);
+              setPage(1);
+            }}
             onPageChange={(newPage: number) => setPage(newPage)}
             emptyMessage="No webhooks match your search criteria."
           />

@@ -11,6 +11,9 @@ test('admin can register and delete a webhook', async ({ page }) => {
   await page
     .getByPlaceholder('https://example.com/api/revalidate')
     .fill('https://example.com/webhook-target');
+  await page
+    .getByRole('button', { name: /select events to subscribe/i })
+    .click();
   await page.getByRole('checkbox', { name: 'content.published' }).check();
   await page.getByRole('button', { name: 'Register', exact: true }).click();
 

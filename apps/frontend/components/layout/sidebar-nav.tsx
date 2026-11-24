@@ -416,7 +416,7 @@ export function SidebarNav({
       {/* Pinned User Profile Footer */}
       <div
         className={cn(
-          'border-t border-zinc-800 shrink-0 w-full overflow-hidden transition-all duration-300 ease-in-out',
+          'border-t border-zinc-800 shrink-0 w-full transition-all duration-300 ease-in-out',
           isCollapsed ? 'p-2' : 'p-3',
         )}
       >
@@ -432,8 +432,8 @@ export function SidebarNav({
               className={cn(
                 'flex items-center rounded-md transition-colors cursor-pointer text-left group focus:outline-none focus:ring-2 focus:ring-zinc-600',
                 isCollapsed
-                  ? 'justify-center p-1.5 w-10 mx-auto'
-                  : 'w-full justify-between gap-2.5 px-3 py-2',
+                  ? 'justify-center size-10 p-0 mx-auto'
+                  : 'w-full justify-between gap-2.5 px-2.5 py-2',
                 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100',
                 'data-[state=open]:bg-zinc-800 data-[state=open]:text-zinc-100 font-medium',
               )}
@@ -442,19 +442,20 @@ export function SidebarNav({
             >
               <div
                 className={cn(
-                  'flex items-center gap-2.5 min-w-0 overflow-hidden',
-                  isCollapsed && 'gap-0 justify-center',
+                  'flex items-center gap-2.5 min-w-0',
+                  isCollapsed ? 'justify-center' : 'flex-1',
                 )}
               >
-                <div className="relative shrink-0">
+                <div className="relative shrink-0 flex items-center justify-center">
                   <Avatar
+                    size={isCollapsed ? 'sm' : 'xs'}
                     className={cn(
                       'ring-1 ring-zinc-700 bg-zinc-800 text-zinc-200 text-xs font-semibold shrink-0',
                       isCollapsed ? 'size-8' : 'size-7',
                     )}
                     letters={initialsFor(displayName, user?.email)}
                   />
-                  <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
+                  <span className="absolute bottom-0 right-0 size-2 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
                 </div>
                 {!isCollapsed && (
                   <div className="flex flex-col min-w-0 overflow-hidden">
@@ -468,7 +469,7 @@ export function SidebarNav({
                 )}
               </div>
               {!isCollapsed && (
-                <ChevronsUpDown className="size-4 text-zinc-500 group-hover:text-zinc-300 group-data-[state=open]:text-zinc-200 shrink-0 transition-colors" />
+                <ChevronsUpDown className="size-4 text-zinc-500 group-hover:text-zinc-300 group-data-[state=open]:text-zinc-200 shrink-0 transition-colors ml-auto" />
               )}
             </button>
           }

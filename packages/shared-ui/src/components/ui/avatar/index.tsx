@@ -369,7 +369,7 @@ const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
     };
 
     return (
-      <div className="relative inline-block">
+      <div className="relative inline-flex shrink-0 items-center justify-center">
         <motion.div
           ref={ref}
           className={cn(

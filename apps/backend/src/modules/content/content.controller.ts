@@ -245,6 +245,8 @@ export const updateDraft: RequestHandler = asyncHandler(
       userId,
       locale,
       userEmail,
+      req.context?.applicationId,
+      req.schemaId,
     );
     logger.info({ entryId }, 'ContentController: updateDraft end');
     void webhookDispatcher.dispatch(
@@ -280,6 +282,8 @@ export const updatePartialEntry: RequestHandler = asyncHandler(
       userId,
       locale,
       userEmail,
+      req.context?.applicationId,
+      req.schemaId,
     );
     logger.info({ entryId }, 'ContentController: updatePartialEntry end');
     void webhookDispatcher.dispatch(

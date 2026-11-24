@@ -44,6 +44,10 @@ export const API_PATHS = {
     BY_ID: (id: string) => `/api/v1/webhooks/${id}`,
     TEST: (id: string) => `/api/v1/webhooks/${id}/test`,
     DELIVERIES: (id: string) => `/api/v1/webhooks/${id}/deliveries`,
+    RETRY_DELIVERY: (id: string, deliveryId: string) =>
+      `/api/v1/webhooks/${id}/deliveries/${deliveryId}/retry`,
+    REPLAY_DELIVERY: (id: string, deliveryId: string) =>
+      `/api/v1/webhooks/${id}/deliveries/${deliveryId}/replay`,
   },
   LOCALES: {
     BASE: '/api/v1/locales',

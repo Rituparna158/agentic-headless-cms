@@ -2,10 +2,12 @@
 
 import * as React from 'react';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Drawer, Badge, Button, Card } from '@repo/shared-ui';
 import {
   listWebhookDeliveries,
+  retryWebhookDelivery,
+  replayWebhookDelivery,
   type WebhookDeliveryRecord,
 } from '@/lib/api/webhooks';
 import type { WebhookRecord } from '@repo/types';
@@ -20,6 +22,8 @@ import {
   Globe,
   Tag,
   Clock,
+  RefreshCw,
+  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -40,10 +44,52 @@ export function WebhookDeliveriesDrawer({
   );
   const [hasCopiedUrl, setHasCopiedUrl] = useState(false);
 
-  const { data: deliveries = [], isLoading } = useQuery({
+  const {
+    data: deliveries = [],
+    isLoading,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ['webhook-deliveries', webhook?.id],
     queryFn: () => listWebhookDeliveries(webhook!.id),
     enabled: open && !!webhook?.id,
+    refetchInterval: open ? 3000 : false,
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: (deliveryId: string) =>
+      retryWebhookDelivery(webhook!.id, deliveryId),
+    onSuccess: (data) => {
+      toast.success(
+        data.success
+          ? `Retry attempt ${data.attempt} succeeded!`
+          : `Retry attempt ${data.attempt} recorded (status: ${data.status}).`,
+      );
+      void refetch();
+    },
+    onError: (err) => {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to retry delivery',
+      );
+    },
+  });
+
+  const replayMutation = useMutation({
+    mutationFn: (deliveryId: string) =>
+      replayWebhookDelivery(webhook!.id, deliveryId),
+    onSuccess: (data) => {
+      toast.success(
+        data.success
+          ? 'Webhook replayed successfully (200 OK)!'
+          : `Replay recorded: ${data.status} (${data.error || 'delivery failed'})`,
+      );
+      void refetch();
+    },
+    onError: (err) => {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to replay webhook',
+      );
+    },
   });
 
   const copyUrlToClipboard = () => {
@@ -164,9 +210,24 @@ export function WebhookDeliveriesDrawer({
         {/* Filter Pills & Section Header */}
         <div className="flex flex-col gap-3 w-full min-w-0">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h4 className="text-base font-semibold text-foreground">
-              Deliveries ({deliveries.length})
-            </h4>
+            <div className="flex items-center gap-2">
+              <h4 className="text-base font-semibold text-foreground">
+                Deliveries ({deliveries.length})
+              </h4>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => void refetch()}
+                disabled={isFetching}
+                title="Refresh deliveries"
+                aria-label="Refresh deliveries"
+              >
+                <RefreshCw
+                  className={`size-3.5 ${isFetching ? 'animate-spin' : ''}`}
+                />
+              </Button>
+            </div>
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
@@ -247,6 +308,17 @@ export function WebhookDeliveriesDrawer({
                             <CheckCircle2 className="size-3" />
                             {delivery.responseStatus} OK
                           </span>
+                        ) : delivery.status === 'pending_retry' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 dark:bg-amber-950/40 dark:border-amber-800 shrink-0">
+                            <Clock className="size-3" />
+                            RETRYING ({delivery.attempt}/
+                            {delivery.maxAttempts ?? 3})
+                          </span>
+                        ) : delivery.status === 'dlq' ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-700 bg-rose-100 px-2 py-0.5 rounded border border-rose-300 dark:bg-rose-950/50 dark:border-rose-800 shrink-0">
+                            <XCircle className="size-3" />
+                            DLQ ({delivery.attempt}/{delivery.maxAttempts ?? 3})
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 dark:bg-rose-950/40 dark:border-rose-800 shrink-0">
                             <XCircle className="size-3" />
@@ -258,7 +330,57 @@ export function WebhookDeliveriesDrawer({
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-[11px] font-medium gap-1 text-foreground hover:text-primary hover:border-primary/40"
+                          disabled={
+                            (replayMutation.isPending &&
+                              replayMutation.variables === delivery.id) ||
+                            (retryMutation.isPending &&
+                              retryMutation.variables === delivery.id)
+                          }
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            replayMutation.mutate(delivery.id);
+                          }}
+                          title="1-click manual replay: resend this webhook payload"
+                          aria-label="Replay webhook"
+                        >
+                          <RotateCcw
+                            className={`size-3 ${
+                              replayMutation.isPending &&
+                              replayMutation.variables === delivery.id
+                                ? 'animate-spin'
+                                : ''
+                            }`}
+                          />
+                          Replay
+                        </Button>
+                        {!isSuccess && delivery.status === 'pending_retry' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 px-2 text-[11px] font-medium gap-1 text-amber-600 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800"
+                            disabled={retryMutation.isPending}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              retryMutation.mutate(delivery.id);
+                            }}
+                            title="Retry pending attempt"
+                          >
+                            <RefreshCw
+                              className={`size-3 ${
+                                retryMutation.isPending &&
+                                retryMutation.variables === delivery.id
+                                  ? 'animate-spin'
+                                  : ''
+                              }`}
+                            />
+                            Retry
+                          </Button>
+                        )}
                         <div className="flex items-center gap-1">
                           <Clock className="size-3 text-muted-foreground/80" />
                           <span>
@@ -283,13 +405,82 @@ export function WebhookDeliveriesDrawer({
                     {/* Expandable JSON Payload with whitespace-pre-wrap & break-all */}
                     {isExpanded && (
                       <div className="px-3 sm:px-3.5 pb-3.5 pt-2 border-t border-border/60 space-y-2 bg-muted/20 min-w-0">
+                        {delivery.lastError && (
+                          <div className="p-2 rounded bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-700 dark:text-rose-300">
+                            <span className="font-semibold">Last Error: </span>
+                            {delivery.lastError}
+                          </div>
+                        )}
+                        {delivery.nextRetryAt && (
+                          <div className="p-2 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                            <Clock className="size-3.5" />
+                            <span>
+                              Scheduled for retry at{' '}
+                              {new Date(
+                                delivery.nextRetryAt,
+                              ).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <span className="font-medium">
                             Dispatched Payload
                           </span>
-                          <span className="text-[11px] font-mono">
-                            Attempt {delivery.attempt}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-mono">
+                              Attempt {delivery.attempt} /{' '}
+                              {delivery.maxAttempts ?? 3}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] font-medium gap-1 text-foreground hover:text-primary hover:border-primary/40"
+                              disabled={
+                                (replayMutation.isPending &&
+                                  replayMutation.variables === delivery.id) ||
+                                (retryMutation.isPending &&
+                                  retryMutation.variables === delivery.id)
+                              }
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                replayMutation.mutate(delivery.id);
+                              }}
+                              title="1-click manual replay: resend this webhook payload"
+                            >
+                              <RotateCcw
+                                className={`size-3 ${
+                                  replayMutation.isPending &&
+                                  replayMutation.variables === delivery.id
+                                    ? 'animate-spin'
+                                    : ''
+                                }`}
+                              />
+                              Replay Now
+                            </Button>
+                            {!isSuccess &&
+                              delivery.status === 'pending_retry' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] font-medium gap-1 text-amber-600 border-amber-300 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800"
+                                  disabled={retryMutation.isPending}
+                                  onClick={(e: React.MouseEvent) => {
+                                    e.stopPropagation();
+                                    retryMutation.mutate(delivery.id);
+                                  }}
+                                >
+                                  <RefreshCw
+                                    className={`size-3 ${
+                                      retryMutation.isPending &&
+                                      retryMutation.variables === delivery.id
+                                        ? 'animate-spin'
+                                        : ''
+                                    }`}
+                                  />
+                                  Retry Now
+                                </Button>
+                              )}
+                          </div>
                         </div>
                         <pre className="p-2.5 sm:p-3 bg-muted/60 rounded-md text-[11px] font-mono text-foreground whitespace-pre-wrap break-all leading-relaxed max-w-full overflow-x-hidden">
                           {JSON.stringify(delivery.payload, null, 2)}

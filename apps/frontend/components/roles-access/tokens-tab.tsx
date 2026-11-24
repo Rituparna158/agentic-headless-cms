@@ -357,7 +357,11 @@ export function TokensTab() {
           page={page}
           pageCount={tokensData?.meta?.pagination?.pageCount ?? 1}
           pageSize={pageSize}
-          onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+          rowsPerPageOptions={[5, 10, 20, 25, 50]}
+          onPageSizeChange={(newSize: number) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
           onPageChange={(newPage: number) => setPage(newPage)}
           emptyMessage="No tokens match your search criteria."
         />

@@ -70,6 +70,20 @@ export interface EntryWorkflowState {
   currentStage: WorkflowStage | null;
   availableTransitions: WorkflowTransition[];
   isFinal: boolean;
+  createdBy?: {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+  } | null;
+  submittedBy?: {
+    id: string;
+    email?: string | null;
+    name?: string | null;
+  } | null;
+  requiresEditsBeforeResubmit?: boolean;
+  rejectionComment?: string | null;
+  isSelfReviewer?: boolean;
+  selfReviewReason?: string | null;
 }
 
 export interface ContentWorkflowStateRecord {

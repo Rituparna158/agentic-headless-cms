@@ -40,6 +40,9 @@ export interface SchemaRecord {
   version: number;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string | null;
+  lastUpdatedBy?: string | null;
+  entryCount?: number;
 }
 
 export interface CreateSchemaInput {

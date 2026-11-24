@@ -187,6 +187,10 @@ export const webhookDeliveries = pgTable(
     payload: jsonb('payload').notNull(),
     responseStatus: integer('response_status'),
     attempt: integer('attempt').notNull().default(1),
+    maxAttempts: integer('max_attempts').notNull().default(3),
+    status: varchar('status', { length: 50 }).notNull().default('delivered'),
+    nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
+    lastError: text('last_error'),
     deliveredAt: timestamp('delivered_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
@@ -196,6 +200,10 @@ export const webhookDeliveries = pgTable(
     webhookCreatedIdx: index('webhook_deliveries_webhook_created_idx').on(
       table.webhookId,
       table.createdAt,
+    ),
+    webhookStatusRetryIdx: index('webhook_deliveries_status_retry_idx').on(
+      table.status,
+      table.nextRetryAt,
     ),
   }),
 );

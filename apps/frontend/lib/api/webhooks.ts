@@ -37,6 +37,12 @@ export interface WebhookTestResponse {
   error?: string;
 }
 
+export type WebhookDeliveryStatus =
+  | 'delivered'
+  | 'pending_retry'
+  | 'failed'
+  | 'dlq';
+
 export interface WebhookDeliveryRecord {
   id: string;
   webhookId: string;
@@ -44,6 +50,10 @@ export interface WebhookDeliveryRecord {
   payload: unknown;
   responseStatus: number | null;
   attempt: number;
+  maxAttempts?: number;
+  status?: WebhookDeliveryStatus;
+  nextRetryAt?: string | null;
+  lastError?: string | null;
   deliveredAt: string | null;
   createdAt: string;
 }
@@ -58,4 +68,33 @@ export function listWebhookDeliveries(
   id: string,
 ): Promise<WebhookDeliveryRecord[]> {
   return apiFetch<WebhookDeliveryRecord[]>(API_PATHS.WEBHOOKS.DELIVERIES(id));
+}
+
+export function retryWebhookDelivery(
+  webhookId: string,
+  deliveryId: string,
+): Promise<{
+  success: boolean;
+  status: WebhookDeliveryStatus;
+  statusCode: number | null;
+  attempt: number;
+  error?: string;
+}> {
+  return apiFetch(API_PATHS.WEBHOOKS.RETRY_DELIVERY(webhookId, deliveryId), {
+    method: 'POST',
+  });
+}
+
+export function replayWebhookDelivery(
+  webhookId: string,
+  deliveryId: string,
+): Promise<{
+  success: boolean;
+  status: WebhookDeliveryStatus;
+  statusCode: number | null;
+  error?: string;
+}> {
+  return apiFetch(API_PATHS.WEBHOOKS.REPLAY_DELIVERY(webhookId, deliveryId), {
+    method: 'POST',
+  });
 }

@@ -68,7 +68,7 @@ function getWorkflowStageBadge(stage?: string | null) {
 // Page size is now managed via state
 export function ContentEntryList({ schema }: ContentEntryListProps) {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('updatedAt:desc');
   const [stageFilter, setStageFilter] = useState<string>('all');
@@ -81,7 +81,15 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
   });
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['content', schema.slug, page, sort, search, stageFilter],
+    queryKey: [
+      'content',
+      schema.slug,
+      page,
+      pageSize,
+      sort,
+      search,
+      stageFilter,
+    ],
     queryFn: () => {
       const filters: Record<string, Record<string, string>> = {};
       if (search && titleField) {
@@ -214,6 +222,7 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
             key: titleField?.apiId ?? 'id',
             sortable: true,
           },
+          { label: 'Author', key: 'createdBy', sortable: false },
           { label: 'Workflow Stage', key: 'workflowStage', sortable: true },
           { label: 'Publication Status', key: 'status', sortable: true },
           { label: 'Last Updated', key: 'updatedAt', sortable: true },
@@ -256,6 +265,14 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
                   {entry.id}
                 </Link>
               ),
+            createdBy: (
+              <span
+                className="text-xs text-foreground font-medium truncate max-w-[140px] block"
+                title={entry.createdByEmail || entry.createdBy || 'Admin'}
+              >
+                {entry.createdBy || entry.createdByEmail || 'Admin'}
+              </span>
+            ),
             workflowStage: getWorkflowStageBadge(entry.workflowStage),
             status: (
               <Badge
@@ -303,7 +320,11 @@ export function ContentEntryList({ schema }: ContentEntryListProps) {
         manualPagination={true}
         page={page}
         pageSize={pageSize}
-        onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+        rowsPerPageOptions={[5, 10, 20, 25, 50]}
+        onPageSizeChange={(newSize: number) => {
+          setPageSize(newSize);
+          setPage(1);
+        }}
         pageCount={data?.meta?.pagination?.pageCount ?? 1}
         totalCount={data?.meta?.pagination?.total ?? 0}
         onPageChange={(newPage: number) => setPage(newPage)}

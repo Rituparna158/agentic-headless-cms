@@ -423,7 +423,11 @@ export function UsersTab({ isAdmin = false }: UsersTabProps) {
           page={page}
           pageCount={usersData?.meta?.pagination?.pageCount ?? 1}
           pageSize={pageSize}
-          onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+          rowsPerPageOptions={[5, 10, 20, 25, 50]}
+          onPageSizeChange={(newSize: number) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
           onPageChange={(newPage: number) => setPage(newPage)}
           emptyMessage="No users match your search criteria."
         />
