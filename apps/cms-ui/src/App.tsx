@@ -150,6 +150,11 @@ const SiteSettingsPage = React.lazy(() =>
     default: m.SiteSettingsPage,
   })),
 );
+const ThemeSettingsPage = React.lazy(() =>
+  import('./features/theme/pages/ThemeSettingsPage').then((m) => ({
+    default: m.ThemeSettingsPage,
+  })),
+);
 const PagesHierarchyPage = React.lazy(() =>
   import('./features/pages-hierarchy/pages/PagesHierarchyPage').then((m) => ({
     default: m.PagesHierarchyPage,
@@ -406,6 +411,10 @@ export const App = () => {
                             <Route
                               path="settings"
                               element={<SiteSettingsPage />}
+                            />
+                            <Route
+                              path="theme"
+                              element={<ThemeSettingsPage />}
                             />
                           </Route>
                           {/* Role-Gated Developer Studio */}
