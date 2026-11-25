@@ -69,6 +69,8 @@ export const API_PATHS = {
       `/api/v1/content/${schemaSlug}/${entryId}/versions`,
     WORKFLOW_STATE: (schemaSlug: string, entryId: string) =>
       `/api/v1/content/${schemaSlug}/${entryId}/workflow-state`,
+    WORKFLOW_MODE: (schemaSlug: string, entryId: string) =>
+      `/api/v1/content/${schemaSlug}/${entryId}/workflow-mode`,
     TRANSITION: (schemaSlug: string, entryId: string) =>
       `/api/v1/content/${schemaSlug}/${entryId}/transition`,
     WORKFLOW_HISTORY: (schemaSlug: string, entryId: string) =>

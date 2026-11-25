@@ -84,6 +84,20 @@ export function getEntryWorkflowState(
   );
 }
 
+export function updateEntryWorkflowMode(
+  schemaSlug: string,
+  entryId: string,
+  requiresReview: boolean,
+): Promise<EntryWorkflowState> {
+  return apiFetch<EntryWorkflowState>(
+    API_PATHS.CONTENT.WORKFLOW_MODE(schemaSlug, entryId),
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ requiresReview }),
+    },
+  );
+}
+
 export function transitionEntry(
   schemaSlug: string,
   entryId: string,

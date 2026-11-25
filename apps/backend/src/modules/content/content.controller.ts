@@ -7,10 +7,15 @@ import {
   ApiResponse,
   ApiError,
   BadRequestError,
+  ForbiddenError,
 } from '@repo/utils';
 import { DEFAULT_LOCALE, ERROR_MESSAGES } from '@repo/constants';
 import type { SchemaDefinition } from '@repo/types';
-import { hasCapability, type CapPermission } from '../auth/capability.js';
+import {
+  hasCapability,
+  canUserPublish,
+  type CapPermission,
+} from '../auth/capability.js';
 import { webhookDispatcher } from '../webhooks/webhook-dispatcher.service.js';
 import { WorkflowsService } from '../workflows/workflows.service.js';
 import { transitionEntryValidationSchema } from '@repo/validation';
@@ -203,6 +208,11 @@ export const createDraft: RequestHandler = asyncHandler(
     const userId = req.user!.id;
     const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
     logger.debug({ schemaId, userId }, 'ContentController: creating draft');
+    const requiresReviewQuery = req.query.requiresReview;
+    const requiresReview =
+      typeof requiresReviewQuery === 'string'
+        ? requiresReviewQuery === 'true'
+        : undefined;
     const entry = await contentService.createDraft(
       schemaId,
       req.body as Record<string, unknown>,
@@ -210,6 +220,7 @@ export const createDraft: RequestHandler = asyncHandler(
       locale,
       req.context?.applicationId,
       userEmail,
+      { requiresReview },
     );
     logger.info(
       { schemaId, entryId: entry.id },
@@ -239,6 +250,11 @@ export const updateDraft: RequestHandler = asyncHandler(
     const userId = req.user!.id;
     const userEmail = req.user?.email || req.user?.firstName || req.user?.id;
     logger.debug({ entryId, userId }, 'ContentController: updating draft');
+    const requiresReviewQuery = req.query.requiresReview;
+    const requiresReview =
+      typeof requiresReviewQuery === 'string'
+        ? requiresReviewQuery === 'true'
+        : undefined;
     const entry = await contentService.updateDraft(
       entryId as string,
       req.body as Record<string, unknown>,
@@ -247,6 +263,7 @@ export const updateDraft: RequestHandler = asyncHandler(
       userEmail,
       req.context?.applicationId,
       req.schemaId,
+      { requiresReview },
     );
     logger.info({ entryId }, 'ContentController: updateDraft end');
     void webhookDispatcher.dispatch(
@@ -469,6 +486,43 @@ export const transitionEntry: RequestHandler = asyncHandler(
           'Workflow transition executed successfully',
         ),
       );
+  },
+);
+
+export const updateWorkflowMode: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { entryId } = req.params;
+    const body = req.body as { requiresReview?: unknown };
+    const requiresReview = body?.requiresReview;
+    logger.info(
+      { entryId, requiresReview },
+      'ContentController: updateWorkflowMode start',
+    );
+
+    if (typeof requiresReview !== 'boolean') {
+      throw new BadRequestError('requiresReview boolean is required');
+    }
+
+    if (requiresReview === false) {
+      const isAuthorizedPublisher = await canUserPublish(req);
+      if (!isAuthorizedPublisher) {
+        throw new ForbiddenError(
+          'Only users with publish permission can enable Direct Publish mode.',
+        );
+      }
+    }
+
+    const state = await workflowsService.setEntryWorkflowMode(
+      entryId as string,
+      req.schemaId!,
+      requiresReview,
+      req.user,
+      req.context?.applicationId,
+    );
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, state, 'Workflow mode updated successfully'));
   },
 );
 

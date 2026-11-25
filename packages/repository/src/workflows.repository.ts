@@ -1,4 +1,4 @@
-import { eq, sql, and, inArray, desc, isNull } from 'drizzle-orm';
+import { eq, ne, sql, and, inArray, desc, isNull } from 'drizzle-orm';
 import type {
   BaseQueryOptions,
   CreateWorkflowInput,
@@ -700,6 +700,7 @@ export class WorkflowsRepository {
       entryId: string;
       workflowId: string;
       currentStage: string;
+      requiresReview?: boolean;
       updatedByUserId?: string | null;
     },
     applicationId?: string,
@@ -735,14 +736,18 @@ export class WorkflowsRepository {
           .limit(1);
 
         if (existing) {
+          const updatePayload: Record<string, unknown> = {
+            workflowId: data.workflowId,
+            currentStage: data.currentStage,
+            updatedByUserId: data.updatedByUserId ?? null,
+            updatedAt: new Date(),
+          };
+          if (typeof data.requiresReview === 'boolean') {
+            updatePayload.requiresReview = data.requiresReview;
+          }
           const [updated] = await tx
             .update(contentWorkflowStates)
-            .set({
-              workflowId: data.workflowId,
-              currentStage: data.currentStage,
-              updatedByUserId: data.updatedByUserId ?? null,
-              updatedAt: new Date(),
-            })
+            .set(updatePayload as any)
             .where(eq(contentWorkflowStates.id, existing.id))
             .returning();
           return updated!;
@@ -751,6 +756,7 @@ export class WorkflowsRepository {
             entryId: data.entryId,
             workflowId: data.workflowId,
             currentStage: data.currentStage,
+            requiresReview: data.requiresReview ?? true,
             updatedByUserId: data.updatedByUserId ?? null,
           };
           if (resolvedAppId) {
@@ -767,6 +773,65 @@ export class WorkflowsRepository {
       logger.error(
         { err: error, entryId: data.entryId },
         'WorkflowsRepository Error in upsertEntryWorkflowState:',
+      );
+      throw new ApiError(500, REPO_ERRORS.UPDATE_WORKFLOW_STATE_FAILED);
+    }
+  }
+
+  async setEntryWorkflowMode(
+    entryId: string,
+    requiresReview: boolean,
+    userId?: string,
+    applicationId?: string,
+  ): Promise<ContentWorkflowStateRecord | null> {
+    try {
+      logger.info(
+        { entryId, requiresReview },
+        'WorkflowsRepository: setEntryWorkflowMode',
+      );
+
+      let resolvedAppId = applicationId;
+      if (!resolvedAppId) {
+        const [entryRow] = await this.db
+          .select({ applicationId: contentEntries.applicationId })
+          .from(contentEntries)
+          .where(eq(contentEntries.id, entryId))
+          .limit(1);
+        resolvedAppId = entryRow?.applicationId ?? undefined;
+      }
+
+      const conditions = [eq(contentWorkflowStates.entryId, entryId)];
+      if (resolvedAppId) {
+        conditions.push(
+          sql`(${contentWorkflowStates.applicationId} = ${resolvedAppId} OR ${contentWorkflowStates.applicationId} IS NULL)`,
+        );
+      }
+
+      const [existing] = await this.db
+        .select()
+        .from(contentWorkflowStates)
+        .where(and(...conditions))
+        .limit(1);
+
+      if (!existing) {
+        return null;
+      }
+
+      const [updated] = await this.db
+        .update(contentWorkflowStates)
+        .set({
+          requiresReview,
+          updatedByUserId: userId ?? existing.updatedByUserId,
+          updatedAt: new Date(),
+        })
+        .where(eq(contentWorkflowStates.id, existing.id))
+        .returning();
+
+      return updated ?? null;
+    } catch (error) {
+      logger.error(
+        { err: error, entryId, requiresReview },
+        'WorkflowsRepository Error in setEntryWorkflowMode:',
       );
       throw new ApiError(500, REPO_ERRORS.UPDATE_WORKFLOW_STATE_FAILED);
     }
@@ -901,7 +966,12 @@ export class WorkflowsRepository {
           and(
             ...conditions,
             eq(workflowHistories.toStage, initialStageSlug),
-            sql`(LOWER(${workflowHistories.action}) LIKE '%change%' OR LOWER(${workflowHistories.action}) LIKE '%reject%' OR LOWER(${workflowHistories.fromStage}) LIKE '%review%')`,
+            ne(workflowHistories.fromStage, initialStageSlug),
+            sql`(LOWER(${workflowHistories.action}) LIKE '%request%change%' OR LOWER(${workflowHistories.action}) LIKE '%reject%' OR LOWER(${workflowHistories.fromStage}) LIKE '%review%')`,
+            sql`LOWER(${workflowHistories.action}) NOT LIKE '%mode%'`,
+            sql`LOWER(${workflowHistories.action}) NOT LIKE '%publish%'`,
+            sql`COALESCE(LOWER(${workflowHistories.comment}), '') NOT LIKE '%review mode%'`,
+            sql`COALESCE(LOWER(${workflowHistories.comment}), '') NOT LIKE '%publishing mode%'`,
           ),
         )
         .orderBy(desc(workflowHistories.createdAt))
@@ -1061,25 +1131,31 @@ export class WorkflowsRepository {
         .where(and(...conditions))
         .limit(1);
 
-      const workflowStateConditions = [
-        eq(contentWorkflowStates.entryId, entryId),
-      ];
+      const historyConditions = [eq(workflowHistories.entryId, entryId)];
       if (applicationId) {
-        workflowStateConditions.push(
-          sql`(${contentWorkflowStates.applicationId} = ${applicationId} OR ${contentWorkflowStates.applicationId} IS NULL)`,
+        historyConditions.push(
+          sql`(${workflowHistories.applicationId} = ${applicationId} OR ${workflowHistories.applicationId} IS NULL)`,
         );
       }
 
-      const [stateRow] = await this.db
+      const [submitRow] = await this.db
         .select({
-          submitterId: contentWorkflowStates.updatedByUserId,
+          submitterId: workflowHistories.actorUserId,
           submitterEmail: users.email,
           submitterFirstName: users.firstName,
           submitterLastName: users.lastName,
         })
-        .from(contentWorkflowStates)
-        .leftJoin(users, eq(contentWorkflowStates.updatedByUserId, users.id))
-        .where(and(...workflowStateConditions))
+        .from(workflowHistories)
+        .leftJoin(users, eq(workflowHistories.actorUserId, users.id))
+        .where(
+          and(
+            ...historyConditions,
+            sql`(LOWER(${workflowHistories.action}) LIKE '%submit%' OR LOWER(${workflowHistories.toStage}) LIKE '%review%')`,
+            sql`LOWER(${workflowHistories.action}) NOT LIKE '%change%'`,
+            sql`LOWER(${workflowHistories.action}) NOT LIKE '%reject%'`,
+          ),
+        )
+        .orderBy(desc(workflowHistories.createdAt))
         .limit(1);
 
       const creator = entryRow?.creatorId
@@ -1092,15 +1168,15 @@ export class WorkflowsRepository {
           }
         : null;
 
-      const submitter = stateRow?.submitterId
+      const submitter = submitRow?.submitterId
         ? {
-            id: stateRow.submitterId,
-            email: stateRow.submitterEmail ?? null,
-            name: stateRow.submitterFirstName
-              ? `${stateRow.submitterFirstName}${stateRow.submitterLastName ? ` ${stateRow.submitterLastName}` : ''}`
-              : (stateRow.submitterEmail ?? null),
+            id: submitRow.submitterId,
+            email: submitRow.submitterEmail ?? null,
+            name: submitRow.submitterFirstName
+              ? `${submitRow.submitterFirstName}${submitRow.submitterLastName ? ` ${submitRow.submitterLastName}` : ''}`
+              : (submitRow.submitterEmail ?? null),
           }
-        : null;
+        : creator;
 
       return { creator, submitter };
     } catch (error) {
@@ -1198,6 +1274,7 @@ export class WorkflowsRepository {
       const conditions = [
         isNull(contentEntries.deletedAt),
         sql`LOWER(${contentWorkflowStates.currentStage}) LIKE '%review%'`,
+        sql`(${contentWorkflowStates.requiresReview} = true OR ${contentWorkflowStates.requiresReview} IS NULL)`,
       ];
       if (applicationId) {
         conditions.push(
@@ -1215,6 +1292,8 @@ export class WorkflowsRepository {
           workflowStages: workflows.stages,
           updatedAt: contentEntries.updatedAt,
           data: entryLocalizations.data,
+          creatorUserId: contentEntries.createdByUserId,
+          submitterUserId: contentWorkflowStates.updatedByUserId,
           user: {
             id: users.id,
             firstName: users.firstName,
@@ -1291,6 +1370,8 @@ export class WorkflowsRepository {
             : new Date().toISOString(),
           authorEmail: r.user?.email ?? null,
           authorName,
+          creatorUserId: r.creatorUserId ?? null,
+          submitterUserId: r.submitterUserId ?? null,
         };
       });
 

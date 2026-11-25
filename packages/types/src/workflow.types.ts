@@ -70,6 +70,7 @@ export interface EntryWorkflowState {
   currentStage: WorkflowStage | null;
   availableTransitions: WorkflowTransition[];
   isFinal: boolean;
+  requiresReview?: boolean;
   createdBy?: {
     id: string;
     email?: string | null;
@@ -91,10 +92,15 @@ export interface ContentWorkflowStateRecord {
   entryId: string;
   workflowId: string;
   currentStage: string;
+  requiresReview?: boolean;
   applicationId: string;
   updatedByUserId?: string | null;
   createdAt: string | Date;
   updatedAt: string | Date;
+}
+
+export interface UpdateWorkflowModeInput {
+  requiresReview: boolean;
 }
 
 export interface WorkflowHistoryRecord {
@@ -125,6 +131,8 @@ export interface PendingReviewItem {
   updatedAt: string;
   authorEmail?: string | null;
   authorName?: string | null;
+  creatorUserId?: string | null;
+  submitterUserId?: string | null;
 }
 
 export interface PendingReviewsResult {
