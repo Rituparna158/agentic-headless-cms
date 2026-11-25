@@ -279,4 +279,92 @@ describe('posts stored as their own entries', () => {
     } as never;
     expect(toBlogPages([page])[0]!.posts[0]!.legacy).toBe(true);
   });
+
+  describe('showcase layouts and image resolution', () => {
+    it('supports grid, magazine, list, and minimal showcase layouts', () => {
+      const grid = buildBlogPageBody('Tech', 'tech_posts', 'grid');
+      const magazine = buildBlogPageBody('Tech', 'tech_posts', 'magazine');
+      const list = buildBlogPageBody('Tech', 'tech_posts', 'list');
+      const minimal = buildBlogPageBody('Tech', 'tech_posts', 'minimal');
+
+      expect(grid.html).toContain('cms-feed-grid');
+      expect(magazine.html).toContain('cms-feed-magazine');
+      expect(list.html).toContain('cms-feed-list');
+      expect(minimal.html).toContain('cms-feed-minimal');
+    });
+
+    it('resolves image URLs in list and reader views, including object images', () => {
+      const body = buildBlogPageBody(
+        'Engineering',
+        'engineering_posts',
+        'grid',
+      );
+      const model = buildSiteModel(
+        [
+          {
+            id: 'p1',
+            slug: '/blog',
+            status: 'published',
+            data: {
+              title: 'Blog',
+              isBlogPage: true,
+              blogTypeId: 'engineering',
+              body,
+              _schemas: [
+                {
+                  slug: 'engineering_posts',
+                  entryType: 'multi',
+                  items: [
+                    {
+                      id: 'post1',
+                      slug: 'my-post',
+                      title: 'My Post',
+                      cover_image_url: 'https://example.com/cover.png',
+                      content: '<p>Hello world</p>',
+                      status: 'published',
+                    },
+                    {
+                      id: 'post2',
+                      slug: 'obj-image-post',
+                      title: 'Obj Post',
+                      image: { url: '/uploads/obj.jpg' },
+                      status: 'published',
+                    },
+                  ],
+                },
+              ],
+            },
+          } as never,
+        ],
+        'live',
+      );
+
+      const page = model.pages[0]!;
+      const hrefs = {
+        post: (i: Record<string, unknown>) => `/blog/${String(i.slug)}`,
+        list: '/blog',
+      };
+      const sources = sourcesForPage(model, page);
+
+      // List view
+      const listRes = renderTemplate(body.html, {
+        page: page.scope,
+        item: null,
+        sources,
+        hrefs,
+      });
+      expect(listRes.html).toContain('https://example.com/cover.png');
+      expect(listRes.html).toContain('/uploads/obj.jpg');
+
+      // Reader view
+      const readerRes = renderTemplate(body.html, {
+        page: page.scope,
+        item: page.posts[0]!,
+        sources,
+        hrefs,
+      });
+      expect(readerRes.html).toContain('https://example.com/cover.png');
+      expect(readerRes.html).toContain('cms-reader-body');
+    });
+  });
 });

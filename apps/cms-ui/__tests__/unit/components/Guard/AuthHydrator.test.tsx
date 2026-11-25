@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthHydrator } from '../../../../src/components/Guard/AuthHydrator';
 import {
   useAuthStore,
-  AuthState,
+  type AuthState,
 } from '../../../../src/features/auth/store/auth.store';
 import { useHydrateAuth } from '../../../../src/features/auth/hooks/useAuthMutations';
 
