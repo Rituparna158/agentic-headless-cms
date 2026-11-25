@@ -311,7 +311,7 @@ export const SitePreviewPage: React.FC = () => {
       <iframe
         ref={frameRef}
         title="Page preview"
-        sandbox="allow-scripts allow-forms"
+        sandbox="allow-scripts allow-forms allow-same-origin"
         srcDoc={srcDoc}
         className="w-full h-full border-0 bg-white block"
       />
@@ -518,7 +518,9 @@ export const SitePreviewPage: React.FC = () => {
       )}
 
       <div className="flex-1 min-h-0 flex">
-        <div className="flex-1 min-w-0 flex justify-center overflow-auto p-0 md:p-4">
+        <div
+          className={`flex-1 min-w-0 flex justify-center overflow-auto ${device === 'desktop' ? 'p-0' : 'p-4'}`}
+        >
           <div
             className={`h-full bg-white flex flex-col ${device === 'desktop' ? 'w-full' : 'rounded-xl border border-border shadow-lg overflow-hidden'}`}
             style={{ width: DEVICE_WIDTH[device], maxWidth: '100%' }}

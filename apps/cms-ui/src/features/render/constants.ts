@@ -48,7 +48,18 @@ export const FIELD_ALIASES: Record<string, string[]> = {
   excerpt: ['excerpt', 'summary', 'description'],
   author: ['author', 'byline', 'writer'],
   date: ['date', 'publish_date', 'published_at', 'publishedAt', 'createdAt'],
-  image: ['image', 'cover_image_url', 'cover_image', 'coverImage', 'thumbnail'],
+  image: [
+    'image',
+    'cover_image_url',
+    'cover_image',
+    'coverImage',
+    'thumbnail',
+    'featured_image',
+    'hero_image',
+    'photo',
+    'picture',
+    'banner',
+  ],
   content: ['content', 'body', 'article_body', 'body_html', 'html'],
 };
 

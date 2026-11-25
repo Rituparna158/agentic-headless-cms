@@ -71,6 +71,13 @@ export const resolveValue = (key: string, raw: unknown): Resolved => {
 
   if (raw !== null && typeof raw === 'object' && !Array.isArray(raw)) {
     const obj = raw as Rec;
+    if (kind === 'image') {
+      const imgCandidate =
+        obj.url || obj.path || obj.src || obj.file || obj.href;
+      if (typeof imgCandidate === 'string' && imgCandidate) {
+        return { kind: 'image', value: getMediaFileUrl(imgCandidate) };
+      }
+    }
     if (typeof obj.html === 'string') return { kind: 'html', value: obj.html };
     if (typeof obj.markdown === 'string') {
       return { kind: 'html', value: marked.parse(obj.markdown) as string };
@@ -80,7 +87,10 @@ export const resolveValue = (key: string, raw: unknown): Resolved => {
 
   if (Array.isArray(raw)) return { kind: 'text', value: raw.join(', ') };
 
-  if (kind === 'image') return { kind, value: getMediaFileUrl(String(raw)) };
+  if (kind === 'image') {
+    const str = String(raw).trim();
+    return { kind, value: str ? getMediaFileUrl(str) : '' };
+  }
   if (kind === 'html') return { kind, value: String(raw) };
 
   const text = String(raw);

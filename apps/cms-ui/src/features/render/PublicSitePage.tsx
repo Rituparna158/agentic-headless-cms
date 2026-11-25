@@ -195,7 +195,7 @@ export function PublicSitePage() {
     <iframe
       ref={frame}
       title={resolved.page.title}
-      sandbox="allow-scripts allow-forms"
+      sandbox="allow-scripts allow-forms allow-same-origin"
       srcDoc={doc}
       className="fixed inset-0 w-full h-full border-0 bg-white"
     />

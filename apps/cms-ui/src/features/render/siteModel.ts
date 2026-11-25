@@ -1,5 +1,7 @@
 import { postsApi } from '@/features/posts/api/posts.api';
 import type { PageEntry } from '@/types/content.types';
+import { readThemeConfig } from '@/features/theme/api/theme.api';
+import { DEFAULT_THEME_CONFIG } from '@/features/theme/constants/theme.constants';
 import {
   GENERAL_STARTER_PAGES,
   ECOMMERCE_STARTER_PAGES,
@@ -58,16 +60,36 @@ export const dataForMode = (entry: PageEntry, mode: RenderMode): Rec | null => {
 const schemasOf = (data: Rec): RawSchema[] =>
   Array.isArray(data._schemas) ? (data._schemas as RawSchema[]) : [];
 
-const toPost = (item: Rec, index: number, pageId: string): Rec => ({
-  ...item,
-  reading_time:
-    typeof item.content === 'string' && item.content
-      ? `${readingTime(item.content)} min read`
-      : undefined,
-  id: (item.id as string) || `${pageId}_item_${index + 1}`,
-  slug: (item.slug as string) || `item-${index + 1}`,
-  _pageId: pageId,
-});
+const toPost = (item: Rec, index: number, pageId: string): Rec => {
+  const rawImg =
+    item.image ??
+    item.cover_image_url ??
+    item.coverImage ??
+    item.cover_image ??
+    item.thumbnail;
+  const imgUrl =
+    typeof rawImg === 'string'
+      ? rawImg
+      : rawImg && typeof rawImg === 'object'
+        ? (rawImg as Rec).url ||
+          (rawImg as Rec).path ||
+          (rawImg as Rec).src ||
+          ''
+        : '';
+  return {
+    ...item,
+    image: imgUrl || (item.image as string) || '',
+    cover_image_url: imgUrl || (item.cover_image_url as string) || '',
+    reading_time:
+      item.reading_time ||
+      (typeof item.content === 'string' && item.content
+        ? `${readingTime(item.content)} min read`
+        : undefined),
+    id: (item.id as string) || `${pageId}_item_${index + 1}`,
+    slug: (item.slug as string) || `item-${index + 1}`,
+    _pageId: pageId,
+  };
+};
 
 const flattenEntry = (entry: PageEntry, data: Rec): Rec => {
   const { _schemas: _s, body, ...rest } = data;
@@ -90,8 +112,12 @@ const isScheduledForLater = (item: Rec, now = Date.now()): boolean => {
 };
 
 /** A blog post stored as its own entry (not inside a page's JSON). */
-export const isPostEntry = (entry: PageEntry): boolean =>
-  (entry.data as Rec | undefined)?.kind === 'post';
+export const isPostEntry = (entry: PageEntry): boolean => {
+  const d = entry.data as Rec | undefined;
+  const p = entry.publishedData as Rec | undefined;
+  const pd = p && isObject(p.data) ? (p.data as Rec) : p;
+  return d?.kind === 'post' || pd?.kind === 'post';
+};
 
 /** Post entries of a blog, newest first, shaped like schema items. */
 const postsFromEntries = (
@@ -103,15 +129,37 @@ const postsFromEntries = (
     if (!isPostEntry(entry)) continue;
     const data = dataForMode(entry, mode);
     if (!data) continue;
-    const blogId = data.blogTypeId as string | undefined;
+    const blogId =
+      (data.blogTypeId as string | undefined) ||
+      ((entry.data as Rec | undefined)?.blogTypeId as string | undefined);
     if (!blogId) continue;
     const { body: _b, ...rest } = data;
     void _b;
+    const rawImg =
+      data.image ??
+      data.cover_image_url ??
+      data.coverImage ??
+      data.cover_image ??
+      data.thumbnail ??
+      (entry.data as Rec | undefined)?.image ??
+      (entry.data as Rec | undefined)?.cover_image_url;
+    const imgUrl =
+      typeof rawImg === 'string'
+        ? rawImg
+        : rawImg && typeof rawImg === 'object'
+          ? (rawImg as Rec).url ||
+            (rawImg as Rec).path ||
+            (rawImg as Rec).src ||
+            ''
+          : '';
+
     (byBlog[blogId] ??= []).push({
       ...rest,
       id: entry.id,
       slug: (data.slug as string) || entry.slug || entry.id,
       title: (data.title as string) || entry.title || 'Untitled',
+      image: imgUrl || (rest.image as string) || '',
+      cover_image_url: imgUrl || (rest.cover_image_url as string) || '',
       status: entry.status === 'published' ? 'published' : 'draft',
       _createdAt: entry.createdAt,
     });
@@ -139,6 +187,7 @@ export function buildSiteModel(
   const comments: Rec[] = [];
   const sections: SiteSection[] = [];
   const redirects: { from: string; to: string }[] = [];
+  let siteTheme = DEFAULT_THEME_CONFIG;
 
   for (const entry of entries) {
     const data = dataForMode(entry, mode);
@@ -186,6 +235,10 @@ export function buildSiteModel(
       const from = String(data.from ?? '').trim();
       const to = String(data.to ?? '').trim();
       if (from && to) redirects.push({ from: normalizeSlug(from), to });
+      continue;
+    }
+    if (data.kind === 'theme') {
+      siteTheme = readThemeConfig(entry);
       continue;
     }
     if (data.kind === 'menus') {
@@ -236,10 +289,16 @@ export function buildSiteModel(
     for (const s of schemasOf(data)) {
       if (s.entryType === 'multi' && Array.isArray(s.items)) {
         const key = s.slug || s.id || '';
+        const strippedKey = key.replace(/_posts$/, '');
         const blogId =
           data.isBlogPage === true ? (data.blogTypeId as string) : '';
-        const stored = blogId ? (postsByBlog[blogId] ?? []) : [];
-        const storedIds = new Set(stored.map((p) => p.id));
+        const stored: Rec[] = blogId
+          ? (postsByBlog[blogId] ??
+            (key ? postsByBlog[key] : undefined) ??
+            (strippedKey ? postsByBlog[strippedKey] : undefined) ??
+            [])
+          : ((key ? postsByBlog[key] : undefined) ?? []);
+        const storedIds = new Set(stored.map((p: Rec) => p.id));
         const items = [
           ...stored,
           ...s.items.filter((it) => !storedIds.has(it.id as string)),
@@ -301,6 +360,7 @@ export function buildSiteModel(
     comments,
     sections,
     redirects,
+    theme: siteTheme,
   };
 }
 
