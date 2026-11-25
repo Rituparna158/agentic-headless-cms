@@ -736,35 +736,31 @@ export class WorkflowsRepository {
           .limit(1);
 
         if (existing) {
-          const updatePayload: Record<string, unknown> = {
-            workflowId: data.workflowId,
-            currentStage: data.currentStage,
-            updatedByUserId: data.updatedByUserId ?? null,
-            updatedAt: new Date(),
-          };
-          if (typeof data.requiresReview === 'boolean') {
-            updatePayload.requiresReview = data.requiresReview;
-          }
           const [updated] = await tx
             .update(contentWorkflowStates)
-            .set(updatePayload as any)
+            .set({
+              workflowId: data.workflowId,
+              currentStage: data.currentStage,
+              updatedByUserId: data.updatedByUserId ?? null,
+              updatedAt: new Date(),
+              ...(typeof data.requiresReview === 'boolean'
+                ? { requiresReview: data.requiresReview }
+                : {}),
+            })
             .where(eq(contentWorkflowStates.id, existing.id))
             .returning();
           return updated!;
         } else {
-          const insertPayload: Record<string, unknown> = {
-            entryId: data.entryId,
-            workflowId: data.workflowId,
-            currentStage: data.currentStage,
-            requiresReview: data.requiresReview ?? true,
-            updatedByUserId: data.updatedByUserId ?? null,
-          };
-          if (resolvedAppId) {
-            insertPayload.applicationId = resolvedAppId;
-          }
           const [inserted] = await tx
             .insert(contentWorkflowStates)
-            .values(insertPayload as any)
+            .values({
+              entryId: data.entryId,
+              workflowId: data.workflowId,
+              currentStage: data.currentStage,
+              requiresReview: data.requiresReview ?? true,
+              updatedByUserId: data.updatedByUserId ?? null,
+              ...(resolvedAppId ? { applicationId: resolvedAppId } : {}),
+            })
             .returning();
           return inserted!;
         }
