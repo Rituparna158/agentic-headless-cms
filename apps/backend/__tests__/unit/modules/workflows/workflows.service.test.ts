@@ -553,6 +553,25 @@ describe('WorkflowsService', () => {
       );
       expect(canPublishDraft).toBe(false);
 
+      // In draft but with requiresReview: false (Direct Publish opted in)
+      mockRepository.getEntryWorkflowState.mockResolvedValueOnce({
+        id: 'st-1-direct',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        requiresReview: false,
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      const canPublishDirect = await workflowsService.canPublish(
+        'entry-1',
+        'schema-1',
+        'app-1',
+      );
+      expect(canPublishDirect).toBe(true);
+
       // In approved (isFinal: true)
       mockRepository.getEntryWorkflowState.mockResolvedValueOnce({
         id: 'st-2',
@@ -570,6 +589,57 @@ describe('WorkflowsService', () => {
         'app-1',
       );
       expect(canPublishApproved).toBe(true);
+    });
+
+    it('should set entry workflow mode and record mode change history', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        requiresReview: false,
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockRepository.setEntryWorkflowMode.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        requiresReview: false,
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      const result = await workflowsService.setEntryWorkflowMode(
+        'entry-1',
+        'schema-1',
+        false,
+        { id: 'user-1' },
+        'app-1',
+      );
+
+      expect(mockRepository.setEntryWorkflowMode).toHaveBeenCalledWith(
+        'entry-1',
+        false,
+        'user-1',
+        'app-1',
+      );
+      expect(result.requiresReview).toBe(false);
+      expect(mockRepository.recordWorkflowHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'Publishing Mode Updated',
+          comment: 'Workflow review mode set to: Direct Publish',
+        }),
+        'app-1',
+      );
     });
 
     it('should retrieve workflow transition history', async () => {

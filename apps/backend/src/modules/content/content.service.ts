@@ -111,6 +111,7 @@ export class ContentService {
     locale: string = DEFAULT_LOCALE,
     applicationId?: string,
     userEmail?: string,
+    options?: { requiresReview?: boolean },
   ) {
     try {
       logger.info({ schemaId, userId }, 'ContentService: createDraft start');
@@ -129,6 +130,7 @@ export class ContentService {
           schemaId,
           userId,
           applicationId,
+          options?.requiresReview ?? true,
         );
       }
       logger.debug(
@@ -161,6 +163,7 @@ export class ContentService {
     userEmail?: string,
     applicationId?: string,
     schemaId?: string,
+    options?: { requiresReview?: boolean },
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: updateDraft start');
@@ -170,7 +173,8 @@ export class ContentService {
       // Perform mutation
       logger.debug({ entryId }, 'ContentService: mutating data');
       const beforeData = beforeState?.data as
-        Record<string, unknown> | undefined;
+        | Record<string, unknown>
+        | undefined;
       const finalData = { ...data };
       if (beforeData?.body && finalData.body === undefined) {
         finalData.body = beforeData.body;
@@ -193,6 +197,20 @@ export class ContentService {
           entryId,
           targetSchemaId,
           { id: userId, email: userEmail },
+          applicationId,
+        );
+      }
+
+      if (
+        targetSchemaId &&
+        typeof options?.requiresReview === 'boolean' &&
+        typeof this.workflowsService?.setEntryWorkflowMode === 'function'
+      ) {
+        await this.workflowsService.setEntryWorkflowMode(
+          entryId,
+          targetSchemaId,
+          options.requiresReview,
+          { id: userId },
           applicationId,
         );
       }

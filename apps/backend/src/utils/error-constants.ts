@@ -72,5 +72,6 @@ export const SERVICE_ERRORS = {
   REMOVE_WORKFLOW_FAILED: 'Failed to remove workflow from schema',
   FETCH_WORKFLOW_STATE_FAILED: 'Failed to fetch workflow state for entry',
   TRANSITION_WORKFLOW_FAILED: 'Failed to transition workflow stage',
+  UPDATE_WORKFLOW_STATE_FAILED: 'Failed to update workflow state for entry',
   FETCH_WORKFLOW_HISTORY_FAILED: 'Failed to fetch workflow history',
 };

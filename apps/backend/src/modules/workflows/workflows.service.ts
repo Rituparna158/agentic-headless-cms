@@ -560,6 +560,7 @@ export class WorkflowsService {
         currentStage,
         availableTransitions,
         isFinal: !!currentStage.isFinal,
+        requiresReview: entryState?.requiresReview ?? true,
         createdBy: actors.creator,
         submittedBy: actors.submitter,
         requiresEditsBeforeResubmit,
@@ -919,6 +920,12 @@ export class WorkflowsService {
         entryId,
         applicationId,
       );
+
+      // If workflow review is not required for this entry, allow direct publishing!
+      if (entryState && entryState.requiresReview === false) {
+        return true;
+      }
+
       const initialStage =
         workflow.stages.find((s) => s.isInitial) || workflow.stages[0];
       const currentStageSlug = entryState?.currentStage || initialStage?.slug;
@@ -941,6 +948,7 @@ export class WorkflowsService {
     schemaId: string,
     userId: string,
     applicationId?: string,
+    requiresReview: boolean = true,
   ): Promise<void> {
     try {
       if (typeof this.repository.getWorkflowBySchemaId !== 'function') return;
@@ -957,6 +965,7 @@ export class WorkflowsService {
               entryId,
               workflowId: workflow.id,
               currentStage: initialStage.slug,
+              requiresReview,
               updatedByUserId: userId,
             },
             applicationId,
@@ -970,7 +979,9 @@ export class WorkflowsService {
               fromStage: initialStage.slug,
               toStage: initialStage.slug,
               action: 'Entry Created',
-              comment: 'Initial workflow state assigned',
+              comment: requiresReview
+                ? 'Initial workflow state assigned (Review Required)'
+                : 'Initial workflow state assigned (Direct Publish opted)',
               actorType: 'user',
               actorUserId: userId,
             },
@@ -983,6 +994,65 @@ export class WorkflowsService {
         { err: error, entryId, schemaId },
         'WorkflowsService: failed to initialize entry workflow state',
       );
+    }
+  }
+
+  async setEntryWorkflowMode(
+    entryId: string,
+    schemaId: string,
+    requiresReview: boolean,
+    user?: { id: string; roles?: string[] },
+    applicationId?: string,
+  ): Promise<EntryWorkflowState> {
+    try {
+      logger.info(
+        { entryId, schemaId, requiresReview },
+        'WorkflowsService: setEntryWorkflowMode',
+      );
+      if (typeof this.repository.setEntryWorkflowMode === 'function') {
+        await this.repository.setEntryWorkflowMode(
+          entryId,
+          requiresReview,
+          user?.id,
+          applicationId,
+        );
+      }
+      if (typeof this.repository.recordWorkflowHistory === 'function') {
+        const entryState = await this.repository.getEntryWorkflowState(
+          entryId,
+          applicationId,
+        );
+        if (entryState) {
+          await this.repository.recordWorkflowHistory(
+            {
+              entryId,
+              workflowId: entryState.workflowId,
+              fromStage: entryState.currentStage,
+              toStage: entryState.currentStage,
+              action: 'Publishing Mode Updated',
+              comment: requiresReview
+                ? 'Workflow review mode set to: Require Review'
+                : 'Workflow review mode set to: Direct Publish',
+              actorType: 'user',
+              actorUserId: user?.id,
+            },
+            applicationId,
+          );
+        }
+      }
+      return await this.getEntryWorkflowState(
+        entryId,
+        schemaId,
+        user,
+        applicationId,
+      );
+    } catch (error) {
+      logger.error(
+        { err: error, entryId, schemaId, requiresReview },
+        'WorkflowsService Error in setEntryWorkflowMode:',
+      );
+      rethrowKnownWorkflowError(error);
+      throw new ApiError(500, SERVICE_ERRORS.UPDATE_WORKFLOW_STATE_FAILED);
     }
   }
 

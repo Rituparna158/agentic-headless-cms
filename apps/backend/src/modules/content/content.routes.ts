@@ -75,6 +75,11 @@ contentRoutes.post(
   requirePermission('update'),
   contentController.transitionEntry,
 );
+contentRoutes.patch(
+  '/:schemaSlug/:entryId/workflow-mode',
+  requirePermission('update'),
+  contentController.updateWorkflowMode,
+);
 contentRoutes.post(
   '/:schemaSlug',
   requireContentAccess('write'),
