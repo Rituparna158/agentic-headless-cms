@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { MediaAssetPickerModal } from '@/features/media/components/MediaAssetPickerModal';
 import { getMediaFileUrl } from '@/features/media/utils/media.util';
-import { SchemaRichTextEditorProps } from '@/types/pageSchemaMedia.types';
+import type { SchemaRichTextEditorProps } from '@/types/pageSchemaMedia.types';
 import { convertHtmlToMarkdown } from '@/utils/covertHtmlToMarkdown';
 import type { SlashState, SlashCommand } from './types/schemaRichText.types';
 import { filterSlashCommands } from './constants/schemaRichText.constants';
