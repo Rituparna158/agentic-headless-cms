@@ -45,7 +45,7 @@ import { MapEmbedSettings } from './page-builder/settings/MapEmbedSettings';
 import { FAQ } from './page-builder/components/FAQ';
 import { FAQSettings } from './page-builder/settings/FAQSettings';
 
-import { CustomBuilderPreviewProps } from '../types/collections.types';
+import { type CustomBuilderPreviewProps } from '../types/collections.types';
 
 export default function CustomBuilderPreview({
   slug,
