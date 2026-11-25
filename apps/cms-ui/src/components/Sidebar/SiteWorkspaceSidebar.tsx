@@ -200,9 +200,7 @@ export const SiteWorkspaceSidebar = () => {
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <FileText size={17} className="shrink-0 text-zinc-400" />
-                    {!isCollapsed && (
-                      <span className="truncate">Posts / Studio</span>
-                    )}
+                    {!isCollapsed && <span className="truncate">Posts</span>}
                   </div>
                   {!isCollapsed && postsCount > 0 && (
                     <span className={sbClasses.counterBadge}>{postsCount}</span>
@@ -224,9 +222,7 @@ export const SiteWorkspaceSidebar = () => {
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Files size={17} className="shrink-0 text-zinc-400" />
-                    {!isCollapsed && (
-                      <span className="truncate">Pages & Sitemap</span>
-                    )}
+                    {!isCollapsed && <span className="truncate">Pages</span>}
                   </div>
                   {!isCollapsed && pagesCount > 0 && (
                     <span className={sbClasses.counterBadge}>{pagesCount}</span>
@@ -317,6 +313,26 @@ export const SiteWorkspaceSidebar = () => {
                     <Layers size={17} className="shrink-0 text-zinc-400" />
                     {!isCollapsed && (
                       <span className="truncate">Shared content</span>
+                    )}
+                  </div>
+                </NavLink>
+              </li>
+            )}
+            {canSettings && (
+              <li>
+                <NavLink
+                  to={`/sites/${siteId}/theme`}
+                  className={({ isActive }) =>
+                    isActive
+                      ? sbClasses.navItemActive
+                      : sbClasses.navItemInactive
+                  }
+                  title="Theme & Appearance Customizer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Palette size={17} className="shrink-0 text-zinc-400" />
+                    {!isCollapsed && (
+                      <span className="truncate">Theme & Styling</span>
                     )}
                   </div>
                 </NavLink>
