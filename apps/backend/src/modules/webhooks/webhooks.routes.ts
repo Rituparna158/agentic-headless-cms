@@ -10,11 +10,17 @@ import {
   replayWebhookDelivery,
   processWebhookRetries,
 } from './webhooks.controller.js';
-import { authenticateToken, requireAdmin } from '@repo/middlewares';
+import {
+  authenticateToken,
+  requireAdmin,
+  validateBody,
+} from '@repo/middlewares';
+import { createWebhookSchema } from './webhooks.schema.js';
+
 export const webhooksRouter = Router();
 webhooksRouter.use(authenticateToken, requireAdmin);
 webhooksRouter.get('/', listWebhooks);
-webhooksRouter.post('/', createWebhook);
+webhooksRouter.post('/', validateBody(createWebhookSchema), createWebhook);
 webhooksRouter.post('/retries/process', processWebhookRetries);
 webhooksRouter.post('/:id/test', testWebhook);
 webhooksRouter.get('/:id/deliveries', listWebhookDeliveries);
