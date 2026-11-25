@@ -9,6 +9,7 @@ import {
   entryLocalizations,
   users,
   contentWorkflowStates,
+  applications,
   createEntryVersion,
   withTransaction,
   RecordNotFoundError,
@@ -47,6 +48,23 @@ export class ContentRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
   }
+  async getApplicationByName(name: string) {
+    try {
+      const [app] = await this.db
+        .select({ id: applications.id, name: applications.name })
+        .from(applications)
+        .where(eq(applications.name, name))
+        .limit(1);
+      return app ?? null;
+    } catch (error) {
+      logger.error(
+        { err: error, name },
+        'ContentRepository: getApplicationByName failed',
+      );
+      throw new ApiError(500, 'Failed to fetch application');
+    }
+  }
+
   async getSchemaBySlug(slug: string, applicationId?: string) {
     try {
       logger.info(

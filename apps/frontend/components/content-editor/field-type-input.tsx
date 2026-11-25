@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import type * as React from 'react';
 import type { FieldTypeInputProps } from '@/types/component.types';
 import {
@@ -10,9 +11,21 @@ import {
   DropdownItem,
   DatePicker,
 } from '@repo/shared-ui';
-import { LexicalRichTextField } from './lexical-rich-text-field';
 import { MediaPickerField } from './media-picker-field';
 import { RelationPickerField } from './relation-picker-field';
+
+const LexicalRichTextField = dynamic(
+  () =>
+    import('./lexical-rich-text-field').then((mod) => mod.LexicalRichTextField),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-44 w-full rounded-md border border-input bg-muted/20 animate-pulse flex items-center justify-center text-xs text-muted-foreground">
+        Loading editor...
+      </div>
+    ),
+  },
+);
 
 /**
  * Renders a specific input control based on the field's dataType.

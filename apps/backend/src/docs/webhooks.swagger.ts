@@ -187,3 +187,90 @@
  *                         type: string
  *                         format: date-time
  */
+
+/**
+ * @swagger
+ * /webhooks/{id}/dlq:
+ *   get:
+ *     summary: List dead-letter queue (exhausted retries) deliveries for a webhook
+ *     tags: [Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "whk_456"
+ *     responses:
+ *       200:
+ *         description: Webhook dead-letter deliveries
+ *       404:
+ *         description: Webhook not found
+ */
+
+/**
+ * @swagger
+ * /webhooks/{id}/deliveries/{deliveryId}/retry:
+ *   post:
+ *     summary: Manually retry a webhook delivery
+ *     tags: [Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: deliveryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Delivery retry initiated
+ *       404:
+ *         description: Delivery not found
+ */
+
+/**
+ * @swagger
+ * /webhooks/{id}/deliveries/{deliveryId}/replay:
+ *   post:
+ *     summary: Replay a dead-letter delivery from the beginning
+ *     tags: [Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: deliveryId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Delivery replay queued
+ *       404:
+ *         description: Delivery not found
+ */
+
+/**
+ * @swagger
+ * /webhooks/retries/process:
+ *   post:
+ *     summary: Trigger an immediate retry processing cycle for all pending webhooks
+ *     tags: [Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Retry processing cycle completed
+ */

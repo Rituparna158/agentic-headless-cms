@@ -16,35 +16,46 @@ import { relations, sql } from 'drizzle-orm';
 import { actorTypeEnum, approvalStatusEnum, auditActionEnum } from './enums.js';
 import { contentEntries, contentVersions } from './content.js';
 import { agents, apiTokens, applications, users } from './identity.js';
-export const approvals = pgTable('approvals', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  entryId: uuid('entry_id')
-    .notNull()
-    .references(() => contentEntries.id, { onDelete: 'cascade' }),
-  proposedVersionId: uuid('proposed_version_id')
-    .notNull()
-    .references(() => contentVersions.id, { onDelete: 'cascade' }),
-  applicationId: uuid('application_id')
-    .notNull()
-    .default(sql`current_setting('app.current_application_id', true)::uuid`)
-    .references(() => applications.id, { onDelete: 'cascade' }),
-  actorType: actorTypeEnum('proposed_by_type').notNull(),
-  proposedByUserId: uuid('proposed_by_user_id').references(() => users.id, {
-    onDelete: 'set null',
+export const approvals = pgTable(
+  'approvals',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    entryId: uuid('entry_id')
+      .notNull()
+      .references(() => contentEntries.id, { onDelete: 'cascade' }),
+    proposedVersionId: uuid('proposed_version_id')
+      .notNull()
+      .references(() => contentVersions.id, { onDelete: 'cascade' }),
+    applicationId: uuid('application_id')
+      .notNull()
+      .default(sql`current_setting('app.current_application_id', true)::uuid`)
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    actorType: actorTypeEnum('proposed_by_type').notNull(),
+    proposedByUserId: uuid('proposed_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    proposedByAgentId: uuid('proposed_by_agent_id').references(
+      () => agents.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
+    status: approvalStatusEnum('status').notNull().default('pending'),
+    reviewedBy: uuid('reviewed_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    reviewNotes: text('review_notes'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    entryIdIdx: index('approvals_entry_id_idx').on(table.entryId),
+    statusIdx: index('approvals_status_idx').on(table.status),
+    reviewedByIdx: index('approvals_reviewed_by_idx').on(table.reviewedBy),
   }),
-  proposedByAgentId: uuid('proposed_by_agent_id').references(() => agents.id, {
-    onDelete: 'set null',
-  }),
-  status: approvalStatusEnum('status').notNull().default('pending'),
-  reviewedBy: uuid('reviewed_by').references(() => users.id, {
-    onDelete: 'set null',
-  }),
-  reviewNotes: text('review_notes'),
-  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+);
 // The differentiator's foundation (FR-AG-6/7): immutable, attributable log of every
 // human or agent write. Enforce immutability at the DB grant level (revoke UPDATE/DELETE
 // on this table for the application role) — this schema alone doesn't guarantee it.

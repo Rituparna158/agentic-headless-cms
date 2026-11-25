@@ -74,40 +74,59 @@ export const users = pgTable('users', {
     .notNull()
     .defaultNow(),
 });
-export const mfaResetRequests = pgTable('mfa_reset_requests', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  sourceApp: varchar('source_app', { length: 255 }),
-  status: mfaResetRequestStatusEnum('status').notNull().default('pending'),
-  adminId: uuid('admin_id').references(() => users.id, {
-    onDelete: 'set null',
+export const mfaResetRequests = pgTable(
+  'mfa_reset_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    sourceApp: varchar('source_app', { length: 255 }),
+    status: mfaResetRequestStatusEnum('status').notNull().default('pending'),
+    adminId: uuid('admin_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    tokenHash: varchar('token_hash', { length: 255 }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index('mfa_reset_requests_user_id_idx').on(table.userId),
+    tokenHashIdx: index('mfa_reset_requests_token_hash_idx').on(
+      table.tokenHash,
+    ),
+    statusIdx: index('mfa_reset_requests_status_idx').on(table.status),
   }),
-  tokenHash: varchar('token_hash', { length: 255 }),
-  expiresAt: timestamp('expires_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-export const passwordResetRequests = pgTable('password_reset_requests', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  tokenHash: varchar('token_hash', { length: 255 }).notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  usedAt: timestamp('used_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+);
+export const passwordResetRequests = pgTable(
+  'password_reset_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: varchar('token_hash', { length: 255 }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index('password_reset_requests_user_id_idx').on(table.userId),
+    tokenHashIdx: index('password_reset_requests_token_hash_idx').on(
+      table.tokenHash,
+    ),
+  }),
+);
 export const userApplications = pgTable(
   'user_applications',
   {

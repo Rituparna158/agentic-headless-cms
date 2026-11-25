@@ -26,11 +26,11 @@ export const authRouter = Router();
 authRouter.post('/login', authRateLimiter, login);
 authRouter.post('/logout', logout);
 authRouter.get('/me', authenticateToken, getCurrentUser);
-authRouter.post('/accept-invite', acceptInvite);
+authRouter.post('/accept-invite', authRateLimiter, acceptInvite);
 authRouter.get('/sso', ssoLogin);
 authRouter.get('/sso/callback', ssoCallback);
 authRouter.post('/mfa/enroll', authenticateToken, enrollMfa);
-authRouter.post('/mfa/verify', authenticateToken, verifyMfa);
+authRouter.post('/mfa/verify', authenticateToken, authRateLimiter, verifyMfa);
 authRouter.post('/mfa/challenge', authRateLimiter, verifyMfaChallenge);
 authRouter.post('/mfa/disable', authenticateToken, disableMfa);
 

@@ -455,8 +455,8 @@ export class AccessRepository {
         }
       }
 
-      let [userApp] = await withTransaction(this.db, async (tx) => {
-        return await tx
+      await withTransaction(this.db, async (tx) => {
+        let [userApp] = await tx
           .select()
           .from(userApplications)
           .where(
@@ -466,10 +466,9 @@ export class AccessRepository {
             ),
           )
           .limit(1);
-      });
-      if (!userApp) {
-        const [newApp] = await withTransaction(this.db, async (tx) => {
-          return await tx
+
+        if (!userApp) {
+          const [newApp] = await tx
             .insert(userApplications)
             .values({
               userId,
@@ -477,18 +476,20 @@ export class AccessRepository {
               status: 'active',
             })
             .returning();
-        });
-        userApp = newApp;
-      }
-      await withTransaction(this.db, async (tx) => {
-        return await tx
+          userApp = newApp;
+        }
+
+        if (!userApp) {
+          throw new ApiError(500, REPO_ERRORS.DB_INSERT_FAILED);
+        }
+
+        await tx
           .delete(userRoles)
-          .where(eq(userRoles.userApplicationId, userApp!.id));
-      });
-      await withTransaction(this.db, async (tx) => {
-        return await tx
+          .where(eq(userRoles.userApplicationId, userApp.id));
+
+        await tx
           .insert(userRoles)
-          .values({ userApplicationId: userApp!.id, roleId });
+          .values({ userApplicationId: userApp.id, roleId });
       });
       logger.debug(
         { userId, roleId },
@@ -679,16 +680,16 @@ export class AccessRepository {
         { userId, roleId },
         'AccessRepository: assigning role to user',
       );
-      const [role] = await withTransaction(this.db, async (tx) => {
-        return await tx
+      await withTransaction(this.db, async (tx) => {
+        const [role] = await tx
           .select()
           .from(roles)
           .where(eq(roles.id, roleId))
           .limit(1);
-      });
-      if (!role) throw new ApiError(400, 'Role not found');
-      let [userApp] = await withTransaction(this.db, async (tx) => {
-        return await tx
+
+        if (!role) throw new ApiError(400, 'Role not found');
+
+        let [userApp] = await tx
           .select()
           .from(userApplications)
           .where(
@@ -698,10 +699,9 @@ export class AccessRepository {
             ),
           )
           .limit(1);
-      });
-      if (!userApp) {
-        const [newApp] = await withTransaction(this.db, async (tx) => {
-          return await tx
+
+        if (!userApp) {
+          const [newApp] = await tx
             .insert(userApplications)
             .values({
               userId,
@@ -709,13 +709,16 @@ export class AccessRepository {
               status: 'active',
             })
             .returning();
-        });
-        userApp = newApp;
-      }
-      await withTransaction(this.db, async (tx) => {
-        return await tx
+          userApp = newApp;
+        }
+
+        if (!userApp) {
+          throw new ApiError(500, REPO_ERRORS.DB_INSERT_FAILED);
+        }
+
+        await tx
           .insert(userRoles)
-          .values({ userApplicationId: userApp!.id, roleId });
+          .values({ userApplicationId: userApp.id, roleId });
       });
       logger.debug('AccessRepository: assignUserRole complete');
     } catch (error) {

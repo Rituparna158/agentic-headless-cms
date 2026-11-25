@@ -72,9 +72,14 @@ export function errorHandlerMiddleware(
     : logger.warn.bind(logger);
   log({ requestId, err, statusCode: httpError.statusCode }, httpError.message);
 
+  const safeMessage =
+    isServerError && env.NODE_ENV === 'production'
+      ? 'An internal server error occurred.'
+      : httpError.message;
+
   const body: ErrorResponseBody = {
     error: {
-      message: httpError.message,
+      message: safeMessage,
       requestId,
       ...(httpError.details !== undefined && !isServerError
         ? { details: httpError.details }
