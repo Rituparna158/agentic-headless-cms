@@ -2,13 +2,13 @@ import { requestHandler } from '@/api/requestHandler';
 import { ENDPOINTS } from '@/api/endpoints';
 import type { PageEntry } from '@/types/content.types';
 import {
-  DynamicSchemaDefinition,
-  ContentCollectionMeta,
-  DynamicContentEntry,
-  CrossSiteSharedTemplate,
-  DynamicFieldDefinition,
-  SchemaLineage,
-  SchemaMetadata,
+  type DynamicSchemaDefinition,
+  type ContentCollectionMeta,
+  type DynamicContentEntry,
+  type CrossSiteSharedTemplate,
+  type DynamicFieldDefinition,
+  type SchemaLineage,
+  type SchemaMetadata,
 } from '../types/posts.types';
 import { FORKABLE_SHARED_TEMPLATES } from '../constants/posts.constants';
 import { DEFAULT_PAGE_FIELDS } from '@/features/collections/constants/collections.constants';
