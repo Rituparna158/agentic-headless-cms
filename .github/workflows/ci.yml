@@ -89,6 +89,10 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit Dependencies for Vulnerabilities
+        run: pnpm audit --prod --audit-level=high
+        continue-on-error: true
+
       - name: Run Linters
         run: pnpm run lint
 
