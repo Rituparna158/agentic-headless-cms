@@ -107,22 +107,23 @@ export const register_dynamic_cms_blocks = (editor: Editor) => {
     `,
     category: 'Dynamic CMS',
     content: `
-      <article class="cms-post-reader" style="max-width: 820px; margin: 0 auto; padding: 48px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <article class="cms-post-reader" style="max-width: 820px; margin: 0 auto; padding: 40px 24px 96px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <a data-cms-action="back-to-list" href="#" class="cms-back-btn" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 24px; font-size: 13px; font-weight: 600; color: #4f46e5; text-decoration: none; padding: 6px 14px; border-radius: 9999px; background: #f1f5f9; transition: all 0.15s ease;">← All posts</a>
         <div style="margin-bottom: 28px;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
             <span data-cms-slot="date" style="font-size: 12px; font-weight: 600; color: #64748b;">{{date}}</span>
             <span style="color: #cbd5e1;">•</span>
             <span style="font-size: 12px; font-weight: 600; color: #6366f1;">By <span data-cms-slot="author">{{author}}</span></span>
           </div>
-          <h1 data-cms-slot="title" style="font-size: 36px; font-weight: 800; color: #0f172a; line-height: 1.25; margin: 0 0 16px;">{{title}}</h1>
-          <p data-cms-slot="excerpt" style="font-size: 18px; color: #64748b; line-height: 1.6; margin: 0;">{{excerpt}}</p>
+          <h1 data-cms-slot="title" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: #0f172a; line-height: 1.2; letter-spacing: -0.025em; margin: 0 0 16px;">{{title}}</h1>
+          <p data-cms-slot="excerpt" class="cms-reader-excerpt" style="font-size: 1.15rem; color: #64748b; line-height: 1.6; margin: 0;">{{excerpt}}</p>
         </div>
         
-        <div style="border-radius: 16px; overflow: hidden; margin-bottom: 36px; max-height: 460px; background: #f1f5f9; box-shadow: 0 4px 12px -2px rgba(0,0,0,0.06);">
+        <div class="cms-reader-image-wrap" style="border-radius: 16px; overflow: hidden; margin-bottom: 36px; max-height: 480px; background: #f1f5f9; box-shadow: 0 4px 12px -2px rgba(0,0,0,0.06);">
           <img data-cms-slot="image" src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800" alt="Cover" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
         </div>
 
-        <div data-cms-slot="body" style="font-size: 17px; line-height: 1.85; color: #334155;">
+        <div data-cms-slot="body" class="cms-reader-body" style="font-size: 17px; line-height: 1.85; color: #334155;">
           {{body}}
         </div>
       </article>
