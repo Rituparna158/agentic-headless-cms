@@ -4,7 +4,7 @@ import {
   FEATURE_GRID_DEFAULTS,
   type FeatureItem,
 } from '../stores/pageBuilderStore';
-import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
+import { type PageBuilderSettingProps } from '@/features/collections/types/collections.types';
 
 export default function FeatureGridSettings({
   targetComponentId,
