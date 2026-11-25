@@ -13,7 +13,7 @@ import {
   type CmsSchemaField,
   type CmsPageSchema,
 } from '../../components/grapesjs-plugins/CustomBlocksPlugin';
-import { GrapesJSEditorProps, GrapesJSEditorHandle } from './types';
+import { type GrapesJSEditorProps, type GrapesJSEditorHandle } from './types';
 import './GrapesJSTheme.css';
 import {
   Undo,
