@@ -8,6 +8,8 @@ import {
   CUSTOM_BLOG_BASE_FIELDS,
   BLOG_FIELD_TYPE_OPTIONS as FIELD_TYPE_OPTIONS,
   LOCKED_BLOG_FIELDS as LOCKED,
+  BLOG_LAYOUT_OPTIONS,
+  type BlogShowcaseLayout,
 } from '../constants/blogTypes';
 import { toApiId } from '@/utils/apiId.util';
 import type { CustomBlogTypeDialogProps } from '../types/blog.types';
@@ -19,6 +21,7 @@ export const CustomBlogTypeDialog: React.FC<CustomBlogTypeDialogProps> = ({
   onCreate,
 }) => {
   const [name, setName] = useState('');
+  const [layout, setLayout] = useState<BlogShowcaseLayout>('grid');
   const [fields, setFields] = useState<DynamicFieldDefinition[]>(
     CUSTOM_BLOG_BASE_FIELDS.map((f) => ({ ...f })),
   );
@@ -109,6 +112,38 @@ export const CustomBlogTypeDialog: React.FC<CustomBlogTypeDialogProps> = ({
                 A blog type with this name already exists.
               </p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1.5">
+              Showcase Layout
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {BLOG_LAYOUT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setLayout(opt.id)}
+                  className={`text-left p-2.5 rounded-xl border transition-all text-xs ${
+                    layout === opt.id
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                      : 'border-border bg-background hover:bg-muted/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-foreground">
+                      {opt.name}
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                      {opt.badge}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">
+                    {opt.description}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -225,6 +260,7 @@ export const CustomBlogTypeDialog: React.FC<CustomBlogTypeDialogProps> = ({
                 name: name.trim(),
                 postLabel: name.trim(),
                 fields: fields.map((f, i) => ({ ...f, sortOrder: i })),
+                layout,
               })
             }
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground disabled:opacity-40"
