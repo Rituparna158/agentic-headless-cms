@@ -28,6 +28,7 @@ import {
 } from '@repo/shared-ui';
 import type { SchemaField } from '@repo/types';
 import {
+  Check,
   ChevronDown,
   Globe,
   History,
@@ -35,11 +36,13 @@ import {
   Loader2,
   MoreVertical,
   Settings2,
+  ShieldCheck,
   Sparkles,
   Trash2,
   Undo2,
   UserCheck,
   Workflow as WorkflowIcon,
+  Zap,
 } from 'lucide-react';
 import {
   translateContentEntry,
@@ -54,10 +57,16 @@ import { DynamicField } from './dynamic-field';
 import { VersionHistoryDrawer } from './version-history-drawer';
 import { WorkflowTransitionModal } from './workflow-transition-modal';
 import { WorkflowHistoryDrawer } from './workflow-history-drawer';
-import { getEntryWorkflowState, transitionEntry } from '@/lib/api/workflows';
+import {
+  getEntryWorkflowState,
+  transitionEntry,
+  updateEntryWorkflowMode,
+} from '@/lib/api/workflows';
 import type { WorkflowTransition } from '@repo/types';
 import type { ContentEntryFormProps } from '@/types/component.types';
 import { useHasPermission } from '@/hooks/use-permissions';
+import { useAuthStore } from '@/stores/auth-store';
+import { cn } from '@/lib/utils';
 
 import { buildDefaultValues } from '@/utils/form';
 
@@ -541,6 +550,22 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
     enabled: !!entry?.id,
   });
 
+  const currentUser = useAuthStore((state) => state.user);
+  const isAuthor = useMemo(() => {
+    if (!entry) return true;
+    if (!workflowState?.createdBy?.id || !currentUser?.id) return false;
+    return workflowState.createdBy.id === currentUser.id;
+  }, [entry, workflowState?.createdBy?.id, currentUser?.id]);
+  const isSubmitter = useMemo(() => {
+    if (!entry) return false;
+    if (!workflowState?.submittedBy?.id || !currentUser?.id) return false;
+    return workflowState.submittedBy.id === currentUser.id;
+  }, [entry, workflowState?.submittedBy?.id, currentUser?.id]);
+  const isAuthorOrSubmitter = isAuthor || isSubmitter;
+  const isLockedForNonAuthor = Boolean(
+    workflowState?.requiresEditsBeforeResubmit && !isAuthorOrSubmitter,
+  );
+
   const transitionMutation = useMutation({
     mutationFn: (variables: { toStage: string; comment?: string }) => {
       if (!entry) throw new Error('Entry not found.');
@@ -549,16 +574,33 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         expectedStage: workflowState?.currentStage?.slug,
       });
     },
-    onSuccess: (newState) => {
+    onSuccess: (newState, variables) => {
+      const isRequestChanges =
+        (variables.toStage === 'draft' ||
+          variables.toStage.toLowerCase().includes('draft')) &&
+        workflowState?.currentStage?.slug !== 'draft';
+
       toast.success(
-        `Stage changed to ${newState.currentStage?.name || newState.currentStage?.slug}`,
+        isRequestChanges
+          ? 'Changes requested successfully.'
+          : `Stage changed to ${newState.currentStage?.name || newState.currentStage?.slug}`,
       );
       refetchWorkflowState();
+      queryClient.invalidateQueries({
+        queryKey: ['entry-workflow-state', schema.slug, entry?.id],
+      });
       queryClient.invalidateQueries({
         queryKey: ['entry-workflow-history', schema.slug, entry?.id],
       });
       setIsTransitionModalOpen(false);
       setPendingTransition(null);
+
+      if (isRequestChanges) {
+        queryClient.invalidateQueries({
+          queryKey: ['content', schema.slug],
+        });
+        router.push(`/content/${schema.slug}`);
+      }
     },
     onError: (error) => {
       if (error instanceof ApiError && error.statusCode === 409) {
@@ -578,6 +620,40 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         error instanceof ApiError
           ? error.message
           : 'Failed to transition stage. Please try again.',
+      );
+    },
+  });
+
+  const workflowModeMutation = useMutation({
+    mutationFn: (requiresReview: boolean) => {
+      if (!entry) throw new Error('Entry not found.');
+      return updateEntryWorkflowMode(schema.slug, entry.id, requiresReview);
+    },
+    onSuccess: (updatedState) => {
+      queryClient.setQueryData(
+        ['entry-workflow-state', schema.slug, entry?.id],
+        updatedState,
+      );
+      toast.dismiss();
+      toast.success(
+        updatedState.requiresReview === false
+          ? 'Direct publish enabled.'
+          : 'Review pipeline enabled.',
+        { duration: 2000 },
+      );
+      refetchWorkflowState();
+      queryClient.invalidateQueries({
+        queryKey: ['entry-workflow-state', schema.slug, entry?.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['entry-workflow-history', schema.slug, entry?.id],
+      });
+    },
+    onError: (err) => {
+      toast.error(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : 'Failed to update workflow review mode.',
       );
     },
   });
@@ -884,16 +960,130 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                     )}
                 </div>
               )}
+
+            {/* Workflow Mode Selector (Require Review vs Direct Publish) */}
+            {entry &&
+              !isViewingHistorical &&
+              workflowState?.hasWorkflow &&
+              (canPublish || canEdit) &&
+              !workflowState.requiresEditsBeforeResubmit &&
+              (Boolean(workflowState.currentStage?.isInitial) ||
+                workflowState.currentStage?.slug === 'draft') && (
+                <Dropdown
+                  align="start"
+                  className="min-w-[14rem] p-1.5"
+                  trigger={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        'h-8 gap-1.5 px-2.5 text-xs font-medium border-border/80 transition-colors',
+                        workflowState.requiresReview === false
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20'
+                          : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20',
+                      )}
+                      aria-label="Workflow Review Mode"
+                      title={
+                        workflowState.requiresReview === false
+                          ? 'Direct Publish: Users with publish permission can publish directly without review.'
+                          : 'Require Review: Entry must be reviewed and approved before publishing.'
+                      }
+                      disabled={workflowModeMutation.isPending || !canEdit}
+                    >
+                      {workflowState.requiresReview === false ? (
+                        <Zap className="size-3 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <ShieldCheck className="size-3 text-amber-600 dark:text-amber-400" />
+                      )}
+                      <span>
+                        {workflowState.requiresReview === false
+                          ? 'Direct Publish'
+                          : 'Require Review'}
+                      </span>
+                      <ChevronDown className="size-3 opacity-60 ml-0.5" />
+                    </Button>
+                  }
+                >
+                  <div className="flex flex-col gap-1 p-1">
+                    <div className="px-2 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Publishing Mode
+                    </div>
+                    <DropdownItem
+                      onSelect={() => {
+                        if (workflowState.requiresReview === false) {
+                          workflowModeMutation.mutate(true);
+                        }
+                      }}
+                      className={cn(
+                        'flex flex-col items-start gap-0.5 p-2 rounded-md cursor-pointer',
+                        workflowState.requiresReview !== false &&
+                          'bg-accent/60 font-medium',
+                      )}
+                    >
+                      <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                        <ShieldCheck className="size-3.5 text-amber-500" />
+                        <span>Require Review</span>
+                        {workflowState.requiresReview !== false && (
+                          <Check className="size-3 text-primary ml-auto" />
+                        )}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground pl-5.5">
+                        Routes entry through editorial review and approval
+                        before publishing.
+                      </span>
+                    </DropdownItem>
+
+                    <DropdownItem
+                      onSelect={() => {
+                        if (!canPublish) {
+                          toast.error(
+                            'Only users with publish permission can enable Direct Publish mode.',
+                          );
+                          return;
+                        }
+                        if (workflowState.requiresReview !== false) {
+                          workflowModeMutation.mutate(false);
+                        }
+                      }}
+                      disabled={!canPublish}
+                      className={cn(
+                        'flex flex-col items-start gap-0.5 p-2 rounded-md',
+                        !canPublish
+                          ? 'opacity-60 cursor-not-allowed'
+                          : 'cursor-pointer',
+                        workflowState.requiresReview === false &&
+                          'bg-accent/60 font-medium',
+                      )}
+                    >
+                      <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                        <Zap className="size-3.5 text-emerald-500" />
+                        <span>Direct Publish</span>
+                        {workflowState.requiresReview === false && (
+                          <Check className="size-3 text-primary ml-auto" />
+                        )}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground pl-5.5">
+                        {canPublish
+                          ? 'Bypasses review pipeline. Authorized publishers can publish directly.'
+                          : 'Requires publish permission. Direct publish is restricted to authorized publishers.'}
+                      </span>
+                    </DropdownItem>
+                  </div>
+                </Dropdown>
+              )}
           </div>
 
           {/* Action Buttons Group */}
           <div className="flex flex-wrap items-center gap-2">
-            {!canEdit ? (
+            {!canEdit || isLockedForNonAuthor ? (
               <Badge
                 variant="outline"
                 className="text-amber-600 bg-amber-500/10 border-amber-500/20 text-xs px-2.5 py-1"
               >
-                Read-Only
+                {isLockedForNonAuthor
+                  ? 'Awaiting Author Revisions'
+                  : 'Read-Only'}
               </Badge>
             ) : showSaveDraft ? (
               <Button
@@ -915,6 +1105,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
             {entry &&
               !isViewingHistorical &&
               workflowState?.hasWorkflow &&
+              workflowState.requiresReview !== false &&
               workflowState.isSelfReviewer &&
               (workflowState.currentStage?.slug.includes('review') ||
                 workflowState.currentStage?.name
@@ -940,20 +1131,25 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
             {entry &&
               !isViewingHistorical &&
               workflowState?.hasWorkflow &&
+              workflowState.requiresReview !== false &&
+              !isLockedForNonAuthor &&
               workflowState.availableTransitions?.map((trans) => {
                 const isReviewTransition =
                   trans.name.toLowerCase().includes('submit') ||
                   trans.toStage.toLowerCase().includes('review');
                 const isBlockedByRequestedChanges =
                   isReviewTransition &&
-                  Boolean(workflowState.requiresEditsBeforeResubmit);
+                  Boolean(workflowState.requiresEditsBeforeResubmit) &&
+                  !workflowState.rejectionComment
+                    ?.toLowerCase()
+                    .includes('mode');
                 const isBlockedByDirtyForm =
                   isReviewTransition && form.formState.isDirty;
                 const isBlocked =
                   isBlockedByRequestedChanges || isBlockedByDirtyForm;
 
                 const buttonTooltip = isBlockedByRequestedChanges
-                  ? `Changes were requested${workflowState.rejectionComment ? `: "${workflowState.rejectionComment}"` : ''}. Please edit and save the draft before re-submitting for review.`
+                  ? 'Changes were requested. Please edit and save the draft before re-submitting for review.'
                   : isBlockedByDirtyForm
                     ? 'Please save your draft changes before submitting for review.'
                     : undefined;
@@ -993,11 +1189,16 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
             ) : entry ? (
               <span
                 title={
-                  workflowState?.hasWorkflow && !workflowState.isFinal
+                  workflowState?.hasWorkflow &&
+                  workflowState.requiresReview !== false &&
+                  !workflowState.isFinal
                     ? `Workflow requires entry to reach the final publish stage (currently: "${workflowState?.currentStage?.name || workflowState?.currentStage?.slug}").`
                     : !canPublish
                       ? 'You do not have permission to publish.'
-                      : ''
+                      : workflowState?.hasWorkflow &&
+                          workflowState.requiresReview === false
+                        ? 'Direct publish is enabled. Click to publish entry directly.'
+                        : ''
                 }
               >
                 <Button
@@ -1007,7 +1208,9 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                   disabled={
                     isViewingHistorical ||
                     !canPublish ||
-                    (workflowState?.hasWorkflow && !workflowState.isFinal) ||
+                    (workflowState?.hasWorkflow &&
+                      workflowState.requiresReview !== false &&
+                      !workflowState.isFinal) ||
                     publishMutation.isPending ||
                     isLocalizedLoading
                   }
@@ -1089,17 +1292,43 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
         ) : null}
 
         {/* Changes Requested Banner */}
-        {entry && workflowState?.requiresEditsBeforeResubmit && (
-          <div className="flex items-start gap-2.5 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs">
-            <span className="font-semibold shrink-0">Changes requested:</span>
-            <span>
-              {workflowState.rejectionComment ||
-                'Reviewer requested changes on this entry.'}{' '}
-              Edit the fields and click <strong>Save Draft</strong> to re-enable
-              review submission.
-            </span>
-          </div>
-        )}
+        {entry &&
+          workflowState?.requiresEditsBeforeResubmit &&
+          !workflowState.rejectionComment?.toLowerCase().includes('mode') && (
+            <div className="flex items-start justify-between gap-3 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs">
+              <div className="flex items-start gap-2.5">
+                <span className="font-semibold shrink-0">
+                  {isAuthorOrSubmitter
+                    ? 'Changes requested:'
+                    : 'Awaiting Revisions:'}
+                </span>
+                <span>
+                  {isAuthorOrSubmitter ? (
+                    <>
+                      Edit the fields and click <strong>Save Draft</strong> to
+                      re-enable review submission.
+                    </>
+                  ) : (
+                    <>
+                      This entry has requested changes and is locked until the
+                      author submits revisions.
+                    </>
+                  )}
+                </span>
+              </div>
+              {!isAuthorOrSubmitter && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs border-amber-500/40 text-amber-900 dark:text-amber-200 hover:bg-amber-500/20 shrink-0"
+                  onClick={() => router.push(`/content/${schema.slug}`)}
+                >
+                  Back to Entries
+                </Button>
+              )}
+            </div>
+          )}
 
         {/* Historical Preview Notice */}
         {isViewingHistorical && (
@@ -1122,7 +1351,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
 
         {/* Dynamic Fields taking full width */}
         <fieldset
-          disabled={isViewingHistorical}
+          disabled={isViewingHistorical || isLockedForNonAuthor}
           className="grid gap-5 w-full border-none p-0 m-0 disabled:opacity-85"
         >
           {isLocalizedLoading ? (
@@ -1140,7 +1369,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 key={field.apiId}
                 field={field}
                 control={form.control}
-                disabled={isViewingHistorical}
+                disabled={isViewingHistorical || isLockedForNonAuthor}
               />
             ))
           )}

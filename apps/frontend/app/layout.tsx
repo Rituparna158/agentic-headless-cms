@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </Suspense>
           {children}
         </QueryProvider>
-        <Toaster />
+        <Toaster duration={3000} richColors />
       </body>
     </html>
   );

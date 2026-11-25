@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ContentEntryForm } from '@/components/content-editor/content-entry-form';
 import { ApiError } from '@/lib/api-client';
+import { useAuthStore } from '@/stores/auth-store';
 
 const {
   mockPush,
@@ -24,6 +25,8 @@ const {
   mockGetEntryWorkflowState,
   mockTransitionEntry,
   mockGetWorkflowHistory,
+  mockUpdateEntryWorkflowMode,
+  mockUseHasPermission,
 } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockRefresh: vi.fn(),
@@ -40,6 +43,10 @@ const {
   mockGetEntryWorkflowState: vi.fn(),
   mockTransitionEntry: vi.fn(),
   mockGetWorkflowHistory: vi.fn(),
+  mockUpdateEntryWorkflowMode: vi.fn(),
+  mockUseHasPermission: vi.fn(
+    (_action: string, _schemaId?: string | null) => true,
+  ),
 }));
 
 vi.mock('sonner', () => ({
@@ -50,7 +57,7 @@ vi.mock('sonner', () => ({
 }));
 
 vi.mock('@/hooks/use-permissions', () => ({
-  useHasPermission: vi.fn(() => true),
+  useHasPermission: mockUseHasPermission,
 }));
 
 vi.mock('next/navigation', () => ({
@@ -83,6 +90,7 @@ vi.mock('@/lib/api/workflows', () => ({
   getEntryWorkflowState: mockGetEntryWorkflowState,
   transitionEntry: mockTransitionEntry,
   getWorkflowHistory: mockGetWorkflowHistory,
+  updateEntryWorkflowMode: mockUpdateEntryWorkflowMode,
 }));
 
 const definition: SchemaDefinition = {
@@ -146,6 +154,7 @@ describe('ContentEntryForm', () => {
       isFinal: true,
     });
     mockGetWorkflowHistory.mockResolvedValue([]);
+    mockUseHasPermission.mockReturnValue(true);
   });
 
   it('renders one control per schema field and a "Not saved" status for a new entry', () => {
@@ -789,5 +798,259 @@ describe('ContentEntryForm', () => {
     });
 
     expect(await screen.findByText('Awaiting Peer Review')).toBeInTheDocument();
+  });
+
+  it('enables direct publishing when entry is in Direct Publish mode (requiresReview: false)', async () => {
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial Workflow' },
+      currentStage: {
+        id: 's-1',
+        name: 'Draft Stage',
+        slug: 'draft',
+        order: 0,
+        isInitial: true,
+        isFinal: false,
+      },
+      availableTransitions: [],
+      isFinal: false,
+      requiresReview: false,
+    });
+
+    renderForm({
+      id: 'entry-direct-pub',
+      status: 'draft',
+      data: { title: 'Direct Publish Article' },
+      publishedData: null,
+    });
+
+    // The Workflow mode selector shows Direct Publish
+    expect(await screen.findByText('Direct Publish')).toBeInTheDocument();
+
+    // The Publish button should be enabled for direct publishing
+    const publishBtn = screen.getByRole('button', { name: /^publish$/i });
+    expect(publishBtn).not.toBeDisabled();
+  });
+
+  it('allows creator to switch workflow mode from Require Review to Direct Publish', async () => {
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial Workflow' },
+      currentStage: {
+        id: 's-1',
+        name: 'Draft Stage',
+        slug: 'draft',
+        order: 0,
+        isInitial: true,
+        isFinal: false,
+      },
+      availableTransitions: [],
+      isFinal: false,
+      requiresReview: true,
+    });
+
+    mockUpdateEntryWorkflowMode.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial Workflow' },
+      currentStage: {
+        id: 's-1',
+        name: 'Draft Stage',
+        slug: 'draft',
+        order: 0,
+        isInitial: true,
+        isFinal: false,
+      },
+      availableTransitions: [],
+      isFinal: false,
+      requiresReview: false,
+    });
+
+    const user = userEvent.setup();
+    renderForm({
+      id: 'entry-mode-switch',
+      status: 'draft',
+      data: { title: 'Mode Switch Article' },
+      publishedData: null,
+    });
+
+    // Workflow mode button displays Require Review
+    const modeBtn = await screen.findByRole('button', {
+      name: /Workflow Review Mode/i,
+    });
+    expect(modeBtn).toBeInTheDocument();
+    expect(modeBtn).toHaveTextContent('Require Review');
+
+    // Click to open dropdown and select Direct Publish
+    await user.click(modeBtn);
+    const directPublishOption = await screen.findByText(
+      'Bypasses review pipeline. Authorized publishers can publish directly.',
+    );
+    await user.click(directPublishOption);
+
+    expect(mockUpdateEntryWorkflowMode).toHaveBeenCalledWith(
+      'article',
+      'entry-mode-switch',
+      false,
+    );
+  });
+
+  it('displays workflow review mode dropdown for author role without publish permission', async () => {
+    mockUseHasPermission.mockImplementation(
+      (action: string) => action !== 'publish',
+    );
+
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial Workflow' },
+      currentStage: {
+        id: 's-1',
+        name: 'Draft Stage',
+        slug: 'draft',
+        order: 0,
+        isInitial: true,
+        isFinal: false,
+      },
+      availableTransitions: [
+        {
+          id: 'trans-1',
+          name: 'Submit for Review',
+          fromStage: 'draft',
+          toStage: 'in_review',
+        },
+      ],
+      isFinal: false,
+      requiresReview: true,
+    });
+
+    renderForm({
+      id: 'entry-author-test',
+      status: 'draft',
+      data: { title: 'Author Article' },
+      publishedData: null,
+    });
+
+    // Workflow Review Mode dropdown button is visible for author
+    const modeBtn = await screen.findByRole('button', {
+      name: /Workflow Review Mode/i,
+    });
+    expect(modeBtn).toBeInTheDocument();
+    expect(modeBtn).toHaveTextContent('Require Review');
+
+    // Submit for Review is visible
+    expect(
+      await screen.findByRole('button', { name: /Submit for Review/i }),
+    ).toBeInTheDocument();
+
+    // Publish button is disabled because author cannot publish
+    const publishBtn = screen.getByRole('button', { name: /^publish$/i });
+    expect(publishBtn).toBeDisabled();
+
+    // Click mode dropdown and verify Direct Publish is restricted
+    const user = userEvent.setup();
+    await user.click(modeBtn);
+    const restrictedNotice = await screen.findByText(
+      /Requires publish permission/i,
+    );
+    expect(restrictedNotice).toBeInTheDocument();
+  });
+
+  it('renders Changes Requested banner for author when changes are requested', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'author-user-id',
+        email: 'author@test.com',
+        firstName: 'Author',
+        lastName: 'User',
+        roles: ['editor'],
+        permissions: [],
+        mfaEnabled: false,
+      },
+    });
+
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial Workflow' },
+      currentStage: {
+        id: 's-1',
+        name: 'Draft Stage',
+        slug: 'draft',
+        order: 0,
+        isInitial: true,
+        isFinal: false,
+      },
+      availableTransitions: [],
+      isFinal: false,
+      requiresReview: true,
+      requiresEditsBeforeResubmit: true,
+      rejectionComment: 'Please fix the typo in paragraph 2.',
+      createdBy: { id: 'author-user-id', email: 'author@test.com' },
+      submittedBy: { id: 'author-user-id', email: 'author@test.com' },
+    });
+
+    renderForm({
+      id: 'entry-changes-requested',
+      status: 'draft',
+      data: { title: 'Needs Revisions' },
+      publishedData: null,
+    });
+
+    expect(await screen.findByText('Changes requested:')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Please fix the typo in paragraph 2\./i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Edit the fields and click/i)).toBeInTheDocument();
+  });
+
+  it('does NOT render Changes Requested banner for reviewer who is not author/submitter', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'admin-reviewer-id',
+        email: 'admin@test.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        roles: ['admin'],
+        permissions: [],
+        mfaEnabled: false,
+      },
+    });
+
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial Workflow' },
+      currentStage: {
+        id: 's-1',
+        name: 'Draft Stage',
+        slug: 'draft',
+        order: 0,
+        isInitial: true,
+        isFinal: false,
+      },
+      availableTransitions: [],
+      isFinal: false,
+      requiresReview: true,
+      requiresEditsBeforeResubmit: true,
+      rejectionComment: 'Please fix the typo in paragraph 2.',
+      createdBy: { id: 'author-user-id', email: 'author@test.com' },
+      submittedBy: { id: 'author-user-id', email: 'author@test.com' },
+    });
+
+    renderForm({
+      id: 'entry-changes-requested-reviewer',
+      status: 'draft',
+      data: { title: 'Needs Revisions' },
+      publishedData: null,
+    });
+
+    // Wait for form to load
+    await screen.findByDisplayValue('Needs Revisions');
+
+    expect(await screen.findByText('Awaiting Revisions:')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /This entry has requested changes and is locked until the author submits revisions/i,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Awaiting Author Revisions')).toBeInTheDocument();
+    expect(screen.queryByText('Changes requested:')).not.toBeInTheDocument();
   });
 });

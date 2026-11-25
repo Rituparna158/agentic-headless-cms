@@ -40,8 +40,6 @@ export const primaryNavItems: NavItem[] = [
     label: 'Approvals',
     href: '/approvals',
     icon: SquareCheck,
-    disabled: true,
-    disabledBadge: 'Soon',
   },
   {
     label: 'Agents',
