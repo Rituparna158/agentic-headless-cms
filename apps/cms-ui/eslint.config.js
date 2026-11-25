@@ -167,8 +167,8 @@ export default [
                 },
               ],
             },
-            // Content-domain features (pages, posts, blog, menus) are consumed
-            // by site-level features (inbox, settings, developer, render, ...)
+            // Content-domain and presentation features (pages, posts, blog, menus, theme, render)
+            // are consumed by site-level features (inbox, settings, developer, render, ...)
             {
               from: { element: { type: 'feature' } },
               allow: [
@@ -177,6 +177,8 @@ export default [
                 'blog',
                 'menus',
                 'site-content',
+                'theme',
+                'render',
               ].map((featureName) => ({
                 to: {
                   element: { type: 'feature', captured: { featureName } },
