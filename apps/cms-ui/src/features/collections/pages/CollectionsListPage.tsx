@@ -17,11 +17,11 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useAuthStore } from '../../auth/store/auth.store';
 import { normalizeCollaborator } from '../utils/collaborator.util';
 import {
-  ViewMode,
-  DeleteMode,
-  CollectionToDelete,
-  CollectionToEdit,
-  CollectionsTableState,
+  type ViewMode,
+  type DeleteMode,
+  type CollectionToDelete,
+  type CollectionToEdit,
+  type CollectionsTableState,
 } from '../types/collections.types';
 import {
   COLLECTIONS_VIEW_MODE_STORAGE_KEY,
