@@ -162,6 +162,13 @@
       "when": 1795400000000,
       "tag": "0022_webhook_retries_and_dlq",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795500000000,
+      "tag": "0023_optional_workflow_review",
+      "breakpoints": true
     }
   ]
 }
