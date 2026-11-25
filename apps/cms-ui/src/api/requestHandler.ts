@@ -1,8 +1,8 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { type AxiosResponse } from 'axios';
 import { z } from 'zod';
 import { apiClient } from './client';
-import { ApiResponse } from '../types/api';
-import { RequestConfig } from '../types/requestHandler.types';
+import type { ApiResponse } from '../types/api';
+import type { RequestConfig } from '../types/requestHandler.types';
 
 // Represents an API response contract violation error.
 export class ApiContractError extends Error {
@@ -31,10 +31,12 @@ export function validateResponse<T>(
 ): T {
   const result = schema.safeParse(data);
   if (!result.success) {
-    console.warn(
-      `[API Contract Error] Validation failed${endpointLabel ? ` for [${endpointLabel}]` : ''}:`,
-      result.error.issues,
-    );
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[API Contract Error] Validation failed${endpointLabel ? ` for [${endpointLabel}]` : ''}:`,
+        result.error.issues,
+      );
+    }
     throw new ApiContractError(result.error.issues, endpointLabel);
   }
   return result.data;
