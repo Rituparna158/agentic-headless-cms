@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 import {
-  DynamicComponentNode,
-  TemplateValidationError,
+  type DynamicComponentNode,
+  type TemplateValidationError,
 } from '../types/template.types';
 import {
   FORBIDDEN_HTML_TAGS as FORBIDDEN_TAGS,
