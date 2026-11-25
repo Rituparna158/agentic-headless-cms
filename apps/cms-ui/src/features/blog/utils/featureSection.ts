@@ -13,8 +13,8 @@ export const buildFeaturedPostsSection = (opts: {
     <h2 style="font-size: 28px; font-weight: 800; color: #1c1917; margin: 0 0 28px; text-align: center;">${escapeAttr(opts.title)}</h2>
     <div data-cms-repeat="true" data-cms-schema="${escapeAttr(opts.schemaSlug)}" data-cms-limit="${opts.limit}" class="cms-dynamic-feed" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px;">
       <article class="cms-post-card" style="background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e7e5e4; display: flex; flex-direction: column; cursor: pointer;">
-        <div style="height: 190px; overflow: hidden; background: #f5f5f4;">
-          <img data-cms-slot="image" src="" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+        <div class="cms-post-image-wrap" style="position: relative; width: 100%; height: 200px; overflow: hidden; background: linear-gradient(135deg, #e0e7ff 0%, #f5f5f4 100%);">
+          <img data-cms-slot="image" src="" alt="" class="cms-post-image" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
         </div>
         <div style="padding: 22px; flex: 1; display: flex; flex-direction: column;">
           <div style="display: flex; gap: 8px; margin-bottom: 8px; font-size: 12px; font-weight: 600;">
