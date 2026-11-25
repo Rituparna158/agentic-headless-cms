@@ -13,7 +13,7 @@ import {
 import {
   usePageBuilderStore,
   useShallow,
-  ButtonItem,
+  type ButtonItem,
   BUTTON_GROUP_DEFAULTS,
 } from '../stores/pageBuilderStore';
 

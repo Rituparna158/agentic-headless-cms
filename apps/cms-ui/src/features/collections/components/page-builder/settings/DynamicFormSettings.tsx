@@ -2,7 +2,7 @@
 import { activateOnKey } from '@/utils/a11y.util';
 import { useState } from 'react';
 import { usePageBuilderStore, useShallow } from '../stores/pageBuilderStore';
-import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
+import { type PageBuilderSettingProps } from '@/features/collections/types/collections.types';
 import { DEFAULT_DYNAMIC_FORM_STATE } from '@/features/collections/constants/page-builder-settings.constants';
 import type { DynamicFormField } from '@/features/collections/types/page-builder.types';
 
