@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, FileText } from 'lucide-react';
 import { collectionsApi } from '../api/collections.api';
-import { CreatePageDialogProps } from '../types/collections.types';
+import { type CreatePageDialogProps } from '../types/collections.types';
 import { slugify } from '../utils/slugify.util';
 
 export function CreatePageDialog({
