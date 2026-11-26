@@ -5,12 +5,16 @@ declare module 'axios' {
   export interface AxiosRequestConfig {
     __retryCount?: number;
     __idempotencyKey?: string;
+    __is401Retry?: boolean;
+    __skip401Interceptor?: boolean;
+    timeout?: number;
   }
 }
 
 export const apiClient = axios.create({
   baseURL: env.VITE_API_URL,
   withCredentials: true, // Secure cookie handling
+  timeout: 30000, // 30s default timeout
   headers: {
     'Content-Type': 'application/json',
     'X-App-Id': env.VITE_APP_ID,
@@ -56,7 +60,43 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-// Response Interceptor: Exponential backoff for transient network and gateway drops
+// Single-flight in-memory promise fallback for non-WebLock environments
+let inFlightRefreshPromise: Promise<unknown> | null = null;
+
+/**
+ * Executes a single-flight session refresh.
+ * Uses navigator.locks for cross-tab coordination when available,
+ * falling back to an in-memory single-flight promise.
+ */
+async function performSingleFlightRefresh(): Promise<unknown> {
+  const refreshWorker = async () => {
+    // Ping auth verification endpoint with credentials
+    return apiClient.get('/auth/me', {
+      __skip401Interceptor: true,
+      __is401Retry: true,
+    });
+  };
+
+  if (
+    typeof navigator !== 'undefined' &&
+    'locks' in navigator &&
+    typeof navigator.locks?.request === 'function'
+  ) {
+    return navigator.locks.request('auth-refresh', async () => {
+      return refreshWorker();
+    });
+  }
+
+  // Fallback to in-flight promise
+  if (!inFlightRefreshPromise) {
+    inFlightRefreshPromise = refreshWorker().finally(() => {
+      inFlightRefreshPromise = null;
+    });
+  }
+  return inFlightRefreshPromise;
+}
+
+// Response Interceptor: 401 Single-Flight Refresh + Exponential backoff
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -72,6 +112,28 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // 1. Single-Flight 401 Session Refresh Lock
+    if (error.response?.status === 401 && !config.__skip401Interceptor) {
+      const url = config.url || '';
+      const isAuthUrl =
+        url.includes('/auth/login') ||
+        url.includes('/auth/logout') ||
+        url.includes('/auth/mfa/challenge');
+
+      if (!config.__is401Retry && !isAuthUrl) {
+        config.__is401Retry = true;
+        try {
+          await performSingleFlightRefresh();
+          // Replay original request with refreshed session credentials
+          return apiClient(config);
+        } catch (refreshErr) {
+          // Token refresh failed; reject to trigger auth eject
+          return Promise.reject(refreshErr);
+        }
+      }
+    }
+
+    // 2. Exponential backoff for transient network and gateway drops
     const retryCount = config.__retryCount || 0;
     const isNetworkError = !error.response && error.code !== 'ERR_CANCELED';
     const isRetryableStatus =

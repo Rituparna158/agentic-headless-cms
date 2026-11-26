@@ -31,10 +31,12 @@ export function validateResponse<T>(
 ): T {
   const result = schema.safeParse(data);
   if (!result.success) {
-    console.warn(
-      `[API Contract Error] Validation failed${endpointLabel ? ` for [${endpointLabel}]` : ''}:`,
-      result.error.issues,
-    );
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[API Contract Error] Validation failed${endpointLabel ? ` for [${endpointLabel}]` : ''}:`,
+        result.error.issues,
+      );
+    }
     throw new ApiContractError(result.error.issues, endpointLabel);
   }
   return result.data;
