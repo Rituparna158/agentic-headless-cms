@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { browserLogger } from '@repo/logger/browser';
 import { accessApi } from '../api/access.api';
-import {
+import type {
   Role,
   RoleWithPermissions,
   ApplicationType,
