@@ -652,6 +652,46 @@ export class WorkflowsService {
           userRolesNormalized.includes(reqRole.toLowerCase().trim()),
         );
         if (!hasRequiredRole) {
+          try {
+            if (typeof this.repository.recordWorkflowHistory === 'function') {
+              await this.repository.recordWorkflowHistory(
+                {
+                  entryId,
+                  workflowId: workflow.id,
+                  fromStage: currentStageSlug,
+                  toStage: input.toStage,
+                  action: 'Transition Denied (Unauthorized Role)',
+                  comment:
+                    input.comment ||
+                    'Attempted workflow transition without required role permissions',
+                  actorType: 'user',
+                  actorUserId: user.id,
+                },
+                applicationId,
+              );
+            }
+            const { actorAgentId, context } = getAuditContext();
+            eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+              action: AUDIT_ACTIONS.UPDATE,
+              resourceType: 'workflow_transition',
+              resourceId: entryId,
+              actorUserId: user.id,
+              actorAgentId,
+              beforeState: { stage: currentStageSlug },
+              afterState: {
+                attemptedStage: input.toStage,
+                status: 'denied',
+                reason: 'Unauthorized role',
+              },
+              context,
+            });
+          } catch (logErr) {
+            logger.warn(
+              { err: logErr },
+              'Failed to record unauthorized workflow transition',
+            );
+          }
+
           throw new ForbiddenError(
             ERROR_MESSAGES.WORKFLOWS.UNAUTHORIZED_TRANSITION,
           );
@@ -721,19 +761,57 @@ export class WorkflowsService {
           targetStage.slug === initialStage.slug);
 
       if (isSelfReviewer) {
-        if (isApprovalTransition) {
-          throw new ForbiddenError(
-            isSubmitter
+        if (isApprovalTransition || isReviewAction) {
+          const deniedAction = isApprovalTransition
+            ? 'Approval Denied (Self-Approval)'
+            : 'Review Denied (Self-Review)';
+          const deniedReason = isApprovalTransition
+            ? isSubmitter
               ? 'You cannot approve your own submission; another editor must review it'
-              : 'You cannot approve your own entry; another editor must review it',
-          );
-        }
-        if (isReviewAction) {
-          throw new ForbiddenError(
-            isSubmitter
+              : 'You cannot approve your own entry; another editor must review it'
+            : isSubmitter
               ? 'You cannot review or request changes on your own submission; another editor must review it'
-              : 'You cannot review or request changes on your own entry; another editor must review it',
-          );
+              : 'You cannot review or request changes on your own entry; another editor must review it';
+
+          try {
+            if (typeof this.repository.recordWorkflowHistory === 'function') {
+              await this.repository.recordWorkflowHistory(
+                {
+                  entryId,
+                  workflowId: workflow.id,
+                  fromStage: currentStageSlug,
+                  toStage: input.toStage,
+                  action: deniedAction,
+                  comment: deniedReason,
+                  actorType: 'user',
+                  actorUserId: user.id,
+                },
+                applicationId,
+              );
+            }
+            const { actorAgentId, context } = getAuditContext();
+            eventBus.emit(EVENT_NAMES.AUDIT_LOG, {
+              action: AUDIT_ACTIONS.UPDATE,
+              resourceType: 'workflow_transition',
+              resourceId: entryId,
+              actorUserId: user.id,
+              actorAgentId,
+              beforeState: { stage: currentStageSlug },
+              afterState: {
+                attemptedStage: input.toStage,
+                status: 'denied',
+                reason: deniedAction,
+              },
+              context,
+            });
+          } catch (logErr) {
+            logger.warn(
+              { err: logErr },
+              'Failed to record self-approval denial history',
+            );
+          }
+
+          throw new ForbiddenError(deniedReason);
         }
       }
 
@@ -760,6 +838,7 @@ export class WorkflowsService {
           workflowId: workflow.id,
           currentStage: input.toStage,
           updatedByUserId: user.id,
+          expectedStage: currentStageSlug,
         },
         applicationId,
       );
