@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { collectionsApi } from '../../api/collections.api';
 import {
-  VersionHistoryDrawerProps,
-  ContentVersionRecord,
+  type VersionHistoryDrawerProps,
+  type ContentVersionRecord,
 } from '../../types/template.types';
 import { useToast } from '@repo/shared-ui';
 import { browserLogger } from '@repo/logger/browser';
