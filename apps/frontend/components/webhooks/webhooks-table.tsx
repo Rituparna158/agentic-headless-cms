@@ -284,6 +284,7 @@ export function WebhooksTable() {
                         size="sm"
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                         title="Actions"
+                        aria-label="Open menu"
                       >
                         <span className="sr-only">Open menu</span>
                         <MoreVertical className="h-4 w-4" />
