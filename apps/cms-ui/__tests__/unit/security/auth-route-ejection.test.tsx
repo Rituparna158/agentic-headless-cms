@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthGuard } from '@/components/Guard/AuthGuard';
 import { RoleGuard } from '@/components/Guard/RoleGuard';
 import { AdminOrSupportGuard } from '@/components/Guard/AdminOrSupportGuard';
-import { useAuthStore, AuthState } from '@/features/auth/store/auth.store';
+import { useAuthStore, type AuthState } from '@/features/auth/store/auth.store';
 
 vi.mock('@/features/auth/store/auth.store', () => ({
   useAuthStore: vi.fn(),
