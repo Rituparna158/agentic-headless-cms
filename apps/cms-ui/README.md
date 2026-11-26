@@ -272,4 +272,5 @@ All lazy-loaded routes (Page Editor, Collections, Audit Logs, Settings) are budg
   - [ADR-0001: Visual Page Builder Engine (GrapesJS)](../../docs/adr/0001-grapesjs-visual-builder-engine.md)
   - [ADR-0002: Dual-Builder Architecture (Schema + Canvas)](../../docs/adr/0002-dual-builder-architecture.md)
   - [ADR-0003: Client-Side State & Contract Envelopes](../../docs/adr/0003-client-state-and-contract-envelopes.md)
+  - [ADR-0004: Resilient Observability, Accessible Primitives & Hardening](../../docs/adr/0004-resilient-observability-accessible-primitives-and-hardening.md)
 - **Shared UI Component Catalog**: See [docs/components.md](../../docs/components.md).

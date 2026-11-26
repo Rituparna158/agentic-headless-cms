@@ -30,19 +30,7 @@ export default mergeConfig(
         coverage: {
           provider: 'v8',
           reporter: ['text', 'json', 'html'],
-          // Unit-tested layers: every non-UI module (APIs, stores, hooks,
-          // utils, storage, constants, editor plugins) plus the guards and
-          // simple pages. Page/component UI is covered by Playwright e2e.
-          include: [
-            'src/**/*.ts',
-            'src/components/Guard/**',
-            'src/components/ui/**',
-            'src/components/modals/**',
-            'src/pages/GeneralError/**',
-            'src/pages/NotFound/**',
-            'src/pages/RequestAccess/**',
-            'src/pages/MfaResetComplete/**',
-          ],
+          include: ['src/**/*.ts', 'src/components/**', 'src/pages/**'],
           exclude: [
             '**/node_modules/**',
             '**/dist/**',
@@ -54,21 +42,10 @@ export default mergeConfig(
             'src/types/**',
             'src/**/index.ts',
             'src/vite-env.d.ts',
-            // UI (tsx) is exercised by component tests + Playwright e2e, so
-            // it is outside the unit-coverage gate except the dirs included above.
             'src/*.tsx',
-            'src/components/*.tsx',
-            'src/components/Layout/**',
             'src/components/PageSideDrawer/**/*.tsx',
             'src/components/Sidebar/**/*.tsx',
             'src/features/**/*.tsx',
-            'src/pages/AcceptInvite/**',
-            'src/pages/AccessDenied/**',
-            'src/pages/Dashboard/**',
-            'src/pages/ForgotPassword/**',
-            'src/pages/Login/**',
-            'src/pages/ResetPassword/**',
-            'src/pages/Security/**/*.tsx',
             'src/features/collections/utils/slugify.util.ts',
             'src/components/Guard/types.ts',
             '**/*.test.{ts,tsx}',

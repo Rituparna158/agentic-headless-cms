@@ -54,7 +54,7 @@ export function createApp(): Express {
   app.use(
     cors({
       origin: (origin, callback) => {
-        if (!origin || env.CORS_ORIGIN === '*') {
+        if (!origin || origin === 'null' || env.CORS_ORIGIN === '*') {
           return callback(null, true);
         }
         const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());

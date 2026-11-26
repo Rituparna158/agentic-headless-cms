@@ -6,11 +6,12 @@ This directory documents the significant architectural and technical decisions m
 
 ## ADR Index
 
-| ADR ID                                                  | Title                                                         | Status       | Date       | Area                          |
-| :------------------------------------------------------ | :------------------------------------------------------------ | :----------- | :--------- | :---------------------------- |
-| [ADR-0001](0001-grapesjs-visual-builder-engine.md)      | Selection of GrapesJS as the Visual Page Builder Engine       | **Accepted** | 2026-08-15 | Visual Studio / Canvas        |
-| [ADR-0002](0002-dual-builder-architecture.md)           | Dual-Builder Architecture: Structured Schemas & Visual Canvas | **Accepted** | 2026-09-02 | Content Modeling & Storage    |
-| [ADR-0003](0003-client-state-and-contract-envelopes.md) | Client-Side State Architecture & Runtime Contract Validation  | **Accepted** | 2026-09-20 | Networking & State Management |
+| ADR ID                                                                          | Title                                                         | Status       | Date       | Area                          |
+| :------------------------------------------------------------------------------ | :------------------------------------------------------------ | :----------- | :--------- | :---------------------------- |
+| [ADR-0001](0001-grapesjs-visual-builder-engine.md)                              | Selection of GrapesJS as the Visual Page Builder Engine       | **Accepted** | 2026-08-15 | Visual Studio / Canvas        |
+| [ADR-0002](0002-dual-builder-architecture.md)                                   | Dual-Builder Architecture: Structured Schemas & Visual Canvas | **Accepted** | 2026-09-02 | Content Modeling & Storage    |
+| [ADR-0003](0003-client-state-and-contract-envelopes.md)                         | Client-Side State Architecture & Runtime Contract Validation  | **Accepted** | 2026-09-20 | Networking & State Management |
+| [ADR-0004](0004-resilient-observability-accessible-primitives-and-hardening.md) | Resilient Observability, Accessible Primitives & Hardening    | **Accepted** | 2026-11-25 | Core Architecture & DevOps    |
 
 ---
 

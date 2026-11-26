@@ -2,19 +2,19 @@ FROM node:24-alpine AS base
 RUN apk add --no-cache libc6-compat
 RUN corepack enable
 
-# ---- Prune ----
+# Prune 
 FROM base AS pruner
 WORKDIR /app
 COPY . .
 RUN npx turbo prune cms-ui --docker
 
-# ---- Install ----
+# Install
 FROM base AS installer
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 
-# ---- Build ----
+# Build 
 FROM base AS builder
 WORKDIR /app
 COPY --from=installer /app/ .
@@ -25,7 +25,7 @@ ENV VITE_API_URL=${VITE_API_URL:-/api/v1}
 ENV VITE_APP_ID=${VITE_APP_ID:-CMS_UI}
 RUN pnpm turbo run build --filter=cms-ui...
 
-# ---- Runtime ----
+# Runtime
 # Static nginx (non-root, uid 101) with hardened security headers and compression.
 FROM nginxinc/nginx-unprivileged:1.27-alpine AS runner
 
