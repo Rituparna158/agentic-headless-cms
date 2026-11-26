@@ -13,7 +13,7 @@ import { browserLogger } from '@repo/logger/browser';
 
 import {
   collectionsApi,
-  PageBodyData,
+  type PageBodyData,
 } from '@/features/collections/api/collections.api';
 import type {
   PageEntry,
@@ -22,15 +22,15 @@ import type {
   PageCustomSchema,
 } from '@/types/content.types';
 import { PageSideDrawer } from '@/components/PageSideDrawer';
-import { GrapesJSData, GrapesJSEditorHandle } from './types';
+import { type GrapesJSData, type GrapesJSEditorHandle } from './types';
 import type { PageBuilderDesign } from '@mindfiredigital/page-builder-react';
 import { TemplateImportModal } from '../../components/template/TemplateImportModal';
 import { ExistingContentDialog } from '../../components/template/ExistingContentDialog';
 import { VersionHistoryDrawer } from '../../components/template/VersionHistoryDrawer';
 import {
-  TemplateValidationResult,
-  ImportActionChoice,
-  ContentVersionRecord,
+  type TemplateValidationResult,
+  type ImportActionChoice,
+  type ContentVersionRecord,
 } from '../../types/template.types';
 import { PageEditorHeader } from './components/PageEditorHeader';
 import { DraftRecoveryBanner } from './components/DraftRecoveryBanner';
