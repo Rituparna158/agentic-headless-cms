@@ -1,8 +1,8 @@
 import {
-  DynamicFieldDataType,
-  DynamicSchemaDefinition,
-  CrossSiteSharedTemplate,
-  FieldTypeCategoryGroup,
+  type DynamicFieldDataType,
+  type DynamicSchemaDefinition,
+  type CrossSiteSharedTemplate,
+  type FieldTypeCategoryGroup,
 } from '../types/posts.types';
 
 export const FIELD_DATA_TYPES_META: Array<{
