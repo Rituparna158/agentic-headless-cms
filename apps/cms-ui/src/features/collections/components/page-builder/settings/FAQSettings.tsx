@@ -11,7 +11,7 @@ import {
 import {
   usePageBuilderStore,
   useShallow,
-  FAQItem,
+  type FAQItem,
   FAQ_DEFAULTS,
 } from '../stores/pageBuilderStore';
 

@@ -12,7 +12,7 @@ import {
 import {
   usePageBuilderStore,
   useShallow,
-  ReviewItem,
+  type ReviewItem,
   TESTIMONIAL_DEFAULTS,
 } from '../stores/pageBuilderStore';
 

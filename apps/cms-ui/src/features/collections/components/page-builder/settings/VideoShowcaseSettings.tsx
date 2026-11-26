@@ -10,7 +10,7 @@ import {
 import {
   usePageBuilderStore,
   useShallow,
-  VideoItem,
+  type VideoItem,
   VIDEO_SHOWCASE_DEFAULTS,
 } from '../stores/pageBuilderStore';
 

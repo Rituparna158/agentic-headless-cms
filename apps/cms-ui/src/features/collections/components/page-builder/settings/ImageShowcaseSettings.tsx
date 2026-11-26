@@ -11,7 +11,7 @@ import {
 import {
   usePageBuilderStore,
   useShallow,
-  ImageItem,
+  type ImageItem,
   IMAGE_SHOWCASE_DEFAULTS,
 } from '../stores/pageBuilderStore';
 
