@@ -6,7 +6,7 @@ import {
   keepPreviousData,
 } from '@tanstack/react-query';
 import { accessApi } from '../api/access.api';
-import { User, Role } from '../types/access.types';
+import type { User, Role } from '../types/access.types';
 import { Button, Typography, DataTable } from '@repo/shared-ui';
 import { Plus, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
 import { InviteUserDialog } from '../components/InviteUserDialog';
