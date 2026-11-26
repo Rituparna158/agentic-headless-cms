@@ -1,5 +1,5 @@
 import { usePageBuilderStore, useShallow } from '../stores/pageBuilderStore';
-import { PageBuilderSettingProps } from '@/features/collections/types/collections.types';
+import { type PageBuilderSettingProps } from '@/features/collections/types/collections.types';
 import { DEFAULT_SEARCH_BAR_STATE } from '@/features/collections/constants/page-builder-settings.constants';
 
 export default function SearchBarSettings({
