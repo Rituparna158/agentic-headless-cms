@@ -22,7 +22,8 @@ test('admin can register and delete a webhook', async ({ page }) => {
   await expect(row.getByText('content.published')).toBeVisible();
   await expect(row.getByText('Active', { exact: true })).toBeVisible();
 
-  await row.getByRole('button', { name: 'Delete Webhook' }).click();
+  await row.getByRole('button', { name: 'Actions' }).click();
+  await page.getByText('Delete', { exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Delete webhook?' }),
   ).toBeVisible();
