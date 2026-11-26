@@ -22,6 +22,7 @@ import {
   secondaryNavItems,
 } from '@/components/layout/nav-items';
 import { listSchemas } from '@/lib/api/schemas';
+import { getPendingReviews } from '@/lib/api/workflows';
 import {
   Avatar,
   Badge,
@@ -125,9 +126,61 @@ export function SidebarNav({
 
   const activeTypeSlug = searchParams?.get('type');
 
+  const canReview = useMemo(() => {
+    if (!user) return false;
+    if (isAdmin) return true;
+    const normalizedRoles = (user.roles || []).map((r) =>
+      r.toLowerCase().trim(),
+    );
+    if (
+      normalizedRoles.includes('editor') ||
+      normalizedRoles.includes('admin') ||
+      normalizedRoles.includes('super_admin')
+    ) {
+      return true;
+    }
+    return (
+      user.permissions?.some((p) =>
+        ['*', 'publish', 'publish_content', 'review'].includes(p.action),
+      ) ?? false
+    );
+  }, [user, isAdmin]);
+
+  // Live count of pending reviews across content types (only for reviewers)
+  const { data: pendingReviewsData } = useQuery({
+    queryKey: ['workflows', 'pending-reviews'],
+    queryFn: () => getPendingReviews(50),
+    enabled: canReview,
+    refetchInterval: 30000,
+    staleTime: 10000,
+  });
+
+  const pendingApprovalsCount = useMemo(() => {
+    const items = pendingReviewsData?.items ?? [];
+    if (!user) return 0;
+    const actionable = items.filter((item) => {
+      const isSelf =
+        (!!user.email &&
+          !!item.authorEmail &&
+          user.email.toLowerCase() === item.authorEmail.toLowerCase()) ||
+        (!!user.id && !!item.creatorUserId && user.id === item.creatorUserId) ||
+        (!!user.id &&
+          !!item.submitterUserId &&
+          user.id === item.submitterUserId);
+      return !isSelf;
+    });
+    return actionable.length;
+  }, [pendingReviewsData, user]);
+
   function renderItem(item: (typeof primaryNavItems)[number]) {
     const isActive = pathname === item.href;
     const Icon = item.icon;
+    const badgeCount =
+      item.href === '/approvals'
+        ? pendingApprovalsCount > 0
+          ? pendingApprovalsCount
+          : undefined
+        : item.badge;
 
     if (item.disabled) {
       return (
@@ -350,14 +403,22 @@ export function SidebarNav({
             isCollapsed && 'gap-0 justify-center',
           )}
         >
-          <Icon
-            className={cn(
-              'size-5 shrink-0 transition-colors',
-              isActive
-                ? 'text-zinc-100'
-                : 'text-zinc-400 group-hover:text-zinc-100',
-            )}
-          />
+          <div className="relative shrink-0 flex items-center justify-center">
+            <Icon
+              className={cn(
+                'size-5 transition-colors',
+                isActive
+                  ? 'text-zinc-100'
+                  : 'text-zinc-400 group-hover:text-zinc-100',
+              )}
+            />
+            {isCollapsed && Boolean(badgeCount) ? (
+              <span
+                data-testid="approvals-badge-collapsed"
+                className="absolute -top-1 -right-1 size-2 rounded-full bg-amber-500 ring-2 ring-zinc-950"
+              />
+            ) : null}
+          </div>
           <span
             className={cn(
               'truncate transition-all duration-300 ease-in-out',
@@ -369,18 +430,36 @@ export function SidebarNav({
             {item.label}
           </span>
         </div>
-        {!isCollapsed && item.badge ? (
+        {!isCollapsed && Boolean(badgeCount) ? (
           <Badge
             variant="outline"
             size="sm"
-            className="border-zinc-700 bg-zinc-800 text-zinc-300 text-xs px-1.5 py-0 shrink-0"
+            data-testid="approvals-badge"
+            className={cn(
+              'text-[11px] min-w-[20px] px-1.5 py-0.5 rounded-full tabular-nums shrink-0 font-semibold',
+              item.href === '/approvals'
+                ? 'border-amber-500/40 bg-amber-500/15 text-amber-500 dark:text-amber-400'
+                : 'border-zinc-700 bg-zinc-800 text-zinc-300',
+            )}
           >
-            {item.badge}
+            {badgeCount}
           </Badge>
         ) : null}
       </Link>
     );
   }
+
+  const visiblePrimaryNavItems = useMemo(() => {
+    return primaryNavItems.filter((item) => {
+      if (item.href === '/approvals') {
+        if (status === 'loading' || status === 'idle') {
+          return true;
+        }
+        return canReview;
+      }
+      return true;
+    });
+  }, [canReview, status]);
 
   const visibleSecondaryNavItems = useMemo(() => {
     return secondaryNavItems.filter((item) => {
@@ -406,7 +485,7 @@ export function SidebarNav({
           isCollapsed ? 'p-2' : 'p-3',
         )}
       >
-        {primaryNavItems.map(renderItem)}
+        {visiblePrimaryNavItems.map(renderItem)}
         <div
           className={cn('bg-zinc-800 my-2 h-px', isCollapsed ? 'mx-2' : '')}
         />
@@ -416,7 +495,7 @@ export function SidebarNav({
       {/* Pinned User Profile Footer */}
       <div
         className={cn(
-          'border-t border-zinc-800 shrink-0 w-full overflow-hidden transition-all duration-300 ease-in-out',
+          'border-t border-zinc-800 shrink-0 w-full transition-all duration-300 ease-in-out',
           isCollapsed ? 'p-2' : 'p-3',
         )}
       >
@@ -432,8 +511,8 @@ export function SidebarNav({
               className={cn(
                 'flex items-center rounded-md transition-colors cursor-pointer text-left group focus:outline-none focus:ring-2 focus:ring-zinc-600',
                 isCollapsed
-                  ? 'justify-center p-1.5 w-10 mx-auto'
-                  : 'w-full justify-between gap-2.5 px-3 py-2',
+                  ? 'justify-center size-10 p-0 mx-auto'
+                  : 'w-full justify-between gap-2.5 px-2.5 py-2',
                 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100',
                 'data-[state=open]:bg-zinc-800 data-[state=open]:text-zinc-100 font-medium',
               )}
@@ -442,19 +521,20 @@ export function SidebarNav({
             >
               <div
                 className={cn(
-                  'flex items-center gap-2.5 min-w-0 overflow-hidden',
-                  isCollapsed && 'gap-0 justify-center',
+                  'flex items-center gap-2.5 min-w-0',
+                  isCollapsed ? 'justify-center' : 'flex-1',
                 )}
               >
-                <div className="relative shrink-0">
+                <div className="relative shrink-0 flex items-center justify-center">
                   <Avatar
+                    size={isCollapsed ? 'sm' : 'xs'}
                     className={cn(
                       'ring-1 ring-zinc-700 bg-zinc-800 text-zinc-200 text-xs font-semibold shrink-0',
                       isCollapsed ? 'size-8' : 'size-7',
                     )}
                     letters={initialsFor(displayName, user?.email)}
                   />
-                  <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
+                  <span className="absolute bottom-0 right-0 size-2 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
                 </div>
                 {!isCollapsed && (
                   <div className="flex flex-col min-w-0 overflow-hidden">
@@ -468,7 +548,7 @@ export function SidebarNav({
                 )}
               </div>
               {!isCollapsed && (
-                <ChevronsUpDown className="size-4 text-zinc-500 group-hover:text-zinc-300 group-data-[state=open]:text-zinc-200 shrink-0 transition-colors" />
+                <ChevronsUpDown className="size-4 text-zinc-500 group-hover:text-zinc-300 group-data-[state=open]:text-zinc-200 shrink-0 transition-colors ml-auto" />
               )}
             </button>
           }

@@ -44,6 +44,10 @@ export const API_PATHS = {
     BY_ID: (id: string) => `/api/v1/webhooks/${id}`,
     TEST: (id: string) => `/api/v1/webhooks/${id}/test`,
     DELIVERIES: (id: string) => `/api/v1/webhooks/${id}/deliveries`,
+    RETRY_DELIVERY: (id: string, deliveryId: string) =>
+      `/api/v1/webhooks/${id}/deliveries/${deliveryId}/retry`,
+    REPLAY_DELIVERY: (id: string, deliveryId: string) =>
+      `/api/v1/webhooks/${id}/deliveries/${deliveryId}/replay`,
   },
   LOCALES: {
     BASE: '/api/v1/locales',
@@ -65,6 +69,8 @@ export const API_PATHS = {
       `/api/v1/content/${schemaSlug}/${entryId}/versions`,
     WORKFLOW_STATE: (schemaSlug: string, entryId: string) =>
       `/api/v1/content/${schemaSlug}/${entryId}/workflow-state`,
+    WORKFLOW_MODE: (schemaSlug: string, entryId: string) =>
+      `/api/v1/content/${schemaSlug}/${entryId}/workflow-mode`,
     TRANSITION: (schemaSlug: string, entryId: string) =>
       `/api/v1/content/${schemaSlug}/${entryId}/transition`,
     WORKFLOW_HISTORY: (schemaSlug: string, entryId: string) =>

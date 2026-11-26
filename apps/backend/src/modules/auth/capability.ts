@@ -196,3 +196,12 @@ export const canSeeSchema = (
 ): boolean =>
   hasCapability(permissions, ANY_CAPABILITY, schemaId) ||
   hasPermission(permissions as never, 'read', schemaId);
+
+export const canUserPublish = async (req: Request): Promise<boolean> => {
+  if (!req.user) return false;
+  const perms = await permissionsFor(req);
+  return (
+    hasCapability(perms, 'publish_content', req.schemaId) ||
+    hasPermission(perms as never, 'publish', req.schemaId)
+  );
+};

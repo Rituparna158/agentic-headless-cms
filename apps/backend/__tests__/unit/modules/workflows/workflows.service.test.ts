@@ -553,6 +553,25 @@ describe('WorkflowsService', () => {
       );
       expect(canPublishDraft).toBe(false);
 
+      // In draft but with requiresReview: false (Direct Publish opted in)
+      mockRepository.getEntryWorkflowState.mockResolvedValueOnce({
+        id: 'st-1-direct',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        requiresReview: false,
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      const canPublishDirect = await workflowsService.canPublish(
+        'entry-1',
+        'schema-1',
+        'app-1',
+      );
+      expect(canPublishDirect).toBe(true);
+
       // In approved (isFinal: true)
       mockRepository.getEntryWorkflowState.mockResolvedValueOnce({
         id: 'st-2',
@@ -570,6 +589,57 @@ describe('WorkflowsService', () => {
         'app-1',
       );
       expect(canPublishApproved).toBe(true);
+    });
+
+    it('should set entry workflow mode and record mode change history', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        requiresReview: false,
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockRepository.setEntryWorkflowMode.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'draft',
+        requiresReview: false,
+        applicationId: 'app-1',
+        updatedByUserId: 'user-1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      const result = await workflowsService.setEntryWorkflowMode(
+        'entry-1',
+        'schema-1',
+        false,
+        { id: 'user-1' },
+        'app-1',
+      );
+
+      expect(mockRepository.setEntryWorkflowMode).toHaveBeenCalledWith(
+        'entry-1',
+        false,
+        'user-1',
+        'app-1',
+      );
+      expect(result.requiresReview).toBe(false);
+      expect(mockRepository.recordWorkflowHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'Publishing Mode Updated',
+          comment: 'Workflow review mode set to: Direct Publish',
+        }),
+        'app-1',
+      );
     });
 
     it('should retrieve workflow transition history', async () => {
@@ -724,6 +794,84 @@ describe('WorkflowsService', () => {
           entryId: 'entry-1',
           currentStage: 'approved',
           updatedByUserId: 'user-editor',
+        }),
+        'app-1',
+      );
+    });
+
+    it('should prevent original creator from approving an entry even if submitted by another editor (strict four-eyes principle)', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'in-review',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-editor',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockRepository.getEntryCreatorUserId.mockResolvedValue('user-admin');
+
+      // 1. In getEntryWorkflowState, creator should have no approval transitions and isSelfReviewer=true
+      const state = await workflowsService.getEntryWorkflowState(
+        'entry-1',
+        'schema-1',
+        { id: 'user-admin', roles: ['admin'] },
+        'app-1',
+      );
+      expect(state.isSelfReviewer).toBe(true);
+      expect(state.availableTransitions).toEqual([]);
+
+      // 2. In transitionEntry, creator attempting to approve must be blocked
+      await expect(
+        workflowsService.transitionEntry(
+          'entry-1',
+          'schema-1',
+          { toStage: 'approved' },
+          { id: 'user-admin', roles: ['admin'] },
+          'app-1',
+        ),
+      ).rejects.toThrow(
+        'You cannot approve your own entry; another editor must review it',
+      );
+    });
+
+    it('should allow an independent third party (neither creator nor submitter) to approve', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'in-review',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-editor',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockRepository.getEntryCreatorUserId.mockResolvedValue('user-admin');
+      mockRepository.upsertEntryWorkflowState.mockResolvedValue({} as any);
+      mockRepository.recordWorkflowHistory.mockResolvedValue({} as any);
+
+      // 'user-reviewer' is neither the creator ('user-admin') nor the submitter ('user-editor')
+      const result = await workflowsService.transitionEntry(
+        'entry-1',
+        'schema-1',
+        { toStage: 'approved' },
+        { id: 'user-reviewer', roles: ['editor'] },
+        'app-1',
+      );
+
+      expect(result).toBeDefined();
+      expect(mockRepository.upsertEntryWorkflowState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entryId: 'entry-1',
+          currentStage: 'approved',
+          updatedByUserId: 'user-reviewer',
         }),
         'app-1',
       );

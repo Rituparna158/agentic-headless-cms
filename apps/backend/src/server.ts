@@ -5,6 +5,7 @@ import { env } from '@repo/config';
 import { logger } from '@repo/logger';
 import { getDatabaseAdapter } from '@repo/config';
 import { assertMinimumRedisVersion, closeRedisConnection } from '@repo/config';
+import { webhookDispatcher } from './modules/webhooks/webhook-dispatcher.service.js';
 
 const app = createApp();
 
@@ -23,6 +24,9 @@ try {
 
 const server = app.listen(env.PORT, () => {
   logger.info(`Server listening on port ${env.PORT} (${env.NODE_ENV})`);
+  webhookDispatcher.startRetryProcessor(
+    env.NODE_ENV === 'production' ? 30000 : 5000,
+  );
 });
 
 let shuttingDown = false;
@@ -33,6 +37,7 @@ function shutdown(signal: string): void {
   shuttingDown = true;
 
   logger.info(`Received ${signal}, shutting down gracefully...`);
+  webhookDispatcher.stopRetryProcessor();
 
   server.close((closeServerError) => {
     if (closeServerError) {

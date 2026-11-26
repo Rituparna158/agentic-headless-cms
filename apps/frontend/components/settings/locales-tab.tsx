@@ -229,7 +229,11 @@ export function LocalesTab() {
           page={page}
           pageCount={localesData?.meta?.pagination?.pageCount ?? 1}
           pageSize={pageSize}
-          onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+          rowsPerPageOptions={[5, 10, 20, 25, 50]}
+          onPageSizeChange={(newSize: number) => {
+            setPageSize(newSize);
+            setPage(1);
+          }}
           onPageChange={(newPage: number) => setPage(newPage)}
         />
         {locales.length === 0 && (

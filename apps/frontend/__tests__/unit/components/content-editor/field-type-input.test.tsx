@@ -91,7 +91,7 @@ describe('FieldTypeInput', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('renders the Lexical rich text editor for dataType "richtext"', () => {
+  it('renders the Lexical rich text editor for dataType "richtext"', async () => {
     const onChange = vi.fn();
     render(
       <FieldTypeInput
@@ -100,8 +100,10 @@ describe('FieldTypeInput', () => {
         onChange={onChange}
       />,
     );
-    expect(screen.getByText('Body')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+    expect(await screen.findByText('Body')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Bold' }),
+    ).toBeInTheDocument();
   });
 
   it('renders the relation picker for dataType "relation"', () => {

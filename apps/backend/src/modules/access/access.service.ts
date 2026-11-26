@@ -363,8 +363,9 @@ export class AccessService {
         });
         logger.debug({ email }, 'AccessService: invite email sent');
       } else {
-        console.log(
-          `\n=========================================\n[Dev Mode] Invitation Link for ${email}:\n${inviteUrl}\n=========================================\n`,
+        logger.info(
+          { email, inviteUrl },
+          'AccessService: Development mode invitation link generated',
         );
       }
       logger.debug(

@@ -1,8 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
-import { eq } from 'drizzle-orm';
-import { getDatabaseAdapter } from '@repo/config';
-import { applications } from '@repo/shared-db';
 import { ContentRepository } from '@repo/repository';
 import type { SchemaDefinition } from '@repo/types';
 import { DEFAULT_LOCALE } from '@repo/constants';
@@ -136,12 +133,7 @@ deliveryRoutes.get(
     try {
       const appName = String(req.params.appName);
       const slug = String(req.params.schemaSlug);
-      const db = getDatabaseAdapter().getDb();
-      const [app] = await db
-        .select({ id: applications.id })
-        .from(applications)
-        .where(eq(applications.name, appName))
-        .limit(1);
+      const app = await repository.getApplicationByName(appName);
       if (!app) return notFound(res);
 
       const schema = await repository.getSchemaBySlug(slug, app.id);
@@ -197,12 +189,9 @@ deliveryRoutes.post(
   submitHour,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const [app] = await getDatabaseAdapter()
-        .getDb()
-        .select({ id: applications.id })
-        .from(applications)
-        .where(eq(applications.name, String(req.params.appName)))
-        .limit(1);
+      const app = await repository.getApplicationByName(
+        String(req.params.appName),
+      );
       if (!app) return notFound(res);
       const schema = await repository.getSchemaBySlug(
         String(req.params.schemaSlug),

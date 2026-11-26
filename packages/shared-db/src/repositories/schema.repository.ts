@@ -52,6 +52,7 @@ export interface UpdateSchemaInput {
 export type SchemaRecord = typeof schemas.$inferSelect & {
   entryCount?: number;
   lastUpdatedBy?: string | null;
+  createdBy?: string | null;
 };
 
 async function insertFields(
@@ -183,6 +184,14 @@ export async function listSchemas(
           FROM content_entries ce 
           WHERE ce.schema_id = schemas.id AND ce.deleted_at IS NULL
         )::integer`,
+        createdBy: sql<string | null>`(
+          SELECT COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.email, 'Admin')
+          FROM schema_versions sv
+          LEFT JOIN users u ON u.id = sv.created_by_user_id
+          WHERE sv.schema_id = schemas.id
+          ORDER BY sv.version ASC
+          LIMIT 1
+        )`,
         lastUpdatedBy: sql<string>`(
           SELECT COALESCE(u.first_name || ' ' || u.last_name, u.email)
           FROM schema_versions sv

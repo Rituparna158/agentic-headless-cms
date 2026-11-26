@@ -9,6 +9,7 @@ import {
   entryLocalizations,
   users,
   contentWorkflowStates,
+  applications,
   createEntryVersion,
   withTransaction,
   RecordNotFoundError,
@@ -47,6 +48,23 @@ export class ContentRepository {
   private get db() {
     return getDatabaseAdapter().getDb();
   }
+  async getApplicationByName(name: string) {
+    try {
+      const [app] = await this.db
+        .select({ id: applications.id, name: applications.name })
+        .from(applications)
+        .where(eq(applications.name, name))
+        .limit(1);
+      return app ?? null;
+    } catch (error) {
+      logger.error(
+        { err: error, name },
+        'ContentRepository: getApplicationByName failed',
+      );
+      throw new ApiError(500, 'Failed to fetch application');
+    }
+  }
+
   async getSchemaBySlug(slug: string, applicationId?: string) {
     try {
       logger.info(
@@ -113,6 +131,13 @@ export class ContentRepository {
           publishedData: entryLocalizations.publishedData,
           createdAt: contentEntries.createdAt,
           updatedAt: contentEntries.updatedAt,
+          createdByUserId: contentEntries.createdByUserId,
+          createdBy: sql<
+            string | null
+          >`COALESCE(NULLIF(TRIM(CONCAT(${users.firstName}, ' ', ${users.lastName})), ''), ${users.email}, 'Admin')`.as(
+            'createdBy',
+          ),
+          createdByEmail: users.email,
           updatedBy: sql<
             string | null
           >`COALESCE(${contentEntries.updatedBy}, ${users.email}, 'Admin')`.as(
@@ -246,6 +271,13 @@ export class ContentRepository {
             publishedAt: entryLocalizations.publishedAt,
             createdAt: contentEntries.createdAt,
             updatedAt: contentEntries.updatedAt,
+            createdByUserId: contentEntries.createdByUserId,
+            createdBy: sql<
+              string | null
+            >`COALESCE(NULLIF(TRIM(CONCAT(${users.firstName}, ' ', ${users.lastName})), ''), ${users.email}, 'Admin')`.as(
+              'createdBy',
+            ),
+            createdByEmail: users.email,
             updatedBy: sql<
               string | null
             >`COALESCE(${contentEntries.updatedBy}, ${users.email}, 'Admin')`.as(

@@ -110,4 +110,54 @@ export class WebhooksService {
       throw new ApiError(500, SERVICE_ERRORS.LIST_WEBHOOK_DELIVERIES_FAILED);
     }
   }
+
+  async listDlq(webhookId?: string, applicationId?: string) {
+    try {
+      logger.info({ webhookId }, 'WebhooksService: listDlq start');
+      return await this.repository.findDlqDeliveries(webhookId, applicationId);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      logger.error({ err: error }, 'WebhooksService Error in listDlq:');
+      throw new ApiError(500, SERVICE_ERRORS.LIST_WEBHOOK_DELIVERIES_FAILED);
+    }
+  }
+
+  async retryDelivery(deliveryId: string) {
+    try {
+      logger.info({ deliveryId }, 'WebhooksService: retryDelivery start');
+      const { webhookDispatcher } =
+        await import('./webhook-dispatcher.service.js');
+      return await webhookDispatcher.retryDelivery(deliveryId);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      logger.error({ err: error }, 'WebhooksService Error in retryDelivery:');
+      throw new ApiError(500, 'Failed to retry webhook delivery');
+    }
+  }
+
+  async replayDelivery(deliveryId: string) {
+    try {
+      logger.info({ deliveryId }, 'WebhooksService: replayDelivery start');
+      const { webhookDispatcher } =
+        await import('./webhook-dispatcher.service.js');
+      return await webhookDispatcher.replayDelivery(deliveryId);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      logger.error({ err: error }, 'WebhooksService Error in replayDelivery:');
+      throw new ApiError(500, 'Failed to replay webhook delivery');
+    }
+  }
+
+  async processRetries(limit = 50) {
+    try {
+      logger.info('WebhooksService: processRetries start');
+      const { webhookDispatcher } =
+        await import('./webhook-dispatcher.service.js');
+      return await webhookDispatcher.processPendingRetries(limit);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      logger.error({ err: error }, 'WebhooksService Error in processRetries:');
+      throw new ApiError(500, 'Failed to process pending webhook retries');
+    }
+  }
 }

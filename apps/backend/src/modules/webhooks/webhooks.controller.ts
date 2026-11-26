@@ -121,3 +121,79 @@ export const listWebhookDeliveries: RequestHandler = asyncHandler(
       );
   },
 );
+
+export const listDlqDeliveries: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    logger.info({ id }, 'WebhooksController: listDlqDeliveries start');
+    const dlq = await webhooksService.listDlq(
+      id as string,
+      req.context?.applicationId,
+    );
+    res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new ApiResponse(
+          HTTP_STATUS.OK,
+          dlq,
+          'DLQ deliveries fetched successfully',
+        ),
+      );
+  },
+);
+
+export const retryWebhookDelivery: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { deliveryId } = req.params;
+    logger.info(
+      { deliveryId },
+      'WebhooksController: retryWebhookDelivery start',
+    );
+    const result = await webhooksService.retryDelivery(deliveryId as string);
+    res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new ApiResponse(
+          HTTP_STATUS.OK,
+          result,
+          'Webhook delivery retried successfully',
+        ),
+      );
+  },
+);
+
+export const replayWebhookDelivery: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { deliveryId } = req.params;
+    logger.info(
+      { deliveryId },
+      'WebhooksController: replayWebhookDelivery start',
+    );
+    const result = await webhooksService.replayDelivery(deliveryId as string);
+    res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new ApiResponse(
+          HTTP_STATUS.OK,
+          result,
+          'Webhook delivery replayed successfully',
+        ),
+      );
+  },
+);
+
+export const processWebhookRetries: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    logger.info('WebhooksController: processWebhookRetries start');
+    const result = await webhooksService.processRetries();
+    res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new ApiResponse(
+          HTTP_STATUS.OK,
+          result,
+          'Webhook retries processed successfully',
+        ),
+      );
+  },
+);

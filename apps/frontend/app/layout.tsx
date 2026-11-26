@@ -7,8 +7,8 @@ import { Toaster } from 'sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Agentic CMS',
-  description: 'Admin dashboard for the Agentic Headless CMS',
+  title: 'Headless CMS',
+  description: 'Admin dashboard for Headless CMS',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </Suspense>
           {children}
         </QueryProvider>
-        <Toaster />
+        <Toaster duration={3000} richColors />
       </body>
     </html>
   );

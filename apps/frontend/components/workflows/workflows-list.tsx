@@ -39,7 +39,7 @@ export function WorkflowsList() {
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
   const [sort, setSort] = useState('createdAt:desc');
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -403,7 +403,11 @@ export function WorkflowsList() {
             manualPagination={true}
             page={page}
             pageSize={pageSize}
-            onPageSizeChange={(newSize: number) => setPageSize(newSize)}
+            rowsPerPageOptions={[5, 10, 20, 25, 50]}
+            onPageSizeChange={(newSize: number) => {
+              setPageSize(newSize);
+              setPage(1);
+            }}
             pageCount={workflowsData?.meta?.pagination?.pageCount ?? 1}
             totalCount={
               workflowsData?.meta?.pagination?.total ?? workflows.length
