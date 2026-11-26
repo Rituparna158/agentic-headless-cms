@@ -27,6 +27,8 @@ import { MediaAssetPickerModal } from '@/features/media/components/MediaAssetPic
 import { VersionHistoryDrawer } from '@/features/collections/components/template/VersionHistoryDrawer';
 import { useCmsToast } from '@/hooks/useCmsToast';
 import { CMS_THEME_CLASSES } from '@/tokens/colorTokens';
+import { PageThemeOverrideField } from '@/features/theme/components/PageThemeOverrideField';
+import type { PageThemeSettings } from '@/features/theme/types/theme.types';
 import {
   GENERAL_STARTER_PAGES,
   ECOMMERCE_STARTER_PAGES,
@@ -98,6 +100,9 @@ export const PageContentEditorPage: React.FC = () => {
   // Working state for page title and dynamic schemas
   const [pageTitle, setPageTitle] = useState('');
   const [schemas, setSchemas] = useState<PageCustomSchema[]>([]);
+  const [pageTheme, setPageTheme] = useState<PageThemeSettings>({
+    mode: 'inherit',
+  });
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Reset initialization when pageId changes
@@ -112,6 +117,9 @@ export const PageContentEditorPage: React.FC = () => {
         activePage.title ||
           (activePage.data?.title as string) ||
           'Untitled Page',
+      );
+      setPageTheme(
+        (activePage.data?.theme as PageThemeSettings) || { mode: 'inherit' },
       );
 
       const existingSchemas =
@@ -426,6 +434,7 @@ export const PageContentEditorPage: React.FC = () => {
         title: pageTitle,
         slug: currentSlug,
         _schemas: schemas,
+        theme: pageTheme,
         ...(resolvedBody ? { body: resolvedBody } : {}),
       };
 
@@ -613,6 +622,10 @@ export const PageContentEditorPage: React.FC = () => {
               <span>Layout Block:</span>
               <span className="text-foreground">Corporate Base</span>
             </div>
+          </div>
+
+          <div className="pt-4 border-t border-border">
+            <PageThemeOverrideField value={pageTheme} onChange={setPageTheme} />
           </div>
         </aside>
 

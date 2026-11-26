@@ -1,4 +1,7 @@
 import { renderTemplate, inferShowMarkers } from './renderTemplate';
+import { resolveEffectiveTheme } from '@/features/theme/utils/resolveEffectiveTheme';
+import { compileThemeToCss } from '@/features/theme/utils/themeCss.util';
+import type { PageThemeSettings } from '@/features/theme/types/theme.types';
 import {
   neighborsOf,
   sourcesForPage,
@@ -114,12 +117,16 @@ export function renderView(
     base && ctx.canonical ? `${base}${ctx.canonical(path)}` : undefined,
   );
 
+  const pageThemeData = page.raw?.data?.theme as PageThemeSettings | undefined;
+  const effectiveTokens = resolveEffectiveTheme(model.theme, pageThemeData);
+  const themeCss = compileThemeToCss(effectiveTokens);
+
   const sectionCss = [header?.css, footer?.css, included.css]
     .filter(Boolean)
     .join('\n');
   return {
     html: rendered.html,
-    css: `${layout.css}\n${sectionCss}`,
+    css: `${themeCss}\n${layout.css}\n${sectionCss}`,
     head,
     diagnostics: rendered.diagnostics,
     item,

@@ -321,6 +321,26 @@ export const SiteWorkspaceSidebar = () => {
             {canSettings && (
               <li>
                 <NavLink
+                  to={`/sites/${siteId}/theme`}
+                  className={({ isActive }) =>
+                    isActive
+                      ? sbClasses.navItemActive
+                      : sbClasses.navItemInactive
+                  }
+                  title="Theme & Appearance Customizer"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Palette size={17} className="shrink-0 text-zinc-400" />
+                    {!isCollapsed && (
+                      <span className="truncate">Theme & Styling</span>
+                    )}
+                  </div>
+                </NavLink>
+              </li>
+            )}
+            {canSettings && (
+              <li>
+                <NavLink
                   to={`/sites/${siteId}/settings`}
                   className={({ isActive }) =>
                     isActive

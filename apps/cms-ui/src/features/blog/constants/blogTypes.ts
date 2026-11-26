@@ -275,6 +275,46 @@ export const BLOG_TYPES: BlogTypeDefinition[] = [
 export const getBlogType = (id: string | undefined) =>
   BLOG_TYPES.find((t) => t.id === id);
 
+export type BlogShowcaseLayout = 'grid' | 'magazine' | 'list' | 'minimal';
+
+export interface BlogLayoutOption {
+  id: BlogShowcaseLayout;
+  name: string;
+  description: string;
+  badge: string;
+}
+
+export const BLOG_LAYOUT_OPTIONS: BlogLayoutOption[] = [
+  {
+    id: 'grid',
+    name: 'Modern Grid',
+    description:
+      'Clean responsive card grid with aspect-ratio cover images and meta badges.',
+    badge: 'Popular',
+  },
+  {
+    id: 'magazine',
+    name: 'Featured Magazine',
+    description:
+      'Prominent full-width hero story on top followed by an editorial card grid.',
+    badge: 'Editorial',
+  },
+  {
+    id: 'list',
+    name: 'Editorial List',
+    description:
+      'Medium / Substack style horizontal feed with side thumbnails and clean dividers.',
+    badge: 'Minimal',
+  },
+  {
+    id: 'minimal',
+    name: 'Compact Minimal',
+    description:
+      'Typography-focused compact cards with high whitespace and elegant typography.',
+    badge: 'Fast',
+  },
+];
+
 /** Fields every custom blog type starts with, so templates stay connected. */
 export const CUSTOM_BLOG_BASE_FIELDS: DynamicFieldDefinition[] = build([
   { apiId: 'title', label: 'Title', type: 'text', required: true },

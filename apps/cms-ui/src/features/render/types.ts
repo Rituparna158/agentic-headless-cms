@@ -1,4 +1,5 @@
 import type { PageEntry } from '@/types/content.types';
+import type { ThemeConfig } from '@/features/theme/types/theme.types';
 
 export type Rec = Record<string, unknown>;
 
@@ -142,6 +143,8 @@ export interface SiteModel {
   sections: SiteSection[];
   /** Redirects from an old address to a new one. */
   redirects: { from: string; to: string }[];
+  /** Site-wide global theme configuration tokens. */
+  theme?: ThemeConfig;
 }
 
 export interface RawSchema {

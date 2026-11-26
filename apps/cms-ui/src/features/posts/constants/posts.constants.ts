@@ -146,7 +146,14 @@ export const FIELD_TYPE_GROUPS: FieldTypeCategoryGroup[] = [
 ];
 
 export const STARTER_SCHEMAS: Record<
-  'ecommerce' | 'posts' | 'realestate',
+  | 'ecommerce'
+  | 'retail'
+  | 'saas'
+  | 'portfolio'
+  | 'posts'
+  | 'realestate'
+  | 'restaurant'
+  | 'education',
   DynamicSchemaDefinition
 > = {
   ecommerce: {
@@ -200,6 +207,194 @@ export const STARTER_SCHEMAS: Record<
       {
         apiId: 'description_html',
         displayName: 'Product Description (HTML/MD)',
+        dataType: 'richtext',
+        isRequired: false,
+        sortOrder: 6,
+      },
+    ],
+  },
+  retail: {
+    name: 'Retail & Fashion Boutique Catalog',
+    slug: 'boutique-products',
+    description:
+      'Editorial boutique product catalog with seasonal drops, designer spotlight, and lookbooks',
+    type: 'collection',
+    fields: [
+      {
+        apiId: 'title',
+        displayName: 'Garment / Item Name',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 0,
+      },
+      {
+        apiId: 'slug',
+        displayName: 'URL Slug',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 1,
+      },
+      {
+        apiId: 'brand',
+        displayName: 'Brand / Atelier',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 2,
+      },
+      {
+        apiId: 'price',
+        displayName: 'Retail Price ($)',
+        dataType: 'number',
+        isRequired: true,
+        sortOrder: 3,
+      },
+      {
+        apiId: 'collection_drop',
+        displayName: 'Seasonal Drop',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 4,
+      },
+      {
+        apiId: 'lookbook_tag',
+        displayName: 'Lookbook Category',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 5,
+      },
+      {
+        apiId: 'in_stock',
+        displayName: 'Available to Order',
+        dataType: 'boolean',
+        isRequired: false,
+        sortOrder: 6,
+      },
+      {
+        apiId: 'description_html',
+        displayName: 'Lookbook Story & Specs (HTML)',
+        dataType: 'richtext',
+        isRequired: false,
+        sortOrder: 7,
+      },
+    ],
+  },
+  saas: {
+    name: 'SaaS Features & Subscription Plans',
+    slug: 'saas-features',
+    description:
+      'Tech startup features, monthly/annual tiers, API capabilities, and cloud limits',
+    type: 'collection',
+    fields: [
+      {
+        apiId: 'name',
+        displayName: 'Feature / Plan Name',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 0,
+      },
+      {
+        apiId: 'slug',
+        displayName: 'URL Slug',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 1,
+      },
+      {
+        apiId: 'tier',
+        displayName: 'Subscription Tier',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 2,
+      },
+      {
+        apiId: 'monthly_price',
+        displayName: 'Monthly Price ($)',
+        dataType: 'number',
+        isRequired: false,
+        sortOrder: 3,
+      },
+      {
+        apiId: 'annual_price',
+        displayName: 'Annual Price ($)',
+        dataType: 'number',
+        isRequired: false,
+        sortOrder: 4,
+      },
+      {
+        apiId: 'is_popular',
+        displayName: 'Featured Popular Badge',
+        dataType: 'boolean',
+        isRequired: false,
+        sortOrder: 5,
+      },
+      {
+        apiId: 'cta_label',
+        displayName: 'Action Button Label',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 6,
+      },
+      {
+        apiId: 'description_html',
+        displayName: 'Details & Feature Checklist',
+        dataType: 'richtext',
+        isRequired: false,
+        sortOrder: 7,
+      },
+    ],
+  },
+  portfolio: {
+    name: 'Agency Case Studies & Creative Work',
+    slug: 'case-studies',
+    description:
+      'Visual portfolio case studies with client briefs, metrics, and art direction',
+    type: 'collection',
+    fields: [
+      {
+        apiId: 'title',
+        displayName: 'Case Study Title',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 0,
+      },
+      {
+        apiId: 'slug',
+        displayName: 'URL Slug',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 1,
+      },
+      {
+        apiId: 'client',
+        displayName: 'Client Name',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 2,
+      },
+      {
+        apiId: 'discipline',
+        displayName: 'Creative Discipline',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 3,
+      },
+      {
+        apiId: 'year',
+        displayName: 'Project Year',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 4,
+      },
+      {
+        apiId: 'metrics_summary',
+        displayName: 'Impact Metric',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 5,
+      },
+      {
+        apiId: 'description_html',
+        displayName: 'Project Story & Gallery (HTML)',
         dataType: 'richtext',
         isRequired: false,
         sortOrder: 6,
@@ -300,6 +495,129 @@ export const STARTER_SCHEMAS: Record<
       },
     ],
   },
+  restaurant: {
+    name: 'Culinary Menus & Hospitality Offerings',
+    slug: 'menu-items',
+    description:
+      'Chef seasonal dishes, tasting courses, wine cellars, and dietary flags',
+    type: 'collection',
+    fields: [
+      {
+        apiId: 'title',
+        displayName: 'Dish / Beverage Title',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 0,
+      },
+      {
+        apiId: 'slug',
+        displayName: 'URL Slug',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 1,
+      },
+      {
+        apiId: 'menu_section',
+        displayName: 'Menu Section',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 2,
+      },
+      {
+        apiId: 'price',
+        displayName: 'Price ($)',
+        dataType: 'number',
+        isRequired: true,
+        sortOrder: 3,
+      },
+      {
+        apiId: 'dietary_tags',
+        displayName: 'Dietary Notes (e.g. GF, V)',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 4,
+      },
+      {
+        apiId: 'chef_recommended',
+        displayName: 'Chef Specialty',
+        dataType: 'boolean',
+        isRequired: false,
+        sortOrder: 5,
+      },
+      {
+        apiId: 'description_html',
+        displayName: 'Ingredients & Preparation',
+        dataType: 'richtext',
+        isRequired: false,
+        sortOrder: 6,
+      },
+    ],
+  },
+  education: {
+    name: 'Academy Masterclasses & Courses',
+    slug: 'courses',
+    description:
+      'Online learning courses, syllabus breakdown, instructor accreditation, and certificates',
+    type: 'collection',
+    fields: [
+      {
+        apiId: 'title',
+        displayName: 'Course Title',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 0,
+      },
+      {
+        apiId: 'slug',
+        displayName: 'URL Slug',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 1,
+      },
+      {
+        apiId: 'instructor',
+        displayName: 'Lead Instructor',
+        dataType: 'text',
+        isRequired: true,
+        sortOrder: 2,
+      },
+      {
+        apiId: 'level',
+        displayName: 'Difficulty Level',
+        dataType: 'text',
+        isRequired: false,
+        sortOrder: 3,
+      },
+      {
+        apiId: 'duration_hours',
+        displayName: 'Total Hours',
+        dataType: 'number',
+        isRequired: false,
+        sortOrder: 4,
+      },
+      {
+        apiId: 'price',
+        displayName: 'Tuition Fee ($)',
+        dataType: 'number',
+        isRequired: false,
+        sortOrder: 5,
+      },
+      {
+        apiId: 'certificate',
+        displayName: 'Certificate Included',
+        dataType: 'boolean',
+        isRequired: false,
+        sortOrder: 6,
+      },
+      {
+        apiId: 'description_html',
+        displayName: 'Curriculum & Learning Outcomes',
+        dataType: 'richtext',
+        isRequired: false,
+        sortOrder: 7,
+      },
+    ],
+  },
 };
 
 export const FORKABLE_SHARED_TEMPLATES: CrossSiteSharedTemplate[] = [
@@ -335,6 +653,129 @@ export const FORKABLE_SHARED_TEMPLATES: CrossSiteSharedTemplate[] = [
       {
         slotId: 'slot-body',
         label: 'Specs & Description',
+        fieldApiId: 'description_html',
+        fieldType: 'richtext',
+      },
+    ],
+  },
+  {
+    id: 'tpl-retail-boutique-store',
+    title: 'Modern Retail & Fashion Boutique',
+    category: 'retail',
+    description:
+      'Editorial-grade luxury fashion and lifestyle storefront with curated seasonal drops, lookbook grids, designer spotlight, and styling concierge.',
+    isPublic: true,
+    forkCount: 37,
+    authorSite: 'Atelier & Co.',
+    schema: STARTER_SCHEMAS.retail,
+    slots: [
+      {
+        slotId: 'slot-title',
+        label: 'Item Name',
+        fieldApiId: 'title',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-brand',
+        label: 'Brand / Atelier',
+        fieldApiId: 'brand',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-price',
+        label: 'Retail Price',
+        fieldApiId: 'price',
+        fieldType: 'number',
+      },
+      {
+        slotId: 'slot-drop',
+        label: 'Collection Drop',
+        fieldApiId: 'collection_drop',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-body',
+        label: 'Story & Garment Specs',
+        fieldApiId: 'description_html',
+        fieldType: 'richtext',
+      },
+    ],
+  },
+  {
+    id: 'tpl-saas-software-platform',
+    title: 'SaaS & Cloud Software Platform',
+    category: 'saas',
+    description:
+      'Modern software startup layout featuring interactive hero banners, monthly/annual tiered pricing tables, developer API highlights, and SOC-2 trust badges.',
+    isPublic: true,
+    forkCount: 56,
+    authorSite: 'DevScale Systems',
+    schema: STARTER_SCHEMAS.saas,
+    slots: [
+      {
+        slotId: 'slot-title',
+        label: 'Plan / Feature Name',
+        fieldApiId: 'name',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-tier',
+        label: 'Tier Identifier',
+        fieldApiId: 'tier',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-price',
+        label: 'Monthly Rate',
+        fieldApiId: 'monthly_price',
+        fieldType: 'number',
+      },
+      {
+        slotId: 'slot-cta',
+        label: 'Button Action',
+        fieldApiId: 'cta_label',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-body',
+        label: 'Feature Checklist & Details',
+        fieldApiId: 'description_html',
+        fieldType: 'richtext',
+      },
+    ],
+  },
+  {
+    id: 'tpl-agency-portfolio-studio',
+    title: 'Digital Agency & Creative Studio',
+    category: 'portfolio',
+    description:
+      'Bold creative portfolio showcase with client case studies, dynamic project grids, studio practice pillars, and creative brief kickoff inquiries.',
+    isPublic: true,
+    forkCount: 29,
+    authorSite: 'Studio Vanguard',
+    schema: STARTER_SCHEMAS.portfolio,
+    slots: [
+      {
+        slotId: 'slot-title',
+        label: 'Case Study Title',
+        fieldApiId: 'title',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-client',
+        label: 'Client Name',
+        fieldApiId: 'client',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-discipline',
+        label: 'Design Discipline',
+        fieldApiId: 'discipline',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-body',
+        label: 'Case Study Summary',
         fieldApiId: 'description_html',
         fieldType: 'richtext',
       },
@@ -409,6 +850,80 @@ export const FORKABLE_SHARED_TEMPLATES: CrossSiteSharedTemplate[] = [
       {
         slotId: 'slot-body',
         label: 'Property Details',
+        fieldApiId: 'description_html',
+        fieldType: 'richtext',
+      },
+    ],
+  },
+  {
+    id: 'tpl-restaurant-culinary-spot',
+    title: 'Culinary Bistro & Restaurant Hospitality',
+    category: 'restaurant',
+    description:
+      'Warm hospitality dining showcase with seasonal chef tasting menus, online table reservation forms, dietary tags, and private event packages.',
+    isPublic: true,
+    forkCount: 24,
+    authorSite: 'Bistrot Gourmet',
+    schema: STARTER_SCHEMAS.restaurant,
+    slots: [
+      {
+        slotId: 'slot-title',
+        label: 'Dish Name',
+        fieldApiId: 'title',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-section',
+        label: 'Menu Course',
+        fieldApiId: 'menu_section',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-price',
+        label: 'Item Price',
+        fieldApiId: 'price',
+        fieldType: 'number',
+      },
+      {
+        slotId: 'slot-body',
+        label: 'Ingredients & Preparation',
+        fieldApiId: 'description_html',
+        fieldType: 'richtext',
+      },
+    ],
+  },
+  {
+    id: 'tpl-education-academy-course',
+    title: 'Online Academy & Course Masterclass',
+    category: 'course',
+    description:
+      'Curriculum-driven online academy with structured lesson syllabus, difficulty badges, instructor accreditation, and student certification enrollment.',
+    isPublic: true,
+    forkCount: 45,
+    authorSite: 'EduPrime Global',
+    schema: STARTER_SCHEMAS.education,
+    slots: [
+      {
+        slotId: 'slot-title',
+        label: 'Course Title',
+        fieldApiId: 'title',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-instructor',
+        label: 'Lead Instructor',
+        fieldApiId: 'instructor',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-level',
+        label: 'Difficulty Level',
+        fieldApiId: 'level',
+        fieldType: 'text',
+      },
+      {
+        slotId: 'slot-body',
+        label: 'Syllabus & Outcomes',
         fieldApiId: 'description_html',
         fieldType: 'richtext',
       },

@@ -1,5 +1,7 @@
 import type { DynamicFieldDefinition, PageEntry } from '@/types/content.types';
+import type { BlogShowcaseLayout } from '../constants/blogTypes';
 
+export type { BlogShowcaseLayout };
 export type BlogPostStatus = 'draft' | 'published';
 
 export interface BlogPost extends Record<string, unknown> {
@@ -79,6 +81,7 @@ export interface CustomBlogTypeDialogProps {
     name: string;
     postLabel: string;
     fields: DynamicFieldDefinition[];
+    layout?: BlogShowcaseLayout;
   }) => void;
 }
 
