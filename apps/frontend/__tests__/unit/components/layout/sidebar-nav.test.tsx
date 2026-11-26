@@ -139,6 +139,35 @@ describe('SidebarNav', () => {
     expect(approvalsLink).toHaveAttribute('href', '/approvals');
   });
 
+  it('renders Workflows navigation item linking to /workflows for admin', () => {
+    renderSidebarNav();
+
+    const workflowsLink = screen.getByRole('link', { name: /Workflows/i });
+    expect(workflowsLink).toBeInTheDocument();
+    expect(workflowsLink).toHaveAttribute('href', '/workflows');
+  });
+
+  it('hides Workflows navigation item for non-admin user', () => {
+    useAuthStore.setState({
+      user: {
+        id: 'author-1',
+        email: 'author@example.com',
+        firstName: 'Author',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['author'],
+        permissions: [{ action: 'create', schemaId: null, effect: 'allow' }],
+      },
+      status: 'authenticated',
+    });
+
+    renderSidebarNav();
+
+    expect(
+      screen.queryByRole('link', { name: /Workflows/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('hides Approvals navigation item for pure Author role', () => {
     useAuthStore.setState({
       user: {

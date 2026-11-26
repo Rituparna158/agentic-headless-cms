@@ -5,9 +5,15 @@ import { useDashboardOverview } from '@/lib/hooks/use-dashboard-overview';
 import { formatRelativeTime } from '@/lib/utils';
 import { Card, CardContent, CardHeader, Badge } from '@repo/shared-ui';
 import { FileText, ArrowRight, Clock } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function RecentActivity() {
   const { data, isLoading, isError } = useDashboardOverview();
+  const user = useAuthStore((state) => state.user);
+  const isAdmin =
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin'].includes(role.toLowerCase()),
+    ) || false;
 
   return (
     <Card className="border border-border/70 shadow-xs flex flex-col justify-between w-full min-w-0 max-w-full overflow-hidden">
@@ -21,13 +27,23 @@ export function RecentActivity() {
               Chronological feed of latest content changes and updates.
             </p>
           </div>
-          <Link
-            href="/audit-log"
-            className="text-xs font-medium text-primary hover:underline flex items-center gap-1 transition-colors shrink-0"
-          >
-            <span>Audit log</span>
-            <ArrowRight className="size-3" />
-          </Link>
+          {isAdmin ? (
+            <Link
+              href="/audit-log"
+              className="text-xs font-medium text-primary hover:underline flex items-center gap-1 transition-colors shrink-0"
+            >
+              <span>Audit log</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          ) : (
+            <Link
+              href="/content"
+              className="text-xs font-medium text-primary hover:underline flex items-center gap-1 transition-colors shrink-0"
+            >
+              <span>View content</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          )}
         </CardHeader>
 
         <CardContent

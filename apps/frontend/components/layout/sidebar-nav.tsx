@@ -457,9 +457,15 @@ export function SidebarNav({
         }
         return canReview;
       }
+      if (item.href === '/workflows') {
+        if (status === 'loading' || status === 'idle') {
+          return true;
+        }
+        return isAdmin;
+      }
       return true;
     });
-  }, [canReview, status]);
+  }, [canReview, isAdmin, status]);
 
   const visibleSecondaryNavItems = useMemo(() => {
     return secondaryNavItems.filter((item) => {
