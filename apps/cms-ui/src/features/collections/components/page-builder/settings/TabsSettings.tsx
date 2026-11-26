@@ -4,7 +4,7 @@ import { Settings, Plus, X, FolderOpen, PaintBucket } from 'lucide-react';
 import {
   usePageBuilderStore,
   useShallow,
-  TabItem,
+  type TabItem,
   TABS_DEFAULTS,
 } from '../stores/pageBuilderStore';
 

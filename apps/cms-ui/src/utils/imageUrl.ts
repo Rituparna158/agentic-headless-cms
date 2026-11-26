@@ -1,4 +1,4 @@
-import { ImageOptimizationOptions } from '@/types/imageHanlder.types';
+import type { ImageOptimizationOptions } from '@/types/imageHanlder.types';
 
 // Returns an optimized image URL with proper dimension, format, and compression parameters.
 

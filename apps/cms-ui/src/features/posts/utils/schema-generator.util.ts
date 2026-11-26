@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 import {
-  DynamicFieldDefinition,
-  ImportValidationIssue,
+  type DynamicFieldDefinition,
+  type ImportValidationIssue,
 } from '../types/posts.types';
 
 export function sanitizeHtml(rawHtml: string): string {

@@ -1,4 +1,4 @@
-import { Component, ErrorInfo } from 'react';
+import { Component, type ErrorInfo } from 'react';
 import { browserLogger } from '@repo/logger/browser';
 import type {
   ErrorBoundaryProps,

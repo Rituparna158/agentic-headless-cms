@@ -1,8 +1,8 @@
 import { sanitizeHtml } from './schema-generator.util';
 import {
-  DynamicFieldDefinition,
-  ImportResult,
-  ImportValidationIssue,
+  type DynamicFieldDefinition,
+  type ImportResult,
+  type ImportValidationIssue,
 } from '../types/posts.types';
 import { validateEntryAgainstSchema } from './schema-generator.util';
 

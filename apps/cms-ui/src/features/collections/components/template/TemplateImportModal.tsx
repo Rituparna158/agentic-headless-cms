@@ -11,8 +11,8 @@ import {
   Copy,
 } from 'lucide-react';
 import {
-  TemplateImportModalProps,
-  TemplateValidationResult,
+  type TemplateImportModalProps,
+  type TemplateValidationResult,
 } from '../../types/template.types';
 import { SAMPLE_DYNAMIC_TEMPLATE } from '../../constants/template.constants';
 import { validateAndParseDynamicTemplate } from '../../utils/template-parser.util';

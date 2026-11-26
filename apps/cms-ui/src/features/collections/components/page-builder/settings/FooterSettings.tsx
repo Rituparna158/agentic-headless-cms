@@ -12,7 +12,7 @@ import {
 import {
   usePageBuilderStore,
   useShallow,
-  NavbarLink,
+  type NavbarLink,
   FOOTER_DEFAULTS,
 } from '../stores/pageBuilderStore';
 

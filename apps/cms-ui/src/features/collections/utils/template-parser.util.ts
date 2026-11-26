@@ -1,7 +1,7 @@
 import {
-  TemplateValidationResult,
-  TemplateValidationError,
-  DynamicComponentNode,
+  type TemplateValidationResult,
+  type TemplateValidationError,
+  type DynamicComponentNode,
 } from '../types/template.types';
 import {
   checkAndSanitizeComponentTree,

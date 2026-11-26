@@ -2,7 +2,7 @@ import { Navigate, Outlet, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../features/auth/store/auth.store';
 import { useSiteAccess } from '@/hooks/useCan';
 import { userCan } from '@/lib/capabilities';
-import { RoleGuardProps } from './types';
+import type { RoleGuardProps } from './types';
 
 /** Inside a website: permissions are checked for that website. */
 const SiteRoleGuard = ({

@@ -6,7 +6,7 @@ import {
   listCanvasDrafts,
   clearAllCanvasDrafts,
   purgeStaleDrafts,
-  CanvasDraftRecord,
+  type CanvasDraftRecord,
 } from '@/features/collections/storage/canvasDraftStorage';
 
 describe('CanvasDraftStorage (Offline Persistence Driver)', () => {

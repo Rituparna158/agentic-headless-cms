@@ -12,7 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { getMediaFileUrl } from '@/features/media/utils/media.util';
-import { SchemaMediaFieldProps } from '@/types/pageSchemaMedia.types';
+import type { SchemaMediaFieldProps } from '@/types/pageSchemaMedia.types';
 
 export const SchemaMediaField: React.FC<SchemaMediaFieldProps> = ({
   value,

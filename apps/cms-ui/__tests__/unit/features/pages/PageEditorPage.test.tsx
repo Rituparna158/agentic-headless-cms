@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PageEditorPage } from '../../../../src/features/collections/pages/editors/PageEditorPage';
 import { BrowserRouter } from 'react-router-dom';
