@@ -12,8 +12,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import {
-  SnapshotDetailDeckProps,
-  SnapshotDiffEntry,
+  type SnapshotDetailDeckProps,
+  type SnapshotDiffEntry,
 } from '../../types/template.types';
 import type { PageCustomSchema } from '@/types/content.types';
 

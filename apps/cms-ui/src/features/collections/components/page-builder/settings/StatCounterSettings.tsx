@@ -4,7 +4,7 @@ import { Settings, Plus, X, BarChart, PaintBucket } from 'lucide-react';
 import {
   usePageBuilderStore,
   useShallow,
-  StatItem,
+  type StatItem,
   STAT_COUNTER_DEFAULTS,
 } from '../stores/pageBuilderStore';
 

@@ -102,6 +102,7 @@ export const CreateSiteWizardModal: React.FC<CreateSiteWizardModalProps> = ({
   const [startMode, setStartMode] = useState<StartMode>('blank');
   const [sourceSiteId, setSourceSiteId] = useState('');
   const [templateId, setTemplateId] = useState('');
+  const [templateFilter, setTemplateFilter] = useState<'all' | string>('all');
 
   // Articles
   const [hasArticles, setHasArticles] = useState(true);
@@ -134,6 +135,51 @@ export const CreateSiteWizardModal: React.FC<CreateSiteWizardModalProps> = ({
     () => postsApi.getSharedTemplates(existingSites),
     [existingSites],
   );
+
+  const templateCategories = useMemo(
+    () => [
+      { key: 'all', label: 'All' },
+      { key: 'retail', label: 'Retail & Fashion' },
+      { key: 'ecommerce', label: 'E-Commerce / Amazon' },
+      { key: 'saas', label: 'SaaS & Tech' },
+      { key: 'portfolio', label: 'Agency & Studio' },
+      { key: 'blog', label: 'Editorial & Magazine' },
+      { key: 'real-estate', label: 'Real Estate' },
+      { key: 'restaurant', label: 'Hospitality' },
+      { key: 'course', label: 'Academy & Courses' },
+    ],
+    [],
+  );
+
+  const filteredTemplates = useMemo(() => {
+    if (templateFilter === 'all') return templates;
+    return templates.filter((t) => {
+      const cat = (t.category || '').toLowerCase();
+      if (templateFilter === 'retail')
+        return (
+          cat === 'retail' ||
+          cat.includes('boutique') ||
+          cat.includes('fashion')
+        );
+      if (templateFilter === 'ecommerce')
+        return (
+          cat === 'ecommerce' || cat.includes('amazon') || cat.includes('shop')
+        );
+      if (templateFilter === 'saas')
+        return cat === 'saas' || cat.includes('software');
+      if (templateFilter === 'portfolio')
+        return cat === 'portfolio' || cat.includes('agency');
+      if (templateFilter === 'blog')
+        return cat === 'blog' || cat === 'editorial' || cat.includes('news');
+      if (templateFilter === 'real-estate')
+        return cat === 'real-estate' || cat === 'realestate';
+      if (templateFilter === 'restaurant')
+        return cat === 'restaurant' || cat.includes('culinary');
+      if (templateFilter === 'course')
+        return cat === 'course' || cat === 'education';
+      return cat === templateFilter;
+    });
+  }, [templates, templateFilter]);
 
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.id === templateId),
@@ -349,7 +395,7 @@ export const CreateSiteWizardModal: React.FC<CreateSiteWizardModalProps> = ({
       aria-label="Create a New Website"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
@@ -487,26 +533,119 @@ export const CreateSiteWizardModal: React.FC<CreateSiteWizardModalProps> = ({
                   onClick={() => setStartMode('template')}
                   icon={<LayoutTemplate size={16} />}
                   title="Use a ready-made template"
-                  description="Pick a prepared structure such as a blog, shop or course site."
+                  description="Pick a prepared structure such as retail fashion, Amazon marketplace, SaaS platform, editorial magazine, or portfolio."
                 >
-                  <select
-                    aria-label="Template"
-                    value={templateId}
-                    onChange={(e) => setTemplateId(e.target.value)}
-                    className={inputClass}
-                  >
-                    <option value="">Choose a template…</option>
-                    {templates.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.title}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedTemplate && (
-                    <p className="text-[11px] text-muted-foreground mt-2">
-                      {selectedTemplate.description}
-                    </p>
-                  )}
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label
+                        htmlFor="wiz-template-select"
+                        className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5"
+                      >
+                        Template Selection
+                      </label>
+                      <select
+                        id="wiz-template-select"
+                        aria-label="Template"
+                        value={templateId}
+                        onChange={(e) => setTemplateId(e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="">Choose a template…</option>
+                        {templates.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title} ({t.category})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Category Filter Pills */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      {templateCategories.map((c) => (
+                        <button
+                          key={c.key}
+                          type="button"
+                          onClick={() => setTemplateFilter(c.key)}
+                          className={`text-[11px] px-2.5 py-1 rounded-full font-medium transition-colors ${
+                            templateFilter === c.key
+                              ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
+                              : 'bg-muted/70 text-muted-foreground hover:text-foreground hover:bg-muted'
+                          }`}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Template Card Showcase Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                      {filteredTemplates.map((t) => {
+                        const isPicked = t.id === templateId;
+                        const pageSample = getStarterPagesForCategory(
+                          t.category,
+                        ).slice(0, 3);
+                        return (
+                          <div
+                            key={t.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setTemplateId(t.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setTemplateId(t.id);
+                              }
+                            }}
+                            className={`p-3 rounded-lg border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                              isPicked
+                                ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-xs'
+                                : 'border-border bg-card/60 hover:border-primary/40 hover:bg-muted/30'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-1 mb-1">
+                                <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-primary/15 text-primary">
+                                  {t.category}
+                                </span>
+                                {isPicked && (
+                                  <span className="flex items-center gap-0.5 text-[10px] font-bold text-primary">
+                                    <Check size={11} /> Selected
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className="text-xs font-bold text-foreground leading-snug">
+                                {t.title}
+                              </h4>
+                              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                                {t.description}
+                              </p>
+                            </div>
+                            <div className="mt-2.5 pt-2 border-t border-border/50 flex flex-col gap-1">
+                              <span className="text-[10px] text-muted-foreground">
+                                By{' '}
+                                <span className="font-medium text-foreground">
+                                  {t.authorSite}
+                                </span>
+                              </span>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-[9px] text-muted-foreground font-mono">
+                                  Pages:
+                                </span>
+                                {pageSample.map((p) => (
+                                  <span
+                                    key={p.key}
+                                    className="text-[9px] bg-muted px-1 rounded text-foreground font-mono"
+                                  >
+                                    {p.slug}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </OptionCard>
               </div>
             </>

@@ -48,22 +48,36 @@ export function getMimeCategory(
 }
 
 export function getMediaFileUrl(urlOrPath: string | undefined | null): string {
-  if (!urlOrPath) return '';
-  if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) {
-    return urlOrPath;
-  }
-  if (urlOrPath.startsWith('data:') || urlOrPath.startsWith('blob:')) {
-    return urlOrPath;
+  if (!urlOrPath || typeof urlOrPath !== 'string') return '';
+  const trimmed = urlOrPath.trim();
+  if (!trimmed) return '';
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:')
+  ) {
+    return trimmed;
   }
 
-  const cleanPath = urlOrPath.startsWith('/')
-    ? urlOrPath
-    : `/api/v1/media/file/${urlOrPath}`;
+  let cleanPath = trimmed;
+  if (!cleanPath.startsWith('/')) {
+    if (cleanPath.startsWith('api/') || cleanPath.startsWith('uploads/')) {
+      cleanPath = `/${cleanPath}`;
+    } else {
+      cleanPath = `/api/v1/media/file/${cleanPath}`;
+    }
+  }
 
   // If in browser development and API is at a different origin:
-  if (typeof window !== 'undefined' && env.VITE_API_URL.startsWith('http')) {
+  if (
+    typeof window !== 'undefined' &&
+    env.VITE_API_URL &&
+    env.VITE_API_URL.startsWith('http')
+  ) {
     try {
       const apiOrigin = new URL(env.VITE_API_URL).origin;
+      if (cleanPath.startsWith(apiOrigin)) return cleanPath;
       return `${apiOrigin}${cleanPath}`;
     } catch {
       return cleanPath;

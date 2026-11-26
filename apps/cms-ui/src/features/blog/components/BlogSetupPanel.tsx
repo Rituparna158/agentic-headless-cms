@@ -1,9 +1,13 @@
 import { isPageEntry } from '@/lib/entryKinds';
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, LayoutTemplate } from 'lucide-react';
 import { useCmsToast } from '@/hooks/useCmsToast';
-import { BLOG_TYPES } from '../constants/blogTypes';
+import {
+  BLOG_TYPES,
+  BLOG_LAYOUT_OPTIONS,
+  type BlogShowcaseLayout,
+} from '../constants/blogTypes';
 import { blogApi } from '../api/blog.api';
 import { useBlogPages } from '../hooks/useBlogPages';
 import { BlogTypePicker } from './BlogTypePicker';
@@ -37,6 +41,7 @@ export const BlogSetupPanel: React.FC<BlogSetupPanelProps> = ({
         name: string;
         postLabel: string;
         fields: (typeof BLOG_TYPES)[number]['fields'];
+        layout?: BlogShowcaseLayout;
       }>,
     ) => {
       for (const def of defs) {
@@ -44,6 +49,7 @@ export const BlogSetupPanel: React.FC<BlogSetupPanelProps> = ({
           siteSlug,
           def,
           normalizeUrlPrefix(urlPrefix),
+          def.layout,
         );
       }
     },
@@ -63,6 +69,38 @@ export const BlogSetupPanel: React.FC<BlogSetupPanelProps> = ({
     onError: () =>
       toast.show({
         title: 'Could not add the blog type',
+        message: 'Please try again.',
+        type: 'error',
+      }),
+  });
+
+  const updateLayoutMutation = useMutation({
+    mutationFn: async ({
+      pageId,
+      layout,
+    }: {
+      pageId: string;
+      layout: BlogShowcaseLayout;
+    }) => {
+      await blogApi.updateBlogLayout(siteSlug, pageId, layout);
+    },
+    onSuccess: (_, { layout }) => {
+      queryClient.invalidateQueries({
+        queryKey: ['collection-pages', siteSlug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['site-preview-entries', siteSlug],
+      });
+      const opt = BLOG_LAYOUT_OPTIONS.find((o) => o.id === layout);
+      toast.show({
+        title: 'Showcase layout updated',
+        message: `Blog layout switched to ${opt?.name || layout}.`,
+        type: 'success',
+      });
+    },
+    onError: () =>
+      toast.show({
+        title: 'Failed to update layout',
         message: 'Please try again.',
         type: 'error',
       }),
@@ -175,6 +213,55 @@ export const BlogSetupPanel: React.FC<BlogSetupPanelProps> = ({
                       Show on a page…
                     </button>
                   </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/50">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                      <LayoutTemplate
+                        size={12}
+                        className="text-muted-foreground"
+                      />
+                      Showcase:
+                    </span>
+                    {BLOG_LAYOUT_OPTIONS.map((opt) => {
+                      const isCurrent =
+                        ((b.page.data?.blogLayout as BlogShowcaseLayout) ||
+                          'grid') === opt.id;
+                      const isPending =
+                        updateLayoutMutation.isPending &&
+                        updateLayoutMutation.variables?.pageId === b.pageId &&
+                        updateLayoutMutation.variables?.layout === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          disabled={updateLayoutMutation.isPending}
+                          onClick={() => {
+                            if (!isCurrent) {
+                              updateLayoutMutation.mutate({
+                                pageId: b.pageId,
+                                layout: opt.id,
+                              });
+                            }
+                          }}
+                          className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                            isCurrent
+                              ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
+                              : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground'
+                          }`}
+                          title={opt.description}
+                        >
+                          {isPending ? (
+                            <Loader2
+                              size={10}
+                              className="animate-spin inline mr-1"
+                            />
+                          ) : null}
+                          {opt.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </li>
             );

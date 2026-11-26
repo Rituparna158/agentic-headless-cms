@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { AuthGuard } from '../../../../src/components/Guard/AuthGuard';
 import {
   useAuthStore,
-  AuthState,
+  type AuthState,
 } from '../../../../src/features/auth/store/auth.store';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 

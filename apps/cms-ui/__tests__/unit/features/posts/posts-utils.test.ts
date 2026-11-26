@@ -9,7 +9,7 @@ import {
   parseHtmlFileContent,
   parseUploadedFileContent,
 } from '@/features/posts/utils/content-parser.util';
-import { DynamicFieldDefinition } from '@/features/posts/types/posts.types';
+import { type DynamicFieldDefinition } from '@/features/posts/types/posts.types';
 import { extractArrayPayload } from '@/features/posts/api/posts.api';
 
 describe('Posts Utilities & Anti-Injection Sanitizer', () => {

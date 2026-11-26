@@ -43,7 +43,7 @@ export const ForgotPasswordPage = () => {
         <div className="space-y-4">
           <p
             role="alert"
-            className="text-sm p-3 bg-green-50 text-green-900 border border-green-200 rounded-md text-center"
+            className="text-sm p-3 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 rounded-md text-center"
           >
             Check your email for a link to reset your password. If it
             doesn&apos;t appear within a few minutes, check your spam folder.

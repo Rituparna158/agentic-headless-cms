@@ -40,9 +40,9 @@ import { useAuthStore } from '../../auth/store/auth.store';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { normalizeCollaborator } from '../utils/collaborator.util';
 import {
-  ViewMode,
-  PageToDelete,
-  EntriesTableState,
+  type ViewMode,
+  type PageToDelete,
+  type EntriesTableState,
 } from '../types/collections.types';
 import {
   ENTRIES_VIEW_MODE_STORAGE_KEY,

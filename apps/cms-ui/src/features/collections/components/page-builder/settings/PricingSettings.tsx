@@ -4,8 +4,8 @@ import { Settings, Plus, X, DollarSign, PaintBucket } from 'lucide-react';
 import {
   usePageBuilderStore,
   useShallow,
-  PricingTier,
-  PricingFeature,
+  type PricingTier,
+  type PricingFeature,
   PRICING_DEFAULTS,
 } from '../stores/pageBuilderStore';
 

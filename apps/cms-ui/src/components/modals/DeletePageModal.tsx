@@ -59,7 +59,13 @@ export function DeletePageModal({
         tabIndex={-1}
         className="relative bg-card rounded-2xl shadow-2xl border border-destructive/30 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 outline-none"
       >
-        <div className="p-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleConfirm();
+          }}
+          className="p-6"
+        >
           <div className="flex items-center gap-3 mb-3 text-destructive">
             <div className="flex size-10 items-center justify-center rounded-xl bg-destructive/10 border border-destructive/20">
               <AlertTriangle className="size-5" />
@@ -132,16 +138,16 @@ export function DeletePageModal({
               Cancel
             </button>
             <button
-              type="button"
-              onClick={handleConfirm}
+              type="submit"
               disabled={isPending || !isMatch}
+              aria-busy={isPending}
               className="px-4 py-2 text-sm font-semibold rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-destructive"
             >
               <Trash2 className="size-4" />
               {isPending ? 'Deleting...' : 'Delete Page'}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

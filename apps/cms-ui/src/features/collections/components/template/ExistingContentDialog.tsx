@@ -6,7 +6,7 @@ import {
   X,
   CheckCircle2,
 } from 'lucide-react';
-import { ExistingContentDialogProps } from '../../types/template.types';
+import { type ExistingContentDialogProps } from '../../types/template.types';
 
 export const ExistingContentDialog: React.FC<ExistingContentDialogProps> = ({
   isOpen,

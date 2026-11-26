@@ -1,4 +1,4 @@
-import { AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 import { z } from 'zod';
 
 export interface RequestConfig<T = unknown> extends AxiosRequestConfig {

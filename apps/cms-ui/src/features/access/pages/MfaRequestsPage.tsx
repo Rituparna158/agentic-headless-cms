@@ -22,7 +22,7 @@ import {
   Tabs,
 } from '@repo/shared-ui';
 import { accessApi } from '../api/access.api';
-import {
+import type {
   MfaRequestRecord,
   MfaTabId,
   SortDirection,

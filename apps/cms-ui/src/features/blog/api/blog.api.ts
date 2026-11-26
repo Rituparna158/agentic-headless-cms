@@ -2,10 +2,13 @@ import { collectionsApi } from '@/features/collections/api/collections.api';
 import type { PageCustomSchema, PageEntry } from '@/types/content.types';
 import { buildBlogPageBody } from '../utils/blogTemplate';
 import { buildFeaturedPostsSection } from '../utils/featureSection';
-import type { BlogTypeDefinition } from '../constants/blogTypes';
+import type {
+  BlogTypeDefinition,
+  BlogShowcaseLayout,
+} from '../constants/blogTypes';
 import type { BlogPostStatus, BlogPost, BlogPage } from '../types/blog.types';
 
-export type { BlogPostStatus, BlogPost, BlogPage };
+export type { BlogPostStatus, BlogPost, BlogPage, BlogShowcaseLayout };
 
 const getSchemas = (page: PageEntry): PageCustomSchema[] =>
   (Array.isArray(page.data?._schemas)
@@ -24,31 +27,87 @@ const postsOfBlog = (
   schema: PageCustomSchema,
   entries: PageEntry[],
 ): BlogPost[] => {
+  const isObject = (v: unknown): v is Record<string, unknown> =>
+    v !== null && typeof v === 'object' && !Array.isArray(v);
+
   const stored: BlogPost[] = entries
-    .filter((e) => e.data?.kind === 'post' && e.data?.blogTypeId === typeId)
-    .map((e) => ({
-      ...(e.data as Record<string, unknown>),
-      id: e.id,
-      slug: (e.data?.slug as string) || e.slug || e.id,
-      title: (e.data?.title as string) || e.title || 'Untitled',
-      status: (e.status === 'published'
-        ? 'published'
-        : 'draft') as BlogPostStatus,
-      createdAt: e.createdAt,
-      updatedAt: e.updatedAt,
-    }));
+    .filter((e) => {
+      const d = (e.data || e.publishedData) as
+        | Record<string, unknown>
+        | undefined;
+      const pd =
+        d && isObject(d.data) ? (d.data as Record<string, unknown>) : d;
+      return pd?.kind === 'post' && pd?.blogTypeId === typeId;
+    })
+    .map((e) => {
+      const rawData = (e.data || e.publishedData) as
+        | Record<string, unknown>
+        | undefined;
+      const d =
+        (rawData && isObject(rawData.data) ? rawData.data : rawData) || {};
+      const rawImg =
+        d.cover_image_url ??
+        d.image ??
+        d.coverImage ??
+        d.cover_image ??
+        d.thumbnail ??
+        '';
+      const imgUrl =
+        typeof rawImg === 'string'
+          ? rawImg
+          : rawImg && typeof rawImg === 'object'
+            ? (((rawImg as Record<string, unknown>).url ||
+                (rawImg as Record<string, unknown>).path ||
+                (rawImg as Record<string, unknown>).src ||
+                '') as string)
+            : '';
+      return {
+        ...d,
+        id: e.id,
+        slug: (d.slug as string) || e.slug || e.id,
+        title: (d.title as string) || e.title || 'Untitled',
+        image: imgUrl || (d.image as string) || '',
+        cover_image_url: imgUrl || (d.cover_image_url as string) || '',
+        status: (e.status === 'published'
+          ? 'published'
+          : 'draft') as BlogPostStatus,
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+      };
+    });
   const ids = new Set(stored.map((p) => p.id));
   const legacy: BlogPost[] = (schema.items ?? [])
-    .map((raw, i) => ({
-      ...raw,
-      id: (raw.id as string) || `post_${i + 1}`,
-      slug: (raw.slug as string) || `post-${i + 1}`,
-      title: (raw.title as string) || 'Untitled',
-      status: (raw.status === 'draft'
-        ? 'draft'
-        : 'published') as BlogPostStatus,
-      legacy: true,
-    }))
+    .map((raw, i) => {
+      const item = raw as Record<string, unknown>;
+      const rawImg =
+        item.cover_image_url ??
+        item.image ??
+        item.coverImage ??
+        item.cover_image ??
+        item.thumbnail ??
+        '';
+      const imgUrl =
+        typeof rawImg === 'string'
+          ? rawImg
+          : rawImg && typeof rawImg === 'object'
+            ? (((rawImg as Record<string, unknown>).url ||
+                (rawImg as Record<string, unknown>).path ||
+                (rawImg as Record<string, unknown>).src ||
+                '') as string)
+            : '';
+      return {
+        ...item,
+        id: (item.id as string) || `post_${i + 1}`,
+        slug: (item.slug as string) || `post-${i + 1}`,
+        title: (item.title as string) || 'Untitled',
+        image: imgUrl || (item.image as string) || '',
+        cover_image_url: imgUrl || (item.cover_image_url as string) || '',
+        status: (item.status === 'draft'
+          ? 'draft'
+          : 'published') as BlogPostStatus,
+        legacy: true,
+      };
+    })
     .filter((p) => !ids.has(p.id)) as BlogPost[];
   const when = (p: BlogPost) =>
     String(p.date || p.updatedAt || p.createdAt || '');
@@ -101,6 +160,7 @@ export const blogApi = {
     siteSlug: string,
     def: Pick<BlogTypeDefinition, 'id' | 'name' | 'postLabel' | 'fields'>,
     urlPrefix: string,
+    layout: BlogShowcaseLayout = 'grid',
   ): Promise<PageEntry> => {
     const slug = `${urlPrefix}/${def.id}`;
     const schema: PageCustomSchema = {
@@ -120,7 +180,8 @@ export const blogApi = {
       blogTypeId: def.id,
       blogName: def.name,
       blogPostLabel: def.postLabel,
-      body: buildBlogPageBody(`${def.name} Blog`, schema.slug),
+      blogLayout: layout,
+      body: buildBlogPageBody(`${def.name} Blog`, schema.slug, layout),
       _schemas: [schema],
     });
     try {
@@ -129,6 +190,34 @@ export const blogApi = {
       // The page stays a draft; it is published with the first post.
     }
     return created;
+  },
+
+  /** Updates the showcase layout of an existing blog page. */
+  updateBlogLayout: async (
+    siteSlug: string,
+    pageId: string,
+    layout: BlogShowcaseLayout,
+  ): Promise<PageEntry> => {
+    const page = (await collectionsApi.getPage(
+      siteSlug,
+      pageId,
+    )) as unknown as PageEntry;
+    const schema = getBlogSchema(page);
+    if (!schema) throw new Error('This blog type has no post schema.');
+    const blogName =
+      (page.data?.blogName as string) || schema.name || page.title || 'Blog';
+    const newBody = buildBlogPageBody(blogName, schema.slug, layout);
+    const updated = await collectionsApi.updatePage(siteSlug, pageId, {
+      ...(page.data ?? {}),
+      title: page.title || (page.data?.title as string) || 'Blog',
+      slug: page.slug || (page.data?.slug as string) || '/blog',
+      blogLayout: layout,
+      body: newBody,
+    });
+    if (page.status === 'published') {
+      await collectionsApi.publishPage(siteSlug, pageId);
+    }
+    return updated;
   },
 
   /** Creates or updates a post as its own entry. */
@@ -156,13 +245,34 @@ export const blogApi = {
     void _status;
     void _c;
     void _u;
+
+    const rawImg =
+      post.cover_image_url ??
+      (post as Record<string, unknown>).image ??
+      (fields as Record<string, unknown>).cover_image_url ??
+      (fields as Record<string, unknown>).image ??
+      (fields as Record<string, unknown>).coverImage ??
+      (fields as Record<string, unknown>).cover_image ??
+      (fields as Record<string, unknown>).thumbnail ??
+      '';
+    const imgUrl =
+      typeof rawImg === 'string'
+        ? rawImg
+        : rawImg && typeof rawImg === 'object'
+          ? (((rawImg as Record<string, unknown>).url ||
+              (rawImg as Record<string, unknown>).path ||
+              (rawImg as Record<string, unknown>).src ||
+              '') as string)
+          : '';
+
     const data = {
       ...fields,
       kind: 'post',
       blogTypeId,
       title: post.title,
       slug: post.slug,
-      image: post.cover_image_url,
+      image: imgUrl,
+      cover_image_url: imgUrl,
     };
 
     let entry: PageEntry;

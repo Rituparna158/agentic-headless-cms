@@ -1,7 +1,7 @@
 import { requestHandler } from '@/api/requestHandler';
 import { ENDPOINTS } from '@/api/endpoints';
-import { buildQueryString, TableQueryParams } from '@/api/queryParams';
-import {
+import { buildQueryString, type TableQueryParams } from '@/api/queryParams';
+import type {
   Role,
   RoleWithPermissions,
   CreateRolePayload,

@@ -74,13 +74,27 @@ export interface SchemaLineage {
   forkedSlugs?: string[];
 }
 
+export type TemplateCategory =
+  | 'ecommerce'
+  | 'retail'
+  | 'saas'
+  | 'portfolio'
+  | 'blog'
+  | 'editorial'
+  | 'real-estate'
+  | 'restaurant'
+  | 'course'
+  | 'education'
+  | 'custom'
+  | (string & {});
+
 export interface SchemaMetadata {
   is_public?: boolean;
   parent_schema_id?: string;
   parent_schema_name?: string;
   parent_schema_slug?: string;
   fork_count?: number;
-  category?: 'ecommerce' | 'blog' | 'real-estate' | 'course' | 'custom';
+  category?: TemplateCategory;
   tags?: string[];
   version?: string;
   [key: string]: unknown;
@@ -196,7 +210,7 @@ export interface PageLayoutTemplate {
 export interface CrossSiteSharedTemplate {
   id: string;
   title: string;
-  category: 'ecommerce' | 'blog' | 'real-estate' | 'course' | 'custom';
+  category: TemplateCategory;
   description: string;
   schema: DynamicSchemaDefinition;
   layoutHtml?: string;

@@ -295,6 +295,28 @@ describe('blogApi', () => {
     });
   });
 
+  describe('updateBlogLayout', () => {
+    it('updates page body with the chosen showcase layout and republishes', async () => {
+      ca.getPage.mockResolvedValue(blogPage({ blogLayout: 'grid' }));
+      ca.updatePage.mockResolvedValue({ id: 'page1' });
+      ca.publishPage.mockResolvedValue({});
+
+      await blogApi.updateBlogLayout('site', 'page1', 'magazine');
+      expect(ca.updatePage).toHaveBeenCalledWith(
+        'site',
+        'page1',
+        expect.objectContaining({
+          blogLayout: 'magazine',
+          body: expect.objectContaining({
+            builder: 'grapesjs',
+            html: expect.stringContaining('cms-feed-magazine'),
+          }),
+        }),
+      );
+      expect(ca.publishPage).toHaveBeenCalledWith('site', 'page1');
+    });
+  });
+
   describe('deletePost', () => {
     it('deletes a stored post entry', async () => {
       ca.deletePage.mockResolvedValue({});
