@@ -10,11 +10,14 @@ const { mockList, mockDelete, mockGetWorkflow, mockHasPermission } = vi.hoisted(
     mockList: vi.fn(),
     mockDelete: vi.fn(),
     mockGetWorkflow: vi.fn(),
-    mockHasPermission: vi.fn(() => true),
+    mockHasPermission: vi.fn(
+      (_action?: string, _schemaId?: string | null) => true,
+    ),
   }),
 );
 vi.mock('@/hooks/use-permissions', () => ({
-  useHasPermission: (...args: unknown[]) => mockHasPermission(...args),
+  useHasPermission: (action: string, schemaId?: string | null) =>
+    mockHasPermission(action, schemaId),
 }));
 vi.mock('@/lib/api/content', () => ({
   listContentEntries: mockList,
