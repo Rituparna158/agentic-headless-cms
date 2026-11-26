@@ -10,7 +10,7 @@ sidebar_position: 2
 **Agentic Headless CMS** can be installed and run using two primary methods depending on your workflow:
 
 - **[Method 1: Local Monorepo Setup](#method-1-local-monorepo-setup)**: Best for developers who want full access to the source code, custom schema extensions, and client SDK packages.
-- **[Method 2: Docker & GHCR Image](#method-2-self-hosted-docker-deployment)**: Best for quick evaluation, staging, or production deployments with zero local Node.js or database setup required.
+- **[Method 2: Docker Deployment](#method-2-self-hosted-docker-deployment)**: Best for quick evaluation, staging, or production deployments with zero local Node.js or database setup required.
 
 ---
 
@@ -90,25 +90,19 @@ All services are now live:
 
 ## Method 2: Self-Hosted Docker Deployment
 
-This method is designed for production servers and users who want to run the platform without cloning the source code or installing Node.js/pnpm. The container images are pulled directly from the **GitHub Container Registry (GHCR)** (`ghcr.io/mindfiredigital/agentic-headless-cms/...`).
+This method runs the complete platform using Docker Compose, building all application images directly from source with zero external registry authentication required.
 
-### Step 1: Download Deployment Files
-Create a dedicated deployment directory and download the production compose configuration and environment template:
+### Step 1: Clone and Set Up Environment
 
 ```bash
-mkdir agentic-cms && cd agentic-cms
-
-# 1. Download production Docker Compose file
-curl -O https://raw.githubusercontent.com/mindfiredigital/agentic-headless-cms/main/docker-compose.prod.yml
-
-# 2. Download environment template
-curl -O https://raw.githubusercontent.com/mindfiredigital/agentic-headless-cms/main/.env.example
+git clone https://github.com/mindfiredigital/agentic-headless-cms.git
+cd agentic-headless-cms
 cp .env.example .env
 ```
 
 ### Step 2: Configure Environment Secrets
 
-The downloaded `.env.example` file is already pre-populated with working defaults. Open your copied `.env` file in an editor. Update the following essential security variables before launching:
+The copied `.env` file is pre-populated with working defaults. Update the following essential security variables before launching:
 
 - **`POSTGRES_PASSWORD`**: Replace with a strong, secure database password.
 - **`JWT_SECRET`**: Provide a secure random string (at least 32 characters) used to sign user authentication tokens.
@@ -117,10 +111,10 @@ The downloaded `.env.example` file is already pre-populated with working default
 
 ### Step 3: Launch the Platform
 
-Launches the Backend API, Next.js Admin Dashboard, PostgreSQL, Redis, and Worker:
+Build and launch all services with Docker Compose:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d
+docker compose up -d --build
 ```
 
 - **Admin Dashboard**: [http://localhost:3001](http://localhost:3001)
@@ -132,14 +126,12 @@ docker compose -f docker-compose.prod.yml up -d
 
 ## Update & Maintenance Lifecycle
 
-Upgrading to a new release requires zero manual database maintenance:
+Upgrading to a new release:
 
 ```bash
-# 1. Pull the latest hardened images from GHCR
-docker compose -f docker-compose.prod.yml pull
-
-# 2. Recreate containers with zero data loss
-docker compose -f docker-compose.prod.yml up -d
+# 1. Pull latest code and rebuild containers
+git pull origin main
+docker compose up -d --build
 ```
 
 ---

@@ -68,24 +68,26 @@ This project uses a modern monorepo setup powered by **Turborepo** and **pnpm**:
 
 ## Self-Hosted Production (Docker Compose)
 
-For end-users and teams who want to run the self-hosted CMS platform without cloning the full repository or installing Node.js/pnpm:
+Run the complete platform locally or on a production server using Docker Compose (builds all containers directly from source with zero external registry authentication required):
 
-1. **Download the production compose file and env template:**
+1. **Clone the repository and set up environment:**
 
    ```bash
-   curl -O https://raw.githubusercontent.com/mindfiredigital/agentic-headless-cms/main/docker-compose.prod.yml
-   curl -O https://raw.githubusercontent.com/mindfiredigital/agentic-headless-cms/main/.env.example
+   git clone https://github.com/mindfiredigital/agentic-headless-cms.git
+   cd agentic-headless-cms
    cp .env.example .env
    ```
 
 2. **Configure your secrets in `.env`:**
    Set your `JWT_SECRET` (at least 32 characters) and custom database password if needed.
 
-3. **Start the platform:**
+3. **Build and start all services:**
+
    ```bash
-   docker compose -f docker-compose.prod.yml up -d
+   docker compose up -d --build
    ```
-   _Pre-built production images for Backend, Frontend, Worker, PostgreSQL 16, and Redis 7 will be pulled directly from GitHub Container Registry (GHCR). Database migrations and initial admin account creation run automatically on first boot._
+
+   _All service images (Backend, Frontend, CMS UI, Worker, PostgreSQL 16, and Redis 7) build locally from source. Database migrations and initial admin account creation run automatically on first boot._
 
 ---
 
