@@ -5,13 +5,16 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContentEntryList } from '@/components/content-editor/content-entry-list';
-const { mockList, mockDelete, mockGetWorkflow } = vi.hoisted(() => ({
-  mockList: vi.fn(),
-  mockDelete: vi.fn(),
-  mockGetWorkflow: vi.fn(),
-}));
+const { mockList, mockDelete, mockGetWorkflow, mockHasPermission } = vi.hoisted(
+  () => ({
+    mockList: vi.fn(),
+    mockDelete: vi.fn(),
+    mockGetWorkflow: vi.fn(),
+    mockHasPermission: vi.fn(() => true),
+  }),
+);
 vi.mock('@/hooks/use-permissions', () => ({
-  useHasPermission: vi.fn(() => true),
+  useHasPermission: (...args: unknown[]) => mockHasPermission(...args),
 }));
 vi.mock('@/lib/api/content', () => ({
   listContentEntries: mockList,
@@ -59,6 +62,7 @@ describe('ContentEntryList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetWorkflow.mockResolvedValue(null);
+    mockHasPermission.mockReturnValue(true);
   });
   it('shows an empty state when there are no entries', async () => {
     mockList.mockResolvedValue({
@@ -140,6 +144,28 @@ describe('ContentEntryList', () => {
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith('article', 'entry-1');
     });
+  });
+  it('hides delete action when the user lacks delete permission', async () => {
+    mockHasPermission.mockReturnValue(false);
+    mockList.mockResolvedValue({
+      data: [
+        {
+          id: 'entry-1',
+          status: 'draft',
+          data: { title: 'Hello World' },
+          publishedData: null,
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      meta: { pagination: { page: 1, pageSize: 25, total: 1, pageCount: 1 } },
+    });
+    renderList();
+    await waitFor(() =>
+      expect(screen.getByText('Hello World')).toBeInTheDocument(),
+    );
+    expect(screen.queryByTitle('Actions')).not.toBeInTheDocument();
+    expect(screen.getByTitle('Edit entry')).toBeInTheDocument();
+    expect(screen.queryByText('Delete')).not.toBeInTheDocument();
   });
   it('shows pagination controls only when there is more than one page', async () => {
     mockList.mockResolvedValue({
