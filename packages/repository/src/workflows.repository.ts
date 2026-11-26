@@ -1,4 +1,4 @@
-import { eq, sql, and, inArray, desc, isNull } from 'drizzle-orm';
+import { eq, ne, sql, and, inArray, desc, isNull } from 'drizzle-orm';
 import type {
   BaseQueryOptions,
   CreateWorkflowInput,
@@ -547,9 +547,21 @@ export class WorkflowsRepository {
     try {
       logger.info({ schemaId }, 'WorkflowsRepository: getWorkflowBySchemaId');
 
+      let resolvedAppId = applicationId;
+      if (!resolvedAppId) {
+        const [sc] = await this.db
+          .select({ applicationId: schemas.applicationId })
+          .from(schemas)
+          .where(eq(schemas.id, schemaId))
+          .limit(1);
+        resolvedAppId = sc?.applicationId ?? undefined;
+      }
+
       const conditions = [eq(schemaWorkflows.schemaId, schemaId)];
-      if (applicationId) {
-        conditions.push(eq(schemaWorkflows.applicationId, applicationId));
+      if (resolvedAppId) {
+        conditions.push(
+          sql`(${schemaWorkflows.applicationId} = ${resolvedAppId} OR ${schemaWorkflows.applicationId} IS NULL)`,
+        );
       }
 
       const [row] = await this.db
@@ -688,6 +700,7 @@ export class WorkflowsRepository {
       entryId: string;
       workflowId: string;
       currentStage: string;
+      requiresReview?: boolean;
       updatedByUserId?: string | null;
     },
     applicationId?: string,
@@ -699,10 +712,20 @@ export class WorkflowsRepository {
       );
 
       return await withTransaction(this.db, async (tx) => {
+        let resolvedAppId = applicationId;
+        if (!resolvedAppId) {
+          const [entryRow] = await tx
+            .select({ applicationId: contentEntries.applicationId })
+            .from(contentEntries)
+            .where(eq(contentEntries.id, data.entryId))
+            .limit(1);
+          resolvedAppId = entryRow?.applicationId ?? undefined;
+        }
+
         const conditions = [eq(contentWorkflowStates.entryId, data.entryId)];
-        if (applicationId) {
+        if (resolvedAppId) {
           conditions.push(
-            eq(contentWorkflowStates.applicationId, applicationId),
+            sql`(${contentWorkflowStates.applicationId} = ${resolvedAppId} OR ${contentWorkflowStates.applicationId} IS NULL)`,
           );
         }
 
@@ -720,23 +743,24 @@ export class WorkflowsRepository {
               currentStage: data.currentStage,
               updatedByUserId: data.updatedByUserId ?? null,
               updatedAt: new Date(),
+              ...(typeof data.requiresReview === 'boolean'
+                ? { requiresReview: data.requiresReview }
+                : {}),
             })
             .where(eq(contentWorkflowStates.id, existing.id))
             .returning();
           return updated!;
         } else {
-          const insertPayload: Record<string, unknown> = {
-            entryId: data.entryId,
-            workflowId: data.workflowId,
-            currentStage: data.currentStage,
-            updatedByUserId: data.updatedByUserId ?? null,
-          };
-          if (applicationId) {
-            insertPayload.applicationId = applicationId;
-          }
           const [inserted] = await tx
             .insert(contentWorkflowStates)
-            .values(insertPayload as any)
+            .values({
+              entryId: data.entryId,
+              workflowId: data.workflowId,
+              currentStage: data.currentStage,
+              requiresReview: data.requiresReview ?? true,
+              updatedByUserId: data.updatedByUserId ?? null,
+              ...(resolvedAppId ? { applicationId: resolvedAppId } : {}),
+            })
             .returning();
           return inserted!;
         }
@@ -745,6 +769,65 @@ export class WorkflowsRepository {
       logger.error(
         { err: error, entryId: data.entryId },
         'WorkflowsRepository Error in upsertEntryWorkflowState:',
+      );
+      throw new ApiError(500, REPO_ERRORS.UPDATE_WORKFLOW_STATE_FAILED);
+    }
+  }
+
+  async setEntryWorkflowMode(
+    entryId: string,
+    requiresReview: boolean,
+    userId?: string,
+    applicationId?: string,
+  ): Promise<ContentWorkflowStateRecord | null> {
+    try {
+      logger.info(
+        { entryId, requiresReview },
+        'WorkflowsRepository: setEntryWorkflowMode',
+      );
+
+      let resolvedAppId = applicationId;
+      if (!resolvedAppId) {
+        const [entryRow] = await this.db
+          .select({ applicationId: contentEntries.applicationId })
+          .from(contentEntries)
+          .where(eq(contentEntries.id, entryId))
+          .limit(1);
+        resolvedAppId = entryRow?.applicationId ?? undefined;
+      }
+
+      const conditions = [eq(contentWorkflowStates.entryId, entryId)];
+      if (resolvedAppId) {
+        conditions.push(
+          sql`(${contentWorkflowStates.applicationId} = ${resolvedAppId} OR ${contentWorkflowStates.applicationId} IS NULL)`,
+        );
+      }
+
+      const [existing] = await this.db
+        .select()
+        .from(contentWorkflowStates)
+        .where(and(...conditions))
+        .limit(1);
+
+      if (!existing) {
+        return null;
+      }
+
+      const [updated] = await this.db
+        .update(contentWorkflowStates)
+        .set({
+          requiresReview,
+          updatedByUserId: userId ?? existing.updatedByUserId,
+          updatedAt: new Date(),
+        })
+        .where(eq(contentWorkflowStates.id, existing.id))
+        .returning();
+
+      return updated ?? null;
+    } catch (error) {
+      logger.error(
+        { err: error, entryId, requiresReview },
+        'WorkflowsRepository Error in setEntryWorkflowMode:',
       );
       throw new ApiError(500, REPO_ERRORS.UPDATE_WORKFLOW_STATE_FAILED);
     }
@@ -769,6 +852,16 @@ export class WorkflowsRepository {
         'WorkflowsRepository: recordWorkflowHistory',
       );
 
+      let resolvedAppId = applicationId;
+      if (!resolvedAppId) {
+        const [entryRow] = await this.db
+          .select({ applicationId: contentEntries.applicationId })
+          .from(contentEntries)
+          .where(eq(contentEntries.id, data.entryId))
+          .limit(1);
+        resolvedAppId = entryRow?.applicationId ?? undefined;
+      }
+
       const insertPayload: Record<string, unknown> = {
         entryId: data.entryId,
         workflowId: data.workflowId,
@@ -779,8 +872,8 @@ export class WorkflowsRepository {
         actorType: data.actorType ?? 'user',
         actorUserId: data.actorUserId ?? null,
       };
-      if (applicationId) {
-        insertPayload.applicationId = applicationId;
+      if (resolvedAppId) {
+        insertPayload.applicationId = resolvedAppId;
       }
 
       const [record] = await this.db
@@ -795,6 +888,134 @@ export class WorkflowsRepository {
         'WorkflowsRepository Error in recordWorkflowHistory:',
       );
       throw new ApiError(500, REPO_ERRORS.RECORD_WORKFLOW_HISTORY_FAILED);
+    }
+  }
+
+  async hasUnapprovedDraftEdits(
+    entryId: string,
+    workflowStateUpdatedAt?: string | Date | null,
+    applicationId?: string,
+  ): Promise<boolean> {
+    try {
+      const conditions = [eq(entryLocalizations.entryId, entryId)];
+      if (applicationId) {
+        conditions.push(
+          sql`(${entryLocalizations.applicationId} = ${applicationId} OR ${entryLocalizations.applicationId} IS NULL)`,
+        );
+      }
+
+      const [loc] = await this.db
+        .select({
+          status: entryLocalizations.status,
+          updatedAt: entryLocalizations.updatedAt,
+        })
+        .from(entryLocalizations)
+        .where(and(...conditions))
+        .orderBy(desc(entryLocalizations.updatedAt))
+        .limit(1);
+
+      if (!loc || loc.status !== 'draft') {
+        return false;
+      }
+
+      if (!workflowStateUpdatedAt) {
+        return true;
+      }
+
+      return (
+        new Date(loc.updatedAt).getTime() >
+        new Date(workflowStateUpdatedAt).getTime()
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  async getEntryRejectionInfo(
+    entryId: string,
+    initialStageSlug: string = 'draft',
+    applicationId?: string,
+  ): Promise<{
+    hasRequestedChanges: boolean;
+    rejectionComment?: string | null;
+    rejectedAt?: Date | null;
+    hasDraftSavedSinceRejection: boolean;
+  }> {
+    try {
+      const conditions = [eq(workflowHistories.entryId, entryId)];
+      if (applicationId) {
+        conditions.push(
+          sql`(${workflowHistories.applicationId} = ${applicationId} OR ${workflowHistories.applicationId} IS NULL)`,
+        );
+      }
+
+      const [lastRejection] = await this.db
+        .select({
+          action: workflowHistories.action,
+          fromStage: workflowHistories.fromStage,
+          toStage: workflowHistories.toStage,
+          comment: workflowHistories.comment,
+          createdAt: workflowHistories.createdAt,
+        })
+        .from(workflowHistories)
+        .where(
+          and(
+            ...conditions,
+            eq(workflowHistories.toStage, initialStageSlug),
+            ne(workflowHistories.fromStage, initialStageSlug),
+            sql`(LOWER(${workflowHistories.action}) LIKE '%request%change%' OR LOWER(${workflowHistories.action}) LIKE '%reject%' OR LOWER(${workflowHistories.fromStage}) LIKE '%review%')`,
+            sql`LOWER(${workflowHistories.action}) NOT LIKE '%mode%'`,
+            sql`LOWER(${workflowHistories.action}) NOT LIKE '%publish%'`,
+            sql`COALESCE(LOWER(${workflowHistories.comment}), '') NOT LIKE '%review mode%'`,
+            sql`COALESCE(LOWER(${workflowHistories.comment}), '') NOT LIKE '%publishing mode%'`,
+          ),
+        )
+        .orderBy(desc(workflowHistories.createdAt))
+        .limit(1);
+
+      if (!lastRejection) {
+        return {
+          hasRequestedChanges: false,
+          hasDraftSavedSinceRejection: true,
+        };
+      }
+
+      const locConditions = [eq(entryLocalizations.entryId, entryId)];
+      if (applicationId) {
+        locConditions.push(
+          sql`(${entryLocalizations.applicationId} = ${applicationId} OR ${entryLocalizations.applicationId} IS NULL)`,
+        );
+      }
+
+      const [loc] = await this.db
+        .select({ updatedAt: entryLocalizations.updatedAt })
+        .from(entryLocalizations)
+        .where(and(...locConditions))
+        .orderBy(desc(entryLocalizations.updatedAt))
+        .limit(1);
+
+      const hasDraftSavedSinceRejection =
+        !!loc?.updatedAt &&
+        new Date(loc.updatedAt).getTime() >
+          new Date(lastRejection.createdAt).getTime();
+
+      return {
+        hasRequestedChanges: true,
+        rejectionComment: lastRejection.comment,
+        rejectedAt: lastRejection.createdAt
+          ? new Date(lastRejection.createdAt)
+          : null,
+        hasDraftSavedSinceRejection,
+      };
+    } catch (err) {
+      logger.error(
+        { err, entryId },
+        'WorkflowsRepository: getEntryRejectionInfo failed',
+      );
+      return {
+        hasRequestedChanges: false,
+        hasDraftSavedSinceRejection: true,
+      };
     }
   }
 
@@ -873,6 +1094,93 @@ export class WorkflowsRepository {
         'WorkflowsRepository Error in getEntryCreatorUserId:',
       );
       return null;
+    }
+  }
+
+  async getEntryWorkflowActors(
+    entryId: string,
+    applicationId?: string,
+  ): Promise<{
+    creator: { id: string; email?: string | null; name?: string | null } | null;
+    submitter: {
+      id: string;
+      email?: string | null;
+      name?: string | null;
+    } | null;
+  }> {
+    try {
+      logger.info({ entryId }, 'WorkflowsRepository: getEntryWorkflowActors');
+      const conditions = [eq(contentEntries.id, entryId)];
+      if (applicationId) {
+        conditions.push(eq(contentEntries.applicationId, applicationId));
+      }
+
+      const [entryRow] = await this.db
+        .select({
+          creatorId: contentEntries.createdByUserId,
+          creatorEmail: users.email,
+          creatorFirstName: users.firstName,
+          creatorLastName: users.lastName,
+        })
+        .from(contentEntries)
+        .leftJoin(users, eq(contentEntries.createdByUserId, users.id))
+        .where(and(...conditions))
+        .limit(1);
+
+      const historyConditions = [eq(workflowHistories.entryId, entryId)];
+      if (applicationId) {
+        historyConditions.push(
+          sql`(${workflowHistories.applicationId} = ${applicationId} OR ${workflowHistories.applicationId} IS NULL)`,
+        );
+      }
+
+      const [submitRow] = await this.db
+        .select({
+          submitterId: workflowHistories.actorUserId,
+          submitterEmail: users.email,
+          submitterFirstName: users.firstName,
+          submitterLastName: users.lastName,
+        })
+        .from(workflowHistories)
+        .leftJoin(users, eq(workflowHistories.actorUserId, users.id))
+        .where(
+          and(
+            ...historyConditions,
+            sql`(LOWER(${workflowHistories.action}) LIKE '%submit%' OR LOWER(${workflowHistories.toStage}) LIKE '%review%')`,
+            sql`LOWER(${workflowHistories.action}) NOT LIKE '%change%'`,
+            sql`LOWER(${workflowHistories.action}) NOT LIKE '%reject%'`,
+          ),
+        )
+        .orderBy(desc(workflowHistories.createdAt))
+        .limit(1);
+
+      const creator = entryRow?.creatorId
+        ? {
+            id: entryRow.creatorId,
+            email: entryRow.creatorEmail ?? null,
+            name: entryRow.creatorFirstName
+              ? `${entryRow.creatorFirstName}${entryRow.creatorLastName ? ` ${entryRow.creatorLastName}` : ''}`
+              : (entryRow.creatorEmail ?? null),
+          }
+        : null;
+
+      const submitter = submitRow?.submitterId
+        ? {
+            id: submitRow.submitterId,
+            email: submitRow.submitterEmail ?? null,
+            name: submitRow.submitterFirstName
+              ? `${submitRow.submitterFirstName}${submitRow.submitterLastName ? ` ${submitRow.submitterLastName}` : ''}`
+              : (submitRow.submitterEmail ?? null),
+          }
+        : creator;
+
+      return { creator, submitter };
+    } catch (error) {
+      logger.error(
+        { err: error, entryId },
+        'WorkflowsRepository Error in getEntryWorkflowActors:',
+      );
+      return { creator: null, submitter: null };
     }
   }
 
@@ -962,6 +1270,7 @@ export class WorkflowsRepository {
       const conditions = [
         isNull(contentEntries.deletedAt),
         sql`LOWER(${contentWorkflowStates.currentStage}) LIKE '%review%'`,
+        sql`(${contentWorkflowStates.requiresReview} = true OR ${contentWorkflowStates.requiresReview} IS NULL)`,
       ];
       if (applicationId) {
         conditions.push(
@@ -979,6 +1288,8 @@ export class WorkflowsRepository {
           workflowStages: workflows.stages,
           updatedAt: contentEntries.updatedAt,
           data: entryLocalizations.data,
+          creatorUserId: contentEntries.createdByUserId,
+          submitterUserId: contentWorkflowStates.updatedByUserId,
           user: {
             id: users.id,
             firstName: users.firstName,
@@ -1055,6 +1366,8 @@ export class WorkflowsRepository {
             : new Date().toISOString(),
           authorEmail: r.user?.email ?? null,
           authorName,
+          creatorUserId: r.creatorUserId ?? null,
+          submitterUserId: r.submitterUserId ?? null,
         };
       });
 

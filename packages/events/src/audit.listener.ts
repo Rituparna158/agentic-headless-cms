@@ -42,14 +42,14 @@ export function setupAuditListener() {
           // ignore cache error if Redis is unavailable
         }
       } catch (error) {
-        console.error(
-          JSON.stringify({
-            level: 'FATAL',
-            message: 'Async Audit Log Insertion Failed',
-            error: error instanceof Error ? error.message : String(error),
-            droppedPayload: payload,
-          }),
-        );
+        // Fallback for async audit event error handling without adding external logger dependency
+        const errObj = {
+          level: 'error',
+          message: 'Async Audit Log Insertion Failed',
+          error: error instanceof Error ? error.message : String(error),
+          droppedPayload: payload,
+        };
+        process.stderr.write(JSON.stringify(errObj) + '\n');
       }
     })();
   });

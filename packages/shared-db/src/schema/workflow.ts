@@ -72,6 +72,7 @@ export const contentWorkflowStates = pgTable(
       .notNull()
       .references(() => workflows.id, { onDelete: 'cascade' }),
     currentStage: varchar('current_stage', { length: 100 }).notNull(),
+    requiresReview: boolean('requires_review').notNull().default(true),
     applicationId: uuid('application_id')
       .notNull()
       .default(sql`current_setting('app.current_application_id', true)::uuid`)

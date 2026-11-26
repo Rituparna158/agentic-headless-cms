@@ -59,10 +59,10 @@ test('content entries can be deleted from the list and from the edit view', asyn
     .getByRole('row', { name: 'Delete From Edit View' })
     .getByRole('link', { name: 'Delete From Edit View' })
     .click();
-  await expect(
-    page.getByRole('button', { name: 'Delete', exact: true }),
-  ).toBeVisible({ timeout: 15_000 });
-  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  const moreActionsButton = page.getByRole('button', { name: 'More actions' });
+  await expect(moreActionsButton).toBeVisible({ timeout: 15_000 });
+  await moreActionsButton.click();
+  await page.getByRole('menuitem', { name: 'Delete' }).click();
   await expect(page.getByText('Delete Entry')).toBeVisible();
   await page
     .getByRole('button', { name: 'Delete', exact: true })

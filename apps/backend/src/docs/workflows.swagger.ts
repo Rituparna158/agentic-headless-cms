@@ -7,6 +7,28 @@
 
 /**
  * @swagger
+ * /workflows/pending-reviews:
+ *   get:
+ *     summary: List pending content reviews for the reviewer inbox
+ *     tags: [Workflows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Maximum number of pending items to return
+ *     responses:
+ *       200:
+ *         description: List of pending content items awaiting review
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
  * /workflows:
  *   get:
  *     summary: List all workflows

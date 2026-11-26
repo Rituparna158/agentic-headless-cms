@@ -36,6 +36,7 @@ const schema: SchemaRecord = {
   version: 1,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  createdBy: 'Alice Johnson',
 };
 
 function renderList() {
@@ -83,6 +84,7 @@ describe('SchemaList', () => {
     expect(screen.getByText(/collection/i)).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('Yes')).toBeInTheDocument();
+    expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
   });
 
   it('links each row to its edit page', async () => {

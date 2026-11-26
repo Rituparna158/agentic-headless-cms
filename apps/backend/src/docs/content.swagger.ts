@@ -496,3 +496,73 @@
  *       204:
  *         description: Entry deleted
  */
+
+/**
+ * @swagger
+ * /delivery/{appName}/{schemaSlug}:
+ *   get:
+ *     summary: Public delivery of published content for a public site
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: appName
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "blog-app"
+ *       - in: path
+ *         name: schemaSlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "articles"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Published content items
+ *       404:
+ *         description: Site not found or not public
+ */
+
+/**
+ * @swagger
+ * /delivery/{appName}/{schemaSlug}/submissions:
+ *   post:
+ *     summary: Public form submission or visitor message for a public site
+ *     tags: [Content]
+ *     parameters:
+ *       - in: path
+ *         name: appName
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "blog-app"
+ *       - in: path
+ *         name: schemaSlug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: "contact-form"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Submission received
+ *       400:
+ *         description: Invalid submission payload
+ *       404:
+ *         description: Site not found or not accepting submissions
+ */

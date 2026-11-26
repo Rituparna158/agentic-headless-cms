@@ -22,3 +22,25 @@ export interface WebhookRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+export type WebhookDeliveryStatus =
+  | 'delivered'
+  | 'pending_retry'
+  | 'failed'
+  | 'dlq';
+
+export interface WebhookDeliveryRecord {
+  id: string;
+  webhookId: string;
+  applicationId?: string;
+  eventType: string;
+  payload: unknown;
+  responseStatus: number | null;
+  attempt: number;
+  maxAttempts: number;
+  status: WebhookDeliveryStatus;
+  nextRetryAt?: string | null;
+  lastError?: string | null;
+  deliveredAt: string | null;
+  createdAt: string;
+}

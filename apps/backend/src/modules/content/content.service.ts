@@ -111,6 +111,7 @@ export class ContentService {
     locale: string = DEFAULT_LOCALE,
     applicationId?: string,
     userEmail?: string,
+    options?: { requiresReview?: boolean },
   ) {
     try {
       logger.info({ schemaId, userId }, 'ContentService: createDraft start');
@@ -129,6 +130,7 @@ export class ContentService {
           schemaId,
           userId,
           applicationId,
+          options?.requiresReview ?? true,
         );
       }
       logger.debug(
@@ -159,6 +161,9 @@ export class ContentService {
     userId: string,
     locale: string = DEFAULT_LOCALE,
     userEmail?: string,
+    applicationId?: string,
+    schemaId?: string,
+    options?: { requiresReview?: boolean },
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: updateDraft start');
@@ -183,14 +188,30 @@ export class ContentService {
       );
 
       // Auto-demotion guard: Reset in-review or approved entry back to initial stage on content edit
+      const targetSchemaId = schemaId || beforeState?.schemaId;
       if (
-        beforeState?.schemaId &&
+        targetSchemaId &&
         typeof this.workflowsService?.handleContentUpdated === 'function'
       ) {
         await this.workflowsService.handleContentUpdated(
           entryId,
-          beforeState.schemaId,
+          targetSchemaId,
           { id: userId, email: userEmail },
+          applicationId,
+        );
+      }
+
+      if (
+        targetSchemaId &&
+        typeof options?.requiresReview === 'boolean' &&
+        typeof this.workflowsService?.setEntryWorkflowMode === 'function'
+      ) {
+        await this.workflowsService.setEntryWorkflowMode(
+          entryId,
+          targetSchemaId,
+          options.requiresReview,
+          { id: userId },
+          applicationId,
         );
       }
       // Emit audit event
@@ -219,6 +240,8 @@ export class ContentService {
     userId: string,
     locale: string = DEFAULT_LOCALE,
     userEmail?: string,
+    applicationId?: string,
+    schemaId?: string,
   ) {
     try {
       logger.info({ entryId, userId }, 'ContentService: updatePartial start');
@@ -236,14 +259,16 @@ export class ContentService {
       );
 
       // Auto-demotion guard: Reset in-review or approved entry back to initial stage on content edit
+      const targetSchemaId = schemaId || beforeState?.schemaId;
       if (
-        beforeState?.schemaId &&
+        targetSchemaId &&
         typeof this.workflowsService?.handleContentUpdated === 'function'
       ) {
         await this.workflowsService.handleContentUpdated(
           entryId,
-          beforeState.schemaId,
+          targetSchemaId,
           { id: userId, email: userEmail },
+          applicationId,
         );
       }
       const { actorUserId, actorAgentId, context } = getAuditContext();
