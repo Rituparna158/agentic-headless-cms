@@ -5,12 +5,12 @@ export type { NavItem };
 
 export const sidebarNavConfig: NavItem[] = [
   {
-    title: 'All Websites',
+    title: 'Sites',
     href: '/',
     icon: Globe,
   },
   {
-    title: 'Central Media Bank',
+    title: 'Media',
     href: '/media',
     icon: ImageIcon,
     requiredCapability: 'manage_media',
