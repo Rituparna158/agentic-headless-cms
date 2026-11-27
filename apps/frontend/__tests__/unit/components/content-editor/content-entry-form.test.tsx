@@ -800,6 +800,47 @@ describe('ContentEntryForm', () => {
     expect(await screen.findByText('Awaiting Peer Review')).toBeInTheDocument();
   });
 
+  it('disables input fields and hides workflow transition buttons when user has read-only access', async () => {
+    mockUseHasPermission.mockImplementation(
+      (action: string) => action === 'read',
+    );
+    mockGetEntryWorkflowState.mockResolvedValue({
+      hasWorkflow: true,
+      workflow: { id: 'wf-1', name: 'Editorial' },
+      currentStage: {
+        id: 's1',
+        name: 'Draft',
+        slug: 'draft',
+        order: 0,
+      },
+      availableTransitions: [
+        {
+          id: 't-1',
+          name: 'Submit for Review',
+          fromStage: 'draft',
+          toStage: 'in_review',
+        },
+      ],
+      isFinal: false,
+    });
+
+    renderForm({
+      id: 'entry-readonly-1',
+      status: 'draft',
+      data: { title: 'Read-only article' },
+      publishedData: null,
+    });
+
+    expect(await screen.findByText('Read-Only')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Submit for Review/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /save draft/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/title/i)).toBeDisabled();
+  });
+
   it('enables direct publishing when entry is in Direct Publish mode (requiresReview: false)', async () => {
     mockGetEntryWorkflowState.mockResolvedValue({
       hasWorkflow: true,

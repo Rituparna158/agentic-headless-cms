@@ -7,6 +7,7 @@ import type {
 import { API_PATHS } from '@/lib/constants/api-paths';
 
 import { apiFetch } from '@/lib/api-client';
+import { useAuthStore } from '@/stores/auth-store';
 
 export interface FrontendListContentEntriesOptions extends ListContentEntriesOptions {
   status?: 'published' | 'draft' | 'all';
@@ -35,8 +36,26 @@ export function listContentEntries(
   schemaSlug: string,
   options: FrontendListContentEntriesOptions = {},
 ): Promise<ListContentEntriesResult> {
+  const currentUser = useAuthStore.getState().user;
+  const status = useAuthStore.getState().status;
+  const normalizedRoles = (currentUser?.roles || []).map((r) =>
+    r.toLowerCase().trim(),
+  );
+  const isExplicitViewer =
+    status === 'authenticated' &&
+    currentUser &&
+    !normalizedRoles.some((r) =>
+      ['admin', 'super_admin', 'editor', 'author'].includes(r),
+    ) &&
+    !currentUser.permissions?.some((p) =>
+      ['*', 'publish', 'publish_content', 'update', 'create'].includes(
+        p.action,
+      ),
+    );
+
+  const defaultStatus = isExplicitViewer ? 'published' : 'all';
   const optsWithStatus: FrontendListContentEntriesOptions = {
-    status: 'all',
+    status: defaultStatus,
     ...options,
   };
   const qs = buildQueryString(optsWithStatus);

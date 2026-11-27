@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { SchemaDefinition } from '@repo/types';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
+import { useAuthStore } from '@/stores/auth-store';
 
 const { mockListSchemas, mockListContentEntries } = vi.hoisted(() => ({
   mockListSchemas: vi.fn(),
@@ -43,6 +44,48 @@ function renderActivity() {
 describe('RecentActivity', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAuthStore.setState({
+      user: {
+        id: 'admin-1',
+        email: 'admin@example.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['admin'],
+        permissions: [{ action: '*', schemaId: null, effect: 'allow' }],
+      },
+      status: 'authenticated',
+    });
+  });
+
+  it('renders Audit log link for admin users', () => {
+    mockListSchemas.mockResolvedValue({ data: [], meta: { total: 0 } });
+    renderActivity();
+
+    const link = screen.getByRole('link', { name: /audit log/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/audit-log');
+  });
+
+  it('does not render Audit log link for non-admin users', () => {
+    mockListSchemas.mockResolvedValue({ data: [], meta: { total: 0 } });
+    useAuthStore.setState({
+      user: {
+        id: 'author-1',
+        email: 'author@example.com',
+        firstName: 'Author',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['author'],
+        permissions: [{ action: 'read', schemaId: null, effect: 'allow' }],
+      },
+      status: 'authenticated',
+    });
+    renderActivity();
+
+    expect(
+      screen.queryByRole('link', { name: /audit log/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows an empty state when there are no schemas/entries', async () => {

@@ -88,13 +88,6 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
     user?.roles?.some((role) =>
       ['admin', 'super_admin'].includes(role.toLowerCase()),
     ) || false;
-  const canCreate =
-    isAdmin ||
-    user?.permissions?.some(
-      (p) =>
-        (p.schemaId === null || p.schemaId === '*') &&
-        ['create', '*'].includes(p.action),
-    );
 
   const form = useForm<SchemaBuilderFieldValues, unknown, CreateSchemaInput>({
     resolver: zodResolver(createSchemaSchema),
@@ -330,7 +323,7 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
     toast.error('Please fix all validation errors before submitting.');
   }
 
-  if (!isEditing && !canCreate && status === 'authenticated') {
+  if (!isAdmin && status === 'authenticated') {
     return (
       <div className="flex flex-1 items-center justify-center p-6 bg-muted/10">
         <Card className="max-w-md text-center border-dashed p-4">
@@ -342,8 +335,9 @@ export function SchemaBuilderForm({ schema }: SchemaBuilderFormProps = {}) {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              You do not have permission to define or create content types. Only
-              administrators can build new schemas.
+              {isEditing
+                ? 'You do not have permission to edit content types. Only administrators can modify schemas.'
+                : 'You do not have permission to define or create content types. Only administrators can build new schemas.'}
             </p>
             <Button asChild variant="outline">
               <Link href="/content-types">Back to Content Types</Link>

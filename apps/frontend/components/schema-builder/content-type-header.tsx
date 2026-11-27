@@ -12,13 +12,7 @@ export function ContentTypeHeader() {
       ['admin', 'super_admin'].includes(role.toLowerCase()),
     ) || false;
 
-  const canCreate =
-    isAdmin ||
-    user?.permissions?.some(
-      (p) =>
-        (p.schemaId === null || p.schemaId === '*') &&
-        ['create', '*'].includes(p.action),
-    );
+  const canCreate = isAdmin;
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/50">

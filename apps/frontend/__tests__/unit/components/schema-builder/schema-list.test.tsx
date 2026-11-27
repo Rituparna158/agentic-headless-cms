@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SchemaList } from '@/components/schema-builder/schema-list';
+import { useAuthStore } from '@/stores/auth-store';
 
 const { mockListSchemas } = vi.hoisted(() => ({
   mockListSchemas: vi.fn(),
@@ -53,6 +54,18 @@ function renderList() {
 describe('SchemaList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAuthStore.setState({
+      user: {
+        id: 'admin-1',
+        email: 'admin@example.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['admin'],
+        permissions: [{ action: '*', schemaId: null, effect: 'allow' }],
+      },
+      status: 'authenticated',
+    });
   });
 
   it('shows an empty state when there are no schemas', async () => {
@@ -87,7 +100,7 @@ describe('SchemaList', () => {
     expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
   });
 
-  it('links each row to its edit page', async () => {
+  it('links each row to its edit page for admin users', async () => {
     mockListSchemas.mockResolvedValue({ data: [schema], meta: { total: 1 } });
     renderList();
 
@@ -95,5 +108,27 @@ describe('SchemaList', () => {
       name: /blog post/i,
     });
     expect(editLink).toHaveAttribute('href', '/content-types/blog-post/edit');
+  });
+
+  it('links row to content manager and displays View only for non-admin users', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'editor-1',
+        email: 'editor@example.com',
+        firstName: 'Editor',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['editor'],
+        permissions: [{ action: 'update', schemaId: null, effect: 'allow' }],
+      },
+      status: 'authenticated',
+    });
+
+    mockListSchemas.mockResolvedValue({ data: [schema], meta: { total: 1 } });
+    renderList();
+
+    const link = await screen.findByRole('link', { name: /blog post/i });
+    expect(link).toHaveAttribute('href', '/content?type=blog-post');
+    expect(screen.getByText('View only')).toBeInTheDocument();
   });
 });

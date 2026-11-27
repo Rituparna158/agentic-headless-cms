@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { FileText, PlusIcon } from 'lucide-react';
 import { useSchemaBySlug } from '@/lib/hooks/use-schema-by-slug';
+import { useHasPermission } from '@/hooks/use-permissions';
 import { Breadcrumbs, Button } from '@repo/shared-ui';
 import { ContentEntryList } from './content-entry-list';
 
 export function SchemaEntryListView({ schemaSlug }: { schemaSlug: string }) {
   const { schema, isLoading, isError } = useSchemaBySlug(schemaSlug);
+  const canCreate = useHasPermission('create', schema?.id);
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">Loading…</p>;
@@ -44,12 +46,14 @@ export function SchemaEntryListView({ schemaSlug }: { schemaSlug: string }) {
             Manage and publish entries for {schema.name}.
           </p>
         </div>
-        <Button asChild size="sm" className="shrink-0 w-fit">
-          <Link href={`/content/${schema.slug}/new`}>
-            <PlusIcon className="size-4 mr-1.5" />
-            New Entry
-          </Link>
-        </Button>
+        {canCreate && (
+          <Button asChild size="sm" className="shrink-0 w-fit">
+            <Link href={`/content/${schema.slug}/new`}>
+              <PlusIcon className="size-4 mr-1.5" />
+              New Entry
+            </Link>
+          </Button>
+        )}
       </div>
 
       <ContentEntryList schema={schema} />

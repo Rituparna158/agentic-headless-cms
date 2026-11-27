@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContentEntriesView } from '@/components/content-editor/content-entries-view';
+import { useAuthStore } from '@/stores/auth-store';
 
 const mockPush = vi.fn();
 const mockSearchParamsGet = vi.fn();
@@ -98,6 +99,7 @@ function renderView() {
 describe('ContentEntriesView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAuthStore.setState({ user: null, status: 'idle' });
     mockSearchParamsGet.mockReturnValue(null);
     mockListContentEntries.mockResolvedValue({
       data: [],
@@ -111,7 +113,19 @@ describe('ContentEntriesView', () => {
     expect(screen.getByText(/loading content entries/i)).toBeInTheDocument();
   });
 
-  it('renders empty state when no content types exist', async () => {
+  it('renders empty state when no content types exist (admin can create)', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'admin-1',
+        email: 'admin@example.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['admin'],
+        permissions: [{ action: '*', schemaId: null, effect: 'allow' }],
+      },
+      status: 'authenticated',
+    });
     mockListSchemas.mockResolvedValue({ data: [] });
     renderView();
     await waitFor(() => {
@@ -119,6 +133,34 @@ describe('ContentEntriesView', () => {
     });
     expect(
       screen.getByRole('link', { name: /create type/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders empty state notice for non-admin when no content types exist', async () => {
+    useAuthStore.setState({
+      user: {
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+        firstName: 'Viewer',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['viewer'],
+        permissions: [],
+      },
+      status: 'authenticated',
+    });
+    mockListSchemas.mockResolvedValue({ data: [] });
+    renderView();
+    await waitFor(() => {
+      expect(screen.getByText('No content types defined')).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole('link', { name: /create type/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /please contact an administrator to define content types/i,
+      ),
     ).toBeInTheDocument();
   });
 

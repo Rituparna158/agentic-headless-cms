@@ -34,6 +34,7 @@ import {
   History,
   Languages,
   Loader2,
+  Lock,
   MoreVertical,
   Settings2,
   ShieldCheck,
@@ -62,7 +63,7 @@ import {
   transitionEntry,
   updateEntryWorkflowMode,
 } from '@/lib/api/workflows';
-import type { WorkflowTransition } from '@repo/types';
+import type { WorkflowTransition, PendingReviewsResult } from '@repo/types';
 import type { ContentEntryFormProps } from '@/types/component.types';
 import { useHasPermission } from '@/hooks/use-permissions';
 import { useAuthStore } from '@/stores/auth-store';
@@ -592,6 +593,24 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
       queryClient.invalidateQueries({
         queryKey: ['entry-workflow-history', schema.slug, entry?.id],
       });
+      queryClient.setQueryData<PendingReviewsResult>(
+        ['workflows', 'pending-reviews'],
+        (old) => {
+          if (!old || !entry?.id) return old;
+          const isStillInReview = (newState.currentStage?.slug || '')
+            .toLowerCase()
+            .includes('review');
+          if (isStillInReview) return old;
+          return {
+            ...old,
+            total: Math.max(0, old.total - 1),
+            items: old.items.filter((item) => item.entryId !== entry.id),
+          };
+        },
+      );
+      queryClient.invalidateQueries({
+        queryKey: ['workflows', 'pending-reviews'],
+      });
       setIsTransitionModalOpen(false);
       setPendingTransition(null);
 
@@ -820,7 +839,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
             </Dropdown>
 
             {/* Auto-Translate Action (visible when in secondary locale) */}
-            {selectedLocale !== defaultLocale && (
+            {selectedLocale !== defaultLocale && canEdit && (
               <div className="flex items-center gap-1">
                 <Button
                   type="button"
@@ -1132,6 +1151,7 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
               !isViewingHistorical &&
               workflowState?.hasWorkflow &&
               workflowState.requiresReview !== false &&
+              canEdit &&
               !isLockedForNonAuthor &&
               workflowState.availableTransitions?.map((trans) => {
                 const isReviewTransition =
@@ -1349,10 +1369,21 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
           </div>
         )}
 
+        {/* Read-Only Notice Banner */}
+        {entry && !canEdit && !isViewingHistorical && !isLockedForNonAuthor && (
+          <div className="flex items-center gap-2 p-3 rounded-lg border border-border/70 bg-muted/30 text-muted-foreground text-xs">
+            <Lock className="size-3.5 text-muted-foreground shrink-0" />
+            <span>
+              You are viewing this entry in read-only mode. Content cannot be
+              edited or submitted.
+            </span>
+          </div>
+        )}
+
         {/* Dynamic Fields taking full width */}
         <fieldset
-          disabled={isViewingHistorical || isLockedForNonAuthor}
-          className="grid gap-5 w-full border-none p-0 m-0 disabled:opacity-85"
+          disabled={isViewingHistorical || isLockedForNonAuthor || !canEdit}
+          className="grid gap-5 w-full border-none p-0 m-0 disabled:opacity-100 [&_input:disabled]:opacity-100 [&_input:disabled]:text-foreground [&_textarea:disabled]:opacity-100 [&_textarea:disabled]:text-foreground [&_input:disabled]:bg-muted/30 [&_textarea:disabled]:bg-muted/30 [&_input:disabled]:cursor-default [&_textarea:disabled]:cursor-default [&_input:disabled]:border-border/70 [&_textarea:disabled]:border-border/70"
         >
           {isLocalizedLoading ? (
             <div
@@ -1369,7 +1400,9 @@ export function ContentEntryForm({ schema, entry }: ContentEntryFormProps) {
                 key={field.apiId}
                 field={field}
                 control={form.control}
-                disabled={isViewingHistorical || isLockedForNonAuthor}
+                disabled={
+                  isViewingHistorical || isLockedForNonAuthor || !canEdit
+                }
               />
             ))
           )}
