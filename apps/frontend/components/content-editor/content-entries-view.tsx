@@ -97,12 +97,18 @@ export function ContentEntriesView() {
                 Create a Content Type first before managing content entries.
               </p>
             </div>
-            <Button asChild>
-              <Link href="/content-types/new">
-                <PlusIcon className="size-4 mr-2" />
-                Create Type
-              </Link>
-            </Button>
+            {isAdmin ? (
+              <Button asChild>
+                <Link href="/content-types/new">
+                  <PlusIcon className="size-4 mr-2" />
+                  Create Type
+                </Link>
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                Please contact an administrator to define content types.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

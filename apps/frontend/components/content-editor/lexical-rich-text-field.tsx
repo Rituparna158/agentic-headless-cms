@@ -311,25 +311,23 @@ export function LexicalRichTextField({
   'aria-describedby': ariaDescribedBy,
   'aria-invalid': ariaInvalid,
 }: LexicalRichTextFieldProps) {
-  const getInitialEditorState = React.useCallback(
-    (editor: LexicalEditor) => {
-      if (!value || !value.trim()) return;
-      try {
-        const parsed = editor.parseEditorState(value);
-        editor.setEditorState(parsed);
-      } catch {
-        editor.update(() => {
-          const root = $getRoot();
-          root.clear();
-          const p = $createParagraphNode();
-          p.append($createTextNode(value));
-          root.append(p);
-        });
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
+  const initialValueRef = React.useRef(value);
+  const getInitialEditorState = React.useCallback((editor: LexicalEditor) => {
+    const initial = initialValueRef.current;
+    if (!initial || !initial.trim()) return;
+    try {
+      const parsed = editor.parseEditorState(initial);
+      editor.setEditorState(parsed);
+    } catch {
+      editor.update(() => {
+        const root = $getRoot();
+        root.clear();
+        const p = $createParagraphNode();
+        p.append($createTextNode(initial));
+        root.append(p);
+      });
+    }
+  }, []);
 
   return (
     <LexicalComposer
@@ -346,7 +344,7 @@ export function LexicalRichTextField({
         className={cn(
           'rounded-md border bg-background overflow-hidden w-full min-w-0',
           disabled &&
-            'opacity-60 pointer-events-none cursor-not-allowed select-none',
+            'bg-muted/20 border-border/70 text-foreground cursor-default select-text',
         )}
       >
         <Toolbar disabled={disabled} />

@@ -27,20 +27,12 @@ export function RecentActivity() {
               Chronological feed of latest content changes and updates.
             </p>
           </div>
-          {isAdmin ? (
+          {isAdmin && (
             <Link
               href="/audit-log"
               className="text-xs font-medium text-primary hover:underline flex items-center gap-1 transition-colors shrink-0"
             >
               <span>Audit log</span>
-              <ArrowRight className="size-3" />
-            </Link>
-          ) : (
-            <Link
-              href="/content"
-              className="text-xs font-medium text-primary hover:underline flex items-center gap-1 transition-colors shrink-0"
-            >
-              <span>View content</span>
               <ArrowRight className="size-3" />
             </Link>
           )}

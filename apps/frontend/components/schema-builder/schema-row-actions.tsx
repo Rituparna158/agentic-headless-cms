@@ -8,15 +8,21 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Modal, Dropdown, DropdownItem } from '@repo/shared-ui';
 import { deleteSchema } from '@/lib/api/schemas';
 import type { SchemaRecord } from '@repo/types';
-import { useHasPermission } from '@/hooks/use-permissions';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function SchemaRowActions({ schema }: { schema: SchemaRecord }) {
   const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showForceDeleteDialog, setShowForceDeleteDialog] = useState(false);
 
-  const canDelete = useHasPermission('delete', schema.id);
-  const canUpdate = useHasPermission('update', schema.id);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin =
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin'].includes(role.toLowerCase()),
+    ) || false;
+
+  const canDelete = isAdmin;
+  const canUpdate = isAdmin;
 
   const deleteMutation = useMutation({
     mutationFn: ({ id, force }: { id: string; force: boolean }) =>

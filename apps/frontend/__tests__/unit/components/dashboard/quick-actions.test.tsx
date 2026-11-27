@@ -19,13 +19,12 @@ describe('QuickActions', () => {
     });
   });
 
-  it('routes each action to its correct creation screen for admin users', () => {
+  it('routes each action to its correct screen for admin users', () => {
     render(<QuickActions />);
 
-    expect(screen.getByRole('link', { name: '+ New Entry' })).toHaveAttribute(
-      'href',
-      '/content',
-    );
+    expect(
+      screen.getByRole('link', { name: 'Manage Content' }),
+    ).toHaveAttribute('href', '/content');
     expect(
       screen.getByRole('link', { name: '+ New Content Type' }),
     ).toHaveAttribute('href', '/content-types/new');
@@ -54,13 +53,42 @@ describe('QuickActions', () => {
     render(<QuickActions />);
 
     expect(
-      screen.getByRole('link', { name: '+ New Entry' }),
+      screen.getByRole('link', { name: 'Manage Content' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Upload Media' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: '+ New Content Type' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides both + New Content Type and Upload Media for viewer role without write permissions', () => {
+    useAuthStore.setState({
+      user: {
+        id: 'viewer-1',
+        email: 'viewer@example.com',
+        firstName: 'Viewer',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['viewer'],
+        permissions: [
+          { action: 'read', schemaId: 'some-schema', effect: 'allow' },
+        ],
+      },
+      status: 'authenticated',
+    });
+
+    render(<QuickActions />);
+
+    expect(
+      screen.getByRole('link', { name: 'Manage Content' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: '+ New Content Type' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Upload Media' }),
     ).not.toBeInTheDocument();
   });
 });

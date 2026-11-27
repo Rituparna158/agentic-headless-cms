@@ -152,7 +152,7 @@ export function SidebarNav({
     queryFn: () => getPendingReviews(50),
     enabled: canReview,
     refetchInterval: 30000,
-    staleTime: 10000,
+    staleTime: 0,
   });
 
   const pendingApprovalsCount = useMemo(() => {

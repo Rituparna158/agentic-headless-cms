@@ -19,7 +19,7 @@ import {
 import { toast } from 'sonner';
 import { getPendingReviews, transitionEntry } from '@/lib/api/workflows';
 import { useAuthStore } from '@/stores/auth-store';
-import type { PendingReviewItem } from '@repo/types';
+import type { PendingReviewItem, PendingReviewsResult } from '@repo/types';
 import {
   AdvancedTable,
   Badge,
@@ -84,6 +84,7 @@ export default function ApprovalsPage() {
     queryFn: () => getPendingReviews(50),
     enabled: canReview,
     refetchInterval: 30000,
+    staleTime: 0,
   });
 
   // Exclude entries authored or submitted by the current user (action-only inbox)
@@ -122,21 +123,43 @@ export default function ApprovalsPage() {
 
   const handleQuickApprove = useCallback(
     async (item: PendingReviewItem) => {
+      const previousData = queryClient.getQueryData<PendingReviewsResult>([
+        'workflows',
+        'pending-reviews',
+      ]);
+      queryClient.setQueryData<PendingReviewsResult>(
+        ['workflows', 'pending-reviews'],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            total: Math.max(0, old.total - 1),
+            items: old.items.filter((i) => i.entryId !== item.entryId),
+          };
+        },
+      );
+
       try {
         setApprovingId(item.entryId);
         await transitionEntry(item.schemaSlug, item.entryId, {
           toStage: 'approved',
         });
         toast.success(`"${item.title}" approved successfully`);
-        await queryClient.invalidateQueries({
-          queryKey: ['workflows', 'pending-reviews'],
-        });
       } catch (err: unknown) {
+        if (previousData) {
+          queryClient.setQueryData(
+            ['workflows', 'pending-reviews'],
+            previousData,
+          );
+        }
         const message =
           err instanceof Error ? err.message : 'Failed to approve item';
         toast.error(message);
       } finally {
         setApprovingId(null);
+        await queryClient.invalidateQueries({
+          queryKey: ['workflows', 'pending-reviews'],
+        });
       }
     },
     [queryClient],
@@ -144,28 +167,47 @@ export default function ApprovalsPage() {
 
   const handleConfirmRequestChanges = async () => {
     if (!requestChangesItem) return;
+    const item = requestChangesItem;
+    const previousData = queryClient.getQueryData<PendingReviewsResult>([
+      'workflows',
+      'pending-reviews',
+    ]);
+    queryClient.setQueryData<PendingReviewsResult>(
+      ['workflows', 'pending-reviews'],
+      (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          total: Math.max(0, old.total - 1),
+          items: old.items.filter((i) => i.entryId !== item.entryId),
+        };
+      },
+    );
+
     try {
       setIsSubmittingChanges(true);
-      await transitionEntry(
-        requestChangesItem.schemaSlug,
-        requestChangesItem.entryId,
-        {
-          toStage: 'draft',
-          comment: changeComment.trim() || 'Changes requested during review.',
-        },
-      );
-      toast.success(`Changes requested for "${requestChangesItem.title}"`);
+      await transitionEntry(item.schemaSlug, item.entryId, {
+        toStage: 'draft',
+        comment: changeComment.trim() || 'Changes requested during review.',
+      });
+      toast.success(`Changes requested for "${item.title}"`);
       setRequestChangesItem(null);
       setChangeComment('');
-      await queryClient.invalidateQueries({
-        queryKey: ['workflows', 'pending-reviews'],
-      });
     } catch (err: unknown) {
+      if (previousData) {
+        queryClient.setQueryData(
+          ['workflows', 'pending-reviews'],
+          previousData,
+        );
+      }
       const message =
         err instanceof Error ? err.message : 'Failed to request changes';
       toast.error(message);
     } finally {
       setIsSubmittingChanges(false);
+      await queryClient.invalidateQueries({
+        queryKey: ['workflows', 'pending-reviews'],
+      });
     }
   };
 

@@ -67,7 +67,7 @@ describe('RecentActivity', () => {
     expect(link).toHaveAttribute('href', '/audit-log');
   });
 
-  it('renders View content link for non-admin users', () => {
+  it('does not render Audit log link for non-admin users', () => {
     mockListSchemas.mockResolvedValue({ data: [], meta: { total: 0 } });
     useAuthStore.setState({
       user: {
@@ -83,9 +83,6 @@ describe('RecentActivity', () => {
     });
     renderActivity();
 
-    const link = screen.getByRole('link', { name: /view content/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/content');
     expect(
       screen.queryByRole('link', { name: /audit log/i }),
     ).not.toBeInTheDocument();

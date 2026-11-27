@@ -7,8 +7,15 @@ import { Boxes, PlusIcon } from 'lucide-react';
 import { listSchemas } from '@/lib/api/schemas';
 import { Badge, Button, Card, CardContent, DataTable } from '@repo/shared-ui';
 import { SchemaRowActions } from './schema-row-actions';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function SchemaList() {
+  const user = useAuthStore((state) => state.user);
+  const isAdmin =
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin'].includes(role.toLowerCase()),
+    ) || false;
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort] = useState('createdAt:desc');
@@ -62,12 +69,18 @@ export function SchemaList() {
             Content types define the fields, validation rules, and schema for
             your published entries.
           </p>
-          <Button asChild size="sm">
-            <Link href="/content-types/new">
-              <PlusIcon className="size-4 mr-1.5" />
-              Create Content Type
-            </Link>
-          </Button>
+          {isAdmin ? (
+            <Button asChild size="sm">
+              <Link href="/content-types/new">
+                <PlusIcon className="size-4 mr-1.5" />
+                Create Content Type
+              </Link>
+            </Button>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">
+              Please contact an administrator to define new content types.
+            </p>
+          )}
         </CardContent>
       </Card>
     );
@@ -90,11 +103,20 @@ export function SchemaList() {
             (field) => field.isLocalized,
           );
           return {
-            name: (
+            name: isAdmin ? (
               <Link
                 href={`/content-types/${schema.slug}/edit`}
                 className="font-medium text-foreground hover:text-primary no-underline transition-colors cursor-pointer flex items-center gap-2"
                 title="Click to edit content type"
+              >
+                <Boxes className="size-4 text-muted-foreground shrink-0" />
+                <span>{schema.name}</span>
+              </Link>
+            ) : (
+              <Link
+                href={`/content?type=${schema.slug}`}
+                className="font-medium text-foreground hover:text-primary no-underline transition-colors cursor-pointer flex items-center gap-2"
+                title="View content entries"
               >
                 <Boxes className="size-4 text-muted-foreground shrink-0" />
                 <span>{schema.name}</span>

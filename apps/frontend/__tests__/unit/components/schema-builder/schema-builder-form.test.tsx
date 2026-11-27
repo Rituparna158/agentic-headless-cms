@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SchemaBuilderForm } from '@/components/schema-builder/schema-builder-form';
+import { useAuthStore } from '@/stores/auth-store';
 
 const { mockPush, mockCreateSchema, mockUpdateSchema, mockToastError } =
   vi.hoisted(() => ({
@@ -45,6 +46,7 @@ function renderForm(schema?: SchemaRecord) {
 describe('SchemaBuilderForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAuthStore.setState({ user: null, status: 'idle' });
   });
 
   it('renders empty fields state initially and opens drawer when Add Field is clicked', async () => {
@@ -384,5 +386,51 @@ describe('SchemaBuilderForm', () => {
         );
       });
     });
+
+    it('renders Permission Denied when an authenticated non-admin attempts to edit a schema', () => {
+      useAuthStore.setState({
+        user: {
+          id: 'editor-1',
+          email: 'editor@example.com',
+          firstName: 'Editor',
+          lastName: 'User',
+          mfaEnabled: false,
+          roles: ['editor'],
+          permissions: [{ action: 'update', schemaId: null, effect: 'allow' }],
+        },
+        status: 'authenticated',
+      });
+
+      renderForm(existingSchema);
+
+      expect(screen.getByText('Permission Denied')).toBeInTheDocument();
+      expect(
+        screen.getByText(/you do not have permission to edit content types/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('renders Permission Denied when an authenticated non-admin attempts to create a schema', () => {
+    useAuthStore.setState({
+      user: {
+        id: 'editor-1',
+        email: 'editor@example.com',
+        firstName: 'Editor',
+        lastName: 'User',
+        mfaEnabled: false,
+        roles: ['editor'],
+        permissions: [{ action: 'create', schemaId: null, effect: 'allow' }],
+      },
+      status: 'authenticated',
+    });
+
+    renderForm();
+
+    expect(screen.getByText('Permission Denied')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /you do not have permission to define or create content types/i,
+      ),
+    ).toBeInTheDocument();
   });
 });

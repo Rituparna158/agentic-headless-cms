@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@repo/shared-ui';
 import {
@@ -10,40 +11,56 @@ import {
   Shield,
   ExternalLink,
 } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function DashboardResources() {
-  const resources = [
-    {
-      title: 'Content Manager',
-      description: 'Manage localized entries and drafts',
-      href: '/content',
-      icon: FileText,
-    },
-    {
-      title: 'Content Type Builder',
-      description: 'Design schemas and relation models',
-      href: '/content-types',
-      icon: Layers,
-    },
-    {
-      title: 'Media Library',
-      description: 'Upload and organize media assets',
-      href: '/media',
-      icon: ImageIcon,
-    },
-    {
-      title: 'Webhooks & Events',
-      description: 'Configure real-time event triggers',
-      href: '/webhooks',
-      icon: Webhook,
-    },
-    {
-      title: 'Roles & Permissions',
-      description: 'Control access policies and tokens',
-      href: '/roles-access',
-      icon: Shield,
-    },
-  ];
+  const user = useAuthStore((state) => state.user);
+  const isAdmin =
+    user?.roles?.some((role) =>
+      ['admin', 'super_admin'].includes(role.toLowerCase()),
+    ) || false;
+
+  const resources = useMemo(() => {
+    const list = [
+      {
+        title: 'Content Manager',
+        description: 'Manage localized entries and drafts',
+        href: '/content',
+        icon: FileText,
+      },
+      {
+        title: 'Content Type Builder',
+        description: 'Design schemas and relation models',
+        href: '/content-types',
+        icon: Layers,
+      },
+      {
+        title: 'Media Library',
+        description: 'Upload and organize media assets',
+        href: '/media',
+        icon: ImageIcon,
+      },
+    ];
+
+    if (isAdmin) {
+      list.push(
+        {
+          title: 'Webhooks & Events',
+          description: 'Configure real-time event triggers',
+          href: '/webhooks',
+          icon: Webhook,
+        },
+        {
+          title: 'Roles & Permissions',
+          description: 'Control access policies and tokens',
+          href: '/roles-access',
+          icon: Shield,
+        },
+      );
+    }
+
+    return list;
+  }, [isAdmin]);
 
   return (
     <div className="space-y-4 w-full min-w-0 max-w-full">
