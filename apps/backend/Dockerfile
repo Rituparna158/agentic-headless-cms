@@ -9,8 +9,7 @@
 # so the build context has to be the repo root, not apps/backend/.
 
 FROM node:24-alpine AS base
-RUN apk add --no-cache libc6-compat
-RUN corepack enable
+RUN apk add --no-cache libc6-compat && corepack enable
 
 # ---- Prune ----
 # `turbo prune` extracts only what this one app actually needs — its own
@@ -30,7 +29,7 @@ RUN npx turbo prune backend --docker
 FROM base AS installer
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
 # ---- Build ----
 FROM base AS builder
@@ -67,9 +66,8 @@ RUN mkdir -p /app/deploy/libvips && \
 
 # ---- Runtime ----
 FROM node:24-alpine AS runner
-RUN apk add --no-cache libc6-compat
-# Strip unused package managers (npm, yarn, corepack) from production runner
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+RUN apk add --no-cache libc6-compat && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /var/cache/apk/*
 
 COPY --from=builder /app/deploy/libvips/ /usr/lib/
 ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
@@ -92,7 +90,7 @@ ENV NODE_ENV=production
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/v1/health/live || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health/live || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "dist/server.js"]
