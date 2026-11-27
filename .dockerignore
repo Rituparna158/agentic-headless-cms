@@ -11,3 +11,11 @@
 **/.env
 **/.env.local
 !**/.env.example
+**/__tests__
+**/tests
+playwright-report
+test-results
+docs/
+.vscode
+.idea
+*.log

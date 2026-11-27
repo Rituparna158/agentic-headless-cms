@@ -4,8 +4,7 @@
 #   docker build -f apps/worker/Dockerfile -t agentic-cms-worker .
 #
 FROM node:24-alpine AS base
-RUN apk add --no-cache libc6-compat
-RUN corepack enable
+RUN apk add --no-cache libc6-compat && corepack enable
 
 # ---- Prune ----
 FROM base AS pruner
@@ -17,7 +16,7 @@ RUN npx turbo prune worker --docker
 FROM base AS installer
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
 # ---- Build ----
 FROM base AS builder
@@ -40,9 +39,8 @@ RUN mkdir -p /app/deploy/libvips && \
 
 # ---- Runtime ----
 FROM node:24-alpine AS runner
-RUN apk add --no-cache libc6-compat
-# Strip unused package managers (npm, yarn, corepack) from production runner
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+RUN apk add --no-cache libc6-compat && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /var/cache/apk/*
 
 COPY --from=builder /app/deploy/libvips/ /usr/lib/
 ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
