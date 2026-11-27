@@ -40,6 +40,26 @@ export function ContentEntryRowActions({
     },
   });
 
+  if (!canDelete) {
+    return (
+      <Button
+        asChild
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        title="Edit entry"
+      >
+        <Link
+          href={`/content/${schemaSlug}/${entryId}`}
+          className="flex items-center justify-center w-full h-full cursor-pointer"
+        >
+          <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          <span className="sr-only">Edit entry</span>
+        </Link>
+      </Button>
+    );
+  }
+
   return (
     <>
       <Dropdown
@@ -63,12 +83,7 @@ export function ContentEntryRowActions({
 
         <DropdownItem
           className="text-destructive focus:text-destructive cursor-pointer"
-          onSelect={(e: Event) => {
-            if (canDelete) setShowDeleteDialog(true);
-            else e.preventDefault();
-          }}
-          disabled={!canDelete}
-          title={!canDelete ? 'You do not have permission to delete.' : ''}
+          onSelect={() => setShowDeleteDialog(true)}
         >
           <div className="flex items-center">
             <Trash2 className="mr-2 h-4 w-4" />

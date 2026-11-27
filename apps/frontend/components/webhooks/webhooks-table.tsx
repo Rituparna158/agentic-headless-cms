@@ -275,27 +275,7 @@ export function WebhooksTable() {
                 </Badge>
               ),
               actions: (
-                <div className="flex items-center justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hidden sm:inline-flex"
-                    onClick={() => setSelectedWebhookForDeliveries(webhook)}
-                    title="Delivery History"
-                    aria-label="Delivery History"
-                  >
-                    <History className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => setPendingDelete(webhook)}
-                    title="Delete Webhook"
-                    aria-label="Delete Webhook"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div className="flex items-center justify-end">
                   <Dropdown
                     align="end"
                     trigger={
@@ -304,6 +284,7 @@ export function WebhooksTable() {
                         size="sm"
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                         title="Actions"
+                        aria-label="Open menu"
                       >
                         <span className="sr-only">Open menu</span>
                         <MoreVertical className="h-4 w-4" />

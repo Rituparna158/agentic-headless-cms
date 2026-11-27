@@ -8,6 +8,8 @@ import type {
   CreateWorkflowInput,
   UpdateWorkflowInput,
   WorkflowRecord,
+  ContentWorkflowStateRecord,
+  WorkflowHistoryRecord,
 } from '@repo/types';
 
 vi.mock('@repo/repository');
@@ -91,6 +93,31 @@ describe('WorkflowsService', () => {
     assignedSchemaIds: ['schema-1'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+  };
+
+  const mockStateRecord: ContentWorkflowStateRecord = {
+    id: 'st-1',
+    entryId: 'entry-1',
+    workflowId: 'wf-multi',
+    currentStage: 'in-review',
+    applicationId: 'app-1',
+    updatedByUserId: 'user-1',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const mockHistoryRecord: WorkflowHistoryRecord = {
+    id: 'h-1',
+    entryId: 'entry-1',
+    workflowId: 'wf-multi',
+    fromStage: 'draft',
+    toStage: 'in-review',
+    action: 'Submit for Review',
+    comment: null,
+    actorType: 'user',
+    actorUserId: 'user-1',
+    applicationId: 'app-1',
+    createdAt: new Date().toISOString(),
   };
 
   beforeEach(() => {
@@ -423,8 +450,10 @@ describe('WorkflowsService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      mockRepository.upsertEntryWorkflowState.mockResolvedValue({} as any);
-      mockRepository.recordWorkflowHistory.mockResolvedValue({} as any);
+      mockRepository.upsertEntryWorkflowState.mockResolvedValue(
+        mockStateRecord,
+      );
+      mockRepository.recordWorkflowHistory.mockResolvedValue(mockHistoryRecord);
 
       const updatedState = await workflowsService.transitionEntry(
         'entry-1',
@@ -703,6 +732,68 @@ describe('WorkflowsService', () => {
       ).rejects.toThrow(
         'You cannot approve your own submission; another editor must review it',
       );
+
+      expect(mockRepository.recordWorkflowHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'Approval Denied (Self-Approval)',
+          actorUserId: 'user-author',
+        }),
+        'app-1',
+      );
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        EVENT_NAMES.AUDIT_LOG,
+        expect.objectContaining({
+          action: AUDIT_ACTIONS.UPDATE,
+          resourceType: 'workflow_transition',
+          actorUserId: 'user-author',
+        }),
+      );
+    });
+
+    it('should log denied attempt in history when user lacks required role', async () => {
+      mockRepository.getWorkflowBySchemaId.mockResolvedValue(
+        multiStageWorkflow,
+      );
+      mockRepository.getEntryWorkflowState.mockResolvedValue({
+        id: 'st-1',
+        entryId: 'entry-1',
+        workflowId: 'wf-multi',
+        currentStage: 'in-review',
+        applicationId: 'app-1',
+        updatedByUserId: 'user-other',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      mockRepository.getEntryCreatorUserId.mockResolvedValue('user-other');
+
+      // User has only 'viewer' role, but 'Approve' transition requires 'admin' or 'editor'
+      await expect(
+        workflowsService.transitionEntry(
+          'entry-1',
+          'schema-1',
+          { toStage: 'approved' },
+          { id: 'user-viewer', roles: ['viewer'] },
+          'app-1',
+        ),
+      ).rejects.toThrow(
+        'You do not have permission to execute this workflow transition',
+      );
+
+      expect(mockRepository.recordWorkflowHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'Transition Denied (Unauthorized Role)',
+          actorUserId: 'user-viewer',
+        }),
+        'app-1',
+      );
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        EVENT_NAMES.AUDIT_LOG,
+        expect.objectContaining({
+          action: AUDIT_ACTIONS.UPDATE,
+          resourceType: 'workflow_transition',
+          actorUserId: 'user-viewer',
+        }),
+      );
     });
 
     it('should hide approval and review transitions from creator in availableTransitions', async () => {
@@ -776,8 +867,10 @@ describe('WorkflowsService', () => {
         updatedAt: new Date().toISOString(),
       });
       mockRepository.getEntryCreatorUserId.mockResolvedValue('user-author');
-      mockRepository.upsertEntryWorkflowState.mockResolvedValue({} as any);
-      mockRepository.recordWorkflowHistory.mockResolvedValue({} as any);
+      mockRepository.upsertEntryWorkflowState.mockResolvedValue(
+        mockStateRecord,
+      );
+      mockRepository.recordWorkflowHistory.mockResolvedValue(mockHistoryRecord);
 
       // 'user-editor' is a different user
       const result = await workflowsService.transitionEntry(
@@ -854,8 +947,10 @@ describe('WorkflowsService', () => {
         updatedAt: new Date().toISOString(),
       });
       mockRepository.getEntryCreatorUserId.mockResolvedValue('user-admin');
-      mockRepository.upsertEntryWorkflowState.mockResolvedValue({} as any);
-      mockRepository.recordWorkflowHistory.mockResolvedValue({} as any);
+      mockRepository.upsertEntryWorkflowState.mockResolvedValue(
+        mockStateRecord,
+      );
+      mockRepository.recordWorkflowHistory.mockResolvedValue(mockHistoryRecord);
 
       // 'user-reviewer' is neither the creator ('user-admin') nor the submitter ('user-editor')
       const result = await workflowsService.transitionEntry(
@@ -920,8 +1015,10 @@ describe('WorkflowsService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      mockRepository.upsertEntryWorkflowState.mockResolvedValue({} as any);
-      mockRepository.recordWorkflowHistory.mockResolvedValue({} as any);
+      mockRepository.upsertEntryWorkflowState.mockResolvedValue(
+        mockStateRecord,
+      );
+      mockRepository.recordWorkflowHistory.mockResolvedValue(mockHistoryRecord);
 
       const result = await workflowsService.transitionEntry(
         'entry-1',
@@ -958,8 +1055,10 @@ describe('WorkflowsService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      mockRepository.upsertEntryWorkflowState.mockResolvedValue({} as any);
-      mockRepository.recordWorkflowHistory.mockResolvedValue({} as any);
+      mockRepository.upsertEntryWorkflowState.mockResolvedValue(
+        mockStateRecord,
+      );
+      mockRepository.recordWorkflowHistory.mockResolvedValue(mockHistoryRecord);
 
       const result = await workflowsService.handleContentUpdated(
         'entry-1',

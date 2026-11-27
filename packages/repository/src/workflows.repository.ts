@@ -24,7 +24,7 @@ import {
   buildPaginationOptions,
   withTransaction,
 } from '@repo/shared-db';
-import { ApiError } from '@repo/utils';
+import { ApiError, ConflictError } from '@repo/utils';
 import { REPO_ERRORS } from './error-constants.js';
 
 export class WorkflowsRepository {
@@ -702,12 +702,17 @@ export class WorkflowsRepository {
       currentStage: string;
       requiresReview?: boolean;
       updatedByUserId?: string | null;
+      expectedStage?: string;
     },
     applicationId?: string,
   ): Promise<ContentWorkflowStateRecord> {
     try {
       logger.info(
-        { entryId: data.entryId, stage: data.currentStage },
+        {
+          entryId: data.entryId,
+          stage: data.currentStage,
+          expectedStage: data.expectedStage,
+        },
         'WorkflowsRepository: upsertEntryWorkflowState',
       );
 
@@ -736,6 +741,13 @@ export class WorkflowsRepository {
           .limit(1);
 
         if (existing) {
+          const updateConditions = [eq(contentWorkflowStates.id, existing.id)];
+          if (data.expectedStage) {
+            updateConditions.push(
+              eq(contentWorkflowStates.currentStage, data.expectedStage),
+            );
+          }
+
           const [updated] = await tx
             .update(contentWorkflowStates)
             .set({
@@ -747,9 +759,15 @@ export class WorkflowsRepository {
                 ? { requiresReview: data.requiresReview }
                 : {}),
             })
-            .where(eq(contentWorkflowStates.id, existing.id))
+            .where(and(...updateConditions))
             .returning();
-          return updated!;
+
+          if (!updated) {
+            throw new ConflictError(
+              `The workflow stage for this entry was modified concurrently by another reviewer. Expected stage "${data.expectedStage}".`,
+            );
+          }
+          return updated;
         } else {
           const [inserted] = await tx
             .insert(contentWorkflowStates)
@@ -766,6 +784,9 @@ export class WorkflowsRepository {
         }
       });
     } catch (error) {
+      if (error instanceof ConflictError) {
+        throw error;
+      }
       logger.error(
         { err: error, entryId: data.entryId },
         'WorkflowsRepository Error in upsertEntryWorkflowState:',
